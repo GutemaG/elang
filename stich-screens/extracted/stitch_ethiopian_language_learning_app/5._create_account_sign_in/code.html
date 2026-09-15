@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Buna - Create Account &amp; Sign In</title>
+<!-- Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#404942",
+            "on-tertiary-fixed-variant": "#8e1309",
+            "primary-fixed": "#aef2c4",
+            "on-secondary-container": "#6c3b00",
+            "on-primary-fixed": "#002110",
+            "on-primary": "#ffffff",
+            "primary-container": "#1b5e3b",
+            "error": "#ba1a1a",
+            "inverse-primary": "#92d5a9",
+            "tertiary-container": "#9f2115",
+            "surface-container-highest": "#f2dfd1",
+            "outline": "#707971",
+            "surface-container-lowest": "#ffffff",
+            "surface-tint": "#296a46",
+            "secondary": "#8d4f00",
+            "inverse-on-surface": "#ffeee1",
+            "on-secondary-fixed": "#2d1600",
+            "on-surface": "#231a11",
+            "surface-container-high": "#f8e5d6",
+            "on-tertiary-container": "#ffb4a7",
+            "tertiary-fixed-dim": "#ffb4a8",
+            "error-container": "#ffdad6",
+            "secondary-fixed-dim": "#ffb875",
+            "surface-variant": "#f2dfd1",
+            "primary-fixed-dim": "#92d5a9",
+            "secondary-fixed": "#ffdcc0",
+            "surface-bright": "#fff8f5",
+            "on-primary-container": "#92d5a9",
+            "on-secondary-fixed-variant": "#6b3b00",
+            "on-tertiary-fixed": "#410000",
+            "on-error": "#ffffff",
+            "tertiary": "#7d0301",
+            "on-tertiary": "#ffffff",
+            "outline-variant": "#bfc9bf",
+            "inverse-surface": "#392e25",
+            "primary": "#004527",
+            "background": "#fff8f5",
+            "surface-dim": "#e9d7c8",
+            "surface": "#fff8f5",
+            "on-background": "#231a11",
+            "secondary-container": "#ffa03b",
+            "on-primary-fixed-variant": "#085230",
+            "tertiary-fixed": "#ffdad4",
+            "surface-container-low": "#fff1e8",
+            "on-error-container": "#93000a",
+            "surface-container": "#feeadc",
+            "on-secondary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "node-offset-lateral": "2.75rem",
+            "margin-mobile": "1.25rem",
+            "space-xl": "2rem",
+            "space-2xs": "0.25rem",
+            "space-2xl": "3rem",
+            "gutter-mobile": "0.75rem",
+            "node-step-vertical": "4.5rem",
+            "space-xs": "0.5rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-3xl": "4rem",
+            "space-sm": "0.75rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .tactile-auth-card {
+      box-shadow: 0 4px 0 #E2D7C5;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .tactile-auth-card:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 transparent;
+    }
+    .mascot-bubble {
+      box-shadow: 0 4px 0 #EDE5D8;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col justify-between items-center selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- Outer Mobile Shell Container -->
+<div class="w-full max-w-lg min-h-screen flex flex-col justify-between bg-surface px-margin-mobile pb-space-lg pt-space-xs">
+<!-- Top Bar: Shared Component Protocol Alignment (Linear screen suppresses full bottom nav, focuses on clean header) -->
+<header class="flex justify-between items-center w-full py-space-sm">
+<button aria-label="Go back" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low text-on-surface hover:bg-surface-container active:translate-y-0.5 transition-transform" type="button">
+<span class="material-symbols-outlined text-headline-sm" data-icon="arrow_back">arrow_back</span>
+</button>
+<!-- Brand Anchor & Progress Indicator -->
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">Buna</span>
+<div class="flex items-center gap-1 ml-1 bg-surface-container px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="w-2.5 h-1.5 rounded-full bg-secondary-container"></span>
+</div>
+</div>
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-primary active:translate-y-0.5 transition-transform px-space-xs py-1" type="button">
+        Skip
+      </button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col justify-center py-space-sm">
+<!-- Mascot Welcoming Callout Section -->
+<div class="flex items-end gap-space-sm mb-space-lg">
+<!-- Expressive Mascot (Ethiopian Walia Ibex / Wolf hybrid stylized avatar) -->
+<div class="relative flex-shrink-0 w-20 h-20 rounded-2xl bg-surface-container-high border-2 border-surface-container-highest flex items-center justify-center overflow-hidden shadow-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-highest to-transparent opacity-60"></div>
+<!-- Tactile Mascot Illustration with Habesha Gold & Evergreen accents -->
+<div class="relative flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-secondary" data-icon="local_cafe" style="font-variation-settings: 'FILL' 1;">local_cafe</span>
+<div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-secondary-container flex items-center justify-center border-2 border-surface">
+<span class="material-symbols-outlined text-xs text-on-secondary-container" data-icon="sparkles" style="font-variation-settings: 'FILL' 1;">arrow_back_ios_new</span>
+</div>
+</div>
+</div>
+<!-- Tactile Speech Bubble -->
+<div class="relative flex-1 bg-surface-container-lowest border-2 border-surface-container-high rounded-2xl p-space-sm mascot-bubble">
+<!-- Speech triangle anchor pointing left to mascot -->
+<div class="absolute -left-2.5 bottom-4 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-surface-container-high border-b-8 border-b-transparent"></div>
+<div class="absolute -left-1.5 bottom-4 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-surface-container-lowest border-b-8 border-b-transparent"></div>
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm text-secondary bg-surface-container px-2 py-0.5 rounded-full uppercase tracking-wider">Step 5 of 5</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Melkam guzo! (Safe journey!)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            You're just one tap away from speaking your first words.
+          </p>
+</div>
+</div>
+<!-- Header & Value Proposition -->
+<div class="space-y-space-xs mb-space-xl">
+<h1 class="font-headline-lg text-headline-lg font-extrabold text-on-surface tracking-tight">
+          Create your free account
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Save your streak, sync your progress across devices, and start speaking Amharic today.
+        </p>
+</div>
+<!-- Feature Pill Badges: Highland Gamification Tokens -->
+<div class="grid grid-cols-3 gap-space-xs mb-space-xl">
+<div class="flex items-center gap-1.5 bg-surface-container-low border border-surface-container px-space-xs py-2 rounded-xl">
+<span class="material-symbols-outlined text-base text-secondary-container" data-icon="local_fire_department" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span class="font-label-sm text-label-sm text-on-surface">Streak Safe</span>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-low border border-surface-container px-space-xs py-2 rounded-xl">
+<span class="material-symbols-outlined text-base text-primary-container" data-icon="sync" style="font-variation-settings: 'FILL' 1;">sync</span>
+<span class="font-label-sm text-label-sm text-on-surface">Cloud Sync</span>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-low border border-surface-container px-space-xs py-2 rounded-xl">
+<span class="material-symbols-outlined text-base text-secondary" data-icon="workspace_premium" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="font-label-sm text-label-sm text-on-surface">XP &amp; Badges</span>
+</div>
+</div>
+<!-- Equal Weight Social Auth Action Cluster -->
+<div class="space-y-space-sm" id="auth-actions">
+<!-- Google Social Auth Button -->
+<button class="tactile-auth-card w-full h-14 bg-surface-container-lowest border-2 border-[#EDE5D8] rounded-2xl flex items-center justify-center gap-space-md px-space-md select-none group cursor-pointer" type="button">
+<!-- Standard Multicolored Google 'G' Logo -->
+<svg aria-hidden="true" class="w-5 h-5 flex-shrink-0" viewbox="0 0 24 24">
+<path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z" fill="#4285F4"></path>
+<path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24Z" fill="#34A853"></path>
+<path d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15Z" fill="#FBBC05"></path>
+<path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z" fill="#EA4335"></path>
+</svg>
+<span class="font-label-lg text-label-lg text-on-surface group-hover:text-primary transition-colors">
+            Continue with Google
+          </span>
+</button>
+<!-- Apple Social Auth Button (Equal Visual Weight, Height & Shape) -->
+<button class="tactile-auth-card w-full h-14 bg-surface-container-lowest border-2 border-[#EDE5D8] rounded-2xl flex items-center justify-center gap-space-md px-space-md select-none group cursor-pointer" type="button">
+<!-- Standard Apple Logo -->
+<svg aria-hidden="true" class="w-5 h-5 flex-shrink-0 fill-on-surface" viewbox="0 0 170 170">
+<path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.69-7.85-12-14.42-6-9.17-10.74-19.82-14.22-31.96-3.48-12.14-5.22-23.47-5.22-34 0-14.22 3.69-26.11 11.08-35.66 7.39-9.55 16.5-14.43 27.35-14.65 4.8 0 10.23 1.25 16.29 3.75 6.06 2.5 10.05 3.79 11.97 3.87 1.48 0 5.72-1.37 12.74-4.12 7.02-2.75 13.06-3.9 18.13-3.46 13.62 1.09 24.36 6.53 32.22 16.32-11.87 7.19-17.65 17.06-17.34 29.62.33 9.8 4.25 18.06 11.76 24.78 7.51 6.72 16.38 10.42 26.62 11.11-2.07 6.43-4.68 13.08-7.84 19.95zM119.22 31.02c0-7.23 2.66-14.1 7.98-20.61 5.32-6.51 11.96-10.41 19.92-11.71.22 1.41.33 2.72.33 3.92 0 7.29-2.77 14.37-8.31 21.23-5.54 6.86-12.33 10.84-20.37 11.94-.33-1.42-.45-2.92-.55-4.77z"></path>
+</svg>
+<span class="font-label-lg text-label-lg text-on-surface group-hover:text-primary transition-colors">
+            Continue with Apple
+          </span>
+</button>
+</div>
+<!-- Quiet Inline Error State Variant with Retry Action -->
+<div class="mt-space-md bg-surface-container-high/90 border border-secondary-fixed-dim/60 rounded-2xl p-space-sm flex items-center justify-between gap-space-xs transition-all shadow-xs">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-secondary-fixed flex items-center justify-center flex-shrink-0 text-secondary">
+<span class="material-symbols-outlined text-sm font-bold" data-icon="info">info</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">
+            Something went wrong — try again
+          </span>
+</div>
+<!-- Tactile Retry Button -->
+<button class="px-space-xs py-1 rounded-xl bg-surface-container-lowest border border-secondary-fixed-dim text-secondary flex items-center gap-1 active:translate-y-0.5 transition-transform hover:bg-surface-bright" type="button">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="refresh">refresh</span>
+<span class="font-label-sm text-label-sm text-secondary">Retry</span>
+</button>
+</div>
+</main>
+<!-- Bottom Footer Anchor: Legal & Secondary Sign-in Link -->
+<footer class="pt-space-md border-t border-surface-container space-y-space-sm text-center">
+<!-- Existing Account Navigation Link -->
+<div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Already have an account? </span>
+<a class="font-label-md text-label-md text-primary font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-primary rounded-sm py-0.5" href="#login">
+          Log In
+        </a>
+</div>
+<!-- Legal Disclaimer Footer -->
+<p class="font-label-sm text-label-sm text-on-surface-variant max-w-xs mx-auto leading-relaxed">
+        By continuing you agree to our 
+        <a class="underline hover:text-on-surface transition-colors" href="#terms">Terms of Service</a> &amp; 
+        <a class="underline hover:text-on-surface transition-colors" href="#privacy">Privacy Policy</a>.
+      </p>
+</footer>
+</div>
+</body></html>

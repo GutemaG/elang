@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Buna - Onboarding Carousel</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#404942",
+            "on-tertiary-fixed-variant": "#8e1309",
+            "primary-fixed": "#aef2c4",
+            "on-secondary-container": "#6c3b00",
+            "on-primary-fixed": "#002110",
+            "on-primary": "#ffffff",
+            "primary-container": "#1b5e3b",
+            "error": "#ba1a1a",
+            "inverse-primary": "#92d5a9",
+            "tertiary-container": "#9f2115",
+            "surface-container-highest": "#f2dfd1",
+            "outline": "#707971",
+            "surface-container-lowest": "#ffffff",
+            "surface-tint": "#296a46",
+            "secondary": "#8d4f00",
+            "inverse-on-surface": "#ffeee1",
+            "on-secondary-fixed": "#2d1600",
+            "on-surface": "#231a11",
+            "surface-container-high": "#f8e5d6",
+            "on-tertiary-container": "#ffb4a7",
+            "tertiary-fixed-dim": "#ffb4a8",
+            "error-container": "#ffdad6",
+            "secondary-fixed-dim": "#ffb875",
+            "surface-variant": "#f2dfd1",
+            "primary-fixed-dim": "#92d5a9",
+            "secondary-fixed": "#ffdcc0",
+            "surface-bright": "#fff8f5",
+            "on-primary-container": "#92d5a9",
+            "on-secondary-fixed-variant": "#6b3b00",
+            "on-tertiary-fixed": "#410000",
+            "on-error": "#ffffff",
+            "tertiary": "#7d0301",
+            "on-tertiary": "#ffffff",
+            "outline-variant": "#bfc9bf",
+            "inverse-surface": "#392e25",
+            "primary": "#004527",
+            "background": "#fff8f5",
+            "surface-dim": "#e9d7c8",
+            "surface": "#fff8f5",
+            "on-background": "#231a11",
+            "secondary-container": "#ffa03b",
+            "on-primary-fixed-variant": "#085230",
+            "tertiary-fixed": "#ffdad4",
+            "surface-container-low": "#fff1e8",
+            "on-error-container": "#93000a",
+            "surface-container": "#feeadc",
+            "on-secondary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "node-offset-lateral": "2.75rem",
+            "margin-mobile": "1.25rem",
+            "space-xl": "2rem",
+            "space-2xs": "0.25rem",
+            "space-2xl": "3rem",
+            "gutter-mobile": "0.75rem",
+            "node-step-vertical": "4.5rem",
+            "space-xs": "0.5rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-3xl": "4rem",
+            "space-sm": "0.75rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    }
+    .material-symbols-outlined[data-weight="fill"] {
+      font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+    /* 3D Tactile Buttons & Card Shadows per Highland Pulse System */
+    .tactile-card {
+      box-shadow: 0 4px 0 #E2D7C5;
+    }
+    .tactile-btn-primary {
+      box-shadow: 0 4px 0 #124027;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .tactile-btn-primary:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 transparent;
+    }
+    .tactile-chip {
+      box-shadow: 0 3px 0 #E5DDD0;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .tactile-chip:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 transparent;
+    }
+    .tactile-btn-secondary {
+      box-shadow: 0 3px 0 #E2D7C5;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .tactile-btn-secondary:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 transparent;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col justify-between items-center selection:bg-secondary-fixed">
+<!-- Mobile Shell Wrapper -->
+<main class="w-full max-w-lg min-h-screen flex flex-col justify-between px-margin-mobile pb-space-lg pt-space-xs relative overflow-x-hidden">
+<!-- Top Bar Component (Derived from Shared TopAppBar token guidance for task/onboarding flows) -->
+<header class="w-full flex justify-between items-center py-space-sm z-20">
+<!-- Back / Progress indicator -->
+<button aria-label="Go back" class="w-10 h-10 rounded-full bg-surface-container-lowest border-2 border-outline-variant/50 flex items-center justify-center text-primary tactile-btn-secondary" type="button">
+<span class="material-symbols-outlined text-primary text-xl">arrow_back</span>
+</button>
+<!-- App Logo / Wordmark -->
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary-container animate-pulse"></span>
+<span class="text-headline-md font-headline-md tracking-tight text-primary">Buna</span>
+</div>
+<!-- Skip Button: Tactile subtle action text -->
+<button class="px-space-sm py-space-2xs rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md hover:text-primary active:translate-y-0.5 transition-all" type="button">
+        Skip
+      </button>
+</header>
+<!-- Carousel Center Container -->
+<div class="w-full flex-1 flex flex-col justify-center items-center my-space-xs z-10">
+<!-- Bento Hero Visual Showcase (Slide 1 Active with Peek of Slide 2 & 3) -->
+<div class="w-full relative flex items-center justify-center py-space-xs">
+<!-- Background Ambient Glow for Cultural Warmth -->
+<div class="absolute w-64 h-64 bg-secondary-container/20 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+<div class="absolute -top-6 -right-6 w-40 h-40 bg-primary-fixed/30 rounded-full blur-2xl -z-10 pointer-events-none"></div>
+<!-- Carousel Cards Deck / Asymmetrical Layout -->
+<div class="w-full relative flex items-center justify-center">
+<!-- Left Ghost Peek: Native Addis Markets (Slide 3 sneak-peek) -->
+<div class="hidden sm:block absolute -left-16 w-28 h-64 bg-surface-container-low rounded-lg border-2 border-outline-variant/40 opacity-40 transform -rotate-6 scale-90 pointer-events-none overflow-hidden p-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-sm">record_voice_over</span>
+</div>
+</div>
+<!-- Main Interactive Slide (Slide 1: Bite-Sized Amharic & Fidel Syllabary Cards) -->
+<div class="w-full bg-surface-container-lowest rounded-lg border-2 border-surface-dim tactile-card p-space-md flex flex-col items-center text-center relative overflow-hidden">
+<!-- Habesha Tibeb Simplified Cultural Header Pattern Accent -->
+<div class="w-full h-1.5 bg-gradient-to-r from-primary via-secondary-container to-tertiary-container rounded-full mb-space-sm opacity-85"></div>
+<!-- Mascot & Syllabary Illustration Scene -->
+<div class="relative w-full h-52 rounded-xl bg-surface-container-low flex items-center justify-center overflow-hidden border border-outline-variant/30 mb-space-md">
+<img class="w-full h-full object-cover rounded-xl" data-alt="A charming illustrated scene of the Buna mascot, a stylized Ethiopian Walia ibex with soft curved horns and friendly expressive eyes, sitting happily on a warm highland patterned woven rug in Addis Ababa. The ibex holds a glowing flashcard of the Amharic Fidel letter ሀ. Warm earthen clay tones, lush highland acacia greens, and Simien golden sunlight fill the playful modern vector art." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATkXQQlI5ZWOPKVLy6WQWTj5C4R3k_XuWqpCIq0GZhjvfTPUMrI7WFB-R50S2nO9VLzFPrI2TKq9OzKOQ-9-wSFJuXq6vj2blPl3NOkvUdJuTEjFjIyJt8EIb6M0h3fkIrjlscBQ3Tz9OE54ry7FvOvf-H3ceIg3by19Nb8HnlbFgSRZObfwLuVpYZqyJ5cuWqKPto7Cyuk56v5DNIRhRFUgxeZlEJUjviAcsKJLO3kLQWIgWxPOvM"/>
+<!-- Floating Fidel Syllabary Tactile Chips -->
+<div class="absolute top-3 left-3 bg-surface-container-lowest/95 backdrop-blur-sm px-space-xs py-1 rounded-full border border-surface-dim tactile-chip flex items-center gap-1.5 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="text-label-md font-label-md text-primary font-bold">ሀ ha</span>
+</div>
+<div class="absolute bottom-3 right-3 bg-surface-container-lowest/95 backdrop-blur-sm px-space-xs py-1 rounded-full border border-surface-dim tactile-chip flex items-center gap-1.5 shadow-sm">
+<span class="text-label-md font-label-md text-secondary font-bold">ቡ bu</span>
+<span class="material-symbols-outlined text-secondary text-sm" data-weight="fill">verified</span>
+</div>
+<div class="absolute top-3 right-3 bg-secondary-container/90 text-on-secondary-container px-space-xs py-0.5 rounded-full text-label-sm font-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">timer</span>
+<span>5 min/day</span>
+</div>
+</div>
+<!-- Slide Content Typography -->
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface tracking-tight mb-space-2xs">
+              Bite-Sized Amharic
+            </h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-xs leading-relaxed">
+              Master Fidel syllabaries and confident daily conversations in just 5 minutes a day.
+            </p>
+<!-- Micro Teaser Preview Pills for Upcoming Slides (Gamification + Authentic Audio) -->
+<div class="w-full grid grid-cols-2 gap-2 mt-space-md pt-space-xs border-t border-surface-dim/60">
+<!-- Teaser 1: Slide 2 Gamified Streak -->
+<div class="flex items-center gap-2 p-2 rounded-xl bg-surface-container-high/50 text-left">
+<div class="w-7 h-7 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-container shrink-0">
+<span class="material-symbols-outlined text-base" data-weight="fill">local_fire_department</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-label-sm font-label-sm text-secondary truncate">Daily Streaks</p>
+<p class="text-[10px] text-on-surface-variant/80 truncate">XP &amp; Highlands Map</p>
+</div>
+</div>
+<!-- Teaser 2: Slide 3 Market Audio -->
+<div class="flex items-center gap-2 p-2 rounded-xl bg-surface-container-high/50 text-left">
+<div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-base" data-weight="fill">volume_up</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-label-sm font-label-sm text-primary truncate">Real Dialects</p>
+<p class="text-[10px] text-on-surface-variant/80 truncate">Addis Merkato chats</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Ghost Peek: Next Slide Gamification Flame (Slide 2 preview) -->
+<div class="hidden sm:block absolute -right-16 w-28 h-64 bg-surface-container-low rounded-lg border-2 border-outline-variant/40 opacity-40 transform rotate-6 scale-90 pointer-events-none overflow-hidden p-3">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-sm" data-weight="fill">local_fire_department</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Dot Indicators (3 rounded pills, Slide 1 Active elongated in Acacia Green) -->
+<div aria-label="Onboarding carousel steps" class="flex items-center justify-center gap-2 mt-space-md" role="tablist">
+<span aria-label="Slide 1 active" aria-selected="true" class="w-8 h-2.5 rounded-full bg-primary-container transition-all duration-300" role="tab"></span>
+<span aria-label="Slide 2" aria-selected="false" class="w-2.5 h-2.5 rounded-full bg-surface-dim hover:bg-surface-variant cursor-pointer transition-all duration-300" role="tab"></span>
+<span aria-label="Slide 3" aria-selected="false" class="w-2.5 h-2.5 rounded-full bg-surface-dim hover:bg-surface-variant cursor-pointer transition-all duration-300" role="tab"></span>
+</div>
+</div>
+<!-- Bottom Action Area: Prominent 3D Tactile Push Button -->
+<div class="w-full flex flex-col items-center gap-space-sm pt-space-xs z-20">
+<!-- Primary Tactile Button: Acacia Green with bevel & bounce physics -->
+<button class="w-full py-3.5 px-space-lg rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 tactile-btn-primary tracking-wide" type="button">
+<span>Continue</span>
+<span class="material-symbols-outlined text-xl">arrow_forward</span>
+</button>
+<!-- Supportive Secondary CTA for Returning Learners -->
+<div class="flex items-center justify-center gap-1.5 text-body-sm font-body-sm text-on-surface-variant">
+<span>Already have an account?</span>
+<button class="text-primary font-label-md text-label-md underline underline-offset-4 decoration-primary/40 hover:decoration-primary active:translate-y-0.5 transition-transform" type="button">
+          Log In
+        </button>
+</div>
+</div>
+</main>
+<script>
+    // Lightweight micro-interaction for dot indicator click feel
+    document.querySelectorAll('[role="tab"]').forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        document.querySelectorAll('[role="tab"]').forEach(d => {
+          d.classList.remove('w-8', 'bg-primary-container');
+          d.classList.add('w-2.5', 'bg-surface-dim');
+          d.setAttribute('aria-selected', 'false');
+        });
+        dot.classList.remove('w-2.5', 'bg-surface-dim');
+        dot.classList.add('w-8', 'bg-primary-container');
+        dot.setAttribute('aria-selected', 'true');
+      });
+    });
+  </script>
+</body></html>

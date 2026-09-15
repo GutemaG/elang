@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Buna - Splash Screen</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#404942",
+            "on-tertiary-fixed-variant": "#8e1309",
+            "primary-fixed": "#aef2c4",
+            "on-secondary-container": "#6c3b00",
+            "on-primary-fixed": "#002110",
+            "on-primary": "#ffffff",
+            "primary-container": "#1b5e3b",
+            "error": "#ba1a1a",
+            "inverse-primary": "#92d5a9",
+            "tertiary-container": "#9f2115",
+            "surface-container-highest": "#f2dfd1",
+            "outline": "#707971",
+            "surface-container-lowest": "#ffffff",
+            "surface-tint": "#296a46",
+            "secondary": "#8d4f00",
+            "inverse-on-surface": "#ffeee1",
+            "on-secondary-fixed": "#2d1600",
+            "on-surface": "#231a11",
+            "surface-container-high": "#f8e5d6",
+            "on-tertiary-container": "#ffb4a7",
+            "tertiary-fixed-dim": "#ffb4a8",
+            "error-container": "#ffdad6",
+            "secondary-fixed-dim": "#ffb875",
+            "surface-variant": "#f2dfd1",
+            "primary-fixed-dim": "#92d5a9",
+            "secondary-fixed": "#ffdcc0",
+            "surface-bright": "#fff8f5",
+            "on-primary-container": "#92d5a9",
+            "on-secondary-fixed-variant": "#6b3b00",
+            "on-tertiary-fixed": "#410000",
+            "on-error": "#ffffff",
+            "tertiary": "#7d0301",
+            "on-tertiary": "#ffffff",
+            "outline-variant": "#bfc9bf",
+            "inverse-surface": "#392e25",
+            "primary": "#004527",
+            "background": "#fff8f5",
+            "surface-dim": "#e9d7c8",
+            "surface": "#fff8f5",
+            "on-background": "#231a11",
+            "secondary-container": "#ffa03b",
+            "on-primary-fixed-variant": "#085230",
+            "tertiary-fixed": "#ffdad4",
+            "surface-container-low": "#fff1e8",
+            "on-error-container": "#93000a",
+            "surface-container": "#feeadc",
+            "on-secondary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "node-offset-lateral": "2.75rem",
+            "margin-mobile": "1.25rem",
+            "space-xl": "2rem",
+            "space-2xs": "0.25rem",
+            "space-2xl": "3rem",
+            "gutter-mobile": "0.75rem",
+            "node-step-vertical": "4.5rem",
+            "space-xs": "0.5rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-3xl": "4rem",
+            "space-sm": "0.75rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+    
+    /* Tactile 3D Extrusion Shadows */
+    .tactile-btn {
+      box-shadow: 0 4px 0 #124027;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .tactile-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 transparent;
+    }
+    
+    .tactile-badge {
+      box-shadow: 0 3px 0 #e2d7c5;
+    }
+
+    /* Ambient Warm Pulse */
+    @keyframes softFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(1.5deg); }
+    }
+    .mascot-float {
+      animation: softFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes steamRise {
+      0% { transform: translateY(0) scaleX(1) scaleY(1); opacity: 0; }
+      30% { opacity: 0.7; }
+      80% { opacity: 0.3; }
+      100% { transform: translateY(-24px) scaleX(1.3) scaleY(1.4); opacity: 0; }
+    }
+    .steam-bubble-1 {
+      animation: steamRise 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    .steam-bubble-2 {
+      animation: steamRise 3.2s cubic-bezier(0.4, 0, 0.2, 1) 0.8s infinite;
+    }
+    .steam-bubble-3 {
+      animation: steamRise 2.5s cubic-bezier(0.4, 0, 0.2, 1) 1.5s infinite;
+    }
+
+    /* Coffee Bean bounce loader */
+    @keyframes beanPop {
+      0%, 80%, 100% { transform: scale(0.85); opacity: 0.45; }
+      40% { transform: scale(1.2) translateY(-4px); opacity: 1; }
+    }
+    .loader-bean-1 { animation: beanPop 1.4s infinite ease-in-out; }
+    .loader-bean-2 { animation: beanPop 1.4s infinite ease-in-out 0.2s; }
+    .loader-bean-3 { animation: beanPop 1.4s infinite ease-in-out 0.4s; }
+
+    /* Tibeb pattern styling */
+    .tibeb-pattern {
+      background-image: radial-gradient(#ffa03b 1px, transparent 1px), radial-gradient(#1b5e3b 1px, #fff8f5 1px);
+      background-size: 32px 32px;
+      background-position: 0 0, 16px 16px;
+      opacity: 0.045;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex items-center justify-center p-0 select-none overflow-x-hidden">
+<!-- Mobile Container Shell -->
+<div class="relative w-full max-w-lg min-h-screen bg-surface flex flex-col justify-between overflow-hidden shadow-2xl">
+<!-- Geometric Cultural Tibeb Backdrop Grid -->
+<div class="absolute inset-0 tibeb-pattern pointer-events-none"></div>
+<!-- Soft Radiant Sunlight Gradient Spheres -->
+<div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-secondary-container/15 blur-3xl pointer-events-none"></div>
+<div class="absolute top-1/3 -left-32 w-72 h-72 rounded-full bg-primary-fixed/30 blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-20 right-1/4 w-96 h-96 rounded-full bg-surface-container-high/60 blur-2xl pointer-events-none"></div>
+<!-- Decorative Top Bar Accent (Stylized Habesha Tibeb Ribbon) -->
+<div class="w-full pt-space-xs px-margin-mobile flex justify-center items-center z-10">
+<div class="flex items-center space-x-1 py-1 px-space-md bg-surface-container-lowest/80 border border-surface-container-highest rounded-full tactile-badge backdrop-blur-sm">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="w-2 h-2 rounded-full bg-secondary-container"></span>
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-label-sm text-label-sm text-secondary tracking-widest pl-1 font-extrabold uppercase">Highland Pulse</span>
+</div>
+</div>
+<!-- Center Hero Section: Mascot & Wordmark -->
+<main class="flex-1 flex flex-col items-center justify-center px-margin-mobile py-space-md text-center z-10 relative">
+<!-- Mascot Container with 3D Depth & Steam micro-particles -->
+<div class="relative w-56 h-56 flex items-center justify-center mb-space-lg">
+<!-- Ambient Grounding Shadow -->
+<div class="absolute bottom-2 w-36 h-6 bg-inverse-surface/10 rounded-full blur-md"></div>
+<!-- Steam Particles rising from Cup -->
+<div class="absolute -top-4 flex items-center justify-center space-x-3 pointer-events-none">
+<div class="steam-bubble-1 w-3 h-5 rounded-full bg-secondary-container/40 blur-[1px]"></div>
+<div class="steam-bubble-2 w-3.5 h-6 rounded-full bg-secondary/30 blur-[1px]"></div>
+<div class="steam-bubble-3 w-2.5 h-4 rounded-full bg-secondary-container/50 blur-[1px]"></div>
+</div>
+<!-- Mascot Character: "Cini" - Ethiopian Ceramic Coffee Cup with Tibeb Crown Band -->
+<div class="mascot-float relative w-44 h-44 bg-surface-container-lowest rounded-3xl border-4 border-surface-container-highest p-3 flex flex-col items-center justify-between" style="box-shadow: 0 8px 0 #e2d7c5, 0 16px 28px -4px rgba(62, 39, 35, 0.12);">
+<!-- Cup Rim & Rich Dark Coffee Fill -->
+<div class="w-full h-10 rounded-2xl bg-surface-container-low border-2 border-surface-container flex items-center justify-center relative overflow-hidden">
+<!-- Coffee Surface -->
+<div class="w-11/12 h-6 rounded-xl bg-gradient-to-r from-on-secondary-fixed via-on-surface to-on-secondary-fixed flex items-center justify-center shadow-inner">
+<!-- Golden Crema Highlight swirl -->
+<div class="w-6 h-2 rounded-full bg-secondary-fixed-dim/40 blur-[0.5px]"></div>
+</div>
+</div>
+<!-- Traditional Red/Gold/Green Tibeb Ceramic Graphic Ribbon -->
+<div class="w-full h-3.5 my-1 flex items-center justify-around px-1 bg-surface-container-high rounded-md border border-surface-container-highest">
+<span class="w-2 h-2 rotate-45 bg-tertiary rounded-[1px]"></span>
+<span class="w-2 h-2 rotate-45 bg-secondary-container rounded-[1px]"></span>
+<span class="w-2 h-2 rotate-45 bg-primary rounded-[1px]"></span>
+<span class="w-2 h-2 rotate-45 bg-secondary-container rounded-[1px]"></span>
+<span class="w-2 h-2 rotate-45 bg-tertiary rounded-[1px]"></span>
+</div>
+<!-- Mascot Face: Joyful, Expressive Eyes & Cheerful Smile -->
+<div class="flex-1 w-full flex flex-col items-center justify-center relative -mt-1">
+<!-- Eyes & Cheeks Row -->
+<div class="flex items-center justify-between w-24 px-1 mb-1">
+<!-- Left Eye (Happy wink / sparkle) -->
+<div class="flex flex-col items-center">
+<div class="w-3.5 h-3.5 rounded-full bg-on-surface relative">
+<span class="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-surface-container-lowest"></span>
+</div>
+<div class="w-3 h-1.5 rounded-full bg-tertiary-fixed-dim/70 mt-1"></div>
+</div>
+<!-- Star Sparkle Nose Badge -->
+<span class="material-symbols-outlined text-secondary-container font-bold text-xs" style="font-variation-settings: 'FILL' 1;">local_cafe</span>
+<!-- Right Eye (Cheerful curve arc) -->
+<div class="flex flex-col items-center">
+<div class="w-3.5 h-3.5 rounded-full bg-on-surface relative">
+<span class="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-surface-container-lowest"></span>
+</div>
+<div class="w-3 h-1.5 rounded-full bg-tertiary-fixed-dim/70 mt-1"></div>
+</div>
+</div>
+<!-- Joyful Open Smile -->
+<div class="w-7 h-4 bg-tertiary rounded-b-full border-2 border-on-surface flex items-start justify-center overflow-hidden">
+<div class="w-4 h-2 bg-on-tertiary-container rounded-full mt-1"></div>
+</div>
+</div>
+<!-- Cup Base Rim -->
+<div class="w-20 h-2 bg-surface-container-highest rounded-full"></div>
+<!-- Side Ear Handle of Ceramic Cini -->
+<div class="absolute -right-5 top-14 w-6 h-14 border-4 border-surface-container-highest rounded-r-2xl bg-surface-container-lowest -z-10" style="box-shadow: 2px 4px 0 #e2d7c5;"></div>
+</div>
+<!-- Floating Interactive Badge (Level / Sip Sparkle) -->
+<div class="absolute -bottom-2 -right-1 bg-secondary-container text-on-secondary-container px-space-sm py-space-2xs rounded-full flex items-center space-x-1 border-2 border-surface-container-lowest tactile-badge">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm font-extrabold">100% Arabica</span>
+</div>
+</div>
+<!-- Typography Wordmark Grouping -->
+<div class="flex flex-col items-center space-y-space-2xs max-w-xs">
+<!-- Main Brand Name -->
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary tracking-tight font-extrabold flex items-center justify-center">
+          Buna
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-secondary-container ml-1.5 mb-1"></span>
+</h1>
+<!-- Amharic Script Counterpart Badge -->
+<div class="inline-flex items-center px-space-md py-0.5 bg-surface-container-low border border-surface-container-high rounded-xl">
+<span class="font-headline-sm text-headline-sm text-secondary font-extrabold tracking-wider">ቡና</span>
+<span class="mx-space-2xs text-outline-variant font-light">•</span>
+<span class="font-label-md text-label-md text-on-surface-variant font-semibold">Coffee &amp; Culture</span>
+</div>
+<!-- Tagline -->
+<p class="font-body-md text-body-md text-on-surface-variant pt-space-xs leading-relaxed font-medium">
+          Learn Amharic, One Sip at a Time.
+        </p>
+</div>
+</main>
+<!-- Bottom Progress & Tactile Loading Bar State -->
+<footer class="w-full px-margin-mobile pb-space-xl pt-space-sm flex flex-col items-center z-10">
+<!-- Tactile Card Capsule for Loading -->
+<div class="w-full bg-surface-container-lowest border-2 border-surface-container-highest rounded-2xl p-space-md flex flex-col items-center space-y-space-sm tactile-badge">
+<!-- Status Indicator Row -->
+<div class="w-full flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<!-- Pulsing 3-Bean Indicator Icons -->
+<div class="flex items-center space-x-1 text-secondary">
+<span class="material-symbols-outlined loader-bean-1 text-base" style="font-variation-settings: 'FILL' 1;">local_cafe</span>
+<span class="material-symbols-outlined loader-bean-2 text-base" style="font-variation-settings: 'FILL' 1;">grain</span>
+<span class="material-symbols-outlined loader-bean-3 text-base" style="font-variation-settings: 'FILL' 1;">local_cafe</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface font-bold">
+              Brewing your lessons...
+            </span>
+</div>
+<!-- Progress Percentage Counter -->
+<span class="font-label-md text-label-md text-primary font-extrabold bg-primary-fixed/40 text-on-primary-fixed-variant px-space-xs py-0.5 rounded-lg">
+            78%
+          </span>
+</div>
+<!-- Tactile 3D Progress Track -->
+<div class="w-full h-4 bg-surface-container rounded-full overflow-hidden p-0.5 border border-surface-container-high shadow-inner relative">
+<!-- Progress Bar Fill with 3D Bevel Top Sheen -->
+<div class="h-full bg-gradient-to-r from-primary-container to-primary rounded-full transition-all duration-700 relative flex items-center justify-end pr-1" style="width: 78%; box-shadow: 0 2px 0 #002110;">
+<!-- Little light shimmer point -->
+<div class="w-2 h-1.5 rounded-full bg-surface-container-lowest/70"></div>
+</div>
+</div>
+<!-- Micro Helper Tip -->
+<p class="font-label-sm text-label-sm text-outline flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs">lightbulb</span>
+<span>Tip: "Tena Yistillign" means "Health be upon you" (Hello)</span>
+</p>
+</div>
+<!-- Tactile Bottom CTA Preview (Disabled state while brewing) -->
+<div class="w-full pt-space-md">
+<button class="w-full bg-primary text-on-primary font-label-lg text-label-lg py-space-sm px-space-lg rounded-full tactile-btn flex items-center justify-center space-x-2 opacity-95" type="button">
+<span>Get Started</span>
+<span class="material-symbols-outlined text-base">arrow_forward</span>
+</button>
+</div>
+</footer>
+</div>
+<!-- Micro Interaction Script for Interactive tactile feedback -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const startBtn = document.querySelector('button');
+      if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          // Playful ripple / click haptic simulation
+          startBtn.classList.add('scale-95');
+          setTimeout(() => startBtn.classList.remove('scale-95'), 150);
+        });
+      }
+    });
+  </script>
+</body></html>

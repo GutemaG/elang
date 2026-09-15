@@ -35,6 +35,22 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # Keychain/Keystore-backed local storage for session tokens and pending
+  # onboarding selections (see 002-auth-onboarding-ui implementation plan).
+  flutter_secure_storage: ^9.2.4
+
+  # Real backend integration + native OAuth SDKs (003-auth-onboarding-ui):
+  # `http` talks to the `001-auth-service` endpoints; `google_sign_in`/
+  # `sign_in_with_apple` trigger the real native sign-in flows.
+  http: ^1.6.0
+  google_sign_in: ^7.2.0
+  # Direct dependency (not just transitive via google_sign_in) because
+  # `google_web_sign_in_button_web.dart` calls its `web_only.dart` API
+  # directly to render Google's real button — required on Web, see that
+  # file's doc comment.
+  google_sign_in_web: ^1.1.3
+  sign_in_with_apple: ^8.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

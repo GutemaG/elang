@@ -24,6 +24,22 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- TODO(deploy): placeholder reversed-client-ID URL scheme
+				     for Google Sign-In's OAuth redirect. Replace with the
+				     real reversed form of AuthConfig.googleClientId (e.g.
+				     com.googleusercontent.apps.<client-id-prefix>) once a
+				     real Google OAuth client ID exists. -->
+				<string>com.googleusercontent.apps.REPLACE_WITH_GOOGLE_OAUTH_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

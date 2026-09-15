@@ -1,0 +1,100 @@
+---
+stage: plan
+bolt: 003-auth-onboarding-ui
+created: 2026-09-15T14:05:00Z
+---
+
+## Implementation Plan: Auth & Onboarding UI — Real Backend Integration
+
+### Objective
+
+Replace `FakeAuthApi` with a real, HTTP-backed `AuthApi` implementation that calls the three now-live `001-auth-service` endpoints (`POST /api/v1/auth/google`, `POST /api/v1/auth/apple`, `GET /api/v1/auth/session`), and swap the placeholder-token sign-in trigger for real native Google/Apple OAuth SDK calls. Covers story `005-real-backend-integration-and-native-sdks`.
+
+The `AuthApi` interface, `AuthResult`/`AuthSuccess`/`AuthFailure`/`AuthFailureReason` types, `SessionRepository`, `OnboardingRepository`, and every screen widget are intended to stay exactly as `002-auth-onboarding-ui` left them. Whether that fully holds is examined explicitly below (see "Technical Approach → Does the 'no controller change' assumption hold?") rather than assumed.
+
+### Deliverables
+
+- **`lib/shared/services/http_auth_api.dart`** — a real `AuthApi` implementation (`HttpAuthApi`) using the `http` package. Calls `POST /api/v1/auth/google`, `POST /api/v1/auth/apple` with `{ id_token | identity_token, pending_selection?: { language, daily_goal_minutes } }`, parses `{ session_token, expires_at, user: { id, selected_language, daily_xp_target, is_new_user } }` on 200, and maps every documented failure (see Error Mapping table below) to `AuthFailure(AuthFailureReason...)`. `PendingOnboardingSelection.languageCode`/`dailyGoalMinutes` map directly to the request's `language`/`daily_goal_minutes` keys — confirmed against `backend/app/infrastructure/api/schemas.py`'s `PendingSelectionRequest`, not just the design doc.
+- **`lib/shared/services/session_api.dart`** *(or folded into `HttpAuthApi`)* — a thin client for `GET /api/v1/auth/session` (`Authorization: Bearer {token}`), returning `{valid, user}`/`{valid:false}`. Not currently consumed by any screen/controller (nothing in `002-auth-onboarding-ui` calls session-validation — `AuthFlowController` only checks local `SessionState.isValid`, which is a client-side expiry check, not a server round-trip). Included as a deliverable because the story's AC references the endpoint and a real backend exists to call, but wiring it into `AuthFlowController`'s splash-time routing decision is flagged as an **open question**, not assumed in scope (see below).
+- **`lib/shared/config/auth_config.dart`** — placeholder OAuth configuration constants (Google client ID, Apple Services ID/Bundle ID/Team ID/Key ID, API base URL), analogous to `backend/.env.example`. See "Configuration placeholders" below for the exact approach.
+- **`pubspec.yaml` additions** (named here, not edited in this stage): `http` (HTTP client), `google_sign_in` (Google native OAuth), `sign_in_with_apple` (Apple native OAuth). Exact versions pinned in Stage 2 against whatever pub.dev resolves at implementation time; reasonable current targets as of this writing: `http: ^1.2.2`, `google_sign_in: ^7.1.0`, `sign_in_with_apple: ^6.1.4`.
+- **`lib/features/auth/state/sign_in_controller.dart` changes** — replace the two hardcoded placeholder-token lines with a real native-SDK token-acquisition step per provider, feeding the resulting token into the *same* `_authApi.signInWithGoogle(idToken:, pendingSelection:)` / `signInWithApple(identityToken:, pendingSelection:)` calls that already exist. This is a real, scoped code change to the controller — see below.
+- **Platform config edits** (Stage 2 scope, enumerated here at planning altitude): `ios/Runner/Info.plist` (URL scheme for Google's OAuth redirect), a new `ios/Runner/Runner.entitlements` (Sign in with Apple capability) + its reference in `ios/Runner.xcodeproj/project.pbxproj`, and `android/app/src/main/AndroidManifest.xml` (an intent-filter for Sign in with Apple's Android redirect callback, and Google Sign-In's SHA-1 registration is a console/deployment step, not a file edit). Detail below.
+- **New tests**: `test/shared/services/http_auth_api_test.dart` covering the error-mapping table below (each of the 4 documented error codes + malformed JSON + network timeout/connection failure), using a mocked `http.Client`. Existing 24 widget tests are expected to keep passing unmodified since screens/`SignInScreen` don't change; `sign_in_controller_test.dart` (new, or folded into existing sign-in screen tests) covers the new token-acquisition step against fake native-SDK wrappers.
+
+### Dependencies
+
+- **`001-auth-service` (complete)** — provides the real, tested contract this bolt integrates against. Confirmed request/response/error shapes directly from `backend/app/infrastructure/api/schemas.py`, `routers.py`, and `error_handlers.py` (not just `ddd-02-technical-design.md`) — no drift found between the design doc and the implemented code.
+- **`http` package** — not currently in `pubspec.yaml`; no HTTP client of any kind is present today. Chosen over `dio` because the integration surface is exactly 3 simple JSON request/response calls with no need for interceptors, multipart uploads, or request cancellation tokens — `http` is the lighter, more idiomatic default for this scope and matches the project's general "don't add a framework/package until the simple option is proven insufficient" posture (`coding-standards.md`).
+- **`google_sign_in` (Flutter plugin)** — native Google OAuth trigger. Recent major versions (7.x) rewired the API around an explicit `GoogleSignIn.instance.initialize(...)` + `authenticate()` call pattern (replacing the older singleton `signIn()`/`signInSilently()` API) — Stage 2 must target whatever the actual resolved pub.dev version's API looks like; do not assume an older tutorial's API surface.
+- **`sign_in_with_apple` (Flutter plugin)** — native/web Apple OAuth trigger. Required alongside Google per App Store policy (`tech-stack.md`). On Android, this package operates via a **web-based OAuth flow requiring a hosted HTTPS redirect page** that bounces the callback back into the app (Apple's Sign-in-with-Apple-for-web flow does not support a native intent the way iOS does) — this is more than a client ID placeholder; it needs an actual reachable redirect endpoint. No such endpoint exists in this project yet (the backend has no `/auth/apple/callback`-style route). Flagged as an open item below, not solved in this plan.
+- **Google/Apple developer console values** (OAuth client ID; Apple Services ID, Team ID, Key ID, Bundle ID) — explicitly out of scope to obtain per the story; represented as placeholders only.
+
+### Configuration Placeholders
+
+Following the backend's `.env.example` precedent, but adapted to Flutter's constraints (no built-in `.env` runtime loading; adding `flutter_dotenv` is an extra dependency and extra asset-bundling step for values that are compiled in anyway):
+
+- **`lib/shared/config/auth_config.dart`**: a plain Dart file of `static const` values with obvious placeholder strings and a `// TODO(deploy):` comment block at the top pointing at where real values go (mirrors `backend/.env.example`'s header comment). Fields: `googleClientId` (`'REPLACE_WITH_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com'`), `googleServerClientId` (must match backend's `GOOGLE_OAUTH_CLIENT_ID` audience — same placeholder value, called out as needing to stay in sync with `backend/.env`), `appleServicesId`, `appleBundleId`, `apiBaseUrl` (`'http://localhost:8000'` default for local dev against the backend's own dev server, per `backend/.env.example`'s local-first pattern).
+- This file is committed with placeholders (safe — no real secrets), matching how `backend/.env.example` is committed. Real per-environment values are intended to be supplied later via `--dart-define-from-file=<untracked file>` at build time (Flutter's standard mechanism for keeping real values out of source control) reading into the same `AuthConfig` class via `String.fromEnvironment(...)` defaults — noted as the intended future mechanism, not built in this stage.
+- Alternative considered and rejected for this stage: `flutter_dotenv` (an actual `.env` file bundled as a Flutter asset). Rejected because it adds a dependency and an asset-loading step for values that are known at build time anyway and don't need to change without a rebuild; the Dart-const-with-placeholders approach is simpler and sufficient, and can be swapped for `flutter_dotenv` later without touching call sites if runtime-configurable values become necessary.
+
+### Technical Approach
+
+**`HttpAuthApi` error mapping** (the core of the AC around `AuthFailure`/`AuthFailureReason`):
+
+| Backend response | `AuthFailureReason` |
+|---|---|
+| `401 invalid_token` | `providerError` (the token itself was rejected by Google/Apple verification) |
+| `401 expired_token` | `providerError` |
+| `400 invalid_pending_selection` | `providerError` — closest available existing bucket; see note below |
+| `502 provider_unreachable` | `networkError` (explicitly the "retryable, not a sign-in-again situation" case per the design doc — matches `networkError`'s existing semantics better than `providerError`) |
+| Network-level failure (`SocketException`, `TimeoutException`, no connectivity, malformed/unparseable response body) | `networkError` |
+| Any other unexpected status code | `networkError` (fail safe toward "retryable" rather than silently swallowing) |
+
+`AuthFailureReason.cancelled` is **never produced by `HttpAuthApi`** — cancellation is a client-side, pre-network event (the user dismissed the native OAuth sheet before any token existed to send). It is produced entirely by the native-SDK integration step in `SignInController`, described next.
+
+**Note on `invalid_pending_selection`**: this is semantically a client-side data bug (the app sent an unsupported language code), not a provider/network failure — but `AuthFailureReason` only has three values (`cancelled`, `networkError`, `providerError`) and the story's own AC requires reusing the existing type without screen/controller changes. `providerError` is the least-wrong existing bucket (it renders as the generic "Something went wrong — try again" banner, which is accurate enough since a user cannot self-correct this by retrying anyway — retry will fail identically until the underlying selection is fixed, which in practice can't happen since language selection is hardcoded to `"am"` today). This is called out explicitly as a known rough edge, not silently forced: **if this bothers a future maintainer, the actual fix is adding a 4th `AuthFailureReason` value (e.g. `invalidRequest`) and one new `switch` arm in `SignInController`/no `SignInScreen` change needed since the screen only branches on `SignInStatus`, not `AuthFailureReason` directly** — but that is out of scope for this bolt unless requested.
+
+**Does the "no screen/controller code change" assumption hold?**
+
+Partially — and the plan states this explicitly rather than forcing it:
+
+- **Holds**: `AuthApi`, `AuthResult`/`AuthSuccess`/`AuthFailure`/`AuthFailureReason`, `SessionRepository`, `OnboardingRepository`, and every screen file (`SignInScreen` included) require **zero changes**. `SignInScreen` only ever reads `SignInController.status`/`isInFlight` and calls `.signIn(provider)`/`.retry()` — none of that surface changes.
+- **Does not fully hold**: `lib/features/auth/state/sign_in_controller.dart`'s `signIn()` method (currently lines ~41–63) hardcodes `idToken: 'placeholder-google-id-token'` / `identityToken: 'placeholder-apple-identity-token'` and calls `_authApi` directly with no prior step. Real native SDK integration requires inserting a token-acquisition step **before** that call:
+  1. Invoke `GoogleSignIn.instance.authenticate()` / `SignInWithApple.getAppleIDCredential(...)` for the tapped provider.
+  2. If the SDK reports user cancellation (a specific exception/error code from each plugin), set `_status = SignInStatus.errorCancelled` directly and `return` — **without ever calling `_authApi`** (this is new logic; today `errorCancelled` is only reachable via a mocked `AuthFailureReason.cancelled` from `FakeAuthApi`, which a real SDK never produces at the network layer).
+  3. If the SDK throws any other error (misconfigured plugin, platform channel failure), map to `SignInStatus.errorFailed` directly, same early-return shape.
+  4. Only on SDK success, extract the real ID/identity token string and proceed into the existing `_authApi.signInWithGoogle(...)`/`signInWithApple(...)` call, unchanged from today.
+  
+  This is a **real, material change to `sign_in_controller.dart`** — small and mechanically contained (an early-exit branch inserted before an existing call, using types/enum values that already exist), but it is not "zero controller changes." The bolt's own `bolt.md` success criteria already anticipates this possibility ("...or, if that assumption breaks, an explicit report of why") — this is that report. Two implementation shapes were considered for where the native SDK call lives:
+  - **(Chosen) Inside `SignInController`**, via two small new collaborator classes (e.g. `GoogleNativeSignIn`/`AppleNativeSignIn`, injected like `_authApi` is) that wrap each plugin behind a minimal `Future<String> signIn()`-shaped interface, throwing a small typed exception on cancellation. Keeps `HttpAuthApi` a pure, platform-agnostic HTTP client (testable without any native plugin), and keeps the "one guarded state machine" property of `SignInController` intact.
+  - **(Rejected) Inside `HttpAuthApi`** itself (ignore the `idToken`/`identityToken` parameters and trigger the native SDK internally). Rejected: it would make a supposedly network-only `AuthApi` implementation secretly depend on Flutter platform plugins (breaking its testability with plain `http.Client` mocks) and would keep the interface's parameter names lying about what the caller actually needs to supply.
+
+**Platform config — what Stage 2 will need to touch (not doing this now):**
+
+- **Android** (`android/app/src/main/AndroidManifest.xml`): an `<intent-filter>` for Sign in with Apple's Android redirect callback (custom scheme or App Link, depending on how the hosted redirect page bounces back). `google_sign_in` itself needs **no `AndroidManifest.xml` or `build.gradle.kts` change** for a non-Firebase setup (current `minSdk = flutter.minSdkVersion` is already ≥21, which is all `google_sign_in` requires); registering the app's SHA-1 fingerprint with the Google Cloud Console is a deployment/console step, not a file edit.
+- **iOS** (`ios/Runner/Info.plist`): add a `CFBundleURLTypes` entry with the reversed-client-ID URL scheme Google's OAuth redirect needs (placeholder value, filled from `AuthConfig`-equivalent at build time — the reversed-client-ID is itself derived from the real Google client ID, so it stays a placeholder until deployment).
+- **iOS Sign in with Apple capability**: no `ios/Runner/*.entitlements` file exists yet in this project. Stage 2 needs to create one declaring `com.apple.developer.applesignin` and wire it into `ios/Runner.xcodeproj/project.pbxproj` (`CODE_SIGN_ENTITLEMENTS` build setting) — normally done via Xcode's "Signing & Capabilities" UI, achievable by hand-editing both files if Xcode isn't driving this.
+- **iOS `Podfile`**: none exists yet (not generated until the first `flutter build ios`/`pod install`) — not a blocker, just noting it doesn't exist today so "no changes needed" isn't quite accurate; it will be *generated*, not edited.
+- **Android redirect endpoint for Sign in with Apple**: the web-based Android flow needs a real HTTPS page to redirect through. No such endpoint exists anywhere in this project (`backend/`'s routers only expose the 3 auth API endpoints, no callback/redirect page). This is a genuine gap beyond "just a placeholder config value" — flagged as an open question below, not solved here.
+
+**Session-validation endpoint (`GET /api/v1/auth/session`) usage**: not wired into `AuthFlowController`'s splash-time decision in this plan. Today, `AuthFlowController` only checks the locally-stored `SessionState.isValid` (token present + not locally-expired) — a pure client-side check with no network round trip. Calling the real `/session` endpoint at splash time would be a legitimately new behavior (server-side session revocation detection) beyond what story 005's ACs ask for (the ACs only cover the sign-in calls' success/error mapping, not splash-time re-validation). Building the `SessionApi` client without wiring it anywhere yet is intentional scope discipline; wiring it is flagged as an open question, not silently added or silently dropped.
+
+### Acceptance Criteria
+
+- [ ] `HttpAuthApi` implements `AuthApi` and calls the real `POST /api/v1/auth/google` / `/apple` endpoints with the exact request shape `backend/app/infrastructure/api/schemas.py` expects (`id_token`/`identity_token`, optional `pending_selection: {language, daily_goal_minutes}`)
+- [ ] A 200 response is parsed into `AuthSuccess(sessionToken, expiresAt)` and persisted via the existing `SessionRepository.saveSession` call path, unchanged from `SignInController`'s current behavior
+- [ ] Each of the 4 documented error codes (`invalid_token`, `expired_token`, `invalid_pending_selection`, `provider_unreachable`) and network-level failures (timeout, no connectivity, malformed response) map to `AuthFailure(AuthFailureReason...)` per the Error Mapping table, with no new HTTP/SDK exception type ever surfacing above `HttpAuthApi`
+- [ ] `google_sign_in` and `sign_in_with_apple` are added to `pubspec.yaml` (Stage 2) and produce a real ID/identity token on success, fed into the unchanged `AuthApi.signInWithGoogle`/`signInWithApple` call signature
+- [ ] Native-SDK user cancellation maps directly to `SignInStatus.errorCancelled` without any `AuthApi`/network call being made
+- [ ] All OAuth configuration values (Google client ID, Apple Services/Team/Key/Bundle ID, API base URL) are placeholders in a committed config file, not real secrets, and not blocking completion
+- [ ] `SignInScreen`, `AuthApi`, `AuthResult`/`AuthFailure`/`AuthFailureReason`, `SessionRepository`, and `OnboardingRepository` require zero source changes; `SignInController` requires one scoped, documented change (the token-acquisition step) — reported explicitly rather than assumed away
+- [ ] Existing 24 widget tests still pass unmodified; new tests cover `HttpAuthApi`'s error-mapping table and `SignInController`'s new cancellation-before-network-call path
+- [ ] No tokens, OAuth payloads, or config secrets appear in logs (same discipline as `002-auth-onboarding-ui`)
+
+### Checkpoint Decisions (Post-Plan, 2026-09-15)
+
+1. **Android Sign-in-with-Apple redirect hosting** — resolved: **iOS only for now**. Sign in with Apple is wired natively on iOS only, since that's the platform Apple's App Store guideline actually targets and where the native (non-web-redirect) flow applies cleanly. The Android web-redirect variant (and its real-HTTPS-endpoint dependency) is deferred until backend hosting is actually decided — not built, not stubbed with a placeholder route. Google Sign-In remains wired on both platforms. Stage 2 should gate the Apple button's real-SDK path to iOS (e.g. platform-check before invoking `SignInWithApple`, or simply not registering an Android implementation) rather than half-wiring a broken Android path.
+2. **`invalid_pending_selection` → `providerError` mapping**: accepted as-is — not worth a 4th `AuthFailureReason` value for a case that shouldn't be reachable given the client only ever sends validated presets.
+3. **`GET /api/v1/auth/session` usage**: resolved — **build the client but do not wire it into `AuthFlowController`'s splash check**. Splash keeps using local-expiry-only validation (no network call at launch, instant + offline-friendly app open). Server-side revocation detection is deferred until a real authenticated feature (the future lesson loop) actually needs it — revisit then, not now.
+4. **`google_sign_in`/`sign_in_with_apple` exact versions**: pin at Stage 2 against whatever pub.dev resolves at that time, as already planned.

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Amharic Learning - Skill Tree</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container": "#feeadc",
+            "on-error": "#ffffff",
+            "surface": "#fff8f5",
+            "on-error-container": "#93000a",
+            "on-background": "#231a11",
+            "background": "#fff8f5",
+            "error": "#ba1a1a",
+            "secondary-fixed": "#ffdcc0",
+            "on-secondary": "#ffffff",
+            "secondary-fixed-dim": "#ffb875",
+            "on-tertiary-container": "#ffb4a7",
+            "on-primary": "#ffffff",
+            "tertiary-container": "#9f2115",
+            "surface-tint": "#296a46",
+            "inverse-on-surface": "#ffeee1",
+            "error-container": "#ffdad6",
+            "primary-fixed": "#aef2c4",
+            "outline-variant": "#bfc9bf",
+            "on-primary-fixed": "#002110",
+            "on-tertiary": "#ffffff",
+            "tertiary-fixed": "#ffdad4",
+            "surface-container-high": "#f8e5d6",
+            "surface-bright": "#fff8f5",
+            "primary-container": "#1b5e3b",
+            "primary-fixed-dim": "#92d5a9",
+            "secondary-container": "#ffa03b",
+            "on-surface": "#231a11",
+            "surface-container-highest": "#f2dfd1",
+            "on-primary-container": "#92d5a9",
+            "tertiary-fixed-dim": "#ffb4a8",
+            "on-primary-fixed-variant": "#085230",
+            "tertiary": "#7d0301",
+            "surface-dim": "#e9d7c8",
+            "inverse-surface": "#392e25",
+            "on-tertiary-fixed": "#410000",
+            "on-tertiary-fixed-variant": "#8e1309",
+            "on-secondary-fixed": "#2d1600",
+            "on-surface-variant": "#404942",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#8d4f00",
+            "on-secondary-container": "#6c3b00",
+            "surface-container-low": "#fff1e8",
+            "primary": "#004527",
+            "surface-variant": "#f2dfd1",
+            "on-secondary-fixed-variant": "#6b3b00",
+            "inverse-primary": "#92d5a9",
+            "outline": "#707971"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-3xl": "4rem",
+            "gutter-mobile": "0.75rem",
+            "node-step-vertical": "4.5rem",
+            "space-sm": "0.75rem",
+            "space-lg": "1.5rem",
+            "margin-mobile": "1.25rem",
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "space-xs": "0.5rem",
+            "space-2xl": "3rem",
+            "space-2xs": "0.25rem",
+            "node-offset-lateral": "2.75rem"
+          },
+          "fontFamily": {
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-fill {
+      font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+    /* Pulse glow & flame animations */
+    @keyframes subtle-glow {
+      0%, 100% { box-shadow: 0 3px 0 #ffdcc0, 0 0 14px rgba(255, 160, 59, 0.35); }
+      50% { box-shadow: 0 3px 0 #ffdcc0, 0 0 26px rgba(255, 160, 59, 0.75); }
+    }
+    .glow-streak {
+      animation: subtle-glow 2s infinite ease-in-out;
+    }
+    @keyframes flame-bob {
+      0%, 100% { transform: scale(1) rotate(-3deg); }
+      50% { transform: scale(1.18) rotate(4deg); }
+    }
+    .flame-animated {
+      animation: flame-bob 1.6s infinite ease-in-out;
+      display: inline-block;
+      transform-origin: center bottom;
+    }
+    /* Ring pulse for active node */
+    @keyframes node-pulse {
+      0% { transform: scale(1); opacity: 0.85; }
+      50% { transform: scale(1.22); opacity: 0; }
+      100% { transform: scale(1.22); opacity: 0; }
+    }
+    .pulse-ring::after {
+      content: '';
+      position: absolute;
+      inset: -10px;
+      border-radius: 9999px;
+      border: 3.5px solid #ffa03b;
+      animation: node-pulse 2.2s infinite cubic-bezier(0.25, 1, 0.5, 1);
+      pointer-events: none;
+    }
+    /* Mascot floating bob animation with subtle head-tilt micro-interaction */
+    @keyframes mascot-float {
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+      30% {
+        transform: translateY(-6px) rotate(2.5deg);
+      }
+      65% {
+        transform: translateY(-3px) rotate(-2deg);
+      }
+    }
+    .animate-mascot {
+      animation: mascot-float 3.4s ease-in-out infinite;
+      transform-origin: center bottom;
+    }
+    /* S-curve trail glowing traveling sparkle/pulse */
+    @keyframes trail-stream {
+      0% {
+        stroke-dashoffset: 280;
+        opacity: 0.2;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        stroke-dashoffset: 0;
+        opacity: 0.2;
+      }
+    }
+    .trail-glow-stream {
+      stroke-dasharray: 45 180;
+      animation: trail-stream 3s linear infinite;
+    }
+    /* Tactile 3D press physics */
+    .tactile-btn {
+      transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .tactile-btn:active {
+      transform: scale(0.95) translateY(3px) !important;
+    }
+    /* Subtle Tibeb textile diamond pattern background */
+    .tibeb-bg-pattern {
+      background-color: #fff8f5;
+      position: relative;
+    }
+    .tibeb-bg-pattern::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.035;
+      background-image: repeating-linear-gradient(45deg, #231a11 0, #231a11 1px, transparent 0, transparent 50%), repeating-linear-gradient(135deg, #231a11 0, #231a11 1px, transparent 0, transparent 50%);
+      background-size: 28px 28px;
+    }
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col justify-between selection:bg-secondary-container selection:text-on-secondary-container antialiased pb-28 tibeb-bg-pattern relative">
+<!-- TopAppBar Shared Component Anchor -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-margin-mobile py-space-xs bg-surface/95 backdrop-blur-md border-b-2 border-outline-variant/80 shadow-[0_4px_16px_rgba(35,26,17,0.08),0_4px_0_#EDE5D8]">
+<!-- Left: Active Language Pill -->
+<button class="tactile-btn flex items-center gap-space-2xs bg-surface-container-lowest px-space-sm py-space-2xs rounded-full border-2 border-outline-variant shadow-[0_3px_0_#EDE5D8,0_6px_10px_rgba(0,0,0,0.04)] active:scale-95 active:translate-y-1 transition-all">
+<span class="material-symbols-outlined text-primary text-headline-sm" data-icon="translate">translate</span>
+<span class="font-headline-sm text-headline-sm text-primary">Amharic</span>
+<span class="text-label-sm font-label-sm bg-surface-container text-on-surface-variant px-1 rounded shadow-inner">አማ</span>
+</button>
+<!-- Center: Streak Counter with glowing animated flame -->
+<div class="tactile-btn flex items-center gap-1 bg-surface-container-lowest px-space-sm py-space-2xs rounded-full border-2 border-secondary-container glow-streak shadow-[0_3px_0_#ffdcc0,0_4px_14px_rgba(255,160,59,0.3)] active:scale-95 active:translate-y-1 cursor-pointer">
+<span class="material-symbols-outlined material-symbols-fill text-secondary-container text-headline-sm flame-animated" data-icon="local_fire_department">local_fire_department</span>
+<span class="text-label-md font-label-md text-secondary font-bold tracking-tight">5 Day Streak</span>
+</div>
+<!-- Right: Hearts & XP HUD with tactile depth -->
+<div class="flex items-center gap-space-xs">
+<div class="tactile-btn flex items-center gap-1 bg-surface-container-lowest px-space-xs py-space-2xs rounded-full border-2 border-outline-variant shadow-[0_3px_0_#EDE5D8,0_3px_8px_rgba(186,26,26,0.08)] active:scale-95 active:translate-y-1">
+<span class="material-symbols-outlined material-symbols-fill text-error text-label-lg" data-icon="favorite">favorite</span>
+<span class="text-label-md font-label-md text-error font-bold">5</span>
+</div>
+<div class="tactile-btn flex items-center gap-1 bg-surface-container-lowest px-space-xs py-space-2xs rounded-full border-2 border-outline-variant shadow-[0_3px_0_#EDE5D8,0_3px_8px_rgba(141,79,0,0.08)] active:scale-95 active:translate-y-1">
+<span class="material-symbols-outlined material-symbols-fill text-secondary text-label-lg" data-icon="bolt">bolt</span>
+<span class="text-label-md font-label-md text-secondary font-bold tabular-nums">340</span>
+</div>
+</div>
+</header>
+<!-- Main Scrollable Canvas / Learning Tree -->
+<main class="w-full max-w-md mx-auto pt-24 px-margin-mobile flex-1 flex flex-col items-center relative z-10">
+<!-- Unit Header Banner Card (Tactile Level 1) -->
+<section class="w-full bg-surface-container-lowest rounded-DEFAULT border-2 border-outline-variant shadow-[0_6px_0_#E2D7C5,0_14px_28px_rgba(35,26,17,0.08)] p-space-md mb-space-xl relative overflow-hidden transition-all hover:shadow-[0_8px_0_#E2D7C5,0_18px_32px_rgba(35,26,17,0.11)]">
+<!-- Habesha Tibeb Pattern Stripe Accent with refined woven gradient -->
+<div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-secondary-container to-tertiary-container opacity-95 shadow-sm"></div>
+<div class="flex items-start justify-between mt-1">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-secondary flex items-center gap-1 font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container inline-block animate-pulse"></span>
+Current Milestone
+</span>
+<h1 class="text-headline-sm font-headline-sm text-on-surface mt-0.5 tracking-tight">Unit 1: Foundations &amp; Greetings</h1>
+<p class="text-body-sm font-body-sm text-on-surface-variant font-medium">ሰላምታ እና ፊደል መግቢያ</p>
+</div>
+<span class="inline-flex items-center gap-1 bg-surface-container-high px-space-xs py-space-2xs rounded-full border border-outline-variant text-label-sm font-label-sm text-primary font-bold shadow-[0_2px_0_#EDE5D8,0_2px_4px_rgba(0,0,0,0.03)]">
+<span class="material-symbols-outlined text-sm" data-icon="flag">flag</span>
+3/5 Completed
+</span>
+</div>
+<!-- Linear Progress Bar with multi-layered depth track -->
+<div class="w-full bg-surface-container h-3 rounded-full mt-space-sm border border-outline-variant overflow-hidden p-0.5 shadow-inner relative">
+<div class="bg-gradient-to-r from-primary via-primary-container to-inverse-primary h-full rounded-full w-3/5 transition-all duration-500 shadow-[0_1px_4px_rgba(0,0,0,0.25)] relative">
+<div class="absolute inset-0 bg-white/25 rounded-full h-1/2"></div>
+</div>
+</div>
+</section>
+<!-- Sinuous Interactive Path (The Learning Tree) -->
+<div class="relative w-full flex flex-col items-center py-space-xs">
+<!-- Organic Curving S-curve SVG Connecting Trail -->
+<svg class="absolute top-6 left-0 w-full h-[520px] pointer-events-none -z-0" fill="none" preserveaspectratio="none" viewbox="0 0 320 520">
+<defs>
+<lineargradient id="trailGrad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#1b5e3b"></stop>
+<stop offset="30%" stop-color="#296a46"></stop>
+<stop offset="50%" stop-color="#ffa03b"></stop>
+<stop offset="78%" stop-color="#bfc9bf"></stop>
+<stop offset="100%" stop-color="#e9d7c8"></stop>
+</lineargradient>
+<filter height="160%" id="glowTrail" width="160%" x="-30%" y="-30%">
+<fegaussianblur result="blur" stddeviation="3.5"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+</defs>
+<!-- Layered Depth Shadow Trail -->
+<path d="M 160,26 C 205,55 215,95 208,138 C 200,185 178,212 160,248 C 140,285 110,312 112,364 C 114,418 142,448 160,486" opacity="0.8" stroke="#E2D7C5" stroke-dasharray="7 11" stroke-linecap="round" stroke-width="12"></path>
+<!-- Main Organic Dashed Trail with Smooth S-Curve -->
+<path d="M 160,22 C 205,51 215,91 208,134 C 200,181 178,208 160,244 C 140,281 110,308 112,360 C 114,414 142,444 160,482" stroke="url(#trailGrad)" stroke-dasharray="9 11" stroke-linecap="round" stroke-width="7.5"></path>
+<!-- Glowing animated pulse stream traveling along S-curve to active node -->
+<path class="trail-glow-stream" d="M 160,22 C 205,51 215,91 208,134 C 200,181 178,208 160,244" filter="url(#glowTrail)" stroke="#ffa03b" stroke-linecap="round" stroke-width="5"></path>
+</svg>
+<!-- NODE 1: Alphabet & Fidel Basics (Completed) -->
+<div class="relative flex flex-col items-center z-10 my-space-xs">
+<div class="flex items-center gap-0.5 mb-1 bg-surface-container-lowest/95 px-2 py-0.5 rounded-full border border-outline-variant/70 shadow-[0_2px_0_#EDE5D8,0_2px_5px_rgba(0,0,0,0.04)]">
+<span class="material-symbols-outlined material-symbols-fill text-secondary-container text-label-md" data-icon="star">star</span>
+<span class="material-symbols-outlined material-symbols-fill text-secondary-container text-label-md" data-icon="star">star</span>
+<span class="material-symbols-outlined material-symbols-fill text-secondary-container text-label-md" data-icon="star">star</span>
+</div>
+<button class="tactile-btn w-16 h-16 rounded-full bg-primary-container border-2 border-outline-variant text-on-primary flex items-center justify-center shadow-[0_6px_0_#085230,0_10px_18px_rgba(0,69,39,0.3)] active:scale-95 active:translate-y-1 transition-all group cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-full pointer-events-none"></div>
+<span class="material-symbols-outlined text-headline-md font-bold transition-transform group-hover:scale-110" data-icon="check">check</span>
+</button>
+<span class="mt-space-2xs text-label-md font-label-md text-on-surface bg-surface-container-lowest px-space-xs py-0.5 rounded-full border border-outline-variant shadow-[0_2px_0_#EDE5D8,0_2px_6px_rgba(0,0,0,0.03)] font-bold">Alphabet &amp; Fidel</span>
+</div>
+<!-- NODE 2: Basic Greetings (Completed, offset to right) -->
+<div class="relative flex flex-col items-center z-10 my-space-md translate-x-12">
+<div class="flex items-center gap-0.5 mb-1 bg-surface-container-lowest/95 px-2 py-0.5 rounded-full border border-outline-variant/70 shadow-[0_2px_0_#EDE5D8,0_2px_5px_rgba(0,0,0,0.04)]">
+<span class="material-symbols-outlined material-symbols-fill text-secondary-container text-label-md" data-icon="star">star</span>
+<span class="material-symbols-outlined material-symbols-fill text-secondary-container text-label-md" data-icon="star">star</span>
+<span class="material-symbols-outlined material-symbols-fill text-secondary-container text-label-md" data-icon="star">star</span>
+</div>
+<button class="tactile-btn w-16 h-16 rounded-full bg-primary-container border-2 border-outline-variant text-on-primary flex items-center justify-center shadow-[0_6px_0_#085230,0_10px_18px_rgba(0,69,39,0.3)] active:scale-95 active:translate-y-1 transition-all group cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1/2 bg-white/20 rounded-t-full pointer-events-none"></div>
+<span class="material-symbols-outlined text-headline-md font-bold transition-transform group-hover:scale-110" data-icon="check">check</span>
+</button>
+<span class="mt-space-2xs text-label-md font-label-md text-on-surface bg-surface-container-lowest px-space-xs py-0.5 rounded-full border border-outline-variant shadow-[0_2px_0_#EDE5D8,0_2px_6px_rgba(0,0,0,0.03)] font-bold">Basic Greetings</span>
+</div>
+<!-- NODE 3: ACTIVE CURRENT NODE - Coffee & Hospitality (Jebena) -->
+<div class="relative flex flex-col items-center z-20 my-space-md">
+<!-- Interactive Mascot & Speech Bubble Overlay with organic float/tilt animation -->
+<div class="absolute -right-28 -top-8 flex items-center gap-2 pointer-events-none z-30 animate-mascot">
+<!-- Speech Bubble with 3D tactile edge -->
+<div class="bg-surface-container-lowest border-2 border-secondary-container px-space-xs py-1 rounded-DEFAULT shadow-[0_4px_0_#ffdcc0,0_8px_16px_rgba(255,160,59,0.25)] relative">
+<span class="text-label-sm font-label-sm text-secondary font-bold whitespace-nowrap">Let's go! +20 XP</span>
+<!-- Bubble tail -->
+<div class="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-r-8 border-r-secondary-container"></div>
+</div>
+<!-- Lomi mascot badge with layered tactile elevation -->
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center border-2 border-secondary-container shadow-[0_4px_0_#e69a53,0_8px_18px_rgba(141,79,0,0.22)] relative overflow-hidden group">
+<div class="absolute top-0 inset-x-0 h-1/2 bg-white/25 rounded-t-full"></div>
+<span class="material-symbols-outlined text-secondary text-2xl transition-transform hover:scale-110" data-icon="cruelty_free">cruelty_free</span>
+</div>
+</div>
+<!-- Pulsing Active Node Button with rich multi-tier bevel & glow -->
+<div class="relative pulse-ring">
+<button class="tactile-btn w-20 h-20 rounded-full bg-secondary-container border-4 border-surface-container-lowest text-on-secondary flex flex-col items-center justify-center shadow-[0_8px_0_#c47318,0_16px_28px_rgba(255,160,59,0.45)] active:scale-95 active:translate-y-1 transition-all cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 left-0 right-0 h-1/2 bg-white/25 rounded-t-full pointer-events-none"></div>
+<span class="material-symbols-outlined text-headline-lg font-bold transition-transform group-hover:scale-110 drop-shadow-sm" data-icon="local_cafe">local_cafe</span>
+</button>
+</div>
+<!-- Node Title Label -->
+<div class="mt-2 text-center">
+<span class="text-label-md font-label-md text-on-surface bg-surface-container-high px-space-sm py-1 rounded-full border border-secondary-container shadow-[0_2px_0_#ffdcc0,0_4px_8px_rgba(35,26,17,0.05)] block font-bold">Coffee &amp; Hospitality</span>
+<span class="text-label-sm font-label-sm text-secondary font-bold mt-0.5 block">ቡና እና እንግዳ ተቀባይነት</span>
+</div>
+<!-- Primary Floating CTA: START LESSON with tactile bevel, highlight sheen & 3D press micro-interaction -->
+<button class="tactile-btn mt-space-sm flex items-center gap-2 bg-gradient-to-b from-primary-container to-primary text-on-primary px-space-xl py-space-xs rounded-full font-headline-sm text-headline-sm border-2 border-outline-variant shadow-[0_6px_0_#124027,0_12px_24px_rgba(0,69,39,0.38)] active:scale-95 active:translate-y-1 transition-all hover:brightness-110 cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 inset-x-0 h-1/3 bg-white/20 rounded-t-full pointer-events-none"></div>
+<span class="material-symbols-outlined text-headline-sm transition-transform group-hover:translate-x-0.5" data-icon="play_arrow">play_arrow</span>
+<span class="tracking-wide font-extrabold">START</span>
+</button>
+</div>
+<!-- NODE 4: Family & Introductions (Locked, offset to left) -->
+<div class="relative flex flex-col items-center z-10 my-space-md -translate-x-12 opacity-85">
+<button class="tactile-btn w-16 h-16 rounded-full bg-surface-dim border-2 border-outline text-outline-variant flex items-center justify-center shadow-[0_4px_0_#BAAFA1,0_8px_12px_rgba(0,0,0,0.05)] cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-headline-md" data-icon="lock">lock</span>
+</button>
+<span class="mt-space-2xs text-label-md font-label-md text-on-surface-variant bg-surface-container px-space-xs py-0.5 rounded-full border border-outline-variant shadow-[0_2px_0_#EDE5D8]">Family &amp; Intro</span>
+</div>
+<!-- NODE 5: Unit 1 Milestone Chest (Locked golden reward chest) -->
+<div class="relative flex flex-col items-center z-10 my-space-md opacity-85">
+<button class="tactile-btn w-16 h-16 rounded-DEFAULT bg-surface-dim border-2 border-outline text-secondary flex items-center justify-center shadow-[0_4px_0_#BAAFA1,0_8px_14px_rgba(141,79,0,0.08)] cursor-not-allowed relative overflow-hidden" disabled="">
+<div class="absolute top-0 inset-x-0 h-1/2 bg-white/10 rounded-t-DEFAULT pointer-events-none"></div>
+<span class="material-symbols-outlined text-headline-md" data-icon="inventory_2">inventory_2</span>
+<span class="material-symbols-outlined text-xs absolute top-1 right-1 text-on-surface-variant bg-surface-container-high/80 p-0.5 rounded-full" data-icon="lock">lock</span>
+</button>
+<span class="mt-space-2xs text-label-md font-label-md text-on-surface-variant bg-surface-container px-space-xs py-0.5 rounded-full border border-outline-variant shadow-[0_2px_0_#EDE5D8]">Unit 1 Milestone Chest</span>
+</div>
+</div>
+</main>
+<!-- BottomNavBar Shared Component Anchor -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs bg-surface-container-lowest/95 backdrop-blur-md border-t-2 border-outline-variant/80 shadow-[0_-4px_16px_rgba(35,26,17,0.08),0_-4px_0_#EDE5D8]">
+<!-- Tab 1: Learn (Active) -->
+<a class="tactile-btn flex flex-col items-center justify-center text-primary font-bold py-space-2xs px-space-sm rounded-lg bg-surface-container shadow-[0_2px_0_#EDE5D8,0_2px_6px_rgba(0,0,0,0.04)] active:scale-95 active:translate-y-1 transition-all" href="#">
+<span class="material-symbols-outlined material-symbols-fill text-headline-sm" data-icon="school">school</span>
+<span class="text-label-sm font-label-sm">Learn</span>
+</a>
+<!-- Tab 2: Practice (Inactive) -->
+<a class="tactile-btn flex flex-col items-center justify-center text-on-surface-variant py-space-2xs px-space-sm hover:bg-surface-container rounded-lg active:scale-95 active:translate-y-1 transition-all" href="#">
+<span class="material-symbols-outlined text-headline-sm" data-icon="fitness_center">fitness_center</span>
+<span class="text-label-sm font-label-sm">Practice</span>
+</a>
+<!-- Tab 3: Leaderboard (Inactive) -->
+<a class="tactile-btn flex flex-col items-center justify-center text-on-surface-variant py-space-2xs px-space-sm hover:bg-surface-container rounded-lg active:scale-95 active:translate-y-1 transition-all" href="#">
+<span class="material-symbols-outlined text-headline-sm" data-icon="leaderboard">leaderboard</span>
+<span class="text-label-sm font-label-sm">Leaderboard</span>
+</a>
+<!-- Tab 4: Profile (Inactive) -->
+<a class="tactile-btn flex flex-col items-center justify-center text-on-surface-variant py-space-2xs px-space-sm hover:bg-surface-container rounded-lg active:scale-95 active:translate-y-1 transition-all" href="#">
+<span class="material-symbols-outlined text-headline-sm" data-icon="person">person</span>
+<span class="text-label-sm font-label-sm">Profile</span>
+</a>
+</nav>
+</body></html>

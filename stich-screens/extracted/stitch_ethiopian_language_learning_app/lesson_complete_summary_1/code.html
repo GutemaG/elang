@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lesson Complete - Buna</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container": "#feeadc",
+            "secondary": "#8d4f00",
+            "on-error": "#ffffff",
+            "inverse-primary": "#92d5a9",
+            "surface-variant": "#f2dfd1",
+            "surface-bright": "#fff8f5",
+            "inverse-surface": "#392e25",
+            "inverse-on-surface": "#ffeee1",
+            "on-surface-variant": "#404942",
+            "on-tertiary-fixed": "#410000",
+            "error-container": "#ffdad6",
+            "secondary-fixed": "#ffdcc0",
+            "primary-container": "#1b5e3b",
+            "on-primary-fixed-variant": "#085230",
+            "on-surface": "#231a11",
+            "on-primary-container": "#92d5a9",
+            "on-background": "#231a11",
+            "background": "#fff8f5",
+            "primary-fixed-dim": "#92d5a9",
+            "primary": "#004527",
+            "on-secondary-fixed": "#2d1600",
+            "surface-container-high": "#f8e5d6",
+            "surface": "#fff8f5",
+            "on-tertiary-fixed-variant": "#8e1309",
+            "on-tertiary-container": "#ffb4a7",
+            "surface-tint": "#296a46",
+            "surface-dim": "#e9d7c8",
+            "on-primary": "#ffffff",
+            "outline-variant": "#bfc9bf",
+            "on-error-container": "#93000a",
+            "surface-container-highest": "#f2dfd1",
+            "surface-container-lowest": "#ffffff",
+            "secondary-fixed-dim": "#ffb875",
+            "error": "#ba1a1a",
+            "primary-fixed": "#aef2c4",
+            "tertiary": "#7d0301",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed": "#002110",
+            "tertiary-fixed": "#ffdad4",
+            "on-secondary": "#ffffff",
+            "surface-container-low": "#fff1e8",
+            "on-secondary-fixed-variant": "#6b3b00",
+            "on-secondary-container": "#6c3b00",
+            "tertiary-fixed-dim": "#ffb4a8",
+            "outline": "#707971",
+            "tertiary-container": "#9f2115",
+            "secondary-container": "#ffa03b"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "node-offset-lateral": "2.75rem",
+            "space-sm": "0.75rem",
+            "node-step-vertical": "4.5rem",
+            "margin-mobile": "1.25rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-2xs": "0.25rem",
+            "gutter-mobile": "0.75rem",
+            "space-xl": "2rem",
+            "space-3xl": "4rem",
+            "space-xs": "0.5rem",
+            "space-2xl": "3rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+    .tactile-bevel-card {
+      box-shadow: 0 4px 0 #E2D7C5;
+    }
+    .tactile-bevel-gold {
+      box-shadow: 0 4px 0 #D17C1F;
+    }
+    .tactile-bevel-streak {
+      box-shadow: 0 4px 0 #BD3C2C;
+    }
+    .tactile-bevel-green {
+      box-shadow: 0 4px 0 #0E3D25;
+    }
+    .tactile-btn-primary {
+      box-shadow: 0 5px 0 #08331d;
+    }
+    .tactile-btn-secondary {
+      box-shadow: 0 3px 0 #d3c4af;
+    }
+    @keyframes gentle-float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(1deg); }
+    }
+    .float-mascot {
+      animation: gentle-float 3.4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col items-center justify-start overflow-x-hidden relative selection:bg-secondary-fixed">
+<!-- Ambient Celebratory Background Confetti Particles -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+<div class="absolute top-12 left-6 w-3 h-3 bg-secondary-container rounded-sm rotate-12 opacity-80 animate-pulse"></div>
+<div class="absolute top-20 right-8 w-2.5 h-3.5 bg-primary-container rounded-sm -rotate-45 opacity-70"></div>
+<div class="absolute top-36 left-12 w-2 h-2 bg-tertiary-container rounded-full opacity-60"></div>
+<div class="absolute top-48 right-14 w-3 h-2 bg-secondary-fixed-dim rounded-sm rotate-45 opacity-80"></div>
+<div class="absolute top-60 left-4 w-3.5 h-2 bg-primary-fixed-dim rounded-sm -rotate-12 opacity-75"></div>
+<div class="absolute top-28 left-1/2 -translate-x-24 w-2 h-3 bg-secondary-container rounded-sm rotate-90 opacity-70"></div>
+<div class="absolute top-16 right-1/4 w-2.5 h-2.5 bg-tertiary-fixed rounded-sm rotate-12 opacity-50"></div>
+<!-- Soft warm sunburst aura -->
+<div class="absolute top-10 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-surface-container-high/60 blur-3xl -z-10"></div>
+</div>
+<!-- Main Mobile Container (Linear Task View: BottomNavBar suppressed per Semantic Shell rules) -->
+<div class="relative z-10 w-full max-w-lg min-h-screen flex flex-col justify-between px-margin-mobile pt-space-md pb-space-lg">
+<!-- Top Navigation Anchor (Shared Component: TopAppBar with action Skip/Close) -->
+<header class="flex justify-between items-center w-full py-space-xs mb-space-xs">
+<button aria-label="Close summary" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary active:translate-y-0.5 transition-transform">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<div class="text-headline-md font-headline-md text-primary tracking-tight">
+        Buna
+      </div>
+<button class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors px-space-xs py-space-2xs rounded-full">
+        Skip
+      </button>
+</header>
+<!-- Center Content Canvas -->
+<main class="flex-1 flex flex-col items-center justify-start text-center">
+<!-- Mascot & Radiant Halo -->
+<div class="relative mt-space-2xs mb-space-sm flex items-center justify-center">
+<!-- Sunburst Radiance -->
+<div class="absolute inset-0 bg-secondary-container/25 blur-2xl rounded-full scale-110"></div>
+<!-- Interactive Mascot with Sparkles -->
+<div class="relative float-mascot">
+<img alt="Buna Coffee Cup Mascot celebrating lesson completion" class="w-48 h-48 sm:w-56 sm:h-56 object-contain drop-shadow-[0_12px_24px_rgba(141,79,0,0.18)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf-FjF5gs8jLY09ovGu2OF5llV2ygjwoFrGsV2hsWdrVdk_CdakE2Z8qec6U2v_xzbwlEuO2CPf4S4Hfr-aUj5DFNzx75jt986CjzZK7lrmkgh54rL9IIWrlJQOui3N1068tKyiBoKN12NjSeNE1JdPYkb_GQm0SqVbnrssoxKnaJwMLYBtl0HAZI7KQ56d4wxDTVlCGpFb7x-sUL-npqs4b5yF6Yl0vF0c9tt37oXFJV5NZHRx4k5X7riF1BI75YC0MBWWJX8hpw"/>
+<!-- Star sparkle chips -->
+<div class="absolute -top-2 -right-1 bg-surface-container-lowest border-2 border-secondary-container rounded-full p-1 shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary-container text-[20px]" style="font-variation-settings: 'FILL' 1;">arrow_back_ios_new</span>
+</div>
+<div class="absolute top-1/2 -left-3 bg-surface-container-lowest border-2 border-primary-container rounded-full p-1 shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-[18px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+</div>
+</div>
+<!-- Headline & Amharic Grounding Callout -->
+<div class="space-y-1 mb-space-md">
+<h1 class="text-display-lg-mobile font-display-lg-mobile text-primary tracking-tight">
+          Lesson Complete!
+        </h1>
+<p class="text-headline-sm font-headline-sm text-secondary font-bold">
+          እንኳን ደስ አለዎት! (Enkwan Des Alowot!)
+        </p>
+<p class="text-body-sm font-body-sm text-on-surface-variant max-w-xs mx-auto pt-0.5">
+          Melkam Sira! You've mastered 5 new Fidel characters today!
+        </p>
+</div>
+<!-- 3-Column Tactile Stat Cards Row -->
+<div class="grid grid-cols-3 gap-gutter-mobile w-full mb-space-md">
+<!-- Card 1: XP Earned -->
+<div class="bg-surface-container-lowest border-2 border-[#F3DFC7] rounded-DEFAULT p-space-sm flex flex-col items-center justify-center tactile-bevel-card active:translate-y-1 active:shadow-none transition-all">
+<div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center mb-1 text-secondary-container">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<span class="text-headline-sm font-headline-sm text-secondary tracking-tight">+25</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">XP EARNED</span>
+</div>
+<!-- Card 2: Daily Streak -->
+<div class="bg-surface-container-lowest border-2 border-[#FBD6CF] rounded-DEFAULT p-space-sm flex flex-col items-center justify-center tactile-bevel-card relative active:translate-y-1 active:shadow-none transition-all">
+<span class="absolute -top-2.5 bg-tertiary-container text-surface-container-lowest text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full shadow-sm">
+            +1 Today
+          </span>
+<div class="w-9 h-9 rounded-full bg-[#FEE9E6] flex items-center justify-center mb-1 text-tertiary-container">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<span class="text-headline-sm font-headline-sm text-tertiary-container tracking-tight">6 Days</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">STREAK</span>
+</div>
+<!-- Card 3: Amole Gems -->
+<div class="bg-surface-container-lowest border-2 border-[#D1E8D9] rounded-DEFAULT p-space-sm flex flex-col items-center justify-center tactile-bevel-card active:translate-y-1 active:shadow-none transition-all">
+<div class="w-9 h-9 rounded-full bg-[#E5F5EC] flex items-center justify-center mb-1 text-primary-container">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">diamond</span>
+</div>
+<span class="text-headline-sm font-headline-sm text-primary tracking-tight">+12</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">GEMS</span>
+</div>
+</div>
+<!-- Accuracy Tactile Card & Meter -->
+<div class="w-full bg-surface-container-lowest border-2 border-surface-container rounded-DEFAULT p-space-md tactile-bevel-card mb-space-sm text-left">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-primary-container text-[20px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-label-lg font-label-lg text-on-surface">Accuracy Score</span>
+</div>
+<span class="text-headline-sm font-headline-sm text-primary-container bg-surface-container-low px-2 py-0.5 rounded-full border border-primary-container/20">
+            94%
+          </span>
+</div>
+<!-- Radiant Emerald Progress Track -->
+<div class="w-full h-3.5 bg-surface-container-high rounded-full overflow-hidden p-0.5 border border-outline-variant/30">
+<div class="h-full bg-primary-container rounded-full transition-all duration-1000 ease-out shadow-sm" style="width: 94%;"></div>
+</div>
+<!-- Sub metrics breakdown -->
+<div class="flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant mt-2.5 pt-2 border-t border-surface-container">
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary-container inline-block"></span>
+            16 Correct
+          </span>
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary-container inline-block"></span>
+            1 Review
+          </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">timer</span>
+            2m 14s
+          </span>
+</div>
+</div>
+<!-- Daily Ritual Milestone Pill -->
+<div class="w-full bg-surface-container border border-secondary/20 rounded-full px-space-md py-space-xs flex items-center justify-center space-x-2 text-on-surface shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]" style="font-variation-settings: 'FILL' 1;">local_cafe</span>
+<span class="text-body-sm font-body-sm font-semibold text-on-secondary-container">
+          Daily Buna Brew Ritual Complete! Goal 100% met
+        </span>
+</div>
+</main>
+<!-- Bottom Floating Action Dock (High-Depth Duolingo style Tactile Push Buttons) -->
+<footer class="w-full pt-space-md space-y-space-xs">
+<!-- Primary 3D Extruded Button -->
+<button class="w-full h-14 bg-primary-container text-on-primary rounded-full font-label-lg text-label-lg flex items-center justify-center gap-2 tactile-btn-primary active:translate-y-1 active:shadow-none transition-all cursor-pointer" onclick="triggerConfettiBurst(this)">
+<span>CONTINUE</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<!-- Secondary Soft Beveled Button -->
+<button class="w-full h-11 bg-surface-container-lowest border-2 border-outline-variant/60 text-on-surface-variant font-label-md text-label-md rounded-full flex items-center justify-center gap-1.5 tactile-btn-secondary active:translate-y-0.5 active:shadow-none transition-all hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">replay</span>
+<span>Review Mistakes</span>
+</button>
+</footer>
+</div>
+<!-- Interactive Tactile Feedback Script -->
+<script>
+    function triggerConfettiBurst(button) {
+      // Visual tactile spring effect
+      button.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        button.style.transform = '';
+      }, 150);
+    }
+  </script>
+</body></html>

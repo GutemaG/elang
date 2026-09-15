@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Buna - Language Selection</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#404942",
+            "on-tertiary-fixed-variant": "#8e1309",
+            "primary-fixed": "#aef2c4",
+            "on-secondary-container": "#6c3b00",
+            "on-primary-fixed": "#002110",
+            "on-primary": "#ffffff",
+            "primary-container": "#1b5e3b",
+            "error": "#ba1a1a",
+            "inverse-primary": "#92d5a9",
+            "tertiary-container": "#9f2115",
+            "surface-container-highest": "#f2dfd1",
+            "outline": "#707971",
+            "surface-container-lowest": "#ffffff",
+            "surface-tint": "#296a46",
+            "secondary": "#8d4f00",
+            "inverse-on-surface": "#ffeee1",
+            "on-secondary-fixed": "#2d1600",
+            "on-surface": "#231a11",
+            "surface-container-high": "#f8e5d6",
+            "on-tertiary-container": "#ffb4a7",
+            "tertiary-fixed-dim": "#ffb4a8",
+            "error-container": "#ffdad6",
+            "secondary-fixed-dim": "#ffb875",
+            "surface-variant": "#f2dfd1",
+            "primary-fixed-dim": "#92d5a9",
+            "secondary-fixed": "#ffdcc0",
+            "surface-bright": "#fff8f5",
+            "on-primary-container": "#92d5a9",
+            "on-secondary-fixed-variant": "#6b3b00",
+            "on-tertiary-fixed": "#410000",
+            "on-error": "#ffffff",
+            "tertiary": "#7d0301",
+            "on-tertiary": "#ffffff",
+            "outline-variant": "#bfc9bf",
+            "inverse-surface": "#392e25",
+            "primary": "#004527",
+            "background": "#fff8f5",
+            "surface-dim": "#e9d7c8",
+            "surface": "#fff8f5",
+            "on-background": "#231a11",
+            "secondary-container": "#ffa03b",
+            "on-primary-fixed-variant": "#085230",
+            "tertiary-fixed": "#ffdad4",
+            "surface-container-low": "#fff1e8",
+            "on-error-container": "#93000a",
+            "surface-container": "#feeadc",
+            "on-secondary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "node-offset-lateral": "2.75rem",
+            "margin-mobile": "1.25rem",
+            "space-xl": "2rem",
+            "space-2xs": "0.25rem",
+            "space-2xl": "3rem",
+            "gutter-mobile": "0.75rem",
+            "node-step-vertical": "4.5rem",
+            "space-xs": "0.5rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-3xl": "4rem",
+            "space-sm": "0.75rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+            "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    
+    /* Tactile 3D mechanical bevels defined by Highland Pulse */
+    .tactile-btn-primary {
+      box-shadow: 0 4px 0 #002e1a;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+    .tactile-btn-primary:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #002e1a;
+    }
+
+    .tactile-card-active {
+      box-shadow: 0 5px 0 #1b5e3b, 0 10px 24px -4px rgba(27, 94, 59, 0.18);
+    }
+    
+    .tactile-card-inactive {
+      box-shadow: 0 4px 0 #e2d7c5;
+    }
+
+    .fidel-watermark {
+      user-select: none;
+      pointer-events: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col justify-between selection:bg-secondary selection:text-on-secondary">
+<!-- Mobile Viewport Container Constraint -->
+<div class="w-full max-w-lg mx-auto min-h-screen flex flex-col bg-surface relative">
+<!-- Top Navigation / Duolingo-style Progress Header -->
+<header class="w-full px-margin-mobile pt-space-md pb-space-xs flex items-center gap-gutter-mobile z-20">
+<!-- Back Action Button -->
+<button aria-label="Go Back" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container active:translate-y-0.5 transition-transform" type="button">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<!-- Segmented Progress Bar -->
+<div class="flex-1 flex flex-col gap-space-2xs">
+<div class="h-3 w-full bg-surface-container rounded-full overflow-hidden p-0.5 shadow-inner">
+<!-- Step 1 of 3 (33%) -->
+<div class="h-full bg-primary-container rounded-full w-1/3 transition-all duration-300 relative overflow-hidden">
+<div class="absolute inset-0 bg-white/20 rounded-full h-1/2"></div>
+</div>
+</div>
+</div>
+<!-- Step Indicator Badge -->
+<div class="px-space-xs py-space-2xs bg-surface-container rounded-full text-primary font-label-sm text-label-sm">
+        1/3
+      </div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 px-margin-mobile pt-space-xs pb-space-2xl flex flex-col justify-start">
+<!-- Mascot Instruction Frame & Speech Bubble -->
+<section class="flex items-start gap-space-sm mt-space-xs mb-space-lg">
+<!-- Expressive Mascot (Ethiopian Walia Ibex) Avatar -->
+<div class="relative flex-shrink-0">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-high border-2 border-surface-container-highest flex items-center justify-center text-secondary shadow-sm overflow-hidden">
+<!-- Stylized Walia Ibex / Mascot Graphic -->
+<svg class="w-10 h-10 text-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 48 48">
+<path d="M14 12C12 6 7 4 4 6C4 10 9 16 16 20" stroke="#8d4f00" stroke-width="3"></path>
+<path d="M34 12C36 6 41 4 44 6C44 10 39 16 32 20" stroke="#8d4f00" stroke-width="3"></path>
+<circle cx="24" cy="28" fill="#ffa03b" fill-opacity="0.2" r="14" stroke="#8d4f00" stroke-width="2.5"></circle>
+<ellipse cx="19" cy="27" fill="#231a11" rx="2" ry="3"></ellipse>
+<ellipse cx="29" cy="27" fill="#231a11" rx="2" ry="3"></ellipse>
+<path d="M21 34C22.5 35.5 25.5 35.5 27 34" stroke="#231a11" stroke-width="2.5"></path>
+<path d="M24 29V32" stroke="#231a11" stroke-width="2"></path>
+<circle cx="15" cy="31" fill="#ffdad4" r="2"></circle>
+<circle cx="33" cy="31" fill="#ffdad4" r="2"></circle>
+</svg>
+</div>
+<!-- Sparkle detail -->
+<div class="absolute -top-1 -right-1 w-4 h-4 bg-secondary-container rounded-full flex items-center justify-center text-white border-2 border-surface">
+<span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<!-- Mascot Speech Bubble -->
+<div class="relative bg-surface-container-lowest border-2 border-surface-container-highest rounded-2xl p-space-sm shadow-sm flex-1">
+<!-- Directional triangle pointer to mascot -->
+<div class="absolute -left-2 top-4 w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-r-[9px] border-r-surface-container-highest"></div>
+<div class="absolute -left-[6px] top-4 w-0 h-0 border-t-[7px] border-t-transparent border-b-[7px] border-b-transparent border-r-[8px] border-r-surface-container-lowest"></div>
+<div class="flex items-center justify-between">
+<h1 class="font-headline-sm text-headline-sm text-on-surface">
+              What do you want to learn?
+            </h1>
+<button aria-label="Listen audio prompt" class="p-1 rounded-full text-secondary hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">volume_up</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Choose your journey to connect with heritage &amp; family.
+          </p>
+</div>
+</section>
+<!-- Language Option Cards -->
+<div class="flex flex-col gap-space-md">
+<!-- OPTION 1: AMHARIC (Active & Selected) -->
+<article aria-selected="true" class="group relative bg-surface-container-lowest border-2 border-primary rounded-lg p-space-md tactile-card-active transition-all cursor-pointer overflow-hidden">
+<!-- Subtle Fidel Script Watermark Background Decoration -->
+<div class="fidel-watermark absolute -right-3 -bottom-4 text-surface-container-highest/60 font-black text-6xl tracking-widest leading-none pointer-events-none">
+            ሀሁሂ
+          </div>
+<!-- Card Top Bar: Header, Ethiopian Flag Badge & Checkmark -->
+<div class="flex items-start justify-between relative z-10">
+<div class="flex items-center gap-space-xs">
+<!-- Flag Capsule Strip -->
+<div class="w-10 h-7 rounded-md overflow-hidden border border-outline-variant/30 flex flex-col shadow-xs">
+<div class="h-1/3 bg-[#078930]"></div>
+<div class="h-1/3 bg-[#FCDD09] flex items-center justify-center">
+<div class="w-1.5 h-1.5 rounded-full bg-[#0F47AF]"></div>
+</div>
+<div class="h-1/3 bg-[#DA121A]"></div>
+</div>
+<div>
+<span class="inline-block font-label-sm text-label-sm text-primary font-bold tracking-wider">OFFICIAL LAUNCH</span>
+<div class="flex items-baseline gap-2">
+<h2 class="font-headline-md text-headline-md text-on-surface">Amharic</h2>
+<span class="font-headline-sm text-headline-sm text-primary font-bold font-['Plus_Jakarta_Sans']">አማርኛ</span>
+</div>
+</div>
+</div>
+<!-- Active Checkmark Tactile Badge -->
+<div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-sm ring-2 ring-primary-fixed">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+<!-- Fidel Syllabary Script Glyphs Showcase Row -->
+<div class="mt-space-md bg-surface-container-low/70 border border-surface-container-highest rounded-DEFAULT p-space-xs flex items-center justify-between px-space-sm relative z-10">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Core Alphabet (ፊደል):</span>
+<div class="flex items-center gap-space-xs font-bold text-primary text-sm tracking-wide">
+<span class="px-1.5 py-0.5 bg-surface-container-lowest rounded border border-outline-variant/40">ሀ</span>
+<span class="px-1.5 py-0.5 bg-surface-container-lowest rounded border border-outline-variant/40">ሁ</span>
+<span class="px-1.5 py-0.5 bg-surface-container-lowest rounded border border-outline-variant/40">ሂ</span>
+<span class="px-1.5 py-0.5 bg-surface-container-lowest rounded border border-outline-variant/40">ሃ</span>
+<span class="px-1.5 py-0.5 bg-surface-container-lowest rounded border border-outline-variant/40">ሄ</span>
+<span class="px-1.5 py-0.5 bg-surface-container-lowest rounded border border-outline-variant/40">ህ</span>
+<span class="px-1.5 py-0.5 bg-surface-container-lowest rounded border border-outline-variant/40">ሆ</span>
+</div>
+</div>
+<!-- Bottom Learner Count & Cultural Detail -->
+<div class="mt-space-sm pt-space-xs flex items-center justify-between border-t border-surface-container relative z-10">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-label-md text-label-md">Over 120k learners</span>
+</div>
+<div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm bg-secondary-fixed/40 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]">local_cafe</span>
+<span>Buna Ready</span>
+</div>
+</div>
+<!-- Active Selection Glow Ambient Accent -->
+<div class="absolute -inset-px border-2 border-primary rounded-lg pointer-events-none"></div>
+</article>
+<!-- OPTION 2: AFAAN OROMO (Disabled / Coming Soon) -->
+<article aria-disabled="true" class="relative bg-surface-container-lowest/60 border-2 border-surface-container-highest rounded-lg p-space-md opacity-80 cursor-not-allowed select-none tactile-card-inactive">
+<!-- Top Row: Identification and Coming Soon Badge -->
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-xs">
+<!-- Regional Oromia Motif Icon Capsule -->
+<div class="w-10 h-7 rounded-md overflow-hidden bg-surface-container border border-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">park</span>
+</div>
+<div>
+<span class="inline-block font-label-sm text-label-sm text-on-surface-variant/80 font-medium tracking-wider">NEXT RELEASE</span>
+<div class="flex items-baseline gap-2">
+<h2 class="font-headline-md text-headline-md text-on-surface-variant">Afaan Oromo</h2>
+<span class="font-body-md text-body-md text-on-surface-variant/70 font-medium">Afaan Oromoo</span>
+</div>
+</div>
+</div>
+<!-- "Coming Soon" Pill Badge with Amharic & English -->
+<div class="px-space-xs py-1 bg-surface-container-high border border-surface-container-highest rounded-full flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-secondary font-bold">በቅርቡ ይጠብቁ</span>
+<span class="text-[9px] leading-tight text-on-surface-variant/70 font-semibold tracking-wider uppercase">Coming Soon</span>
+</div>
+</div>
+<!-- Qubee Script / Dialect preview placeholder -->
+<div class="mt-space-md bg-surface-container-low/50 border border-surface-container-highest/60 rounded-DEFAULT p-space-xs flex items-center justify-between px-space-sm text-on-surface-variant/70">
+<span class="font-label-sm text-label-sm">Qubee Script curriculum in progress</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+</div>
+</div>
+<!-- Card Footer for Waitlist Interest -->
+<div class="mt-space-sm pt-space-xs flex items-center justify-between border-t border-surface-container/60 text-on-surface-variant/70">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">notifications</span>
+<span class="font-label-sm text-label-sm">Notify me when live</span>
+</div>
+<button class="text-secondary font-label-sm text-label-sm hover:underline cursor-pointer" type="button">
+              Join Waitlist
+            </button>
+</div>
+</article>
+</div>
+<!-- Supportive Cultural Reinforcement Note -->
+<div class="mt-space-lg flex items-center justify-center gap-space-xs text-on-surface-variant text-center">
+<span class="material-symbols-outlined text-[18px] text-secondary">explore</span>
+<p class="font-body-sm text-body-sm">
+          You can always add more languages anytime in your settings.
+        </p>
+</div>
+</main>
+<!-- Bottom Docked Area with Tactile Primary CTA Button -->
+<footer class="w-full px-margin-mobile pb-space-lg pt-space-sm bg-gradient-to-t from-surface via-surface to-surface/90 sticky bottom-0 z-30">
+<!-- Tactile Push Button: Continue (ቀጥል) -->
+<button class="w-full bg-primary hover:bg-[#00381f] text-on-primary font-label-lg text-label-lg py-3.5 px-space-lg rounded-full tactile-btn-primary flex items-center justify-center gap-space-xs cursor-pointer border border-[#085230]" type="button">
+<span>Continue</span>
+<span class="font-bold opacity-85">·</span>
+<span class="font-bold">ቀጥል</span>
+<span class="material-symbols-outlined text-[20px] ml-1">arrow_forward</span>
+</button>
+<!-- Bottom Home Indicator Clearance -->
+<div class="w-28 h-1 bg-outline-variant/40 rounded-full mx-auto mt-space-md"></div>
+</footer>
+</div>
+</body></html>

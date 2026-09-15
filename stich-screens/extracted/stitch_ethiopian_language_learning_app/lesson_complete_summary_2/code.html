@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Buna - Lesson Complete Summary</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface": "#fff8f5",
+            "inverse-surface": "#392e25",
+            "outline": "#707971",
+            "on-secondary-fixed-variant": "#6b3b00",
+            "primary": "#004527",
+            "tertiary-fixed-dim": "#ffb4a8",
+            "on-primary-fixed-variant": "#085230",
+            "surface-variant": "#f2dfd1",
+            "secondary-container": "#ffa03b",
+            "on-error-container": "#93000a",
+            "surface-container-high": "#f8e5d6",
+            "tertiary-fixed": "#ffdad4",
+            "on-background": "#231a11",
+            "surface-container": "#feeadc",
+            "on-tertiary": "#ffffff",
+            "outline-variant": "#bfc9bf",
+            "tertiary": "#7d0301",
+            "on-primary-fixed": "#002110",
+            "secondary-fixed": "#ffdcc0",
+            "on-error": "#ffffff",
+            "on-secondary-fixed": "#2d1600",
+            "on-primary-container": "#92d5a9",
+            "tertiary-container": "#9f2115",
+            "on-secondary": "#ffffff",
+            "on-secondary-container": "#6c3b00",
+            "surface-container-low": "#fff1e8",
+            "on-primary": "#ffffff",
+            "secondary": "#8d4f00",
+            "primary-fixed-dim": "#92d5a9",
+            "primary-fixed": "#aef2c4",
+            "inverse-primary": "#92d5a9",
+            "background": "#fff8f5",
+            "on-tertiary-fixed": "#410000",
+            "inverse-on-surface": "#ffeee1",
+            "surface-bright": "#fff8f5",
+            "on-surface-variant": "#404942",
+            "surface-tint": "#296a46",
+            "error": "#ba1a1a",
+            "on-surface": "#231a11",
+            "on-tertiary-container": "#ffb4a7",
+            "surface-container-highest": "#f2dfd1",
+            "secondary-fixed-dim": "#ffb875",
+            "surface-dim": "#e9d7c8",
+            "surface-container-lowest": "#ffffff",
+            "primary-container": "#1b5e3b",
+            "on-tertiary-fixed-variant": "#8e1309",
+            "error-container": "#ffdad6"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "3rem",
+            "space-sm": "0.75rem",
+            "space-xl": "2rem",
+            "space-3xl": "4rem",
+            "node-offset-lateral": "2.75rem",
+            "gutter-mobile": "0.75rem",
+            "node-step-vertical": "4.5rem",
+            "space-xs": "0.5rem",
+            "space-md": "1rem",
+            "space-2xs": "0.25rem",
+            "space-lg": "1.5rem",
+            "margin-mobile": "1.25rem"
+          },
+          "fontFamily": {
+            "label-md": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+            "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    
+    /* Tactile 3D Bevel Presets */
+    .tactile-bevel-primary {
+      box-shadow: 0 4px 0 #002b18;
+    }
+    .tactile-bevel-primary:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 transparent;
+    }
+
+    .tactile-bevel-secondary {
+      box-shadow: 0 3px 0 #e9d7c8;
+    }
+    .tactile-bevel-secondary:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 transparent;
+    }
+
+    .tactile-card-bevel {
+      box-shadow: 0 4px 0 #e9d7c8;
+    }
+
+    .tactile-card-bevel-gold {
+      box-shadow: 0 4px 0 #ffdcc0;
+    }
+
+    .tactile-card-bevel-orange {
+      box-shadow: 0 4px 0 #ffb875;
+    }
+
+    .tactile-card-bevel-green {
+      box-shadow: 0 4px 0 #aef2c4;
+    }
+
+    /* Ambient Celebration Glow */
+    .mascot-glow {
+      box-shadow: 0 0 45px -8px rgba(255, 160, 59, 0.45), 0 12px 28px -10px rgba(141, 79, 0, 0.25);
+    }
+    
+    /* Micro float animation */
+    @keyframes gentleFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(1deg); }
+    }
+    .animate-float {
+      animation: gentleFloat 4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container min-h-screen flex justify-center items-center py-0 sm:py-6">
+<!-- Mobile Shell Simulation Frame -->
+<main class="w-full max-w-md bg-surface min-h-screen flex flex-col justify-between shadow-2xl sm:rounded-3xl border-0 sm:border-2 sm:border-surface-dim overflow-x-hidden relative">
+<!-- TOP APP BAR (Shared Component JSON Implementation) -->
+<!-- Destination Suppression: Transactional/Success summary screens suppress BottomNavBar to keep focus on Continue CTA -->
+<header class="flex justify-between items-center w-full px-margin-mobile py-space-sm max-w-lg mx-auto bg-surface relative z-20">
+<!-- Leading action (Icon button) -->
+<button aria-label="Go back" class="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:text-primary-container active:translate-y-0.5 transition-transform" type="button">
+<span class="material-symbols-outlined text-primary text-[24px]">arrow_back</span>
+</button>
+<!-- Headline Anchor -->
+<h1 class="text-headline-md font-headline-md text-primary tracking-tight">Buna</h1>
+<!-- Trailing action button -->
+<button class="text-label-md font-label-md text-on-surface-variant hover:text-primary-container active:translate-y-0.5 transition-transform px-space-xs py-space-2xs" type="button">
+        Skip
+      </button>
+</header>
+<!-- MAIN SCROLLABLE CONTENT CANVAS -->
+<div class="flex-1 px-margin-mobile pb-space-2xl flex flex-col items-center">
+<!-- CELEBRATION HERO SECTION -->
+<section class="relative w-full flex flex-col items-center pt-space-xs pb-space-md text-center">
+<!-- Decorative Ambient Particle Backdrops -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none -z-10 overflow-hidden">
+<div class="w-64 h-64 bg-surface-container rounded-full blur-3xl opacity-80 scale-125"></div>
+<div class="absolute top-4 left-6 text-secondary-container opacity-75 animate-pulse">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1;">arrow_back_ios_new</span>
+</div>
+<div class="absolute top-10 right-8 text-primary-fixed-dim opacity-90">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<div class="absolute bottom-12 left-10 text-secondary opacity-60">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="absolute top-2 right-20 text-tertiary opacity-70">
+<span class="material-symbols-outlined text-[18px]">celebration</span>
+</div>
+</div>
+<!-- Joyful Mascot Container -->
+<div class="relative mb-space-sm animate-float">
+<!-- Vignette ring badge with border -->
+<div class="w-36 h-36 sm:w-40 sm:h-40 rounded-full bg-surface-container-lowest border-4 border-surface-container mascot-glow flex items-center justify-center p-2 relative overflow-hidden">
+<img alt="Buna smiling Ethiopian cini coffee cup mascot" class="w-full h-full object-contain filter drop-shadow-sm select-none" src="https://lh3.googleusercontent.com/aida/AEtjO1ULEQEqYnmJxCRqrk5gr6ajXRPvCX7jzF8YTPl4ZGfh4CisSWLKM35DXG4Cc5SgqmBw5UWypwZaITHoyXCAMaDVlC8Q3vHQ_3U3NuSbWuMOxVXc4xtVivgW48kUdiwW-9R78_cfK1qBMOCR42HB4myExJD0lJ-Cmf5BomHuO18GS0P-HQo4OHStao8xATC9Qqy433cfiOvlSIZC1RP3ubGDz9h1XadcF0vqBUkbQay2t0Tmb4tR8D4zsNk"/>
+</div>
+<!-- Achievement Star Float Badge -->
+<div class="absolute -bottom-1 -right-1 bg-secondary-container text-on-secondary-container w-9 h-9 rounded-full flex items-center justify-center border-2 border-surface-container-lowest shadow-md">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+<!-- Celebratory Typography Hierarchy -->
+<div class="space-y-1 max-w-xs">
+<span class="inline-block text-label-sm font-label-sm uppercase tracking-widest text-secondary font-bold bg-secondary-fixed px-space-xs py-0.5 rounded-full mb-1">
+            Lesson Completed
+          </span>
+<h2 class="text-display-lg-mobile font-display-lg-mobile text-primary tracking-tight font-extrabold">
+            Lesson Complete!
+          </h2>
+<p class="text-headline-sm font-headline-sm text-secondary font-bold">
+            እንኳን ደስ አለዎት!
+          </p>
+<p class="text-body-sm font-body-sm text-on-surface-variant pt-1 leading-snug">
+            Melkam Sira! You’ve mastered <span class="font-bold text-on-surface">5 new Fidel characters</span> today!
+          </p>
+</div>
+</section>
+<!-- STAT CARDS ROW (Duolingo-style 3D tactile bevels) -->
+<section aria-label="Lesson Statistics" class="w-full grid grid-cols-3 gap-space-xs my-space-sm">
+<!-- CARD 1: XP EARNED -->
+<div class="bg-surface-container-lowest rounded-2xl border-2 border-surface-dim p-space-xs flex flex-col items-center justify-between text-center tactile-card-bevel-gold transition-transform hover:-translate-y-0.5">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary mb-1">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<div class="my-0.5">
+<span class="text-headline-md font-headline-md text-on-surface font-extrabold block leading-tight">+25</span>
+<span class="text-label-sm font-label-sm text-secondary font-bold tracking-wider">XP EARNED</span>
+</div>
+</div>
+<!-- CARD 2: STREAK (Highlighted) -->
+<div class="bg-surface-container-lowest rounded-2xl border-2 border-secondary-fixed-dim p-space-xs flex flex-col items-center justify-between text-center tactile-card-bevel-orange relative transition-transform hover:-translate-y-0.5">
+<div class="absolute -top-2.5 bg-secondary text-on-secondary text-[9px] font-label-sm tracking-wider px-1.5 py-0.2 rounded-full border border-surface-container-lowest font-extrabold shadow-sm uppercase">
+            +1 Today
+          </div>
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary-container mt-1 mb-1">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<div class="my-0.5">
+<span class="text-headline-md font-headline-md text-on-surface font-extrabold block leading-tight">6 Days</span>
+<span class="text-label-sm font-label-sm text-secondary font-bold tracking-wider">STREAK</span>
+</div>
+</div>
+<!-- CARD 3: AMOLE EARNED (Coins) -->
+<div class="bg-surface-container-lowest rounded-2xl border-2 border-surface-dim p-space-xs flex flex-col items-center justify-between text-center tactile-card-bevel-green transition-transform hover:-translate-y-0.5">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary mb-1">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">diamond</span>
+</div>
+<div class="my-0.5">
+<span class="text-headline-md font-headline-md text-on-surface font-extrabold block leading-tight">+12</span>
+<span class="text-label-sm font-label-sm text-on-primary-fixed-variant font-bold tracking-wider">AMOLE</span>
+</div>
+</div>
+</section>
+<!-- ACCURACY & PERFORMANCE BREAKDOWN CARD -->
+<section class="w-full bg-surface-container-lowest rounded-2xl border-2 border-surface-dim p-space-md tactile-card-bevel my-space-xs">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center space-x-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">target</span>
+</div>
+<span class="text-label-lg font-label-lg text-on-surface">Accuracy</span>
+</div>
+<span class="text-headline-sm font-headline-sm text-primary font-extrabold">94%</span>
+</div>
+<!-- Progress Bar Track -->
+<div class="w-full h-3 bg-surface-dim rounded-full overflow-hidden p-0.5 border border-surface-dim">
+<div class="h-full bg-primary-container rounded-full transition-all duration-1000 ease-out" style="width: 94%;"></div>
+</div>
+<!-- Micro-stats Row -->
+<div class="grid grid-cols-3 pt-space-sm mt-space-xs border-t border-surface-container text-center divide-x divide-surface-container">
+<div class="px-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">Answered</span>
+<span class="text-body-sm font-body-sm font-bold text-primary flex items-center justify-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+              16 Correct
+            </span>
+</div>
+<div class="px-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">Needs Practice</span>
+<span class="text-body-sm font-body-sm font-bold text-secondary flex items-center justify-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[15px]">refresh</span>
+              1 Review
+            </span>
+</div>
+<div class="px-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">Time Spent</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface flex items-center justify-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[15px]">timer</span>
+              2m 14s
+            </span>
+</div>
+</div>
+</section>
+<!-- RITUAL / CULTURAL MILESTONE CALLOUT PILL -->
+<section class="w-full bg-surface-container-high rounded-2xl border-2 border-secondary-fixed p-space-sm flex items-center space-x-space-sm my-space-xs relative overflow-hidden">
+<div class="w-10 h-10 rounded-xl bg-surface-container-lowest flex-shrink-0 flex items-center justify-center text-secondary border border-secondary-fixed shadow-sm">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">local_cafe</span>
+</div>
+<div class="flex-1 pr-2">
+<div class="flex items-center space-x-1.5">
+<span class="text-label-md font-label-md text-on-secondary-fixed-variant">Daily Buna Brew Ritual</span>
+<span class="bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.2 rounded-full">100%</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-snug pt-0.5">
+            Abol stage unlocked! Your morning language pot is boiling warm.
+          </p>
+</div>
+<div class="text-secondary opacity-40">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</div>
+</section>
+</div>
+<!-- STICKY BOTTOM ACTIONS DOCK -->
+<footer class="w-full px-margin-mobile pb-space-lg pt-space-xs bg-surface border-t-0 flex flex-col space-y-space-xs z-30">
+<!-- Primary Pill CTA with 3D Tactile Extrusion -->
+<button class="w-full py-space-sm px-space-lg bg-primary-container text-on-primary rounded-full font-label-lg text-label-lg flex items-center justify-center space-x-2 tactile-bevel-primary transition-all active:translate-y-1 select-none" type="button">
+<span>CONTINUE</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<!-- Secondary Tactile Action -->
+<button class="w-full py-space-xs px-space-md bg-surface-container-lowest text-on-surface-variant hover:text-primary rounded-full font-label-md text-label-md border-2 border-surface-dim flex items-center justify-center space-x-1.5 tactile-bevel-secondary transition-all active:translate-y-1 select-none" type="button">
+<span class="material-symbols-outlined text-[18px]">history_edu</span>
+<span>Review Mistakes</span>
+</button>
+</footer>
+</main>
+<script>
+    // Lightweight audio feedback simulation on tactile button press
+    document.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Haptic feel via slight visual toggle or future sound triggers
+      });
+    });
+  </script>
+</body></html>

@@ -1,30 +1,32 @@
-// This is a basic Flutter widget test.
+// Smoke test for the app's entry point.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Verifies BunaApp boots into the splash screen without crashing. Uses an
+// in-memory fake for secure storage so the test doesn't depend on platform
+// channels (flutter_secure_storage has no test-environment implementation).
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ethiolanglearning/main.dart';
+import 'package:elang/features/auth/auth_dependencies.dart';
+import 'package:elang/main.dart';
+
+import 'helpers/in_memory_secure_storage_service.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('BunaApp boots into the splash screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      BunaApp(
+        authDependencies: AuthDependencies(
+          storage: InMemorySecureStorageService(),
+        ),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // First frame, before the session-check/animation resolves.
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Buna'), findsOneWidget);
+    expect(find.text('Get Started'), findsOneWidget);
   });
 }
