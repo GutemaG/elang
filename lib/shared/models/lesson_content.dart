@@ -11,6 +11,7 @@ class LessonContent {
     required this.exercises,
     required this.beansAtStart,
     required this.beansMax,
+    this.contentVersion,
   });
 
   final String lessonId;
@@ -23,4 +24,10 @@ class LessonContent {
   /// server mid-lesson.
   final int beansAtStart;
   final int beansMax;
+
+  /// Offline-caching staleness signal (009-offline-caching-and-sync-ui,
+  /// FR-1), stored alongside a downloaded pack so a later staleness check
+  /// has something to compare against. `null` when not supplied (e.g. by
+  /// an older fake) -- never required for a lesson to be playable.
+  final DateTime? contentVersion;
 }

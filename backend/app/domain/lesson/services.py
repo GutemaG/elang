@@ -12,6 +12,7 @@ from app.domain.lesson.entities import Skill, UserBeans, UserSkillProgress, User
 from app.domain.lesson.exceptions import (
     BeansExhaustedError,
     InvalidCompletionError,
+    InvalidCompletionTimestampError,
     SkillLockedError,
 )
 from app.domain.lesson.value_objects import (
@@ -23,6 +24,36 @@ from app.domain.lesson.value_objects import (
     LessonCompletionOutcome,
     SkillState,
 )
+
+
+class CompletionTimestampValidator:
+    """Pure domain logic -- no external dependencies (bolt 008).
+
+    Bounds a client-supplied offline-completion timestamp against reality
+    before it's trusted for streak/XP-day attribution: it must not be from
+    the future beyond a small clock-skew allowance, and must not predate
+    the account's own creation. Deliberately has no upper bound on how far
+    in the past a valid timestamp may be -- supporting long offline gaps
+    without penalizing them is the point (`003-offline-caching-and-sync`
+    requirements.md, FR-3), so only genuinely impossible timestamps are
+    rejected.
+    """
+
+    MAX_FUTURE_SKEW = timedelta(minutes=5)
+
+    def validate(
+        self, client_completed_at: datetime, account_created_at: datetime, now: datetime
+    ) -> None:
+        if client_completed_at > now + self.MAX_FUTURE_SKEW:
+            raise InvalidCompletionTimestampError(
+                f"client_completed_at={client_completed_at.isoformat()} is more than "
+                f"{self.MAX_FUTURE_SKEW} ahead of server time"
+            )
+        if client_completed_at < account_created_at:
+            raise InvalidCompletionTimestampError(
+                f"client_completed_at={client_completed_at.isoformat()} predates the "
+                f"account's creation at {account_created_at.isoformat()}"
+            )
 
 
 @dataclass(frozen=True)

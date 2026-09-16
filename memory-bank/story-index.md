@@ -1,10 +1,10 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 18
-- **Generated**: 18
-- **Completed**: 18
-- **Last updated**: 2026-09-16
+- **Total stories**: 26
+- **Generated**: 26
+- **Completed**: 26
+- **Last updated**: 2026-09-17
 
 ---
 
@@ -44,6 +44,22 @@
 - [x] **004-lesson-complete-streak-and-levelup-modals** (core-lesson-loop-ui): Lesson-complete summary + streak/level-up - Should - ✅ COMPLETED (bolt 006-core-lesson-loop-ui)
 - [x] **005-real-backend-integration** (core-lesson-loop-ui): Real backend integration - Must - ✅ COMPLETED (bolt 007-core-lesson-loop-ui)
 
+### 003-offline-caching-and-sync
+
+#### Unit: 001-offline-sync-service
+
+- [x] **001-content-version-signal** (offline-sync-service): Expose a content-version signal for staleness checks - Must - ✅ COMPLETED (bolt 008-offline-sync-service)
+- [x] **002-timestamped-completion-for-streak-attribution** (offline-sync-service): Accept a client-supplied completion timestamp for streak/XP-day attribution - Must - ✅ COMPLETED (bolt 008-offline-sync-service)
+- [x] **003-idempotent-offline-replay** (offline-sync-service): Re-verify/extend idempotent replay of delayed completions - Must - ✅ COMPLETED (bolt 008-offline-sync-service)
+
+#### Unit: 002-offline-caching-and-sync-ui
+
+- [x] **001-download-lesson-packs** (offline-caching-and-sync-ui): Download and cache lesson packs (content + audio) - Must - ✅ COMPLETED (bolt 009-offline-caching-and-sync-ui)
+- [x] **002-offline-lesson-taking** (offline-caching-and-sync-ui): Take a downloaded lesson with zero connectivity - Must - ✅ COMPLETED (bolt 009-offline-caching-and-sync-ui)
+- [x] **003-pending-sync-queue-and-auto-sync** (offline-caching-and-sync-ui): Queue and auto-sync offline completions on reconnect - Must - ✅ COMPLETED (bolt 010-offline-caching-and-sync-ui)
+- [x] **004-connectivity-and-sync-status-indicator** (offline-caching-and-sync-ui): Connectivity/sync status indicator - Should - ✅ COMPLETED (bolt 010-offline-caching-and-sync-ui)
+- [x] **005-download-management-screen** (offline-caching-and-sync-ui): Manage downloaded packs (list/size/delete) - Could - ✅ COMPLETED (bolt 010-offline-caching-and-sync-ui)
+
 ---
 
 ## Stories by Status
@@ -51,4 +67,4 @@
 - **Planned**: 0
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 18
+- **Completed**: 26

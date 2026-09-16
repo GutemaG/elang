@@ -27,6 +27,7 @@ from app.domain.lesson.exceptions import (
     BeansExhaustedError,
     InsufficientAmoleError,
     InvalidCompletionError,
+    InvalidCompletionTimestampError,
     LessonDomainError,
     LessonNotFoundError,
     SkillLockedError,
@@ -48,6 +49,7 @@ _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     BeansExhaustedError: 422,
     InvalidCompletionError: 422,
     InsufficientAmoleError: 422,
+    InvalidCompletionTimestampError: 422,
 }
 _LESSON_DEFAULT_STATUS = 400
 

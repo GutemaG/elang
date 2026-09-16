@@ -33,6 +33,12 @@ abstract class LessonApi {
   /// once even if this call is retried after a network blip (bolt 005's
   /// ADR-5, Decision 2).
   ///
+  /// [clientCompletedAt] is the moment the lesson was actually finished —
+  /// identical to "now" for a normal online completion; earlier for one
+  /// completed offline and synced later (009-offline-caching-and-sync-ui).
+  /// Required by `001-lesson-service` since bolt 008; drives streak/XP-day
+  /// attribution server-side.
+  ///
   /// Never called for an interrupted (out-of-beans, dismissed) attempt —
   /// that's what keeps "no partial XP on interruption" true.
   Future<LessonCompletionResult> completeLesson({
@@ -42,6 +48,7 @@ abstract class LessonApi {
     required int totalCount,
     required Duration timeSpent,
     required int beansRemainingAtEnd,
+    required DateTime clientCompletedAt,
   });
 
   /// Current beans/refill state, for the out-of-beans modal.

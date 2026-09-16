@@ -3,7 +3,9 @@
 // Covers: locked/active/completed nodes render distinctly with a
 // crown-level badge on completed nodes; locked nodes aren't tappable;
 // tapping an active node starts a lesson; a fetch failure shows inline
-// error + retry.
+// error + retry; and (009-offline-caching-and-sync-ui, story 001) the
+// download affordance shows a previously-downloaded pack as downloaded on
+// load, and downloads an un-downloaded lesson on tap.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,10 +19,15 @@ import 'package:elang/shared/services/answer_feedback_player.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
 import 'package:elang/shared/services/lesson_api.dart';
 import 'package:elang/shared/services/lesson_audio_player.dart';
+import 'package:elang/shared/services/lesson_pack_downloader.dart';
+import 'package:elang/shared/services/sync_engine.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
 import '../../../helpers/fake_answer_feedback_player.dart';
+import '../../../helpers/fake_connectivity_monitor.dart';
 import '../../../helpers/fake_lesson_audio_player.dart';
+import '../../../helpers/fake_lesson_pack_store.dart';
+import '../../../helpers/fake_pending_sync_queue_store.dart';
 
 Widget _wrapped({
   required LessonApi lessonApi,
@@ -32,6 +39,17 @@ Widget _wrapped({
       lessonApi: lessonApi,
       audioPlayer: audioPlayer,
       feedbackPlayer: feedbackPlayer ?? FakeAnswerFeedbackPlayer(),
+      connectivityMonitor: FakeConnectivityMonitor(),
+      lessonPackStore: FakeLessonPackStore(),
+      lessonPackDownloader: LessonPackDownloader(
+        lessonApi: lessonApi,
+        packStore: FakeLessonPackStore(),
+      ),
+      syncEngine: SyncEngine(
+        lessonApi: lessonApi,
+        connectivityMonitor: FakeConnectivityMonitor(),
+        queueStore: FakePendingSyncQueueStore(),
+      ),
     ),
   );
 }
@@ -93,6 +111,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // The sync-status banner + manage-downloads button added above the
+    // node list (010-offline-caching-and-sync-ui) push lower nodes far
+    // enough down that they can sit outside the test window's fixed
+    // viewport -- scroll this one into view before tapping it.
+    await tester.ensureVisible(find.text('Coffee & Hospitality'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Coffee & Hospitality'));
     await tester.pumpAndSettle();
 
@@ -213,6 +237,100 @@ void main() {
       // Back on the dashboard, and it re-fetched (getSkillTree called
       // again on return).
       expect(find.text('Skill A'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a previously-downloaded lesson shows the downloaded icon as soon as the dashboard loads',
+    (tester) async {
+      final api = FakeLessonApi(latency: Duration.zero);
+      // Built directly (not via `api.startLesson`) -- that call's artificial
+      // `Future.delayed` only resolves once something drives the fake test
+      // clock, which doesn't happen until the first `pump`, so awaiting it
+      // before `pumpWidget` would deadlock the test.
+      final packStore = FakeLessonPackStore()
+        ..save(
+          const LessonContent(
+            lessonId: 'lesson-alphabet',
+            skillId: 'skill-alphabet',
+            title: 'Alphabet & Fidel',
+            beansAtStart: 5,
+            beansMax: 5,
+            exercises: [
+              MultipleChoiceExercise(
+                id: 'alphabet-1',
+                prompt: 'ሀ',
+                promptTranslation: 'Which sound?',
+                options: ['ha', 'le'],
+                correctOptionIndex: 0,
+              ),
+            ],
+          ),
+        );
+      final downloader = LessonPackDownloader(lessonApi: api, packStore: packStore);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SkillTreeDashboardScreen(
+            lessonApi: api,
+            audioPlayer: FakeLessonAudioPlayer(),
+            feedbackPlayer: FakeAnswerFeedbackPlayer(),
+            connectivityMonitor: FakeConnectivityMonitor(),
+            lessonPackStore: packStore,
+            lessonPackDownloader: downloader,
+            syncEngine: SyncEngine(
+              lessonApi: api,
+              connectivityMonitor: FakeConnectivityMonitor(),
+              queueStore: FakePendingSyncQueueStore(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Alphabet's already downloaded; greetings and coffee aren't.
+      expect(find.byIcon(Icons.download_done), findsOneWidget);
+      expect(find.byIcon(Icons.download_outlined), findsNWidgets(2));
+    },
+  );
+
+  testWidgets(
+    'tapping the download affordance on an un-downloaded lesson downloads it',
+    (tester) async {
+      final api = FakeLessonApi(latency: Duration.zero);
+      final packStore = FakeLessonPackStore();
+      final downloader = LessonPackDownloader(lessonApi: api, packStore: packStore);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SkillTreeDashboardScreen(
+            lessonApi: api,
+            audioPlayer: FakeLessonAudioPlayer(),
+            feedbackPlayer: FakeAnswerFeedbackPlayer(),
+            connectivityMonitor: FakeConnectivityMonitor(),
+            lessonPackStore: packStore,
+            lessonPackDownloader: downloader,
+            syncEngine: SyncEngine(
+              lessonApi: api,
+              connectivityMonitor: FakeConnectivityMonitor(),
+              queueStore: FakePendingSyncQueueStore(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.download_outlined), findsNWidgets(3));
+
+      // First node in seed order is the audio-free "Alphabet & Fidel"
+      // node -- tapping avoids exercising the audio-download path here,
+      // which is covered separately in lesson_pack_downloader_test.dart.
+      await tester.tap(find.byIcon(Icons.download_outlined).first);
+      await tester.pumpAndSettle();
+
+      expect(await packStore.listDownloadedLessonIds(), ['lesson-alphabet']);
+      expect(find.byIcon(Icons.download_done), findsOneWidget);
+      expect(find.byIcon(Icons.download_outlined), findsNWidgets(2));
     },
   );
 }

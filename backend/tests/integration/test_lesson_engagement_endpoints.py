@@ -7,14 +7,16 @@ as bolt 004's endpoint tests.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session as SyncSession
 
 from app.infrastructure.db.lesson_models import ExerciseModel, LessonModel, SkillModel
+from app.infrastructure.db.models import UserModel
 from tests.fakes import FakeTokenVerifier
 
 
@@ -84,6 +86,10 @@ def _auth(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+def _now_iso() -> str:
+    return datetime.now(UTC).isoformat()
+
+
 class TestGetBeansStatus:
     def test_new_user_gets_full_beans_and_starting_amole(
         self, make_client: Any, seeded_content: dict[str, str]
@@ -150,6 +156,7 @@ class TestCompleteLesson:
                 "correct_count": 4,
                 "total_count": 4,
                 "time_spent_seconds": 30.0,
+                "client_completed_at": _now_iso(),
             },
         )
 
@@ -177,6 +184,7 @@ class TestCompleteLesson:
             "correct_count": 4,
             "total_count": 4,
             "time_spent_seconds": 30.0,
+            "client_completed_at": _now_iso(),
         }
 
         first = client.post(
@@ -208,6 +216,7 @@ class TestCompleteLesson:
                 "correct_count": 1,
                 "total_count": 1,
                 "time_spent_seconds": 10.0,
+                "client_completed_at": _now_iso(),
             },
         )
 
@@ -227,6 +236,7 @@ class TestCompleteLesson:
                 "correct_count": 1,
                 "total_count": 1,
                 "time_spent_seconds": 10.0,
+                "client_completed_at": _now_iso(),
             },
         )
 
@@ -246,6 +256,7 @@ class TestCompleteLesson:
                 "correct_count": 1,
                 "total_count": 1,  # lesson-a1 actually has 4 exercises
                 "time_spent_seconds": 10.0,
+                "client_completed_at": _now_iso(),
             },
         )
 
@@ -270,6 +281,7 @@ class TestCompleteLesson:
                 "correct_count": 1,
                 "total_count": 4,
                 "time_spent_seconds": 30.0,
+                "client_completed_at": _now_iso(),
             },
         )
 
@@ -281,6 +293,7 @@ class TestCompleteLesson:
                 "correct_count": 0,
                 "total_count": 4,
                 "time_spent_seconds": 30.0,
+                "client_completed_at": _now_iso(),
             },
         )
 
@@ -299,7 +312,65 @@ class TestCompleteLesson:
                 "correct_count": 1,
                 "total_count": 4,
                 "time_spent_seconds": 10.0,
+                "client_completed_at": _now_iso(),
             },
         )
 
         assert response.status_code == 401
+
+    def test_far_future_client_completed_at_returns_422(
+        self, make_client: Any, seeded_content: dict[str, str]
+    ) -> None:
+        # Bolt 008: `CompletionTimestampValidator` rejects a completion
+        # timestamp implausibly far in the future (beyond the small
+        # clock-skew allowance).
+        client, token = _sign_in(make_client)
+        far_future = datetime(2099, 1, 1, tzinfo=UTC).isoformat()
+
+        response = client.post(
+            f"/api/v1/lessons/{seeded_content['lesson_a1']}/complete",
+            headers=_auth(token),
+            json={
+                "attempt_id": "attempt-1",
+                "correct_count": 4,
+                "total_count": 4,
+                "time_spent_seconds": 30.0,
+                "client_completed_at": far_future,
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json()["error_code"] == "invalid_completion_timestamp"
+
+    def test_a_completion_from_long_before_now_is_accepted(
+        self, make_client: Any, seeded_content: dict[str, str], db_path: Path
+    ) -> None:
+        # No upper bound on staleness -- a lesson completed 45 days ago,
+        # syncing now, must still succeed (requirements.md FR-3). The
+        # account itself must actually be old enough for that to be
+        # plausible, so it's backdated directly here (the API has no way
+        # to backdate an account's own creation).
+        client, token = _sign_in(make_client)
+        engine = create_engine(f"sqlite:///{db_path}")
+        with SyncSession(engine) as session:
+            user = session.execute(
+                select(UserModel).where(UserModel.provider_user_id == "google-user-1")
+            ).scalar_one()
+            user.created_at = datetime.now(UTC) - timedelta(days=100)
+            session.commit()
+        engine.dispose()
+        long_ago = (datetime.now(UTC) - timedelta(days=45)).isoformat()
+
+        response = client.post(
+            f"/api/v1/lessons/{seeded_content['lesson_a1']}/complete",
+            headers=_auth(token),
+            json={
+                "attempt_id": "attempt-1",
+                "correct_count": 4,
+                "total_count": 4,
+                "time_spent_seconds": 30.0,
+                "client_completed_at": long_ago,
+            },
+        )
+
+        assert response.status_code == 200

@@ -6,6 +6,7 @@ cycle, falling back to the first lesson once the cycle is complete again.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -87,6 +88,7 @@ class TestSkillTreeNextLessonId:
                 "correct_count": 1,
                 "total_count": 1,
                 "time_spent_seconds": 10.0,
+                "client_completed_at": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -108,6 +110,7 @@ class TestSkillTreeNextLessonId:
                     "correct_count": 1,
                     "total_count": 1,
                     "time_spent_seconds": 10.0,
+                    "client_completed_at": datetime.now(UTC).isoformat(),
                 },
             )
 

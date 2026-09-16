@@ -166,8 +166,9 @@ class TestGetLessonContent:
 
         result = await get_lesson_content("user-1", "l1", lesson_repo, skill_repo, progress_repo)
 
-        assert result.id == "l1"
-        assert len(result.exercises) == 1
+        assert result.lesson.id == "l1"
+        assert len(result.lesson.exercises) == 1
+        assert result.content_version is not None
 
     async def test_raises_lesson_not_found_for_unknown_lesson_id(self) -> None:
         lesson_repo = FakeLessonRepository([])

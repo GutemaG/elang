@@ -16,12 +16,16 @@ deleted.
 
 **Known limitation (documented, non-blocking, mirrors how `001-auth-service`
 treated missing real OAuth credentials)**: no real Cloudflare R2 bucket or
-credentials exist in this environment. `audio_url` values below use a
-clearly-marked, non-functional placeholder scheme
-(`https://r2-placeholder.buna.dev/audio/<slug>.mp3`) -- swapping in real R2
-URLs later is a pure data update (re-run this idempotent script with real
-URLs), not a schema or contract change. Flagged again in
-`ddd-03-test-report.md`.
+credentials exist in this environment. `audio_url` values below all point to
+the same small, publicly-reachable placeholder MP3
+(`https://www.kozco.com/tech/piano2-CoolEdit.mp3`) rather than
+per-exercise real audio -- a genuinely resolvable placeholder was required
+once `010-offline-caching-and-sync-ui` started actually downloading these
+URLs for offline playback (the original non-resolving
+`r2-placeholder.buna.dev` scheme made every download fail outright, on
+every device, real or emulated). Swapping in real per-exercise R2 URLs
+later is a pure data update (re-run this idempotent script with real URLs),
+not a schema or contract change. Flagged again in `ddd-03-test-report.md`.
 """
 
 from __future__ import annotations
@@ -46,7 +50,10 @@ def _content_id(slug: str) -> str:
 
 
 def _audio_url(slug: str) -> str:
-    return f"https://r2-placeholder.buna.dev/audio/{slug}.mp3"
+    # See module docstring's "Known limitation" -- a real, resolvable
+    # placeholder, not per-exercise real audio.
+    del slug  # unused: every exercise currently shares one placeholder file
+    return "https://www.kozco.com/tech/piano2-CoolEdit.mp3"
 
 
 def _choice(choice_id: str, text: str) -> dict[str, str]:

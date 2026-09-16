@@ -74,6 +74,12 @@ class LessonModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )
+    # Bolt 008: drives this lesson's `content_version` signal (offline
+    # staleness check, FR-1 of 003-offline-caching-and-sync) -- bumped
+    # automatically by the seed script's idempotent in-place updates.
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
+    )
 
     skill: Mapped[SkillModel] = relationship(back_populates="lessons")
     exercises: Mapped[list[ExerciseModel]] = relationship(
@@ -109,6 +115,11 @@ class ExerciseModel(Base):
     answer_key: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+    # Bolt 008: contributes to the owning lesson's `content_version` signal
+    # (see `LessonModel.updated_at`).
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
     )
 
     lesson: Mapped[LessonModel] = relationship(back_populates="exercises")

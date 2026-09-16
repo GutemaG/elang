@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -15,6 +15,7 @@ from app.domain.lesson.exceptions import (
     BeansExhaustedError,
     InsufficientAmoleError,
     InvalidCompletionError,
+    InvalidCompletionTimestampError,
     LessonNotFoundError,
     SkillLockedError,
 )
@@ -38,6 +39,7 @@ from tests.fakes import (
 )
 
 _NOW = datetime(2026, 9, 16, 12, 0, tzinfo=UTC)
+_ACCOUNT_CREATED_AT = datetime(2026, 1, 1, tzinfo=UTC)
 
 
 def _exercise(id_: str, lesson_id: str, order_index: int) -> Exercise:
@@ -95,6 +97,8 @@ class TestCompleteLesson:
             time_spent_seconds=30.0,
             daily_xp_target=40,
             now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
             **repos,
         )
 
@@ -117,6 +121,8 @@ class TestCompleteLesson:
             time_spent_seconds=30.0,
             daily_xp_target=40,
             now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
             **repos,
         )
 
@@ -139,6 +145,8 @@ class TestCompleteLesson:
                 time_spent_seconds=30.0,
                 daily_xp_target=40,
                 now=_NOW,
+                client_completed_at=_NOW,
+                account_created_at=_ACCOUNT_CREATED_AT,
                 **repos,
             )
 
@@ -155,6 +163,8 @@ class TestCompleteLesson:
                 time_spent_seconds=30.0,
                 daily_xp_target=40,
                 now=_NOW,
+                client_completed_at=_NOW,
+                account_created_at=_ACCOUNT_CREATED_AT,
                 **repos,
             )
 
@@ -172,6 +182,8 @@ class TestCompleteLesson:
                 time_spent_seconds=30.0,
                 daily_xp_target=40,
                 now=_NOW,
+                client_completed_at=_NOW,
+                account_created_at=_ACCOUNT_CREATED_AT,
                 **repos,
             )
 
@@ -191,8 +203,164 @@ class TestCompleteLesson:
                 time_spent_seconds=30.0,
                 daily_xp_target=40,
                 now=_NOW,
+                client_completed_at=_NOW,
+                account_created_at=_ACCOUNT_CREATED_AT,
                 **repos,
             )
+
+
+class TestCompleteLessonOfflineTimestamp:
+    """Bolt 008 (003-offline-caching-and-sync): `client_completed_at`
+    drives streak/XP-day attribution and completion-timestamp validation,
+    independent of `now` (real server time, used for Beans regen only).
+    """
+
+    async def test_streak_day_attribution_uses_client_completed_at_not_now(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+        offline_completion_day = _NOW - timedelta(days=3)
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            client_completed_at=offline_completion_day,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            now=_NOW,  # sync happens "now", well after the offline completion
+            **repos,
+        )
+
+        stored_streak = await repos["streak_repo"].get("u1")
+        assert stored_streak.last_completed_date == offline_completion_day.date()
+
+    async def test_two_completions_attributed_to_the_same_day_increment_streak_once(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+        same_day = _NOW - timedelta(days=1)
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            client_completed_at=same_day,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            now=_NOW,
+            **repos,
+        )
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-2",  # different attempt, same lesson replayed
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=20.0,
+            daily_xp_target=40,
+            client_completed_at=same_day,  # same calendar day as attempt-1
+            account_created_at=_ACCOUNT_CREATED_AT,
+            now=_NOW,
+            **repos,
+        )
+
+        stored_streak = await repos["streak_repo"].get("u1")
+        # StreakPolicy: a second completion attributed to the *same* day is
+        # "already counted today" (gap <= 0), not a fresh increment -- this
+        # is what FR-4's "per distinct day, not per lesson" means in
+        # practice.
+        assert stored_streak.current_streak == 1
+
+    async def test_raises_invalid_completion_timestamp_for_a_far_future_timestamp(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+
+        with pytest.raises(InvalidCompletionTimestampError):
+            await complete_lesson(
+                user_id="u1",
+                lesson_id="lesson-a1",
+                attempt_id="attempt-1",
+                correct_count=4,
+                total_count=4,
+                time_spent_seconds=30.0,
+                daily_xp_target=40,
+                client_completed_at=_NOW + timedelta(hours=1),
+                account_created_at=_ACCOUNT_CREATED_AT,
+                now=_NOW,
+                **repos,
+            )
+        assert repos["attempt_repo"].add_calls == 0
+
+    async def test_raises_invalid_completion_timestamp_when_it_predates_account_creation(
+        self,
+    ) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+
+        with pytest.raises(InvalidCompletionTimestampError):
+            await complete_lesson(
+                user_id="u1",
+                lesson_id="lesson-a1",
+                attempt_id="attempt-1",
+                correct_count=4,
+                total_count=4,
+                time_spent_seconds=30.0,
+                daily_xp_target=40,
+                client_completed_at=_ACCOUNT_CREATED_AT - timedelta(days=1),
+                account_created_at=_ACCOUNT_CREATED_AT,
+                now=_NOW,
+                **repos,
+            )
+        assert repos["attempt_repo"].add_calls == 0
+
+    async def test_accepts_a_completion_from_long_before_now_for_a_long_offline_gap(self) -> None:
+        # No upper bound on staleness -- a lesson finished 45 days ago,
+        # finally syncing "now", must still be accepted (requirements.md
+        # FR-3: long offline gaps are supported, not penalized).
+        repos = _repos(_LESSONS, _SKILLS)
+
+        outcome = await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            client_completed_at=_NOW - timedelta(days=45),
+            account_created_at=_ACCOUNT_CREATED_AT,
+            now=_NOW,
+            **repos,
+        )
+
+        assert outcome.xp_awarded == 4 * XP_PER_CORRECT_ANSWER
+        assert repos["attempt_repo"].add_calls == 1
+
+    async def test_idempotent_replay_after_a_multi_day_delay(self) -> None:
+        # The idempotency check (attempt_repo.get first) must short-circuit
+        # a replay regardless of how much real time (`now`) has passed
+        # between the original call and the retry -- story 003's "delayed,
+        # not just near-immediate replay" requirement.
+        repos = _repos(_LESSONS, _SKILLS)
+        kwargs = dict(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        first = await complete_lesson(now=_NOW, **kwargs)
+        second = await complete_lesson(now=_NOW + timedelta(days=2), **kwargs)
+
+        assert first == second
+        assert repos["attempt_repo"].add_calls == 1
 
 
 class TestGetBeansStatus:

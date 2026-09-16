@@ -1,9 +1,14 @@
-// Lesson-complete summary + streak/level-up modal tests (story 004).
+// Lesson-complete summary + streak/level-up modal tests (story 004), plus
+// (010-offline-caching-and-sync-ui, story 003) the pending-sync variant
+// shown after an offline completion.
 //
 // Covers: the base summary (XP, streak, accuracy, daily-goal progress)
 // always renders; a crown-level-up/streak-freeze unlock shows the
 // level-up modal with no empty/broken section when absent; dismissing
-// returns to the caller (the dashboard, in the real flow).
+// returns to the caller (the dashboard, in the real flow); a pending-sync
+// result shows exact XP/accuracy but "syncs when back online" instead of a
+// guessed streak/daily-goal number, and never shows a level-up modal even
+// if the (otherwise-unreachable) crown fields were somehow set.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -157,6 +162,72 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Streak Freeze Unlocked!'), findsOneWidget);
+      expect(find.text('Crown Level Up!'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a pending-sync result shows exact XP/accuracy but "syncs when back online" for streak/daily-goal',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: LessonCompleteScreen(
+            result: LessonCompletionResult(
+              xpEarned: 10,
+              dailyXpTotal: 0,
+              dailyXpTarget: 0,
+              streakCount: 0,
+              streakIncreasedToday: false,
+              accuracyPercent: 100,
+              correctCount: 2,
+              totalCount: 2,
+              timeSpent: Duration(seconds: 20),
+              pendingSync: true,
+            ),
+          ),
+        ),
+      );
+
+      // XP and accuracy are exact (client-known) even offline.
+      expect(find.text('+10'), findsOneWidget);
+      expect(find.text('100%'), findsOneWidget);
+
+      // Streak/daily-goal are not guessed at.
+      expect(find.text('SYNCS WHEN ONLINE'), findsOneWidget);
+      expect(find.text('0 Days'), findsNothing);
+      expect(find.text('+1 Today'), findsNothing);
+      expect(find.textContaining('XP today'), findsNothing);
+      expect(find.textContaining("You're offline"), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a pending-sync result never shows a level-up modal, even if crown fields were somehow set',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: LessonCompleteScreen(
+            result: LessonCompletionResult(
+              xpEarned: 10,
+              dailyXpTotal: 0,
+              dailyXpTarget: 0,
+              streakCount: 0,
+              streakIncreasedToday: false,
+              accuracyPercent: 100,
+              correctCount: 2,
+              totalCount: 2,
+              timeSpent: Duration(seconds: 20),
+              crownLevel: 3,
+              crownLeveledUp: true,
+              pendingSync: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
       expect(find.text('Crown Level Up!'), findsNothing);
     },
   );

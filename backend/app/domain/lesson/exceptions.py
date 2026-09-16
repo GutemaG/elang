@@ -58,3 +58,15 @@ class InsufficientAmoleError(LessonDomainError):
     """A Beans refill was attempted without enough Amole balance."""
 
     error_code = "insufficient_amole"
+
+
+class InvalidCompletionTimestampError(LessonDomainError):
+    """A completion's `client_completed_at` is implausible: more than a
+    small clock-skew allowance in the future, or earlier than the
+    account's own creation date (bolt 008, story
+    002-timestamped-completion-for-streak-attribution). Rejected before
+    any ledger effect, distinct from `InvalidCompletionError`'s
+    count-mismatch case.
+    """
+
+    error_code = "invalid_completion_timestamp"

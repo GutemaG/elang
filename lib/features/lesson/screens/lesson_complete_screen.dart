@@ -20,7 +20,10 @@ class LessonCompleteScreen extends StatelessWidget {
   final LessonCompletionResult result;
 
   Future<void> _onContinue(BuildContext context) async {
-    if (result.hasLevelUpFlourish) {
+    // A pending-sync result's crown/streak-freeze fields are always at
+    // their safe defaults (never known offline) -- no level-up flourish to
+    // show here regardless.
+    if (!result.pendingSync && result.hasLevelUpFlourish) {
       await showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
@@ -89,13 +92,22 @@ class LessonCompleteScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.spaceXs),
                   Expanded(
-                    child: _StatCard(
-                      icon: Icons.local_fire_department,
-                      color: AppColors.tertiaryBrand,
-                      value: '${result.streakCount} Days',
-                      label: 'STREAK',
-                      badge: result.streakIncreasedToday ? '+1 Today' : null,
-                    ),
+                    child: result.pendingSync
+                        ? const _StatCard(
+                            icon: Icons.local_fire_department,
+                            color: AppColors.tertiaryBrand,
+                            value: '--',
+                            label: 'SYNCS WHEN ONLINE',
+                          )
+                        : _StatCard(
+                            icon: Icons.local_fire_department,
+                            color: AppColors.tertiaryBrand,
+                            value: '${result.streakCount} Days',
+                            label: 'STREAK',
+                            badge: result.streakIncreasedToday
+                                ? '+1 Today'
+                                : null,
+                          ),
                   ),
                   const SizedBox(width: AppSpacing.spaceXs),
                   Expanded(
@@ -127,24 +139,34 @@ class LessonCompleteScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.spaceXs),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadii.full),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 12,
-                        backgroundColor: AppColors.surfaceContainer,
-                        valueColor: const AlwaysStoppedAnimation(
-                          AppColors.primaryContainer,
+                    if (result.pendingSync)
+                      Text(
+                        "You're offline -- this lesson's XP will sync and "
+                        'count toward today\'s goal once you\'re back online.',
+                        style: AppTypography.bodySm.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      )
+                    else ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadii.full),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 12,
+                          backgroundColor: AppColors.surfaceContainer,
+                          valueColor: const AlwaysStoppedAnimation(
+                            AppColors.primaryContainer,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.space2xs),
-                    Text(
-                      '${result.dailyXpTotal} / ${result.dailyXpTarget} XP today',
-                      style: AppTypography.bodySm.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                      const SizedBox(height: AppSpacing.space2xs),
+                      Text(
+                        '${result.dailyXpTotal} / ${result.dailyXpTarget} XP today',
+                        style: AppTypography.bodySm.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

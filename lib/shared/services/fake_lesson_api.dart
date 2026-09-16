@@ -214,6 +214,7 @@ class FakeLessonApi implements LessonApi {
     required int totalCount,
     required Duration timeSpent,
     required int beansRemainingAtEnd,
+    required DateTime clientCompletedAt,
   }) async {
     await Future<void>.delayed(latency);
 

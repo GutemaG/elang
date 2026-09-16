@@ -6,8 +6,10 @@ import 'package:flutter/foundation.dart';
 import '../../../shared/models/exercise.dart';
 import '../../../shared/models/lesson_completion_result.dart';
 import '../../../shared/models/lesson_content.dart';
+import '../../../shared/models/pending_sync_entry.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/lesson_api.dart';
+import '../../../shared/services/sync_engine.dart';
 
 /// How the current exercise's tile(s) should render.
 enum TileFeedback { none, correct, incorrect }
@@ -23,7 +25,9 @@ class LessonController extends ChangeNotifier {
   LessonController({
     required this._lessonApi,
     required this._feedbackPlayer,
+    required this._syncEngine,
     required LessonContent content,
+    this.startedOffline = false,
   }) : _content = content,
        _beansRemaining = content.beansAtStart,
        _queue = List<int>.generate(content.exercises.length, (i) => i),
@@ -31,7 +35,15 @@ class LessonController extends ChangeNotifier {
 
   final LessonApi _lessonApi;
   final AnswerFeedbackPlayer _feedbackPlayer;
+  final SyncEngine _syncEngine;
   final LessonContent _content;
+
+  /// Whether this attempt was started with the device offline -- fixed
+  /// once at construction (mirrors whichever choice `LessonScreen` made
+  /// loading the content) and never re-checked at completion time, per
+  /// FR-2's "doesn't switch modes mid-attempt" edge case
+  /// (010-offline-caching-and-sync-ui, story 003).
+  final bool startedOffline;
   final Stopwatch _stopwatch = Stopwatch()..start();
 
   /// Generated once per attempt and reused across any completion retry --
@@ -201,6 +213,46 @@ class LessonController extends ChangeNotifier {
 
   Future<void> _finishLesson() async {
     _stopwatch.stop();
+    final clientCompletedAt = DateTime.now().toUtc();
+
+    if (startedOffline) {
+      // Never calls the network endpoint at all -- queued for `SyncEngine`
+      // to replay once connectivity returns (010-offline-caching-and-
+      // sync-ui, story 003). The mode was fixed at lesson start and stays
+      // fixed even if connectivity has since returned (FR-2's "doesn't
+      // switch modes mid-attempt").
+      await _syncEngine.enqueueOfflineCompletion(
+        PendingSyncEntry(
+          attemptId: _attemptId,
+          lessonId: _content.lessonId,
+          correctCount: _correctCount,
+          totalCount: exercises.length,
+          timeSpent: _stopwatch.elapsed,
+          beansRemainingAtEnd: _beansRemaining,
+          clientCompletedAt: clientCompletedAt,
+        ),
+      );
+      final accuracyPercent = exercises.isEmpty
+          ? 0
+          : ((_correctCount / exercises.length) * 100).round();
+      _completionResult = LessonCompletionResult(
+        xpEarned: _correctCount * kXpPerCorrectAnswer,
+        dailyXpTotal: 0,
+        dailyXpTarget: 0,
+        streakCount: 0,
+        streakIncreasedToday: false,
+        accuracyPercent: accuracyPercent,
+        correctCount: _correctCount,
+        totalCount: exercises.length,
+        timeSpent: _stopwatch.elapsed,
+        pendingSync: true,
+      );
+      _lessonFinished = true;
+      _completionError = null;
+      notifyListeners();
+      return;
+    }
+
     try {
       final result = await _lessonApi.completeLesson(
         lessonId: _content.lessonId,
@@ -209,6 +261,10 @@ class LessonController extends ChangeNotifier {
         totalCount: exercises.length,
         timeSpent: _stopwatch.elapsed,
         beansRemainingAtEnd: _beansRemaining,
+        // Captured right now, whether this call succeeds immediately or is
+        // itself a retry -- identical to "now" for a normal online
+        // completion.
+        clientCompletedAt: clientCompletedAt,
       );
       _completionResult = result;
       _lessonFinished = true;

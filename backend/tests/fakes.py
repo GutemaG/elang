@@ -10,7 +10,7 @@ the `UserRepository`/`AuthSessionRepository` Protocols (DB) -- never
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import date
+from datetime import UTC, date, datetime
 
 from app.domain.entities import AuthSession, User
 from app.domain.lesson.entities import (
@@ -108,6 +108,14 @@ class FakeSkillRepository:
         return list(self._skills)
 
 
+# Bolt 008: fixed, stable stand-in for a real `updated_at`-derived content
+# version -- unit tests for `get_lesson_content`/`get_skill_tree` don't
+# exercise version-change behavior (that's covered by the real
+# `SqlAlchemyLessonRepository` integration tests), just that the signal is
+# threaded through.
+FAKE_CONTENT_VERSION = datetime(2026, 1, 1, tzinfo=UTC)
+
+
 class FakeLessonRepository:
     """In-memory stand-in for `app.domain.lesson.repositories.LessonRepository`."""
 
@@ -116,6 +124,11 @@ class FakeLessonRepository:
 
     async def get_by_id(self, lesson_id: str) -> Lesson | None:
         return self._lessons.get(lesson_id)
+
+    async def get_content_version(self, lesson_id: str) -> datetime | None:
+        if lesson_id not in self._lessons:
+            return None
+        return FAKE_CONTENT_VERSION
 
 
 class FakeLessonRepositoryWithSkillIndex(FakeLessonRepository):
@@ -138,6 +151,15 @@ class FakeLessonRepositoryWithSkillIndex(FakeLessonRepository):
             if lesson_ids:
                 result[skill_id] = lesson_ids
         return result
+
+    async def list_content_versions_by_skills(
+        self, skill_ids: Sequence[str]
+    ) -> dict[str, datetime]:
+        return {
+            skill_id: FAKE_CONTENT_VERSION
+            for skill_id in set(skill_ids)
+            if any(lesson.skill_id == skill_id for lesson in self._lessons.values())
+        }
 
 
 class FakeUserSkillProgressRepository:

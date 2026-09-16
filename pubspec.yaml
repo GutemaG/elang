@@ -65,6 +65,19 @@ dependencies:
   # `lib/shared/services/answer_feedback_player.dart`).
   vibration: ^3.2.1
 
+  # Offline lesson caching (009-offline-caching-and-sync-ui). Used only
+  # behind `LessonPackStore`/`ConnectivityMonitor` (see
+  # `lib/shared/services/lesson_pack_store.dart` and
+  # `connectivity_monitor.dart`) so widget tests never touch a real
+  # database or platform connectivity channel directly.
+  sqflite: ^2.4.4
+  # Was already a *transitive* dependency (via `audioplayers`' AudioCache --
+  # see `answer_feedback_player.dart`'s doc comment on that prior
+  # investigation); promoted to direct here since `LessonPackStore` uses it
+  # directly to resolve where downloaded audio files live on disk.
+  path_provider: ^2.1.6
+  connectivity_plus: ^7.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -75,6 +88,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+  # Promoted from transitive (via `path_provider`) to direct dev-only so
+  # `lesson_pack_downloader_test.dart` can swap `PathProviderPlatform.instance`
+  # for a fake pointing at a real temp directory -- the plugin boundary, per
+  # `coding-standards.md`'s testing convention.
+  path_provider_platform_interface: ^2.1.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

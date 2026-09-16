@@ -113,8 +113,10 @@ class TestSkillTreeQueryCount:
 
         assert len(summary.entries) == 50
         # A small constant number of queries (skills, progress, beans,
-        # streak, lifetime-XP sum, grouped next-lesson-per-skill) -- never
-        # one per skill (bolt 005 added 3 more constant queries on top of
-        # bolt 004's original 2; bolt 007 added 1 more, grouped rather than
+        # streak, lifetime-XP sum, grouped next-lesson-per-skill, grouped
+        # per-skill content-version) -- never one per skill (bolt 005 added
+        # 3 more constant queries on top of bolt 004's original 2; bolt 007
+        # added 1 more grouped query; bolt 008 added 2 more grouped queries
+        # for the content-version signal -- all grouped rather than
         # per-skill, to avoid a real N+1).
-        assert len(query_log) <= 6
+        assert len(query_log) <= 8

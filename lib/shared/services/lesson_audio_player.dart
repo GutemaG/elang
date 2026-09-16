@@ -15,6 +15,12 @@ abstract class LessonAudioPlayer {
 }
 
 /// Real implementation backed by the `audioplayers` package.
+///
+/// [play] accepts either a remote URL (the normal online case) or a local
+/// file path (009-offline-caching-and-sync-ui: a downloaded lesson pack's
+/// audio, rewritten to a local path by `LessonPackStore`) -- distinguished
+/// by whether the string has an `http`/`https` scheme, since a bare local
+/// path never does.
 class AudioplayersLessonAudioPlayer implements LessonAudioPlayer {
   AudioplayersLessonAudioPlayer() : _player = ap.AudioPlayer();
 
@@ -23,7 +29,8 @@ class AudioplayersLessonAudioPlayer implements LessonAudioPlayer {
   @override
   Future<void> play(String url) async {
     await _player.stop();
-    await _player.play(ap.UrlSource(url));
+    final isRemote = url.startsWith('http://') || url.startsWith('https://');
+    await _player.play(isRemote ? ap.UrlSource(url) : ap.DeviceFileSource(url));
   }
 
   @override

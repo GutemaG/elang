@@ -169,6 +169,10 @@ class TestSkillTreeEndpoint:
         assert body["streak_count"] == 0
         assert body["total_xp"] == 0
         assert body["unit_title"]
+        # bolt 008: offline-caching staleness signal (FR-1 of
+        # 003-offline-caching-and-sync) on every skill entry.
+        assert by_id[seeded_content["skill_a"]]["content_version"]
+        assert by_id[seeded_content["skill_b"]]["content_version"]
 
 
 class TestLessonContentEndpoint:
@@ -195,6 +199,8 @@ class TestLessonContentEndpoint:
         assert exercises[0]["choices"][0]["text"] == "ሰላም"
         assert exercises[1]["audio_url"] == "https://r2-placeholder.buna.dev/audio/hello.mp3"
         assert exercises[2]["word_bank"][0]["text"] == "ደህና"
+        # bolt 008: offline-caching staleness signal (FR-1).
+        assert body["content_version"]
 
     def test_includes_correct_answer_data_per_adr5(
         self, make_client: Any, seeded_content: dict[str, str]

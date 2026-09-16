@@ -1,15 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/skill_tree.dart';
 import '../../../shared/services/answer_feedback_player.dart';
+import '../../../shared/services/connectivity_monitor.dart';
 import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
+import '../../../shared/services/lesson_pack_downloader.dart';
+import '../../../shared/services/lesson_pack_store.dart';
+import '../../../shared/services/sync_engine.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
 import '../widgets/lesson_hud.dart';
 import '../widgets/skill_path_node.dart';
+import '../widgets/sync_status_banner.dart';
+import 'download_management_screen.dart';
 import 'lesson_screen.dart';
 
 /// Story 001's skill-tree home dashboard — maps to
@@ -26,11 +34,19 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     required this.lessonApi,
     required this.audioPlayer,
     required this.feedbackPlayer,
+    required this.connectivityMonitor,
+    required this.lessonPackStore,
+    required this.lessonPackDownloader,
+    required this.syncEngine,
   });
 
   final LessonApi lessonApi;
   final LessonAudioPlayer audioPlayer;
   final AnswerFeedbackPlayer feedbackPlayer;
+  final ConnectivityMonitor connectivityMonitor;
+  final LessonPackStore lessonPackStore;
+  final LessonPackDownloader lessonPackDownloader;
+  final SyncEngine syncEngine;
 
   @override
   State<SkillTreeDashboardScreen> createState() =>
@@ -44,6 +60,24 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   void initState() {
     super.initState();
     _future = widget.lessonApi.getSkillTree();
+    // So a previously-downloaded pack shows as downloaded immediately,
+    // without the user re-tapping the download affordance.
+    unawaited(widget.lessonPackDownloader.refreshDownloadedStatuses());
+    // Drains any entries queued from a previous session -- the "survives
+    // app restart" durability requirement (010-offline-caching-and-
+    // sync-ui, story 003).
+    unawaited(widget.syncEngine.refresh());
+  }
+
+  void _openDownloadManagement() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => DownloadManagementScreen(
+          lessonPackStore: widget.lessonPackStore,
+          syncEngine: widget.syncEngine,
+        ),
+      ),
+    );
   }
 
   void _reload() {
@@ -60,6 +94,9 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           lessonApi: widget.lessonApi,
           audioPlayer: widget.audioPlayer,
           feedbackPlayer: widget.feedbackPlayer,
+          connectivityMonitor: widget.connectivityMonitor,
+          lessonPackStore: widget.lessonPackStore,
+          syncEngine: widget.syncEngine,
         ),
       ),
     );
@@ -82,7 +119,44 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
               return _ErrorState(onRetry: _reload);
             }
             final tree = snapshot.data!;
-            return _DashboardContent(tree: tree, onNodeTap: _onNodeTap);
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.marginMobile,
+                    AppSpacing.spaceSm,
+                    AppSpacing.marginMobile,
+                    0,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SyncStatusBanner(
+                          syncEngine: widget.syncEngine,
+                          lessonPackStore: widget.lessonPackStore,
+                          lessonPackDownloader: widget.lessonPackDownloader,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.folder_outlined,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        tooltip: 'Manage Downloads',
+                        onPressed: _openDownloadManagement,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: _DashboardContent(
+                    tree: tree,
+                    onNodeTap: _onNodeTap,
+                    downloader: widget.lessonPackDownloader,
+                  ),
+                ),
+              ],
+            );
           },
         ),
       ),
@@ -91,10 +165,15 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
 }
 
 class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({required this.tree, required this.onNodeTap});
+  const _DashboardContent({
+    required this.tree,
+    required this.onNodeTap,
+    required this.downloader,
+  });
 
   final SkillTreeResponse tree;
   final ValueChanged<SkillTreeNode> onNodeTap;
+  final LessonPackDownloader downloader;
 
   @override
   Widget build(BuildContext context) {
@@ -135,11 +214,26 @@ class _DashboardContent extends StatelessWidget {
                     ),
                     child: Align(
                       alignment: _lateralOffset(i),
-                      child: SkillPathNode(
-                        node: tree.nodes[i],
-                        onTap: tree.nodes[i].state == SkillNodeState.locked
-                            ? null
-                            : () => onNodeTap(tree.nodes[i]),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          SkillPathNode(
+                            node: tree.nodes[i],
+                            onTap:
+                                tree.nodes[i].state == SkillNodeState.locked
+                                ? null
+                                : () => onNodeTap(tree.nodes[i]),
+                          ),
+                          if (tree.nodes[i].state != SkillNodeState.locked)
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: _DownloadAffordance(
+                                lessonId: tree.nodes[i].lessonId,
+                                downloader: downloader,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -227,6 +321,87 @@ class _UnitBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A small icon-button overlay on a skill-tree node letting the user
+/// download that lesson for offline use (009-offline-caching-and-sync-ui,
+/// story 001). Deliberately plain (not a new Highland Pulse component) --
+/// this bolt prioritizes the underlying offline capability over visual
+/// polish.
+class _DownloadAffordance extends StatelessWidget {
+  const _DownloadAffordance({required this.lessonId, required this.downloader});
+
+  final String lessonId;
+  final LessonPackDownloader downloader;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: downloader,
+      builder: (context, _) {
+        final status = downloader.statusFor(lessonId);
+        return _iconFor(status, onTap: () => downloader.downloadLesson(lessonId));
+      },
+    );
+  }
+
+  Widget _iconFor(LessonDownloadStatus status, {required VoidCallback onTap}) {
+    switch (status) {
+      case LessonDownloadStatus.downloaded:
+        return const _AffordanceBadge(
+          icon: Icons.download_done,
+          color: AppColors.primaryContainer,
+        );
+      case LessonDownloadStatus.downloading:
+        return const _AffordanceBadge(
+          icon: null,
+          color: AppColors.secondaryContainer,
+          child: SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      case LessonDownloadStatus.failed:
+        return _AffordanceBadge(
+          icon: Icons.error_outline,
+          color: AppColors.tertiaryBrand,
+          onTap: onTap,
+        );
+      case LessonDownloadStatus.notDownloaded:
+        return _AffordanceBadge(
+          icon: Icons.download_outlined,
+          color: AppColors.outlineVariant,
+          onTap: onTap,
+        );
+    }
+  }
+}
+
+class _AffordanceBadge extends StatelessWidget {
+  const _AffordanceBadge({required this.icon, required this.color, this.onTap, this.child});
+
+  final IconData? icon;
+  final Color color;
+  final VoidCallback? onTap;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceContainerLowest,
+      shape: const CircleBorder(),
+      elevation: 1,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: child ?? Icon(icon, size: 16, color: color),
+        ),
       ),
     );
   }

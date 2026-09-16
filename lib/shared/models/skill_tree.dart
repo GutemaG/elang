@@ -26,6 +26,7 @@ class SkillTreeNode {
     required this.subtitle,
     required this.state,
     this.crownLevel = 0,
+    this.contentVersion,
   });
 
   final String id;
@@ -37,6 +38,13 @@ class SkillTreeNode {
   /// 0 when never completed; 1-5 once completed (see FR-6's crown-level cap).
   final int crownLevel;
 
+  /// Offline-caching staleness signal (009-offline-caching-and-sync-ui,
+  /// FR-1) -- the most recent content edit across this skill's lessons/
+  /// exercises. `null` for a fake/older API implementation that doesn't
+  /// supply one; a `null` value simply means "no staleness comparison
+  /// possible yet", never a crash.
+  final DateTime? contentVersion;
+
   SkillTreeNode copyWith({SkillNodeState? state, int? crownLevel}) {
     return SkillTreeNode(
       id: id,
@@ -45,6 +53,7 @@ class SkillTreeNode {
       subtitle: subtitle,
       state: state ?? this.state,
       crownLevel: crownLevel ?? this.crownLevel,
+      contentVersion: contentVersion,
     );
   }
 }

@@ -186,6 +186,56 @@ class SqlAlchemyLessonRepository:
         model = result.scalar_one_or_none()
         return _lesson_model_to_domain(model) if model is not None else None
 
+    async def get_content_version(self, lesson_id: str) -> datetime | None:
+        stmt = (
+            select(LessonModel.updated_at, func.max(ExerciseModel.updated_at))
+            .outerjoin(ExerciseModel, ExerciseModel.lesson_id == LessonModel.id)
+            .where(LessonModel.id == lesson_id)
+            .group_by(LessonModel.id, LessonModel.updated_at)
+        )
+        result = await self._session.execute(stmt)
+        row = result.first()
+        if row is None:
+            return None
+        lesson_updated_at, max_exercise_updated_at = row
+        version = _ensure_utc(lesson_updated_at)
+        if max_exercise_updated_at is not None:
+            version = max(version, _ensure_utc(max_exercise_updated_at))
+        return version
+
+    async def list_content_versions_by_skills(
+        self, skill_ids: Sequence[str]
+    ) -> dict[str, datetime]:
+        if not skill_ids:
+            return {}
+
+        # Two grouped queries (lesson-level, then exercise-level via a join
+        # to its owning lesson), not a per-skill round trip -- same
+        # discipline as `list_lesson_ids_by_skills`.
+        lesson_stmt = (
+            select(LessonModel.skill_id, func.max(LessonModel.updated_at))
+            .where(LessonModel.skill_id.in_(skill_ids))
+            .group_by(LessonModel.skill_id)
+        )
+        lesson_result = await self._session.execute(lesson_stmt)
+        version_by_skill: dict[str, datetime] = {
+            skill_id: _ensure_utc(max_updated) for skill_id, max_updated in lesson_result.all()
+        }
+
+        exercise_stmt = (
+            select(LessonModel.skill_id, func.max(ExerciseModel.updated_at))
+            .join(ExerciseModel, ExerciseModel.lesson_id == LessonModel.id)
+            .where(LessonModel.skill_id.in_(skill_ids))
+            .group_by(LessonModel.skill_id)
+        )
+        exercise_result = await self._session.execute(exercise_stmt)
+        for skill_id, max_updated in exercise_result.all():
+            candidate = _ensure_utc(max_updated)
+            if skill_id not in version_by_skill or candidate > version_by_skill[skill_id]:
+                version_by_skill[skill_id] = candidate
+
+        return version_by_skill
+
     async def list_lesson_ids_by_skill(self, skill_id: str) -> tuple[str, ...]:
         stmt = (
             select(LessonModel.id)

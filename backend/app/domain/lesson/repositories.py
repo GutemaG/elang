@@ -7,7 +7,7 @@ layer only depends on these Protocols, never on SQLAlchemy directly.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import date
+from datetime import date, datetime
 from typing import Protocol
 
 from app.domain.lesson.entities import (
@@ -39,6 +39,26 @@ class LessonRepository(Protocol):
         through the skill is complete. Does not return the `Lesson`
         aggregate itself (which is always whole, including exercises) --
         this is deliberately not that.
+        """
+        ...
+
+    async def get_content_version(self, lesson_id: str) -> datetime | None:
+        """The most recent `updated_at` across this lesson's own row and
+        all its exercises (bolt 008) -- a stable, comparable signal a
+        client can check against its cached copy to decide whether a
+        re-download is needed (FR-1 of `003-offline-caching-and-sync`).
+        `None` only for an unknown `lesson_id`.
+        """
+        ...
+
+    async def list_content_versions_by_skills(
+        self, skill_ids: Sequence[str]
+    ) -> dict[str, datetime]:
+        """The same signal as `get_content_version`, but the most recent
+        `updated_at` across each skill's *own* lessons and exercises, for
+        every skill in `skill_ids` in one round trip -- same N+1-avoidance
+        discipline as `list_lesson_ids_by_skills`. A skill with no lessons
+        is simply absent from the result dict.
         """
         ...
 

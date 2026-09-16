@@ -9,6 +9,7 @@ which supersedes ADR-4's "never expose correct answers" -- see ADR-5
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
@@ -30,6 +31,10 @@ class SkillTreeEntryResponse(BaseModel):
     # first lesson if the cycle is already complete. `None` only if the
     # skill somehow has zero lessons (shouldn't happen with real content).
     lesson_id: str | None
+    # bolt 008: offline-caching staleness signal (FR-1 of
+    # 003-offline-caching-and-sync) -- the client compares this against its
+    # cached copy's version to decide whether a re-download is needed.
+    content_version: datetime
 
 
 class SkillTreeResponse(BaseModel):
@@ -88,6 +93,9 @@ class LessonSummaryResponse(BaseModel):
 class LessonContentResponse(BaseModel):
     lesson: LessonSummaryResponse
     exercises: list[ExerciseResponse]
+    # bolt 008: same staleness signal as `SkillTreeEntryResponse.content_version`,
+    # scoped to this one lesson.
+    content_version: datetime
 
 
 class BeansStatusResponse(BaseModel):
@@ -109,6 +117,10 @@ class CompleteLessonRequest(BaseModel):
     correct_count: int
     total_count: int
     time_spent_seconds: float
+    # bolt 008: when the user actually completed the lesson -- identical to
+    # "now" for an online completion; earlier for one queued while offline
+    # and synced later (see `CompletionTimestampValidator`).
+    client_completed_at: datetime
 
 
 class CompleteLessonResponse(BaseModel):

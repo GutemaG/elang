@@ -142,7 +142,15 @@ class HttpLessonApi implements LessonApi {
       subtitle: '',
       state: _toSkillNodeState(json['state'] as String),
       crownLevel: json['crown_level'] as int,
+      contentVersion: _parseContentVersion(json['content_version']),
     );
+  }
+
+  /// Bolt 008's `content_version` field, present on every skill/lesson
+  /// entry since then -- `null` only defensively, for an older/mocked
+  /// backend response that doesn't include it yet.
+  DateTime? _parseContentVersion(Object? raw) {
+    return raw is String ? DateTime.tryParse(raw) : null;
   }
 
   SkillNodeState _toSkillNodeState(String state) => switch (state) {
@@ -179,6 +187,7 @@ class HttpLessonApi implements LessonApi {
       exercises: exercises,
       beansAtStart: beansJson['beans'] as int,
       beansMax: beansJson['beans_max'] as int,
+      contentVersion: _parseContentVersion(lessonJson['content_version']),
     );
   }
 
@@ -241,6 +250,7 @@ class HttpLessonApi implements LessonApi {
     required int totalCount,
     required Duration timeSpent,
     required int beansRemainingAtEnd,
+    required DateTime clientCompletedAt,
   }) async {
     final json = _decodeOrThrow(
       await _post(
@@ -250,6 +260,7 @@ class HttpLessonApi implements LessonApi {
           'correct_count': correctCount,
           'total_count': totalCount,
           'time_spent_seconds': timeSpent.inMilliseconds / 1000,
+          'client_completed_at': clientCompletedAt.toUtc().toIso8601String(),
         },
       ),
     );

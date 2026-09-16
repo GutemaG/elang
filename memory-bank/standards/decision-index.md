@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-16T12:30:00Z
-total_decisions: 5
+last_updated: 2026-09-16T22:00:00Z
+total_decisions: 6
 ---
 
 # Decision Index
@@ -17,6 +17,14 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-6: Offline sync replays the existing per-completion endpoint; no batch-sync endpoint
+- **Status**: accepted
+- **Date**: 2026-09-16
+- **Bolt**: 008-offline-sync-service (001-offline-sync-service)
+- **Path**: `bolts/008-offline-sync-service/adr-6-no-batch-sync-endpoint.md`
+- **Summary**: Whether offline lesson-completion sync should get a new batch endpoint or just replay the existing per-completion endpoint N times was left open at Inception. Decided: no batch endpoint — the existing endpoint is already idempotent and now timestamp-aware, so calling it once per queued entry is correct; a batch endpoint would only be a performance optimization for a queue-size problem not yet shown to exist.
+- **Read when**: Designing any client-side offline queue/retry mechanism against this backend, adding a new bulk/batch variant of an existing endpoint, or revisiting sync performance if real-world offline queues turn out larger than expected.
 
 ### ADR-5: Exercise grading moves client-side; the account ledger stays server-bounded, not server-computed
 - **Status**: accepted

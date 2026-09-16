@@ -8,7 +8,7 @@ response mapping.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from app.domain.lesson.entities import (
     Lesson,
@@ -32,6 +32,7 @@ from app.domain.lesson.repositories import (
 )
 from app.domain.lesson.services import (
     BeanLedger,
+    CompletionTimestampValidator,
     LessonAccessPolicy,
     LessonCompletionService,
     SkillTreeEntry,
@@ -50,6 +51,12 @@ from app.domain.lesson.value_objects import (
 # curriculum structure is ever scoped.
 UNIT_TITLE = "Unit 1: Foundations & Greetings"
 UNIT_SUBTITLE = "ሰላምታ እና ፊደል መግቢያ"
+
+# Bolt 008: stable fallback `content_version` for a skill with zero lessons
+# (shouldn't happen with real content, mirrors the existing `lesson_id_by_skill`
+# `None` fallback) -- fixed and comparable, never "now" (which would make the
+# signal unstable across repeated fetches).
+_NO_CONTENT_VERSION = datetime(1970, 1, 1, tzinfo=UTC)
 
 
 def _default_beans(user_id: str, now: datetime) -> UserBeans:
@@ -82,6 +89,7 @@ class SkillTreeSummary:
 
     entries: list[SkillTreeEntry]
     lesson_id_by_skill: dict[str, str | None]
+    content_version_by_skill: dict[str, datetime]
     unit_title: str
     unit_subtitle: str
     streak_count: int
@@ -136,9 +144,18 @@ async def get_skill_tree(
             (lid for lid in lesson_ids if lid not in done_this_cycle), lesson_ids[0]
         )
 
+    # Bolt 008: the offline-caching client's staleness check (FR-1 of
+    # 003-offline-caching-and-sync) -- one grouped query, not a per-skill
+    # round trip, same discipline as `lessons_by_skill` above.
+    content_versions = await lesson_repo.list_content_versions_by_skills([s.id for s in skills])
+    content_version_by_skill = {
+        skill.id: content_versions.get(skill.id, _NO_CONTENT_VERSION) for skill in skills
+    }
+
     return SkillTreeSummary(
         entries=entries,
         lesson_id_by_skill=lesson_id_by_skill,
+        content_version_by_skill=content_version_by_skill,
         unit_title=UNIT_TITLE,
         unit_subtitle=UNIT_SUBTITLE,
         streak_count=streak.current_streak,
@@ -148,13 +165,25 @@ async def get_skill_tree(
     )
 
 
+@dataclass(frozen=True)
+class LessonContentResult:
+    """`Lesson` plus bolt 008's `content_version` signal -- kept as a
+    separate wrapper (same pattern as `SkillTreeSummary`) rather than a
+    field on the `Lesson` entity itself, since the version is a derived
+    signal for the offline-caching client, not a property of the aggregate.
+    """
+
+    lesson: Lesson
+    content_version: datetime
+
+
 async def get_lesson_content(
     user_id: str,
     lesson_id: str,
     lesson_repo: LessonRepository,
     skill_repo: SkillRepository,
     progress_repo: UserSkillProgressRepository,
-) -> Lesson:
+) -> LessonContentResult:
     """Story 001: a lesson's full, ordered exercise list in one call.
 
     Raises `LessonNotFoundError` (404) for an unknown lesson id, or
@@ -174,7 +203,11 @@ async def get_lesson_content(
     )
     LessonAccessPolicy().ensure_accessible(skill_state)
 
-    return lesson
+    # Bolt 008: the offline-caching client's per-lesson staleness check
+    # (FR-1 of 003-offline-caching-and-sync).
+    content_version = await lesson_repo.get_content_version(lesson_id) or _NO_CONTENT_VERSION
+
+    return LessonContentResult(lesson=lesson, content_version=content_version)
 
 
 @dataclass(frozen=True)
@@ -241,6 +274,8 @@ async def complete_lesson(
     total_count: int,
     time_spent_seconds: float,
     daily_xp_target: int,
+    client_completed_at: datetime,
+    account_created_at: datetime,
     lesson_repo: LessonRepository,
     skill_repo: SkillRepository,
     progress_repo: UserSkillProgressRepository,
@@ -254,10 +289,22 @@ async def complete_lesson(
     orchestrates Beans consumption (bounded by ADR-5's Decision 1), XP
     award, skill-progress/crown-level update, and streak update, all in one
     transaction, idempotent on `attempt_id` (story 003).
+
+    Bolt 008 (`003-offline-caching-and-sync`): `client_completed_at` is the
+    moment the user actually completed the lesson (identical to `now` for
+    an online completion; earlier for one synced after an offline gap) --
+    it drives streak/XP-day attribution and the persisted attempt's
+    `completed_at`, while `now` (real server time) still drives Beans
+    regeneration, which must reflect real elapsed time regardless of when
+    the completion is attributed to. The idempotency check happens before
+    timestamp validation so an already-accepted attempt is never rejected
+    on retry, no matter what the validator's bounds are.
     """
     existing = await attempt_repo.get(attempt_id)
     if existing is not None:
         return existing.outcome
+
+    CompletionTimestampValidator().validate(client_completed_at, account_created_at, now)
 
     lesson = await lesson_repo.get_by_id(lesson_id)
     if lesson is None:
@@ -285,9 +332,9 @@ async def complete_lesson(
     streak = await streak_repo.get(user_id) or _default_streak(user_id)
     skill_lesson_ids = frozenset(await lesson_repo.list_lesson_ids_by_skill(lesson.skill_id))
 
-    today = now.date()
+    completion_date = client_completed_at.date()
     daily_xp_total_before = await attempt_repo.sum_xp_by_user_between(
-        user_id, today, today + timedelta(days=1)
+        user_id, completion_date, completion_date + timedelta(days=1)
     )
 
     completion = LessonCompletionService().complete(
@@ -301,8 +348,8 @@ async def complete_lesson(
         time_spent_seconds=time_spent_seconds,
         daily_xp_total_before=daily_xp_total_before,
         daily_xp_target=daily_xp_target,
-        now=now,
-        completion_date=today,
+        now=client_completed_at,
+        completion_date=completion_date,
     )
 
     await beans_repo.upsert(new_beans)
@@ -318,7 +365,7 @@ async def complete_lesson(
             correct_count=correct_count,
             total_count=total_count,
             xp_awarded=completion.outcome.xp_awarded,
-            completed_at=now,
+            completed_at=client_completed_at,
             outcome=completion.outcome,
         )
     )

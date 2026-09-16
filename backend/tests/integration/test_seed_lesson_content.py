@@ -148,7 +148,9 @@ class TestSeedContentAcceptanceCriteria:
         for exercise in listening_exercises:
             audio_url = exercise.content["audio_url"]
             assert audio_url
-            # Documented, clearly-marked non-functional placeholder scheme
-            # (no real Cloudflare R2 credentials in this environment) --
-            # never a bare/empty string that would silently pass validation.
-            assert audio_url.startswith("https://r2-placeholder.buna.dev/audio/")
+            # Documented placeholder (no real Cloudflare R2 credentials in
+            # this environment) -- but a genuinely resolvable one, not a
+            # bare/empty string or a non-existent hostname: real devices
+            # download and play this for offline caching
+            # (010-offline-caching-and-sync-ui), so it has to actually work.
+            assert audio_url.startswith("https://www.kozco.com/")

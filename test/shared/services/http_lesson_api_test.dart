@@ -270,6 +270,10 @@ void main() {
         expect(body['correct_count'], 4);
         expect(body['total_count'], 4);
         expect(body['time_spent_seconds'], 30.0);
+        // Bolt 008 made this required backend-side; sent as an ISO 8601
+        // string so it round-trips through `DateTime.parse` unambiguously.
+        expect(body['client_completed_at'], isA<String>());
+        expect(DateTime.tryParse(body['client_completed_at'] as String), isNotNull);
         return http.Response(
           jsonEncode({
             'xp_earned': 20,
@@ -302,6 +306,7 @@ void main() {
         totalCount: 4,
         timeSpent: const Duration(seconds: 30),
         beansRemainingAtEnd: 5,
+        clientCompletedAt: DateTime.now().toUtc(),
       );
 
       expect(result.xpEarned, 20);
@@ -330,6 +335,7 @@ void main() {
           totalCount: 4,
           timeSpent: const Duration(seconds: 10),
           beansRemainingAtEnd: 0,
+          clientCompletedAt: DateTime.now().toUtc(),
         ),
         throwsA(isA<LessonApiException>().having((e) => e.errorCode, 'errorCode', 'beans_exhausted')),
       );

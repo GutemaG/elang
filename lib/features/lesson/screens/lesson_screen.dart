@@ -4,8 +4,11 @@ import '../../../shared/models/beans_status.dart';
 import '../../../shared/models/exercise.dart';
 import '../../../shared/models/lesson_content.dart';
 import '../../../shared/services/answer_feedback_player.dart';
+import '../../../shared/services/connectivity_monitor.dart';
 import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
+import '../../../shared/services/lesson_pack_store.dart';
+import '../../../shared/services/sync_engine.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
@@ -15,6 +18,13 @@ import '../widgets/choice_tile.dart';
 import '../widgets/out_of_beans_sheet.dart';
 import '../widgets/word_bank_builder.dart';
 import 'lesson_complete_screen.dart';
+
+/// Thrown by [LessonScreen]'s content loader when the device is offline
+/// and this lesson was never downloaded (009-offline-caching-and-sync-ui,
+/// story 002's "download required" edge case).
+class LessonNotDownloadedOfflineException implements Exception {
+  const LessonNotDownloadedOfflineException();
+}
 
 /// Story 002's lesson exercise screen — hosts all 3 exercise types
 /// (multiple-choice, listening, sentence-construction) against a single
@@ -30,12 +40,18 @@ class LessonScreen extends StatefulWidget {
     required this.lessonApi,
     required this.audioPlayer,
     required this.feedbackPlayer,
+    required this.connectivityMonitor,
+    required this.lessonPackStore,
+    required this.syncEngine,
   });
 
   final String lessonId;
   final LessonApi lessonApi;
   final LessonAudioPlayer audioPlayer;
   final AnswerFeedbackPlayer feedbackPlayer;
+  final ConnectivityMonitor connectivityMonitor;
+  final LessonPackStore lessonPackStore;
+  final SyncEngine syncEngine;
 
   @override
   State<LessonScreen> createState() => _LessonScreenState();
@@ -46,19 +62,45 @@ class _LessonScreenState extends State<LessonScreen> {
   LessonController? _controller;
   bool _outOfBeansModalShown = false;
 
+  /// The online/offline decision made once at load time by
+  /// [_loadLessonContent] -- threaded into [LessonController] and never
+  /// re-checked at completion time (see that controller's `startedOffline`
+  /// doc comment).
+  bool _startedOffline = false;
+
   @override
   void initState() {
     super.initState();
-    _future = widget.lessonApi.startLesson(widget.lessonId).then((content) {
+    _future = _loadLessonContent().then((content) {
       final controller = LessonController(
         lessonApi: widget.lessonApi,
         feedbackPlayer: widget.feedbackPlayer,
+        syncEngine: widget.syncEngine,
         content: content,
+        startedOffline: _startedOffline,
       );
       controller.addListener(_onControllerChanged);
       _controller = controller;
       return content;
     });
+  }
+
+  /// Online -> unchanged (fetches from `001-lesson-service`). Offline ->
+  /// falls back to a downloaded pack (009-offline-caching-and-sync-ui,
+  /// story 002); throws [LessonNotDownloadedOfflineException] if this
+  /// lesson was never downloaded, so the screen can show a distinct
+  /// "download this lesson first" state instead of a generic error.
+  Future<LessonContent> _loadLessonContent() async {
+    final online = await widget.connectivityMonitor.isOnline();
+    _startedOffline = !online;
+    if (online) {
+      return widget.lessonApi.startLesson(widget.lessonId);
+    }
+    final cached = await widget.lessonPackStore.load(widget.lessonId);
+    if (cached == null) {
+      throw const LessonNotDownloadedOfflineException();
+    }
+    return cached;
   }
 
   void _onControllerChanged() {
@@ -144,6 +186,9 @@ class _LessonScreenState extends State<LessonScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
+              if (snapshot.error is LessonNotDownloadedOfflineException) {
+                return const _DownloadRequiredState();
+              }
               return Center(
                 child: Text(
                   "Couldn't load this lesson.",
@@ -161,6 +206,52 @@ class _LessonScreenState extends State<LessonScreen> {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown when the device is offline and this lesson was never downloaded
+/// (009-offline-caching-and-sync-ui, story 002's edge case) -- a clear,
+/// actionable state rather than a generic error or an indefinite spinner.
+class _DownloadRequiredState extends StatelessWidget {
+  const _DownloadRequiredState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.spaceLg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.cloud_off,
+              size: 40,
+              color: AppColors.tertiaryBrand,
+            ),
+            const SizedBox(height: AppSpacing.spaceSm),
+            Text(
+              "You're offline",
+              style: AppTypography.headlineSm.copyWith(
+                color: AppColors.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.space2xs),
+            Text(
+              'Download this lesson while online to take it offline.',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySm.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.spaceMd),
+            TactileButton(
+              label: 'Go back',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
         ),
       ),
     );

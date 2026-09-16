@@ -30,6 +30,7 @@ void main() {
         totalCount: 2,
         timeSpent: const Duration(seconds: 20),
         beansRemainingAtEnd: 5,
+        clientCompletedAt: DateTime.now().toUtc(),
       );
 
       expect(result.crownLevel, 1);
@@ -66,6 +67,7 @@ void main() {
         totalCount: 2,
         timeSpent: const Duration(seconds: 20),
         beansRemainingAtEnd: 5,
+        clientCompletedAt: DateTime.now().toUtc(),
       );
 
       expect(result.crownLevel, startingCrown + 1);
@@ -89,6 +91,7 @@ void main() {
       totalCount: 1,
       timeSpent: const Duration(seconds: 5),
       beansRemainingAtEnd: 5,
+      clientCompletedAt: DateTime.now().toUtc(),
     );
     final atFive = await api.completeLesson(
       lessonId: completedNode.lessonId,
@@ -97,6 +100,7 @@ void main() {
       totalCount: 1,
       timeSpent: const Duration(seconds: 5),
       beansRemainingAtEnd: 5,
+      clientCompletedAt: DateTime.now().toUtc(),
     );
 
     expect(atFive.crownLevel, 5);
@@ -109,6 +113,7 @@ void main() {
       totalCount: 1,
       timeSpent: const Duration(seconds: 5),
       beansRemainingAtEnd: 5,
+      clientCompletedAt: DateTime.now().toUtc(),
     );
     // Already at the cap — no further "level up" flourish.
     expect(atFivePlus.crownLevel, 5);
@@ -131,6 +136,7 @@ void main() {
         totalCount: 1,
         timeSpent: const Duration(seconds: 5),
         beansRemainingAtEnd: 5,
+        clientCompletedAt: DateTime.now().toUtc(),
       );
       expect(first.streakIncreasedToday, isTrue);
       final streakAfterFirst = first.streakCount;
@@ -146,6 +152,7 @@ void main() {
         totalCount: 1,
         timeSpent: const Duration(seconds: 5),
         beansRemainingAtEnd: 5,
+        clientCompletedAt: DateTime.now().toUtc(),
       );
 
       expect(second.streakIncreasedToday, isFalse);
@@ -167,6 +174,7 @@ void main() {
       totalCount: 2,
       timeSpent: const Duration(seconds: 5),
       beansRemainingAtEnd: 3,
+      clientCompletedAt: DateTime.now().toUtc(),
     );
 
     final after = await api.getSkillTree();
@@ -187,6 +195,7 @@ void main() {
       totalCount: 2,
       timeSpent: const Duration(seconds: 5),
       beansRemainingAtEnd: 5,
+      clientCompletedAt: DateTime.now().toUtc(),
     );
     final retry = await api.completeLesson(
       lessonId: activeNode.lessonId,
@@ -195,6 +204,7 @@ void main() {
       totalCount: 2,
       timeSpent: const Duration(seconds: 5),
       beansRemainingAtEnd: 5,
+      clientCompletedAt: DateTime.now().toUtc(),
     );
 
     expect(first.xpEarned, greaterThan(0));
@@ -218,6 +228,7 @@ void main() {
       totalCount: 1,
       timeSpent: const Duration(seconds: 5),
       beansRemainingAtEnd: 0,
+      clientCompletedAt: DateTime.now().toUtc(),
     );
 
     final statusBefore = await api.getBeansStatus();

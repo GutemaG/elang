@@ -21,6 +21,7 @@ class CompleteLessonCall {
     required this.totalCount,
     required this.timeSpent,
     required this.beansRemainingAtEnd,
+    required this.clientCompletedAt,
   });
 
   final String lessonId;
@@ -29,12 +30,19 @@ class CompleteLessonCall {
   final int totalCount;
   final Duration timeSpent;
   final int beansRemainingAtEnd;
+  final DateTime clientCompletedAt;
 }
 
 class ControllableLessonApi implements LessonApi {
   SkillTreeResponse? skillTree;
   Object? skillTreeError;
   LessonContent? lessonContent;
+
+  /// When set, `startLesson` throws this instead of returning
+  /// [lessonContent] -- simulates a backend/network failure while
+  /// downloading a lesson pack (009-offline-caching-and-sync-ui's
+  /// download-failure edge case).
+  Object? startLessonError;
   LessonCompletionResult? completionResult;
 
   /// When set, `completeLesson` throws this instead of returning
@@ -42,6 +50,19 @@ class ControllableLessonApi implements LessonApi {
   /// completion (story 005's edge case). Cleared by the test between a
   /// failed attempt and a successful retry.
   Object? completeLessonError;
+
+  /// When set, `completeLesson` awaits this before returning/throwing --
+  /// lets a test hold a call "in flight" to observe transient states (e.g.
+  /// `SyncEngine`'s `syncing` status while a drain is actively running,
+  /// 010-offline-caching-and-sync-ui's story 004).
+  Future<void>? completeLessonGate;
+
+  /// Attempt ids that should fail (with [completeLessonError], or a
+  /// generic exception if that's unset) while every other attempt id
+  /// succeeds -- lets a test simulate "the 2nd of 3 queued entries fails"
+  /// without a single global failure flag affecting every call
+  /// (`SyncEngine`'s "resumes correctly after a partial failure" case).
+  Set<String> completeLessonFailingAttemptIds = {};
   BeansStatus? beansStatus;
   RefillResult? refillResult;
 
@@ -55,7 +76,10 @@ class ControllableLessonApi implements LessonApi {
   }
 
   @override
-  Future<LessonContent> startLesson(String lessonId) async => lessonContent!;
+  Future<LessonContent> startLesson(String lessonId) async {
+    if (startLessonError != null) throw startLessonError!;
+    return lessonContent!;
+  }
 
   @override
   Future<LessonCompletionResult> completeLesson({
@@ -65,6 +89,7 @@ class ControllableLessonApi implements LessonApi {
     required int totalCount,
     required Duration timeSpent,
     required int beansRemainingAtEnd,
+    required DateTime clientCompletedAt,
   }) async {
     completeLessonCalls.add(
       CompleteLessonCall(
@@ -74,8 +99,13 @@ class ControllableLessonApi implements LessonApi {
         totalCount: totalCount,
         timeSpent: timeSpent,
         beansRemainingAtEnd: beansRemainingAtEnd,
+        clientCompletedAt: clientCompletedAt,
       ),
     );
+    if (completeLessonGate != null) await completeLessonGate;
+    if (completeLessonFailingAttemptIds.contains(attemptId)) {
+      throw completeLessonError ?? Exception('forced failure for $attemptId');
+    }
     if (completeLessonError != null) throw completeLessonError!;
     return completionResult!;
   }

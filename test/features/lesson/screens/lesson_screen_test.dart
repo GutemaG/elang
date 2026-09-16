@@ -8,7 +8,13 @@
 // support tap-to-play/replay; local beans hitting 0 immediately shows the
 // out-of-beans modal instead of accepting further answers; refill resumes
 // the lesson; dismissing without refilling returns to the caller without
-// ever calling `completeLesson` (no partial XP).
+// ever calling `completeLesson` (no partial XP); and
+// (009-offline-caching-and-sync-ui, story 002) offline lesson-taking --
+// a downloaded pack plays from the cache while offline, and an
+// un-downloaded lesson shows a "download required" state instead of a
+// generic error; and (010-offline-caching-and-sync-ui, story 003) an
+// offline completion queues for sync instead of calling the network, and
+// stays queued even if connectivity returns mid-lesson.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,9 +25,20 @@ import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
 
+import 'package:elang/shared/services/sync_engine.dart';
+
 import '../../../helpers/controllable_lesson_api.dart';
 import '../../../helpers/fake_answer_feedback_player.dart';
+import '../../../helpers/fake_connectivity_monitor.dart';
 import '../../../helpers/fake_lesson_audio_player.dart';
+import '../../../helpers/fake_lesson_pack_store.dart';
+import '../../../helpers/fake_pending_sync_queue_store.dart';
+
+SyncEngine _syncEngineFor(ControllableLessonApi api) => SyncEngine(
+  lessonApi: api,
+  connectivityMonitor: FakeConnectivityMonitor(),
+  queueStore: FakePendingSyncQueueStore(),
+);
 
 const _multipleChoice = LessonContent(
   lessonId: 'lesson-mc',
@@ -156,6 +173,9 @@ Widget _wrapped(
       lessonApi: api,
       audioPlayer: FakeLessonAudioPlayer(),
       feedbackPlayer: feedbackPlayer ?? FakeAnswerFeedbackPlayer(),
+      connectivityMonitor: FakeConnectivityMonitor(),
+      lessonPackStore: FakeLessonPackStore(),
+      syncEngine: _syncEngineFor(api),
     ),
   );
 }
@@ -416,6 +436,9 @@ void main() {
           lessonApi: api,
           audioPlayer: audioPlayer,
           feedbackPlayer: FakeAnswerFeedbackPlayer(),
+          connectivityMonitor: FakeConnectivityMonitor(),
+          lessonPackStore: FakeLessonPackStore(),
+          syncEngine: _syncEngineFor(api),
         ),
       ),
     );
@@ -550,6 +573,9 @@ void main() {
                         lessonApi: api,
                         audioPlayer: FakeLessonAudioPlayer(),
                         feedbackPlayer: FakeAnswerFeedbackPlayer(),
+                        connectivityMonitor: FakeConnectivityMonitor(),
+                        lessonPackStore: FakeLessonPackStore(),
+                        syncEngine: _syncEngineFor(api),
                       ),
                     ),
                   ),
@@ -606,4 +632,201 @@ void main() {
     await tester.pump();
     expect(api.refillCallCount, 0);
   });
+
+  testWidgets(
+    'offline with a downloaded pack plays from the cache instead of the network',
+    (tester) async {
+      // No `lessonContent` set on the api -- `startLesson` would throw on
+      // the null-assert if the screen fell through to the network path,
+      // proving the cache was actually used.
+      final api = ControllableLessonApi();
+      final packStore = FakeLessonPackStore()..save(_multipleChoice);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            lessonId: 'lesson-mc',
+            lessonApi: api,
+            audioPlayer: FakeLessonAudioPlayer(),
+            feedbackPlayer: FakeAnswerFeedbackPlayer(),
+            connectivityMonitor: FakeConnectivityMonitor(online: false),
+            lessonPackStore: packStore,
+            syncEngine: _syncEngineFor(api),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('ሀ'), findsOneWidget);
+      expect(find.text('Check'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'offline with this lesson never downloaded shows a "download required" state, not a generic error',
+    (tester) async {
+      final api = ControllableLessonApi();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => LessonScreen(
+                        lessonId: 'lesson-mc',
+                        lessonApi: api,
+                        audioPlayer: FakeLessonAudioPlayer(),
+                        feedbackPlayer: FakeAnswerFeedbackPlayer(),
+                        connectivityMonitor: FakeConnectivityMonitor(online: false),
+                        lessonPackStore: FakeLessonPackStore(),
+                        syncEngine: _syncEngineFor(api),
+                      ),
+                    ),
+                  ),
+                  child: const Text('open lesson'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open lesson'));
+      await tester.pumpAndSettle();
+
+      expect(find.text("You're offline"), findsOneWidget);
+      expect(
+        find.text('Download this lesson while online to take it offline.'),
+        findsOneWidget,
+      );
+      expect(find.text("Couldn't load this lesson."), findsNothing);
+
+      await tester.tap(find.text('Go back'));
+      await tester.pumpAndSettle();
+
+      // Back to the caller, not stuck on the download-required state.
+      expect(find.text('open lesson'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'completing a lesson while offline queues it for sync instead of calling the network',
+    (tester) async {
+      final api = ControllableLessonApi();
+      final connectivity = FakeConnectivityMonitor(online: false);
+      final packStore = FakeLessonPackStore()..save(_multipleChoice);
+      final queueStore = FakePendingSyncQueueStore();
+      final engine = SyncEngine(
+        lessonApi: api,
+        connectivityMonitor: connectivity,
+        queueStore: queueStore,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            lessonId: 'lesson-mc',
+            lessonApi: api,
+            audioPlayer: FakeLessonAudioPlayer(),
+            feedbackPlayer: FakeAnswerFeedbackPlayer(),
+            connectivityMonitor: connectivity,
+            lessonPackStore: packStore,
+            syncEngine: engine,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Answer both exercises correctly and finish.
+      await tester.tap(find.text('ha'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      await tester.tap(find.text('le'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      // Never called the network endpoint at all.
+      expect(api.completeLessonCalls, isEmpty);
+      // Shows the pending-sync summary, not a completion error.
+      expect(find.text('Lesson Complete!'), findsOneWidget);
+      expect(find.text('SYNCS WHEN ONLINE'), findsOneWidget);
+      // ...and it actually landed in the queue.
+      expect(await queueStore.count(), 1);
+      expect(engine.pendingCount, 1);
+    },
+  );
+
+  testWidgets(
+    "a lesson started offline still queues at completion, even if connectivity returns mid-lesson (doesn't switch modes)",
+    (tester) async {
+      final api = ControllableLessonApi()
+        ..completeLessonError = Exception('still down when the queued sync ran');
+      final connectivity = FakeConnectivityMonitor(online: false);
+      final packStore = FakeLessonPackStore()..save(_multipleChoice);
+      final queueStore = FakePendingSyncQueueStore();
+      final engine = SyncEngine(
+        lessonApi: api,
+        connectivityMonitor: connectivity,
+        queueStore: queueStore,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            lessonId: 'lesson-mc',
+            lessonApi: api,
+            audioPlayer: FakeLessonAudioPlayer(),
+            feedbackPlayer: FakeAnswerFeedbackPlayer(),
+            connectivityMonitor: connectivity,
+            lessonPackStore: packStore,
+            syncEngine: engine,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Connectivity returns mid-lesson, *before* it's completed.
+      connectivity.setOnline(true);
+      await tester.pump();
+
+      await tester.tap(find.text('ha'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      await tester.tap(find.text('le'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      // Still shows the pending-sync summary (the offline mode from load
+      // time), not the "couldn't save your progress" error a direct
+      // online `completeLesson` call would have produced against this
+      // failing api.
+      expect(find.text('Lesson Complete!'), findsOneWidget);
+      expect(find.text('SYNCS WHEN ONLINE'), findsOneWidget);
+      expect(
+        find.text("Couldn't save your progress. Tap Continue to try again."),
+        findsNothing,
+      );
+      // The queued sync attempt (triggered by reconnecting) did run and
+      // fail, proving completion went through the queue/engine, not a
+      // bypassing direct call.
+      expect(api.completeLessonCalls, hasLength(1));
+      expect(engine.pendingCount, 1);
+
+      // The failed attempt scheduled a backoff retry timer -- dispose the
+      // engine so it doesn't outlive the test.
+      engine.dispose();
+    },
+  );
 }

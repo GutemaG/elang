@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends
 
 from app.application.lesson_use_cases import (
+    LessonContentResult,
     SkillTreeSummary,
     complete_lesson,
     get_beans_status,
@@ -21,7 +22,7 @@ from app.application.lesson_use_cases import (
     refill_beans,
 )
 from app.domain.entities import User
-from app.domain.lesson.entities import Exercise, Lesson
+from app.domain.lesson.entities import Exercise
 from app.domain.lesson.repositories import (
     LessonAttemptRepository,
     LessonRepository,
@@ -79,6 +80,7 @@ def _to_skill_tree_response(summary: SkillTreeSummary) -> SkillTreeResponse:
                 state=entry.state.value,
                 crown_level=entry.crown_level,
                 lesson_id=summary.lesson_id_by_skill.get(entry.skill.id),
+                content_version=summary.content_version_by_skill[entry.skill.id],
             )
             for entry in summary.entries
         ],
@@ -125,7 +127,8 @@ def _to_exercise_response(exercise: Exercise) -> ExerciseResponse:
     )
 
 
-def _to_lesson_content_response(lesson: Lesson) -> LessonContentResponse:
+def _to_lesson_content_response(result: LessonContentResult) -> LessonContentResponse:
+    lesson = result.lesson
     return LessonContentResponse(
         lesson=LessonSummaryResponse(
             id=lesson.id,
@@ -134,6 +137,7 @@ def _to_lesson_content_response(lesson: Lesson) -> LessonContentResponse:
             order_index=lesson.order_index,
         ),
         exercises=[_to_exercise_response(e) for e in lesson.exercises],
+        content_version=result.content_version,
     )
 
 
@@ -180,8 +184,8 @@ async def get_lesson_content_endpoint(
     carries its correct-answer data, so the client can grade instantly and
     locally with zero further network calls.
     """
-    lesson = await get_lesson_content(user.id, lesson_id, lesson_repo, skill_repo, progress_repo)
-    return _to_lesson_content_response(lesson)
+    result = await get_lesson_content(user.id, lesson_id, lesson_repo, skill_repo, progress_repo)
+    return _to_lesson_content_response(result)
 
 
 @router.get("/beans", response_model=BeansStatusResponse)
@@ -241,6 +245,8 @@ async def complete_lesson_endpoint(
         total_count=request.total_count,
         time_spent_seconds=request.time_spent_seconds,
         daily_xp_target=user.daily_xp_target.xp_per_day,
+        client_completed_at=request.client_completed_at,
+        account_created_at=user.created_at,
         lesson_repo=lesson_repo,
         skill_repo=skill_repo,
         progress_repo=progress_repo,
