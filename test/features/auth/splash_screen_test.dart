@@ -22,6 +22,7 @@ import 'package:elang/shared/models/session_state.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
 import 'package:elang/shared/services/session_repository.dart';
 
+import '../../helpers/fake_answer_feedback_player.dart';
 import '../../helpers/fake_lesson_audio_player.dart';
 import '../../helpers/in_memory_secure_storage_service.dart';
 
@@ -31,6 +32,7 @@ LessonDependencies _lessonDeps() => LessonDependencies(
   sessionRepository: SessionRepository(storage: InMemorySecureStorageService()),
   lessonApi: FakeLessonApi(latency: Duration.zero),
   audioPlayer: FakeLessonAudioPlayer(),
+  feedbackPlayer: FakeAnswerFeedbackPlayer(),
 );
 
 /// Advances past the splash screen's ~1.4s "brewing" animation so the

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../../../shared/models/exercise.dart';
 import '../../../shared/models/lesson_completion_result.dart';
 import '../../../shared/models/lesson_content.dart';
+import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/lesson_api.dart';
 
 /// How the current exercise's tile(s) should render.
@@ -18,13 +20,17 @@ enum TileFeedback { none, correct, incorrect }
 /// `002-auth-onboarding-ui`) so the concurrency/phase logic lives in one
 /// testable unit, separate from widget-tree code.
 class LessonController extends ChangeNotifier {
-  LessonController({required this._lessonApi, required LessonContent content})
-    : _content = content,
-      _beansRemaining = content.beansAtStart,
-      _queue = List<int>.generate(content.exercises.length, (i) => i),
-      _attemptId = _generateAttemptId();
+  LessonController({
+    required this._lessonApi,
+    required this._feedbackPlayer,
+    required LessonContent content,
+  }) : _content = content,
+       _beansRemaining = content.beansAtStart,
+       _queue = List<int>.generate(content.exercises.length, (i) => i),
+       _attemptId = _generateAttemptId();
 
   final LessonApi _lessonApi;
+  final AnswerFeedbackPlayer _feedbackPlayer;
   final LessonContent _content;
   final Stopwatch _stopwatch = Stopwatch()..start();
 
@@ -135,6 +141,7 @@ class LessonController extends ChangeNotifier {
     if (correct) {
       _correctCount++;
       _feedback = TileFeedback.correct;
+      unawaited(_feedbackPlayer.playCorrect());
     } else {
       _wrongCount++;
       _beansRemaining = (_beansRemaining - 1).clamp(0, _content.beansMax);
@@ -143,6 +150,7 @@ class LessonController extends ChangeNotifier {
       if (_beansRemaining <= 0) {
         _lessonInterrupted = true;
       }
+      unawaited(_feedbackPlayer.playIncorrect());
     }
     notifyListeners();
   }

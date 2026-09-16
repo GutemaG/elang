@@ -44,6 +44,7 @@ class BunaApp extends StatelessWidget {
         homeBuilder: (context) => SkillTreeDashboardScreen(
           lessonApi: lessonDependencies.lessonApi,
           audioPlayer: lessonDependencies.audioPlayer,
+          feedbackPlayer: lessonDependencies.feedbackPlayer,
         ),
       ),
     );

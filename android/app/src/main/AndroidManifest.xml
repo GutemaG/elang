@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Answer-grading feedback's vibration cue (see AnswerFeedbackPlayer). -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <application
         android:label="ethiolanglearning"
         android:name="${applicationName}"

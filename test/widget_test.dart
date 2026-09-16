@@ -11,6 +11,7 @@ import 'package:elang/features/lesson/lesson_dependencies.dart';
 import 'package:elang/main.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
 
+import 'helpers/fake_answer_feedback_player.dart';
 import 'helpers/fake_lesson_audio_player.dart';
 import 'helpers/in_memory_secure_storage_service.dart';
 
@@ -28,6 +29,7 @@ void main() {
           sessionRepository: authDependencies.sessionRepository,
           lessonApi: FakeLessonApi(latency: Duration.zero),
           audioPlayer: FakeLessonAudioPlayer(),
+          feedbackPlayer: FakeAnswerFeedbackPlayer(),
         ),
       ),
     );

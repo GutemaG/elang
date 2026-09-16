@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/skill_tree.dart';
+import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -24,10 +25,12 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     super.key,
     required this.lessonApi,
     required this.audioPlayer,
+    required this.feedbackPlayer,
   });
 
   final LessonApi lessonApi;
   final LessonAudioPlayer audioPlayer;
+  final AnswerFeedbackPlayer feedbackPlayer;
 
   @override
   State<SkillTreeDashboardScreen> createState() =>
@@ -56,6 +59,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           lessonId: node.lessonId,
           lessonApi: widget.lessonApi,
           audioPlayer: widget.audioPlayer,
+          feedbackPlayer: widget.feedbackPlayer,
         ),
       ),
     );

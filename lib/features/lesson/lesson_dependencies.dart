@@ -1,3 +1,4 @@
+import '../../shared/services/answer_feedback_player.dart';
 import '../../shared/services/http_lesson_api.dart';
 import '../../shared/services/lesson_api.dart';
 import '../../shared/services/lesson_audio_player.dart';
@@ -19,9 +20,12 @@ class LessonDependencies {
     required SessionRepository sessionRepository,
     LessonApi? lessonApi,
     LessonAudioPlayer? audioPlayer,
+    AnswerFeedbackPlayer? feedbackPlayer,
   }) : lessonApi = lessonApi ?? HttpLessonApi(sessionRepository: sessionRepository),
-       audioPlayer = audioPlayer ?? AudioplayersLessonAudioPlayer();
+       audioPlayer = audioPlayer ?? AudioplayersLessonAudioPlayer(),
+       feedbackPlayer = feedbackPlayer ?? SystemAnswerFeedbackPlayer();
 
   final LessonApi lessonApi;
   final LessonAudioPlayer audioPlayer;
+  final AnswerFeedbackPlayer feedbackPlayer;
 }

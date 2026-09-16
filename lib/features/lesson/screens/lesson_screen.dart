@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/beans_status.dart';
 import '../../../shared/models/exercise.dart';
 import '../../../shared/models/lesson_content.dart';
+import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -28,11 +29,13 @@ class LessonScreen extends StatefulWidget {
     required this.lessonId,
     required this.lessonApi,
     required this.audioPlayer,
+    required this.feedbackPlayer,
   });
 
   final String lessonId;
   final LessonApi lessonApi;
   final LessonAudioPlayer audioPlayer;
+  final AnswerFeedbackPlayer feedbackPlayer;
 
   @override
   State<LessonScreen> createState() => _LessonScreenState();
@@ -49,6 +52,7 @@ class _LessonScreenState extends State<LessonScreen> {
     _future = widget.lessonApi.startLesson(widget.lessonId).then((content) {
       final controller = LessonController(
         lessonApi: widget.lessonApi,
+        feedbackPlayer: widget.feedbackPlayer,
         content: content,
       );
       controller.addListener(_onControllerChanged);

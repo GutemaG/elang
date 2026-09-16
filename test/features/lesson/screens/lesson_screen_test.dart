@@ -20,6 +20,7 @@ import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
+import '../../../helpers/fake_answer_feedback_player.dart';
 import '../../../helpers/fake_lesson_audio_player.dart';
 
 const _multipleChoice = LessonContent(
@@ -144,12 +145,17 @@ ControllableLessonApi _apiFor(
     ..refillResult = const RefillSuccess(newBeans: 5, newAmoleBalance: 70);
 }
 
-Widget _wrapped(ControllableLessonApi api, {required String lessonId}) {
+Widget _wrapped(
+  ControllableLessonApi api, {
+  required String lessonId,
+  FakeAnswerFeedbackPlayer? feedbackPlayer,
+}) {
   return MaterialApp(
     home: LessonScreen(
       lessonId: lessonId,
       lessonApi: api,
       audioPlayer: FakeLessonAudioPlayer(),
+      feedbackPlayer: feedbackPlayer ?? FakeAnswerFeedbackPlayer(),
     ),
   );
 }
@@ -193,6 +199,39 @@ void main() {
 
       expect(find.byIcon(Icons.cancel), findsOneWidget);
       expect(find.text('4'), findsOneWidget); // beans decremented
+    },
+  );
+
+  testWidgets(
+    'grading plays a distinct sound/haptic cue for a correct vs. an incorrect answer',
+    (tester) async {
+      final api = _apiFor(_multipleChoice);
+      final feedbackPlayer = FakeAnswerFeedbackPlayer();
+      await tester.pumpWidget(
+        _wrapped(api, lessonId: 'lesson-mc', feedbackPlayer: feedbackPlayer),
+      );
+      await tester.pumpAndSettle();
+
+      expect(feedbackPlayer.cues, isEmpty);
+
+      // Exercise 1 (mc-1): wrong answer.
+      await tester.tap(find.text('le'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+
+      expect(feedbackPlayer.cues, [FeedbackCue.incorrect]);
+
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      // Exercise 2 (mc-2): correct answer.
+      await tester.tap(find.text('le'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+
+      expect(feedbackPlayer.cues, [FeedbackCue.incorrect, FeedbackCue.correct]);
     },
   );
 
@@ -376,6 +415,7 @@ void main() {
           lessonId: 'lesson-mixed',
           lessonApi: api,
           audioPlayer: audioPlayer,
+          feedbackPlayer: FakeAnswerFeedbackPlayer(),
         ),
       ),
     );
@@ -509,6 +549,7 @@ void main() {
                         lessonId: 'lesson-mc',
                         lessonApi: api,
                         audioPlayer: FakeLessonAudioPlayer(),
+                        feedbackPlayer: FakeAnswerFeedbackPlayer(),
                       ),
                     ),
                   ),

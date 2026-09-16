@@ -13,21 +13,25 @@ import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
 import 'package:elang/shared/models/skill_tree.dart';
+import 'package:elang/shared/services/answer_feedback_player.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
 import 'package:elang/shared/services/lesson_api.dart';
 import 'package:elang/shared/services/lesson_audio_player.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
+import '../../../helpers/fake_answer_feedback_player.dart';
 import '../../../helpers/fake_lesson_audio_player.dart';
 
 Widget _wrapped({
   required LessonApi lessonApi,
   required LessonAudioPlayer audioPlayer,
+  AnswerFeedbackPlayer? feedbackPlayer,
 }) {
   return MaterialApp(
     home: SkillTreeDashboardScreen(
       lessonApi: lessonApi,
       audioPlayer: audioPlayer,
+      feedbackPlayer: feedbackPlayer ?? FakeAnswerFeedbackPlayer(),
     ),
   );
 }
