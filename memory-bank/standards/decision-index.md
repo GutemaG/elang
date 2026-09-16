@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-15T13:00:03Z
-total_decisions: 2
+last_updated: 2026-09-16T12:30:00Z
+total_decisions: 5
 ---
 
 # Decision Index
@@ -17,6 +17,31 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-5: Exercise grading moves client-side; the account ledger stays server-bounded, not server-computed
+- **Status**: accepted
+- **Date**: 2026-09-16
+- **Bolt**: 005-lesson-engagement-service (001-lesson-service)
+- **Path**: `bolts/005-lesson-engagement-service/adr-5-client-side-grading-with-bounded-server-ledger.md`
+- **Supersedes**: ADR-4's "never expose `answer_key`" clause
+- **Summary**: ADR-4's server-side-only grading (via a per-exercise call) turned out to conflict with `requirements.md`'s "no network call per exercise" NFR. The lesson-content response now includes correct-answer data so the client grades instantly and locally; the account ledger (beans/XP) is still bounded server-side (can't exceed what the account's real beans balance would allow) and completion is idempotent on a client-generated `attempt_id`, so the integrity that matters (the persisted ledger) is preserved without a per-exercise round trip.
+- **Read when**: Implementing or modifying lesson-content/exercise API responses, the `/lessons/{id}/complete` endpoint, Beans/XP ledger logic, or reviewing any endpoint where a client-asserted lesson result is trusted (know the bound before assuming it's unchecked).
+
+### ADR-4: Lesson-content API responses never include correct answers — grading is server-side-only
+- **Status**: superseded by ADR-5
+- **Date**: 2026-09-16
+- **Bolt**: 004-lesson-content-service (001-lesson-service)
+- **Path**: `bolts/004-lesson-content-service/adr-4-server-side-only-answer-keys.md`
+- **Summary**: Whether the lesson-content payload includes correct answers or withholds them is a real API contract decision the next bolt depends on. `answer_key` is never serialized into any API response; grading is entirely server-side via a future `SubmitExerciseAnswer` use case reading the stored answer key directly.
+- **Read when**: Understanding why the lesson-content schema originally excluded answer data, and why that no longer holds (see ADR-5) — the per-exercise-call approach this ADR planned around was never actually built.
+
+### ADR-3: Single polymorphic `exercises` table with JSON `content`/`answer_key` columns
+- **Status**: accepted
+- **Date**: 2026-09-16
+- **Bolt**: 004-lesson-content-service (001-lesson-service)
+- **Path**: `bolts/004-lesson-content-service/adr-3-polymorphic-exercises-table.md`
+- **Summary**: The lesson engine's 3 fixed exercise types need different rendering/answer data but share the same surrounding shape. Model exercises as one `exercises` table with a `type` discriminator plus JSON `content`/`answer_key` columns, not per-type tables.
+- **Read when**: Implementing or modifying the `exercises` table/schema, adding a new exercise type, or working on any other closed, small-type-count polymorphic data model where per-type tables vs. a single JSON-backed table is a live question.
 
 ### ADR-2: Verify Sign in with Apple identity tokens via raw JWT-over-JWKS, no vendor SDK
 - **Status**: accepted

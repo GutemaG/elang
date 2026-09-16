@@ -51,6 +51,12 @@ dependencies:
   google_sign_in_web: ^1.1.3
   sign_in_with_apple: ^8.2.0
 
+  # Listening-exercise audio playback (006-core-lesson-loop-ui). Used only
+  # behind the `LessonAudioPlayer` interface (see
+  # `lib/shared/services/lesson_audio_player.dart`) so widget tests never
+  # touch its platform channel directly.
+  audioplayers: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

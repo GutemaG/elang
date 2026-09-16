@@ -64,3 +64,19 @@ class MissingCredentialsError(AuthDomainError):
     """
 
     error_code = "missing_credentials"
+
+
+class InvalidSessionError(AuthDomainError):
+    """A well-formed `Authorization` header carried a token that doesn't
+    resolve to a live session (unknown or expired).
+
+    Distinct from `/auth/session`'s `{"valid": false}` 200 response: that
+    endpoint's whole job is polling "is my session still good," so an
+    invalid answer is an expected outcome there. Every *other* authenticated
+    endpoint (starting with `004-lesson-content-service`'s lesson-content
+    endpoints, via the shared `get_current_user` dependency) treats an
+    invalid session as a request failure -- the caller should redirect to
+    sign-in, not silently proceed -- so it gets this 401 error instead.
+    """
+
+    error_code = "invalid_session"

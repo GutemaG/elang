@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/screens/home_placeholder_screen.dart';
 import 'auth_dependencies.dart';
 import 'screens/daily_goal_selection_screen.dart';
 import 'screens/language_selection_screen.dart';
@@ -25,7 +24,17 @@ abstract final class AuthRoutes {
 
   /// Builds the full route table for [MaterialApp.routes], with every auth
   /// screen wired to the shared [AuthDependencies] bag.
-  static Map<String, WidgetBuilder> build(AuthDependencies deps) {
+  ///
+  /// [homeBuilder] builds whatever the post-sign-in / valid-session
+  /// destination is — as of `006-core-lesson-loop-ui` that's the skill-tree
+  /// dashboard, not the old `HomePlaceholderScreen`. This route table stays
+  /// deliberately agnostic to what that destination is: `splash_screen.dart`
+  /// and `sign_in_screen.dart` only ever navigate to the [home] route
+  /// *name*, never to a concrete widget.
+  static Map<String, WidgetBuilder> build(
+    AuthDependencies deps, {
+    required WidgetBuilder homeBuilder,
+  }) {
     return {
       splash: (context) =>
           SplashScreen(authFlowController: deps.authFlowController),
@@ -41,7 +50,7 @@ abstract final class AuthRoutes {
         onboardingRepository: deps.onboardingRepository,
         sessionRepository: deps.sessionRepository,
       ),
-      home: (context) => const HomePlaceholderScreen(),
+      home: homeBuilder,
     };
   }
 }

@@ -36,7 +36,13 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.infrastructure.api.error_handlers import register_exception_handlers
+from app.infrastructure.api.lesson_routers import router as lesson_router
 from app.infrastructure.api.routers import router as auth_router
+
+# Imported for its side effect of registering the lesson-content bounded
+# context's tables onto the shared `Base.metadata`, so `Base.metadata.create_all`
+# below (used by every DB-backed test in the suite) creates them too.
+from app.infrastructure.db import lesson_models  # noqa: F401
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.session import get_db_session
 
@@ -114,6 +120,7 @@ def make_client(app_engine: AsyncEngine) -> Generator[Any]:
         app = FastAPI()
         register_exception_handlers(app)
         app.include_router(auth_router)
+        app.include_router(lesson_router)
         app.state.google_verifier = google_verifier
         app.state.apple_verifier = apple_verifier
         app.dependency_overrides[get_db_session] = override_get_db_session

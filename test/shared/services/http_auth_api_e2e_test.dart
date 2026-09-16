@@ -69,6 +69,9 @@
 //     by `sign_in_controller_native_test.dart`'s fakes; no native platform
 //     plugin can run in this test environment at all.
 
+@Tags(['e2e'])
+library;
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';

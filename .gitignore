@@ -50,3 +50,6 @@ app.*.map.json
 # Local secrets (never commit)
 .mcp.json
 backend/.env
+
+# specsmd tooling deps (fs-extra, js-yaml for bolt-complete.cjs)
+.specsmd/aidlc/scripts/node_modules/

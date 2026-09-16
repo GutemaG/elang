@@ -7,6 +7,12 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import get_settings
+
+# Imported for its side effect of registering the lesson-content bounded
+# context's tables onto the shared `Base.metadata` -- required for Alembic
+# autogenerate to see them, since `env.py` only imports `models.py` (the
+# auth bounded context) directly otherwise.
+from app.infrastructure.db import lesson_models  # noqa: F401
 from app.infrastructure.db.models import Base
 
 # this is the Alembic Config object, which provides

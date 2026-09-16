@@ -9,7 +9,18 @@ the `UserRepository`/`AuthSessionRepository` Protocols (DB) -- never
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from datetime import date
+
 from app.domain.entities import AuthSession, User
+from app.domain.lesson.entities import (
+    Lesson,
+    LessonAttempt,
+    Skill,
+    UserBeans,
+    UserSkillProgress,
+    UserStreak,
+)
 from app.domain.value_objects import AuthProvider
 
 
@@ -85,3 +96,122 @@ class FakeAuthSessionRepository:
 
     async def get_by_id(self, session_id: str) -> AuthSession | None:
         return self._sessions.get(session_id)
+
+
+class FakeSkillRepository:
+    """In-memory stand-in for `app.domain.lesson.repositories.SkillRepository`."""
+
+    def __init__(self, skills: list[Skill] | None = None) -> None:
+        self._skills = list(skills or [])
+
+    async def list_all(self) -> list[Skill]:
+        return list(self._skills)
+
+
+class FakeLessonRepository:
+    """In-memory stand-in for `app.domain.lesson.repositories.LessonRepository`."""
+
+    def __init__(self, lessons: list[Lesson] | None = None) -> None:
+        self._lessons: dict[str, Lesson] = {lesson.id: lesson for lesson in (lessons or [])}
+
+    async def get_by_id(self, lesson_id: str) -> Lesson | None:
+        return self._lessons.get(lesson_id)
+
+
+class FakeLessonRepositoryWithSkillIndex(FakeLessonRepository):
+    """`FakeLessonRepository` extended with `list_lesson_ids_by_skill`
+    (bolt 005) -- a separate class so bolt 004's tests exercising the
+    plain `FakeLessonRepository` contract are untouched.
+    """
+
+    async def list_lesson_ids_by_skill(self, skill_id: str) -> tuple[str, ...]:
+        matching = [lesson for lesson in self._lessons.values() if lesson.skill_id == skill_id]
+        matching.sort(key=lambda lesson: lesson.order_index)
+        return tuple(lesson.id for lesson in matching)
+
+    async def list_lesson_ids_by_skills(
+        self, skill_ids: Sequence[str]
+    ) -> dict[str, tuple[str, ...]]:
+        result: dict[str, tuple[str, ...]] = {}
+        for skill_id in set(skill_ids):
+            lesson_ids = await self.list_lesson_ids_by_skill(skill_id)
+            if lesson_ids:
+                result[skill_id] = lesson_ids
+        return result
+
+
+class FakeUserSkillProgressRepository:
+    """In-memory stand-in for
+    `app.domain.lesson.repositories.UserSkillProgressRepository`.
+    """
+
+    def __init__(self, progress_rows: list[UserSkillProgress] | None = None) -> None:
+        self._rows: dict[tuple[str, str], UserSkillProgress] = {
+            (row.user_id, row.skill_id): row for row in (progress_rows or [])
+        }
+
+    async def list_by_user(self, user_id: str) -> list[UserSkillProgress]:
+        return [row for row in self._rows.values() if row.user_id == user_id]
+
+    async def get(self, user_id: str, skill_id: str) -> UserSkillProgress | None:
+        return self._rows.get((user_id, skill_id))
+
+    async def upsert(self, progress: UserSkillProgress) -> None:
+        self._rows[(progress.user_id, progress.skill_id)] = progress
+
+
+class FakeUserBeansRepository:
+    """In-memory stand-in for
+    `app.domain.lesson.repositories.UserBeansRepository`.
+    """
+
+    def __init__(self, beans: list[UserBeans] | None = None) -> None:
+        self._rows: dict[str, UserBeans] = {b.user_id: b for b in (beans or [])}
+
+    async def get(self, user_id: str) -> UserBeans | None:
+        return self._rows.get(user_id)
+
+    async def upsert(self, beans: UserBeans) -> None:
+        self._rows[beans.user_id] = beans
+
+
+class FakeUserStreakRepository:
+    """In-memory stand-in for
+    `app.domain.lesson.repositories.UserStreakRepository`.
+    """
+
+    def __init__(self, streaks: list[UserStreak] | None = None) -> None:
+        self._rows: dict[str, UserStreak] = {s.user_id: s for s in (streaks or [])}
+
+    async def get(self, user_id: str) -> UserStreak | None:
+        return self._rows.get(user_id)
+
+    async def upsert(self, streak: UserStreak) -> None:
+        self._rows[streak.user_id] = streak
+
+
+class FakeLessonAttemptRepository:
+    """In-memory stand-in for
+    `app.domain.lesson.repositories.LessonAttemptRepository`.
+    """
+
+    def __init__(self, attempts: list[LessonAttempt] | None = None) -> None:
+        self._rows: dict[str, LessonAttempt] = {a.id: a for a in (attempts or [])}
+        self.add_calls = 0
+
+    async def get(self, attempt_id: str) -> LessonAttempt | None:
+        return self._rows.get(attempt_id)
+
+    async def add(self, attempt: LessonAttempt) -> None:
+        self.add_calls += 1
+        self._rows[attempt.id] = attempt
+
+    async def sum_xp_by_user(self, user_id: str) -> int:
+        return sum(a.xp_awarded for a in self._rows.values() if a.user_id == user_id)
+
+    async def sum_xp_by_user_between(self, user_id: str, start: date, end: date) -> int:
+        return sum(
+            a.xp_awarded
+            for a in self._rows.values()
+            if a.user_id == user_id and start <= a.completed_at.date() < end
+        )

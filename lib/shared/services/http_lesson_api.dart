@@ -1,0 +1,302 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import '../config/auth_config.dart';
+import '../models/beans_status.dart';
+import '../models/exercise.dart';
+import '../models/lesson_completion_result.dart';
+import '../models/lesson_content.dart';
+import '../models/skill_tree.dart';
+import 'lesson_api.dart';
+import 'lesson_api_exception.dart';
+import 'session_repository.dart';
+
+/// Real, HTTP-backed [LessonApi] implementation calling the now-complete
+/// `001-lesson-service` endpoints (bolts 004/005): `GET /skill-tree`,
+/// `GET /lessons/{id}`, `GET /beans`, `POST /beans/refill`,
+/// `POST /lessons/{id}/complete`.
+///
+/// Every call is authenticated -- unlike [HttpAuthApi] (which has no
+/// session yet to attach), this reads the current token from
+/// [SessionRepository] fresh on every request rather than once at
+/// construction, since this class is built at app start-up, before any
+/// sign-in has happened (see `lesson_dependencies.dart`).
+///
+/// Never logs tokens, request bodies, or response bodies -- only, at most,
+/// an HTTP status code -- per `coding-standards.md`'s logging discipline.
+class HttpLessonApi implements LessonApi {
+  HttpLessonApi({
+    required SessionRepository sessionRepository,
+    http.Client? client,
+    String? baseUrl,
+  }) : _sessionRepository = sessionRepository,
+       _client = client ?? http.Client(),
+       _baseUrl = baseUrl ?? AuthConfig.apiBaseUrl;
+
+  final SessionRepository _sessionRepository;
+  final http.Client _client;
+  final String _baseUrl;
+
+  Future<Map<String, String>> _authHeaders() async {
+    final session = await _sessionRepository.getSessionState();
+    final token = session.token;
+    if (token == null || token.isEmpty) {
+      // Unreachable in practice -- the lesson feature is only ever reached
+      // via the authenticated `home` route -- but a cheap, correct guard
+      // beats sending a request guaranteed to 401 (Technical Design's
+      // Decision 4).
+      throw const LessonApiException(
+        'No session token available',
+        errorCode: 'missing_credentials',
+      );
+    }
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
+  Future<http.Response> _get(String path) async {
+    final headers = await _authHeaders();
+    try {
+      return await _client.get(Uri.parse('$_baseUrl$path'), headers: headers);
+    } on Object {
+      throw const LessonApiException('Network request failed');
+    }
+  }
+
+  Future<http.Response> _post(String path, {Map<String, dynamic>? body}) async {
+    final headers = await _authHeaders();
+    try {
+      return await _client.post(
+        Uri.parse('$_baseUrl$path'),
+        headers: headers,
+        body: body == null ? null : jsonEncode(body),
+      );
+    } on Object {
+      throw const LessonApiException('Network request failed');
+    }
+  }
+
+  /// Decodes a 200 JSON body, or throws [LessonApiException] for any other
+  /// status (parsing the backend's `{error_code, message}` shape when
+  /// present).
+  Map<String, dynamic> _decodeOrThrow(http.Response response) {
+    if (response.statusCode != 200) {
+      throw _errorFrom(response);
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const LessonApiException('Malformed response body');
+    }
+    return decoded;
+  }
+
+  LessonApiException _errorFrom(http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        final errorCode = decoded['error_code'];
+        final message = decoded['message'];
+        return LessonApiException(
+          message is String ? message : 'Request failed (${response.statusCode})',
+          errorCode: errorCode is String ? errorCode : null,
+        );
+      }
+    } on FormatException {
+      // Fall through to the generic exception below.
+    }
+    return LessonApiException('Request failed (${response.statusCode})');
+  }
+
+  @override
+  Future<SkillTreeResponse> getSkillTree() async {
+    final json = _decodeOrThrow(await _get('/api/v1/skill-tree'));
+    final skills = (json['skills'] as List).cast<Map<String, dynamic>>();
+    return SkillTreeResponse(
+      unitTitle: json['unit_title'] as String,
+      unitSubtitle: json['unit_subtitle'] as String,
+      nodes: skills.map(_toSkillTreeNode).toList(),
+      streakCount: json['streak_count'] as int,
+      beans: json['beans'] as int,
+      beansMax: json['beans_max'] as int,
+      totalXp: json['total_xp'] as int,
+    );
+  }
+
+  SkillTreeNode _toSkillTreeNode(Map<String, dynamic> json) {
+    return SkillTreeNode(
+      id: json['id'] as String,
+      // Falls back to the node's own id only if the backend somehow has no
+      // lesson for this skill (shouldn't happen with real content) -- an
+      // empty lessonId would make the node untappable in a confusing way,
+      // so this at least fails predictably (a 404 on tap) rather than
+      // silently.
+      lessonId: (json['lesson_id'] as String?) ?? json['id'] as String,
+      title: json['title'] as String,
+      // No backend equivalent exists for this cosmetic tagline (`Skill`
+      // has no subtitle column) -- confirmed unused by every widget that
+      // renders a `SkillTreeNode` (see implementation-plan.md's Decision
+      // 1), so an empty string has zero visible effect.
+      subtitle: '',
+      state: _toSkillNodeState(json['state'] as String),
+      crownLevel: json['crown_level'] as int,
+    );
+  }
+
+  SkillNodeState _toSkillNodeState(String state) => switch (state) {
+    'locked' => SkillNodeState.locked,
+    'active' => SkillNodeState.active,
+    'completed' => SkillNodeState.completed,
+    _ => throw LessonApiException('Unknown skill state: $state'),
+  };
+
+  @override
+  Future<LessonContent> startLesson(String lessonId) async {
+    // Two parallel requests, not one -- the lesson-content endpoint has no
+    // beans field (bolt 004's contract never included it); merged into one
+    // `LessonContent` here so no caller needs to know it took two calls.
+    // Still satisfies the Performance NFR: both happen once, at lesson
+    // start, never repeated per exercise (Technical Design's Decision 2).
+    final results = await Future.wait([
+      _get('/api/v1/lessons/$lessonId'),
+      _get('/api/v1/beans'),
+    ]);
+    final lessonJson = _decodeOrThrow(results[0]);
+    final beansJson = _decodeOrThrow(results[1]);
+
+    final lesson = lessonJson['lesson'] as Map<String, dynamic>;
+    final exercises = (lessonJson['exercises'] as List)
+        .cast<Map<String, dynamic>>()
+        .map(_toExercise)
+        .toList();
+
+    return LessonContent(
+      lessonId: lesson['id'] as String,
+      skillId: lesson['skill_id'] as String,
+      title: lesson['title'] as String,
+      exercises: exercises,
+      beansAtStart: beansJson['beans'] as int,
+      beansMax: beansJson['beans_max'] as int,
+    );
+  }
+
+  Exercise _toExercise(Map<String, dynamic> json) {
+    final type = json['type'] as String;
+    final id = json['id'] as String;
+    switch (type) {
+      case 'multiple_choice':
+        final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
+        final correctChoiceId = json['correct_choice_id'] as String;
+        return MultipleChoiceExercise(
+          id: id,
+          // The backend's seed content asks "How do you say 'X'?" (an
+          // English instruction) with Amharic answer choices -- the
+          // reverse direction from the original fake's Amharic-prompt/
+          // English-gloss design. Mapped onto `prompt` (the main, large
+          // text) rather than `promptTranslation` so it still reads as a
+          // complete, sensible question; `promptTranslation` is left
+          // empty since the backend has no second text field to supply
+          // it from. Flagged here per the story's "explicit finding, not
+          // silently patched" guidance -- a real content-authoring
+          // decision, not a bug.
+          prompt: json['prompt'] as String,
+          promptTranslation: '',
+          options: choices.map((c) => c['text'] as String).toList(),
+          correctOptionIndex: choices.indexWhere((c) => c['id'] == correctChoiceId),
+        );
+      case 'listening':
+        final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
+        final correctChoiceId = json['correct_choice_id'] as String;
+        return ListeningExercise(
+          id: id,
+          audioUrl: json['audio_url'] as String,
+          instruction: json['prompt'] as String,
+          options: choices.map((c) => c['text'] as String).toList(),
+          correctOptionIndex: choices.indexWhere((c) => c['id'] == correctChoiceId),
+        );
+      case 'sentence_construction':
+        final wordBank = (json['word_bank'] as List).cast<Map<String, dynamic>>();
+        final textById = {
+          for (final tile in wordBank) tile['id'] as String: tile['text'] as String,
+        };
+        final correctSequence = (json['correct_sequence'] as List).cast<String>();
+        return SentenceConstructionExercise(
+          id: id,
+          promptTranslation: json['prompt'] as String,
+          wordBank: wordBank.map((tile) => tile['text'] as String).toList(),
+          correctSentence: correctSequence.map((tileId) => textById[tileId]!).toList(),
+        );
+      default:
+        throw LessonApiException('Unknown exercise type: $type');
+    }
+  }
+
+  @override
+  Future<LessonCompletionResult> completeLesson({
+    required String lessonId,
+    required String attemptId,
+    required int correctCount,
+    required int totalCount,
+    required Duration timeSpent,
+    required int beansRemainingAtEnd,
+  }) async {
+    final json = _decodeOrThrow(
+      await _post(
+        '/api/v1/lessons/$lessonId/complete',
+        body: {
+          'attempt_id': attemptId,
+          'correct_count': correctCount,
+          'total_count': totalCount,
+          'time_spent_seconds': timeSpent.inMilliseconds / 1000,
+        },
+      ),
+    );
+    return LessonCompletionResult(
+      xpEarned: json['xp_earned'] as int,
+      dailyXpTotal: json['daily_xp_total'] as int,
+      dailyXpTarget: json['daily_xp_target'] as int,
+      streakCount: json['streak_count'] as int,
+      streakIncreasedToday: json['streak_increased_today'] as bool,
+      accuracyPercent: json['accuracy_percent'] as int,
+      correctCount: json['correct_count'] as int,
+      totalCount: json['total_count'] as int,
+      timeSpent: timeSpent,
+      skillUnlockedTitle: json['skill_unlocked_title'] as String?,
+      crownLevel: json['crown_level'] as int?,
+      crownLeveledUp: json['crown_leveled_up'] as bool,
+      streakFreezeUnlocked: json['streak_freeze_unlocked'] as bool,
+    );
+  }
+
+  @override
+  Future<BeansStatus> getBeansStatus() async {
+    final json = _decodeOrThrow(await _get('/api/v1/beans'));
+    final nextBeanAtRaw = json['next_bean_at'];
+    return BeansStatus(
+      beans: json['beans'] as int,
+      beansMax: json['beans_max'] as int,
+      nextBeanAt: nextBeanAtRaw is String ? DateTime.tryParse(nextBeanAtRaw) : null,
+      regenMinutesPerBean: json['regen_minutes_per_bean'] as int,
+      amoleBalance: json['amole_balance'] as int,
+      refillCostAmole: json['refill_cost_amole'] as int,
+    );
+  }
+
+  @override
+  Future<RefillResult> refillBeansWithAmole() async {
+    final response = await _post('/api/v1/beans/refill');
+    if (response.statusCode == 422) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic> && decoded['error_code'] == 'insufficient_amole') {
+        return const RefillFailure(RefillFailureReason.insufficientAmole);
+      }
+    }
+    final json = _decodeOrThrow(response);
+    return RefillSuccess(
+      newBeans: json['beans'] as int,
+      newAmoleBalance: json['amole_balance'] as int,
+    );
+  }
+}

@@ -2,11 +2,11 @@
 id: 005-real-backend-integration-and-native-sdks
 unit: 002-auth-onboarding-ui
 intent: 001-auth-onboarding
-status: ready
+status: implemented
 priority: must
 created: 2026-09-15T14:00:58Z
 assigned_bolt: 003-auth-onboarding-ui
-implemented: false
+implemented: true
 ---
 
 # Story: 005-real-backend-integration-and-native-sdks
@@ -19,11 +19,13 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** `001-auth-service` is now fully implemented and tested, **When** the app calls `signInWithGoogle`/`signInWithApple`, **Then** a real `AuthApi` implementation calls `POST /api/v1/auth/google` / `/apple` over HTTP, matching the exact request/response/error shapes in `ddd-02-technical-design.md`
-- [ ] **Given** the backend returns a success response, **When** the client receives it, **Then** the session token is persisted via `SessionRepository` exactly as the mocked flow already does, and the user is routed home
-- [ ] **Given** the backend returns one of the 4 documented error codes (`invalid_token`, `expired_token`, `invalid_pending_selection`, `provider_unreachable`) or a network-level failure (timeout, no connectivity), **When** the client receives it, **Then** it maps to the existing `AuthFailure`/`AuthFailureReason` sealed type already consumed by `SignInController` — no screen/controller code should need to change, only the `AuthApi` implementation (per the Stage 2 plan's explicit design intent)
-- [ ] **Given** the Google Sign-In and Sign in with Apple Flutter plugins are added, **When** a user taps a provider button, **Then** the real native OAuth flow launches (not a placeholder token) and its result (ID token / identity token, or cancellation) feeds into the real `AuthApi` call
-- [ ] **Given** no real OAuth client IDs/Team ID/Key ID exist yet in this environment, **When** the native SDKs are wired, **Then** their required configuration values are read from placeholders (e.g. a `.env`-equivalent or platform config file) analogous to the backend's `.env.example` — not hardcoded, and not blocking this story's completion on having real secrets
+- [x] **Given** `001-auth-service` is now fully implemented and tested, **When** the app calls `signInWithGoogle`/`signInWithApple`, **Then** a real `AuthApi` implementation calls `POST /api/v1/auth/google` / `/apple` over HTTP, matching the exact request/response/error shapes in `ddd-02-technical-design.md`
+- [x] **Given** the backend returns a success response, **When** the client receives it, **Then** the session token is persisted via `SessionRepository` exactly as the mocked flow already does, and the user is routed home
+- [x] **Given** the backend returns one of the 4 documented error codes (`invalid_token`, `expired_token`, `invalid_pending_selection`, `provider_unreachable`) or a network-level failure (timeout, no connectivity), **When** the client receives it, **Then** it maps to the existing `AuthFailure`/`AuthFailureReason` sealed type already consumed by `SignInController` — no screen/controller code should need to change, only the `AuthApi` implementation (per the Stage 2 plan's explicit design intent)
+- [x] **Given** the Google Sign-In and Sign in with Apple Flutter plugins are added, **When** a user taps a provider button, **Then** the real native OAuth flow launches (not a placeholder token) and its result (ID token / identity token, or cancellation) feeds into the real `AuthApi` call
+- [x] **Given** no real OAuth client IDs/Team ID/Key ID exist yet in this environment, **When** the native SDKs are wired, **Then** their required configuration values are read from placeholders (e.g. a `.env`-equivalent or platform config file) analogous to the backend's `.env.example` — not hardcoded, and not blocking this story's completion on having real secrets
+
+**Post-implementation note (2026-09-15)**: real Google OAuth credentials were subsequently configured by the user and the full flow was verified working end-to-end on both Flutter Web (via `GoogleWebSignInButton`'s rendered-button flow, added to satisfy GIS's Web restriction — see `implementation-walkthrough.md`) and a physical Android device (via `adb reverse` for local backend reachability). CORS middleware was added to the backend to support the Web flow. See root `README.md` "Known gotchas" for details.
 
 ## Technical Notes
 

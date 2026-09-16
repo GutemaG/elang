@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.infrastructure.api.error_handlers import register_exception_handlers
+from app.infrastructure.api.lesson_routers import router as lesson_router
 from app.infrastructure.api.routers import router as auth_router
 from app.infrastructure.external.apple_verifier import AppleTokenVerifier
 from app.infrastructure.external.google_verifier import GoogleTokenVerifier
@@ -53,9 +54,7 @@ def create_app() -> FastAPI:
         # run to run, so pin-listing origins is impractical locally. Only
         # active in `environment == "local"`; staging/production rely
         # solely on `cors_allowed_origins` above.
-        allow_origin_regex=r"http://localhost:\d+"
-        if settings.environment == "local"
-        else None,
+        allow_origin_regex=r"http://localhost:\d+" if settings.environment == "local" else None,
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -63,6 +62,7 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
     app.include_router(auth_router)
+    app.include_router(lesson_router)
 
     @app.get("/health", tags=["ops"])
     async def health() -> dict[str, str]:

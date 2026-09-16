@@ -9,10 +9,13 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from fastapi import Depends, Request
+from fastapi import Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.use_cases import validate_session
 from app.config import get_settings
+from app.domain.entities import User
+from app.domain.exceptions import InvalidSessionError, MissingCredentialsError
 from app.domain.services import (
     AuthenticationService,
     OnboardingAttachmentPolicy,
@@ -47,3 +50,30 @@ async def get_session_validation_service(
     user_repo = SqlAlchemyUserRepository(session)
     session_repo = SqlAlchemyAuthSessionRepository(session)
     return SessionValidationService(session_repo=session_repo, user_repo=user_repo)
+
+
+async def get_current_user(
+    authorization: str | None = Header(default=None),
+    service: SessionValidationService = Depends(get_session_validation_service),
+) -> User:
+    """Shared authenticated-endpoint dependency, reusing the exact same
+    `SessionValidationService` `001-auth-service` already exercises via
+    `/auth/session` -- no new auth mechanism, per
+    `004-lesson-content-service`'s Technical Design (Security Design).
+
+    Unlike `/auth/session` (whose job is *polling* validity, so an invalid
+    token is a normal `200 {"valid": false}` outcome), every other
+    authenticated endpoint treats an invalid/expired/unknown token as a
+    request failure: `InvalidSessionError` (401), distinct from
+    `MissingCredentialsError` (401) for a missing/malformed header.
+    """
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise MissingCredentialsError("Missing or malformed Authorization header")
+    token_value = authorization.split(" ", 1)[1].strip()
+    if not token_value:
+        raise MissingCredentialsError("Missing or malformed Authorization header")
+
+    user = await validate_session(service, token_value)
+    if user is None:
+        raise InvalidSessionError("Session token is unknown or expired")
+    return user

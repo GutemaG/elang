@@ -16,10 +16,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:elang/features/auth/auth_dependencies.dart';
 import 'package:elang/features/auth/auth_flow_controller.dart';
 import 'package:elang/features/auth/screens/splash_screen.dart';
+import 'package:elang/features/lesson/lesson_dependencies.dart';
 import 'package:elang/main.dart';
 import 'package:elang/shared/models/session_state.dart';
+import 'package:elang/shared/services/fake_lesson_api.dart';
+import 'package:elang/shared/services/session_repository.dart';
 
+import '../../helpers/fake_lesson_audio_player.dart';
 import '../../helpers/in_memory_secure_storage_service.dart';
+
+LessonDependencies _lessonDeps() => LessonDependencies(
+  // Unused (a fake `lessonApi` is supplied below), but required by the
+  // constructor -- only `HttpLessonApi`'s default would ever read it.
+  sessionRepository: SessionRepository(storage: InMemorySecureStorageService()),
+  lessonApi: FakeLessonApi(latency: Duration.zero),
+  audioPlayer: FakeLessonAudioPlayer(),
+);
 
 /// Advances past the splash screen's ~1.4s "brewing" animation so the
 /// navigation that's gated on both the animation *and* the session-check
@@ -59,12 +71,14 @@ void main() {
     (tester) async {
       final deps = AuthDependencies(storage: InMemorySecureStorageService());
 
-      await tester.pumpWidget(BunaApp(authDependencies: deps));
+      await tester.pumpWidget(
+        BunaApp(authDependencies: deps, lessonDependencies: _lessonDeps()),
+      );
       await _finishSplashAnimation(tester);
 
-      // Onboarding carousel content, not home.
+      // Onboarding carousel content, not the dashboard.
       expect(find.text('Bite-Sized Amharic'), findsOneWidget);
-      expect(find.text('Home (out of scope for this bolt)'), findsNothing);
+      expect(find.text('Unit 1: Foundations & Greetings'), findsNothing);
     },
   );
 
@@ -81,11 +95,13 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(BunaApp(authDependencies: deps));
+      await tester.pumpWidget(
+        BunaApp(authDependencies: deps, lessonDependencies: _lessonDeps()),
+      );
       await _finishSplashAnimation(tester);
 
       expect(find.text('Bite-Sized Amharic'), findsOneWidget);
-      expect(find.text('Home (out of scope for this bolt)'), findsNothing);
+      expect(find.text('Unit 1: Foundations & Greetings'), findsNothing);
     },
   );
 
@@ -101,10 +117,12 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(BunaApp(authDependencies: deps));
+      await tester.pumpWidget(
+        BunaApp(authDependencies: deps, lessonDependencies: _lessonDeps()),
+      );
       await _finishSplashAnimation(tester);
 
-      expect(find.text('Home (out of scope for this bolt)'), findsOneWidget);
+      expect(find.text('Unit 1: Foundations & Greetings'), findsOneWidget);
       expect(find.text('Bite-Sized Amharic'), findsNothing);
     },
   );

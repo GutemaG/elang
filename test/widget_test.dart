@@ -7,18 +7,27 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/auth/auth_dependencies.dart';
+import 'package:elang/features/lesson/lesson_dependencies.dart';
 import 'package:elang/main.dart';
+import 'package:elang/shared/services/fake_lesson_api.dart';
 
+import 'helpers/fake_lesson_audio_player.dart';
 import 'helpers/in_memory_secure_storage_service.dart';
 
 void main() {
   testWidgets('BunaApp boots into the splash screen', (
     WidgetTester tester,
   ) async {
+    final authDependencies = AuthDependencies(
+      storage: InMemorySecureStorageService(),
+    );
     await tester.pumpWidget(
       BunaApp(
-        authDependencies: AuthDependencies(
-          storage: InMemorySecureStorageService(),
+        authDependencies: authDependencies,
+        lessonDependencies: LessonDependencies(
+          sessionRepository: authDependencies.sessionRepository,
+          lessonApi: FakeLessonApi(latency: Duration.zero),
+          audioPlayer: FakeLessonAudioPlayer(),
         ),
       ),
     );
