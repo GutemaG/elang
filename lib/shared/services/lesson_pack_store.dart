@@ -214,6 +214,14 @@ class SqfliteLessonPackStore implements LessonPackStore {
       'wordBank': e.wordBank,
       'correctSentence': e.correctSentence,
     },
+    MatchPairsExercise e => {
+      'type': 'match_pairs',
+      'id': e.id,
+      'prompt': e.prompt,
+      'leftTiles': e.leftTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
+      'rightTiles': e.rightTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
+      'correctPairs': e.correctPairs,
+    },
   };
 
   Exercise _exerciseFromJson(Map<String, dynamic> json) {
@@ -240,6 +248,20 @@ class SqfliteLessonPackStore implements LessonPackStore {
           promptTranslation: json['promptTranslation'] as String,
           wordBank: (json['wordBank'] as List).cast<String>(),
           correctSentence: (json['correctSentence'] as List).cast<String>(),
+        );
+      case 'match_pairs':
+        final leftTiles = (json['leftTiles'] as List).cast<Map<String, dynamic>>();
+        final rightTiles = (json['rightTiles'] as List).cast<Map<String, dynamic>>();
+        return MatchPairsExercise(
+          id: json['id'] as String,
+          prompt: json['prompt'] as String,
+          leftTiles: leftTiles
+              .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+              .toList(),
+          rightTiles: rightTiles
+              .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+              .toList(),
+          correctPairs: (json['correctPairs'] as Map).cast<String, String>(),
         );
       default:
         throw StateError('Unknown exercise type in cached pack: ${json['type']}');

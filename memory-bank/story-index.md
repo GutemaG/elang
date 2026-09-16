@@ -1,9 +1,9 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 26
-- **Generated**: 26
-- **Completed**: 26
+- **Total stories**: 29
+- **Generated**: 29
+- **Completed**: 29
 - **Last updated**: 2026-09-17
 
 ---
@@ -60,6 +60,18 @@
 - [x] **004-connectivity-and-sync-status-indicator** (offline-caching-and-sync-ui): Connectivity/sync status indicator - Should - ✅ COMPLETED (bolt 010-offline-caching-and-sync-ui)
 - [x] **005-download-management-screen** (offline-caching-and-sync-ui): Manage downloaded packs (list/size/delete) - Could - ✅ COMPLETED (bolt 010-offline-caching-and-sync-ui)
 
+### 004-match-pairs-exercise-type
+
+#### Unit: 001-match-pairs-service
+
+- [x] **001-serve-match-pairs-exercise-content** (match-pairs-service): Serve match-pairs exercise content (incl. seed data) - Must - ✅ COMPLETED (bolt 011-match-pairs-service)
+- ~~**002-grade-match-pairs-attempts**~~ (match-pairs-service): **RETIRED** 2026-09-17 — reassigned to match-pairs-ui per ADR-5 (client-side grading), no replacement story needed
+
+#### Unit: 002-match-pairs-ui
+
+- [x] **001-match-pairs-exercise-screen** (match-pairs-ui): Take a match-pairs exercise via tap-tile-pairs (now also covers FR-2 grading) - Must - ✅ COMPLETED (bolt 012-match-pairs-ui)
+- [x] **002-offline-match-pairs-verification** (match-pairs-ui): Match-pairs exercises work fully offline - Must - ✅ COMPLETED (bolt 012-match-pairs-ui)
+
 ---
 
 ## Stories by Status
@@ -67,4 +79,5 @@
 - **Planned**: 0
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 26
+- **Completed**: 29
+- **Retired**: 1

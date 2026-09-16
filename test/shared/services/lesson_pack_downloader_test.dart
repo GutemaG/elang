@@ -53,6 +53,23 @@ const _mcOnly = LessonContent(
   ],
 );
 
+const _matchPairsOnly = LessonContent(
+  lessonId: 'lesson-mp',
+  skillId: 'skill-mp',
+  title: 'Match Pairs Lesson',
+  beansAtStart: 5,
+  beansMax: 5,
+  exercises: [
+    MatchPairsExercise(
+      id: 'mp-1',
+      prompt: 'Match each word to its meaning',
+      leftTiles: [MatchPairsTile(id: 'l1', text: 'ቡና'), MatchPairsTile(id: 'l2', text: 'ሻይ')],
+      rightTiles: [MatchPairsTile(id: 'r1', text: 'Coffee'), MatchPairsTile(id: 'r2', text: 'Tea')],
+      correctPairs: {'l1': 'r1', 'l2': 'r2'},
+    ),
+  ],
+);
+
 const _withAudio = LessonContent(
   lessonId: 'lesson-mixed',
   skillId: 'skill-mixed',
@@ -103,6 +120,35 @@ void main() {
     expect(saved, isNotNull);
     expect(saved!.exercises, hasLength(1));
   });
+
+  test(
+    // 004-match-pairs-exercise-type, story 002: proves a match_pairs
+    // exercise downloads through the unmodified downloader path (it only
+    // special-cases `ListeningExercise`) with zero HTTP calls, rather than
+    // assuming this from the downloader's design.
+    'a lesson with only a match_pairs exercise downloads with zero HTTP calls',
+    () async {
+      final api = ControllableLessonApi()..lessonContent = _matchPairsOnly;
+      final packStore = FakeLessonPackStore();
+      var httpCalls = 0;
+      final downloader = LessonPackDownloader(
+        lessonApi: api,
+        packStore: packStore,
+        httpClient: MockClient((request) async {
+          httpCalls++;
+          return http.Response('', 200);
+        }),
+      );
+
+      await downloader.downloadLesson('lesson-mp');
+
+      expect(downloader.statusFor('lesson-mp'), LessonDownloadStatus.downloaded);
+      expect(httpCalls, 0);
+      final saved = await packStore.load('lesson-mp');
+      final exercise = saved!.exercises.single as MatchPairsExercise;
+      expect(exercise.correctPairs, {'l1': 'r1', 'l2': 'r2'});
+    },
+  );
 
   test(
     'a lesson with a listening exercise downloads its audio and rewrites audioUrl to the local file',

@@ -260,3 +260,66 @@ class TestLessonContentEndpoint:
 
         assert response.status_code == 401
         assert response.json()["error_code"] == "missing_credentials"
+
+
+@pytest.fixture
+def seeded_match_pairs_content(db_path: Path) -> dict[str, str]:
+    """Isolated fixture (own skill/lesson) rather than extending
+    `seeded_content` -- that fixture's exercise list is asserted exactly
+    elsewhere in this file, so a 4th exercise there would break unrelated
+    tests.
+    """
+    engine = create_engine(f"sqlite:///{db_path}")
+    with SyncSession(engine) as session:
+        session.add(SkillModel(id="skill-mp", title="Food & Drink", order_index=1))
+        session.add(
+            LessonModel(id="lesson-mp", skill_id="skill-mp", title="Coffee & Tea", order_index=1)
+        )
+        session.add(
+            ExerciseModel(
+                id="ex-mp",
+                lesson_id="lesson-mp",
+                order_index=1,
+                type="match_pairs",
+                prompt="Match each word to its meaning",
+                content={
+                    "left_tiles": [
+                        {"id": "l1", "text": "ቡና"},
+                        {"id": "l2", "text": "ሻይ"},
+                    ],
+                    "right_tiles": [
+                        {"id": "r1", "text": "Coffee"},
+                        {"id": "r2", "text": "Tea"},
+                    ],
+                },
+                answer_key={"correct_pairs": [["l1", "r1"], ["l2", "r2"]]},
+            )
+        )
+        session.commit()
+    engine.dispose()
+    return {"lesson_mp": "lesson-mp"}
+
+
+class TestMatchPairsExercise:
+    def test_lesson_content_includes_left_right_tiles_and_correct_pairs(
+        self, make_client: Any, seeded_match_pairs_content: dict[str, str]
+    ) -> None:
+        # 004-match-pairs-exercise-type (bolt 011): content and answer-key
+        # stay separate fields (mirroring multiple_choice), per ADR-5 --
+        # both ship in the response since grading is client-side.
+        client, token = _sign_in(make_client)
+
+        response = client.get(
+            f"/api/v1/lessons/{seeded_match_pairs_content['lesson_mp']}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        exercise = response.json()["exercises"][0]
+        assert exercise["type"] == "match_pairs"
+        assert [t["text"] for t in exercise["left_tiles"]] == ["ቡና", "ሻይ"]
+        assert [t["text"] for t in exercise["right_tiles"]] == ["Coffee", "Tea"]
+        assert exercise["correct_pairs"] == [["l1", "r1"], ["l2", "r2"]]
+        # Raw JSON column name never leaked, same guarantee as the other
+        # 3 exercise types (ADR-5's own boundary).
+        assert "answer_key" not in response.text

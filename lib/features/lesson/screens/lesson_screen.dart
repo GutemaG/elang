@@ -15,6 +15,7 @@ import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
 import '../state/lesson_controller.dart';
 import '../widgets/choice_tile.dart';
+import '../widgets/match_pairs_builder.dart';
 import '../widgets/out_of_beans_sheet.dart';
 import '../widgets/word_bank_builder.dart';
 import 'lesson_complete_screen.dart';
@@ -516,6 +517,7 @@ class _ExercisePrompt extends StatelessWidget {
         exercise: e,
         controller: controller,
       ),
+      MatchPairsExercise e => _MatchPairsBody(exercise: e, controller: controller),
     };
   }
 }
@@ -668,6 +670,36 @@ class _SentenceConstructionBody extends StatelessWidget {
   }
 }
 
+class _MatchPairsBody extends StatelessWidget {
+  const _MatchPairsBody({required this.exercise, required this.controller});
+
+  final MatchPairsExercise exercise;
+  final LessonController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final pairs = (controller.selectedAnswer as Map<String, String>?) ?? const {};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          exercise.prompt,
+          style: AppTypography.headlineMd.copyWith(color: AppColors.onSurface),
+        ),
+        const SizedBox(height: AppSpacing.spaceLg),
+        MatchPairsBuilder(
+          leftTiles: exercise.leftTiles,
+          rightTiles: exercise.rightTiles,
+          pairs: pairs,
+          armedLeftTileId: controller.armedLeftTileId,
+          feedback: controller.isChecked ? controller.feedback : TileFeedback.none,
+          onTileTap: controller.selectMatchPairsTile,
+        ),
+      ],
+    );
+  }
+}
+
 class _ActionBar extends StatelessWidget {
   const _ActionBar({required this.controller});
 
@@ -677,11 +709,16 @@ class _ActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!controller.isChecked) {
       final hasAnswer = controller.selectedAnswer != null;
-      final isSentence = controller.currentExercise is SentenceConstructionExercise;
-      final ready = isSentence
-          ? hasAnswer &&
-                (controller.selectedAnswer as List<String>).isNotEmpty
-          : hasAnswer;
+      final currentExercise = controller.currentExercise;
+      final ready = switch (currentExercise) {
+        SentenceConstructionExercise _ =>
+          hasAnswer && (controller.selectedAnswer as List<String>).isNotEmpty,
+        MatchPairsExercise e =>
+          hasAnswer &&
+              (controller.selectedAnswer as Map<String, String>).length ==
+                  e.leftTiles.length,
+        MultipleChoiceExercise _ || ListeningExercise _ => hasAnswer,
+      };
       return TactileButton(
         label: 'Check',
         onPressed: ready ? controller.check : null,

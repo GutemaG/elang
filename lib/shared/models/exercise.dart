@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/foundation.dart' show listEquals, mapEquals;
 
 /// One exercise within a lesson.
 ///
@@ -71,16 +71,57 @@ class SentenceConstructionExercise extends Exercise {
   final List<String> correctSentence;
 }
 
+/// One tappable tile in a [MatchPairsExercise]'s left or right column.
+///
+/// Needs a stable [id] (unlike [MultipleChoiceExercise.options]' plain
+/// `List<String>`) because the two columns are shuffled independently —
+/// position alone can no longer identify which left tile pairs with which
+/// right tile.
+class MatchPairsTile {
+  const MatchPairsTile({required this.id, required this.text});
+
+  final String id;
+  final String text;
+}
+
+class MatchPairsExercise extends Exercise {
+  const MatchPairsExercise({
+    required super.id,
+    required this.prompt,
+    required this.leftTiles,
+    required this.rightTiles,
+    required this.correctPairs,
+  });
+
+  final String prompt;
+
+  /// Two independently-shuffleable columns (left = Amharic terms, right =
+  /// English translations).
+  final List<MatchPairsTile> leftTiles;
+  final List<MatchPairsTile> rightTiles;
+
+  /// The correct association, `leftTileId -> rightTileId`. Served
+  /// separately from the tiles themselves (mirroring
+  /// `multiple_choice`'s `correctOptionIndex`) rather than embedded in the
+  /// tiles — see 004-match-pairs-exercise-type's backend correction notes
+  /// (bolt 011) for why a self-revealing content shape was rejected.
+  final Map<String, String> correctPairs;
+}
+
 /// Grades a submitted answer against [exercise], client-side.
 ///
 /// [answer] must be an `int` (the selected option index) for
-/// [MultipleChoiceExercise]/[ListeningExercise], or a `List<String>` (the
-/// learner's built token order) for [SentenceConstructionExercise].
+/// [MultipleChoiceExercise]/[ListeningExercise], a `List<String>` (the
+/// learner's built token order) for [SentenceConstructionExercise], or a
+/// `Map<String, String>` (`leftTileId -> rightTileId`) for
+/// [MatchPairsExercise].
 bool isAnswerCorrect(Exercise exercise, Object answer) {
   return switch (exercise) {
     MultipleChoiceExercise e => answer == e.correctOptionIndex,
     ListeningExercise e => answer == e.correctOptionIndex,
     SentenceConstructionExercise e =>
       answer is List<String> && listEquals(answer, e.correctSentence),
+    MatchPairsExercise e =>
+      answer is Map<String, String> && mapEquals(answer, e.correctPairs),
   };
 }

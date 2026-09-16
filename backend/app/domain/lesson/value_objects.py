@@ -22,14 +22,16 @@ FREEZE_GRANTED_AT_CROWN_LEVEL = 5
 
 
 class ExerciseType(StrEnum):
-    """The 3 exercise types fixed by `requirements.md` FR-2. Closed set for
-    this intent -- no open extensibility assumed (see domain model's
-    Ubiquitous Language).
+    """The exercise types this lesson engine supports. Originally the 3
+    types fixed by `002-core-lesson-loop`'s `requirements.md` FR-2;
+    `MATCH_PAIRS` was added by `004-match-pairs-exercise-type` (bolt
+    011-match-pairs-service) as the 4th of the 5 originally-planned types.
     """
 
     MULTIPLE_CHOICE = "multiple_choice"
     LISTENING = "listening"
     SENTENCE_CONSTRUCTION = "sentence_construction"
+    MATCH_PAIRS = "match_pairs"
 
 
 class SkillState(StrEnum):
@@ -103,7 +105,33 @@ class SentenceConstructionContent:
             raise ValueError("SentenceConstructionContent requires at least 1 tile")
 
 
-ExerciseContent = MultipleChoiceContent | ListeningContent | SentenceConstructionContent
+@dataclass(frozen=True)
+class MatchPairsContent:
+    """Renderable content for a `match_pairs` exercise.
+
+    `left_tiles`/`right_tiles` are two independently-shuffled columns (left
+    = Amharic terms, right = English translations); unlike
+    `MultipleChoiceContent`, the correct association is never embedded
+    here -- it lives entirely in the sibling `PairAnswerKey`, keeping this
+    exercise type consistent with the existing content/answer-key split
+    rather than making `content` self-revealing.
+    """
+
+    left_tiles: tuple[Choice, ...]
+    right_tiles: tuple[Choice, ...]
+
+    def __post_init__(self) -> None:
+        if len(self.left_tiles) < 2:
+            raise ValueError("MatchPairsContent requires at least 2 left tiles")
+        if len(self.right_tiles) != len(self.left_tiles):
+            raise ValueError(
+                "MatchPairsContent requires left_tiles and right_tiles to be the same length"
+            )
+
+
+ExerciseContent = (
+    MultipleChoiceContent | ListeningContent | SentenceConstructionContent | MatchPairsContent
+)
 
 
 @dataclass(frozen=True)
@@ -138,7 +166,24 @@ class SequenceAnswerKey:
             raise ValueError("SequenceAnswerKey.correct_sequence must be non-empty")
 
 
-AnswerKey = ChoiceAnswerKey | SequenceAnswerKey
+@dataclass(frozen=True)
+class PairAnswerKey:
+    """Correct-answer data for `match_pairs` exercises.
+
+    Each tuple is `(left_choice_id, right_choice_id)`, referencing ids from
+    the sibling `content.left_tiles`/`content.right_tiles` -- validated by
+    the infrastructure layer when reconstructing an `Exercise` from
+    storage, same as `ChoiceAnswerKey`/`SequenceAnswerKey`.
+    """
+
+    correct_pairs: tuple[tuple[str, str], ...]
+
+    def __post_init__(self) -> None:
+        if len(self.correct_pairs) < 2:
+            raise ValueError("PairAnswerKey requires at least 2 pairs")
+
+
+AnswerKey = ChoiceAnswerKey | SequenceAnswerKey | PairAnswerKey
 
 
 @dataclass(frozen=True)

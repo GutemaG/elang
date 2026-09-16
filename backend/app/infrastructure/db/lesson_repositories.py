@@ -34,7 +34,9 @@ from app.domain.lesson.value_objects import (
     ExerciseType,
     LessonCompletionOutcome,
     ListeningContent,
+    MatchPairsContent,
     MultipleChoiceContent,
+    PairAnswerKey,
     SentenceConstructionContent,
     SequenceAnswerKey,
 )
@@ -72,12 +74,21 @@ def _content_from_json(exercise_type: ExerciseType, content: dict[str, Any]) -> 
         return ListeningContent(
             audio_url=content["audio_url"], choices=_choices_from_json(content["choices"])
         )
-    return SentenceConstructionContent(word_bank=_choices_from_json(content["word_bank"]))
+    if exercise_type is ExerciseType.SENTENCE_CONSTRUCTION:
+        return SentenceConstructionContent(word_bank=_choices_from_json(content["word_bank"]))
+    return MatchPairsContent(
+        left_tiles=_choices_from_json(content["left_tiles"]),
+        right_tiles=_choices_from_json(content["right_tiles"]),
+    )
 
 
 def _answer_key_from_json(exercise_type: ExerciseType, answer_key: dict[str, Any]) -> AnswerKey:
     if exercise_type is ExerciseType.SENTENCE_CONSTRUCTION:
         return SequenceAnswerKey(correct_sequence=tuple(answer_key["correct_sequence"]))
+    if exercise_type is ExerciseType.MATCH_PAIRS:
+        return PairAnswerKey(
+            correct_pairs=tuple(tuple(pair) for pair in answer_key["correct_pairs"])
+        )
     return ChoiceAnswerKey(correct_choice_id=answer_key["correct_choice_id"])
 
 

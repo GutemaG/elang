@@ -1,9 +1,10 @@
 """Integration tests for the idempotent curriculum seed script (story 005).
 
 Verifies the acceptance criteria directly: at least 2 skills each with
-multiple lessons, each lesson containing a mix of all 3 exercise types, real
-Amharic content, idempotent re-runs, and the documented audio placeholder
-scheme.
+multiple lessons, each lesson containing at least the original 3 exercise
+types (a floor, not a ceiling -- see `004-match-pairs-exercise-type`'s 5th
+exercise on "Coffee & Tea"), real Amharic content, idempotent re-runs, and
+the documented audio placeholder scheme.
 """
 
 from __future__ import annotations
@@ -72,9 +73,13 @@ class TestSeedContentAcceptanceCriteria:
             lessons = (await db_session.execute(stmt)).scalars().all()
             assert len(lessons) >= 2, f"skill {skill.title!r} has fewer than 2 lessons"
 
-    async def test_every_lesson_has_a_mix_of_all_3_exercise_types(
+    async def test_every_lesson_has_a_mix_of_at_least_3_exercise_types(
         self, db_session: AsyncSession
     ) -> None:
+        # `>=`, not `==`: story 005's original 3-type mix is a floor, not a
+        # ceiling -- 004-match-pairs-exercise-type (bolt 011) added a 5th
+        # exercise (match_pairs) to one lesson ("Coffee & Tea") without
+        # touching the other lessons' original 4-exercise/3-type shape.
         await seed(db_session)
         await db_session.commit()
 
@@ -92,7 +97,7 @@ class TestSeedContentAcceptanceCriteria:
                 .all()
             )
             types = {e.type for e in exercises}
-            assert types == {"multiple_choice", "listening", "sentence_construction"}, (
+            assert types >= {"multiple_choice", "listening", "sentence_construction"}, (
                 f"lesson {lesson.title!r} is missing an exercise type: {types}"
             )
 
@@ -116,7 +121,7 @@ class TestSeedContentAcceptanceCriteria:
                 + " "
                 + " ".join(
                     item.get("text", "")
-                    for group in ("choices", "word_bank")
+                    for group in ("choices", "word_bank", "left_tiles", "right_tiles")
                     for item in exercise.content.get(group, [])
                 )
             )
@@ -124,14 +129,14 @@ class TestSeedContentAcceptanceCriteria:
             for marker in lorem_markers:
                 assert marker not in haystack, f"found placeholder text {marker!r} in {exercise.id}"
 
-            # multiple_choice and sentence_construction exercises present
-            # Amharic directly as answer/tile text -- verify real Ethiopic
-            # (Fidel) script there. `listening` exercises intentionally
-            # present the *English* meaning as choices (the Amharic is
-            # conveyed by the audio itself), so they're exempted from this
-            # particular check and covered by the placeholder-audio-URL
-            # test below instead.
-            if exercise.type in ("multiple_choice", "sentence_construction"):
+            # multiple_choice, sentence_construction, and match_pairs
+            # exercises present Amharic directly as answer/tile text --
+            # verify real Ethiopic (Fidel) script there. `listening`
+            # exercises intentionally present the *English* meaning as
+            # choices (the Amharic is conveyed by the audio itself), so
+            # they're exempted from this particular check and covered by
+            # the placeholder-audio-URL test below instead.
+            if exercise.type in ("multiple_choice", "sentence_construction", "match_pairs"):
                 has_ethiopic = any("ሀ" <= ch <= "፿" for ch in all_text)
                 assert has_ethiopic, f"exercise {exercise.id} has no Ethiopic-script text"
 
@@ -154,3 +159,42 @@ class TestSeedContentAcceptanceCriteria:
             # download and play this for offline caching
             # (010-offline-caching-and-sync-ui), so it has to actually work.
             assert audio_url.startswith("https://www.kozco.com/")
+
+
+class TestMatchPairsSeedContent:
+    """004-match-pairs-exercise-type (bolt 011): verifies the one seeded
+    `match_pairs` exercise this intent's requirements.md commits to.
+    """
+
+    async def test_at_least_one_match_pairs_exercise_is_seeded(
+        self, db_session: AsyncSession
+    ) -> None:
+        await seed(db_session)
+        await db_session.commit()
+
+        stmt = select(ExerciseModel).where(ExerciseModel.type == "match_pairs")
+        match_pairs_exercises = (await db_session.execute(stmt)).scalars().all()
+        assert len(match_pairs_exercises) >= 1
+
+    async def test_seeded_match_pairs_content_is_well_formed(
+        self, db_session: AsyncSession
+    ) -> None:
+        await seed(db_session)
+        await db_session.commit()
+
+        stmt = select(ExerciseModel).where(ExerciseModel.type == "match_pairs")
+        exercise = (await db_session.execute(stmt)).scalars().first()
+        assert exercise is not None
+
+        left_ids = {tile["id"] for tile in exercise.content["left_tiles"]}
+        right_ids = {tile["id"] for tile in exercise.content["right_tiles"]}
+        assert len(left_ids) >= 2
+        assert len(left_ids) == len(right_ids)
+
+        correct_pairs = exercise.answer_key["correct_pairs"]
+        assert len(correct_pairs) == len(left_ids)
+        # Every pair references real tile ids from this exercise's own
+        # content -- not a dangling/mismatched reference.
+        for left_id, right_id in correct_pairs:
+            assert left_id in left_ids
+            assert right_id in right_ids

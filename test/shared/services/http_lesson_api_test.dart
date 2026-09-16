@@ -194,6 +194,24 @@ void main() {
                   ],
                   'correct_sequence': ['w1', 'w2'],
                 },
+                {
+                  'id': 'ex-4',
+                  'order_index': 4,
+                  'type': 'match_pairs',
+                  'prompt': 'Match each word to its meaning',
+                  'left_tiles': [
+                    {'id': 'l1', 'text': 'ቡና'},
+                    {'id': 'l2', 'text': 'ሻይ'},
+                  ],
+                  'right_tiles': [
+                    {'id': 'r1', 'text': 'Coffee'},
+                    {'id': 'r2', 'text': 'Tea'},
+                  ],
+                  'correct_pairs': [
+                    ['l1', 'r1'],
+                    ['l2', 'r2'],
+                  ],
+                },
               ],
             }),
             200,
@@ -224,7 +242,7 @@ void main() {
       expect(content.lessonId, 'lesson-a1');
       expect(content.beansAtStart, 3);
       expect(content.beansMax, 5);
-      expect(content.exercises, hasLength(3));
+      expect(content.exercises, hasLength(4));
 
       final mc = content.exercises[0] as MultipleChoiceExercise;
       expect(mc.prompt, "How do you say 'Hello'?");
@@ -239,6 +257,11 @@ void main() {
       final sentence = content.exercises[2] as SentenceConstructionExercise;
       expect(sentence.wordBank, ['ደህና', 'ነኝ']);
       expect(sentence.correctSentence, ['ደህና', 'ነኝ']);
+
+      final matchPairs = content.exercises[3] as MatchPairsExercise;
+      expect(matchPairs.leftTiles.map((t) => t.text), ['ቡና', 'ሻይ']);
+      expect(matchPairs.rightTiles.map((t) => t.text), ['Coffee', 'Tea']);
+      expect(matchPairs.correctPairs, {'l1': 'r1', 'l2': 'r2'});
     });
 
     test('a 404 response throws LessonApiException with lesson_not_found', () async {

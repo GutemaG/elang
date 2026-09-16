@@ -25,6 +25,7 @@ import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
 
+import 'package:elang/shared/services/lesson_pack_downloader.dart';
 import 'package:elang/shared/services/sync_engine.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
@@ -121,6 +122,23 @@ const _mixedLesson = LessonContent(
       promptTranslation: 'Please drink coffee',
       wordBank: ['ቡና', 'እባክዎ', 'ጠጡ', 'ውሃ'],
       correctSentence: ['እባክዎ', 'ቡና', 'ጠጡ'],
+    ),
+  ],
+);
+
+const _matchPairsLesson = LessonContent(
+  lessonId: 'lesson-mp',
+  skillId: 'skill-mp',
+  title: 'Match Pairs Lesson',
+  beansAtStart: 5,
+  beansMax: 5,
+  exercises: [
+    MatchPairsExercise(
+      id: 'mp-1',
+      prompt: 'Match each word to its meaning',
+      leftTiles: [MatchPairsTile(id: 'l1', text: 'ቡና'), MatchPairsTile(id: 'l2', text: 'ሻይ')],
+      rightTiles: [MatchPairsTile(id: 'r1', text: 'Coffee'), MatchPairsTile(id: 'r2', text: 'Tea')],
+      correctPairs: {'l1': 'r1', 'l2': 'r2'},
     ),
   ],
 );
@@ -509,6 +527,200 @@ void main() {
 
       expect(api.completeLessonCalls, hasLength(1));
       expect(api.completeLessonCalls.single.correctCount, 3);
+    },
+  );
+
+  testWidgets(
+    'a match-pairs exercise requires every tile linked before Check grades it correctly',
+    (tester) async {
+      final api = _apiFor(_matchPairsLesson);
+      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-mp'));
+      await tester.pumpAndSettle();
+
+      // Link only 1 of 2 pairs, then try to Check -- nothing happens yet
+      // (the button is disabled while incomplete).
+      await tester.tap(find.text('ቡና'));
+      await tester.pump();
+      await tester.tap(find.text('Coffee'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      expect(find.text('Continue'), findsNothing);
+
+      // Link the second pair too -- now Check is enabled and grades the
+      // whole exercise atomically.
+      await tester.tap(find.text('ሻይ'));
+      await tester.pump();
+      await tester.tap(find.text('Tea'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      expect(find.text('Continue'), findsOneWidget);
+
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(api.completeLessonCalls, hasLength(1));
+      expect(api.completeLessonCalls.single.correctCount, 1);
+    },
+  );
+
+  testWidgets(
+    'an incorrect match-pairs submission requeues the exercise, same as the other types',
+    (tester) async {
+      final api = _apiFor(_matchPairsLesson);
+      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-mp'));
+      await tester.pumpAndSettle();
+
+      // Link both pairs, but swapped (wrong).
+      await tester.tap(find.text('ቡና'));
+      await tester.pump();
+      await tester.tap(find.text('Tea'));
+      await tester.pump();
+      await tester.tap(find.text('ሻይ'));
+      await tester.pump();
+      await tester.tap(find.text('Coffee'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      // Only exercise in the lesson -- the retry interstitial shows
+      // immediately (mirrors the multiple-choice "missed exercise loops
+      // back" behavior).
+      expect(find.text("Let's review your mistakes"), findsOneWidget);
+      expect(api.completeLessonCalls, isEmpty);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      // Retry: link correctly this time.
+      await tester.tap(find.text('ቡና'));
+      await tester.pump();
+      await tester.tap(find.text('Coffee'));
+      await tester.pump();
+      await tester.tap(find.text('ሻይ'));
+      await tester.pump();
+      await tester.tap(find.text('Tea'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(api.completeLessonCalls, hasLength(1));
+      expect(api.completeLessonCalls.single.correctCount, 1);
+    },
+  );
+
+  testWidgets(
+    'tapping a linked left tile again unlinks it, and re-linking a used right tile moves it (stays one-to-one)',
+    (tester) async {
+      final api = _apiFor(_matchPairsLesson);
+      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-mp'));
+      await tester.pumpAndSettle();
+
+      // Link l1 -> Coffee, then unlink it by tapping it again.
+      await tester.tap(find.text('ቡና'));
+      await tester.pump();
+      await tester.tap(find.text('Coffee'));
+      await tester.pump();
+      await tester.tap(find.text('ቡና'));
+      await tester.pump();
+
+      // Only 1 tile (l2) can still be linked -- Check must stay disabled
+      // since l1 is unlinked again.
+      await tester.tap(find.text('ሻይ'));
+      await tester.pump();
+      await tester.tap(find.text('Tea'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      expect(find.text('Continue'), findsNothing);
+
+      // Re-link l1 to the *other* right tile now that l2 has claimed
+      // Tea -- proves the mapping stays 1:1 rather than allowing a right
+      // tile to serve two left tiles.
+      await tester.tap(find.text('ቡና'));
+      await tester.pump();
+      await tester.tap(find.text('Coffee'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+
+      expect(find.text('Continue'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(api.completeLessonCalls, hasLength(1));
+      expect(api.completeLessonCalls.single.correctCount, 1);
+    },
+  );
+
+  testWidgets(
+    'a match-pairs exercise downloads and then plays fully offline, queuing completion for sync',
+    (tester) async {
+      final downloadApi = ControllableLessonApi()..lessonContent = _matchPairsLesson;
+      final packStore = FakeLessonPackStore();
+      final downloader = LessonPackDownloader(lessonApi: downloadApi, packStore: packStore);
+      await downloader.downloadLesson('lesson-mp');
+      expect(downloader.statusFor('lesson-mp'), LessonDownloadStatus.downloaded);
+
+      // A fresh api with no `lessonContent` set -- proves the offline
+      // screen never falls through to the network (that would null-assert).
+      final offlineApi = ControllableLessonApi()
+        ..completionResult = const LessonCompletionResult(
+          xpEarned: 10,
+          dailyXpTotal: 10,
+          dailyXpTarget: 30,
+          streakCount: 1,
+          streakIncreasedToday: true,
+          accuracyPercent: 100,
+          correctCount: 1,
+          totalCount: 1,
+          timeSpent: Duration(seconds: 5),
+        );
+      final connectivity = FakeConnectivityMonitor(online: false);
+      final queueStore = FakePendingSyncQueueStore();
+      final engine = SyncEngine(
+        lessonApi: offlineApi,
+        connectivityMonitor: connectivity,
+        queueStore: queueStore,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            lessonId: 'lesson-mp',
+            lessonApi: offlineApi,
+            audioPlayer: FakeLessonAudioPlayer(),
+            feedbackPlayer: FakeAnswerFeedbackPlayer(),
+            connectivityMonitor: connectivity,
+            lessonPackStore: packStore,
+            syncEngine: engine,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('ቡና'), findsOneWidget);
+
+      await tester.tap(find.text('ቡና'));
+      await tester.pump();
+      await tester.tap(find.text('Coffee'));
+      await tester.pump();
+      await tester.tap(find.text('ሻይ'));
+      await tester.pump();
+      await tester.tap(find.text('Tea'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(offlineApi.completeLessonCalls, isEmpty);
+      expect(find.text('Lesson Complete!'), findsOneWidget);
+      expect(find.text('SYNCS WHEN ONLINE'), findsOneWidget);
+      expect(await queueStore.count(), 1);
     },
   );
 

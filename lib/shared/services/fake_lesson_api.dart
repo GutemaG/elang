@@ -147,6 +147,21 @@ class FakeLessonApi implements LessonApi {
           wordBank: ['ቡና', 'እባክዎ', 'ጠጡ', 'ውሃ', 'ብሉ'],
           correctSentence: ['እባክዎ', 'ቡና', 'ጠጡ'],
         ),
+        MatchPairsExercise(
+          id: 'coffee-4',
+          prompt: 'Match each word to its meaning',
+          leftTiles: [
+            MatchPairsTile(id: 'l1', text: 'ቡና'),
+            MatchPairsTile(id: 'l2', text: 'ሻይ'),
+            MatchPairsTile(id: 'l3', text: 'ውሃ'),
+          ],
+          rightTiles: [
+            MatchPairsTile(id: 'r1', text: 'Coffee'),
+            MatchPairsTile(id: 'r2', text: 'Tea'),
+            MatchPairsTile(id: 'r3', text: 'Water'),
+          ],
+          correctPairs: {'l1': 'r1', 'l2': 'r2', 'l3': 'r3'},
+        ),
       ],
     ),
     'lesson-family': LessonContent(

@@ -237,6 +237,24 @@ class HttpLessonApi implements LessonApi {
           wordBank: wordBank.map((tile) => tile['text'] as String).toList(),
           correctSentence: correctSequence.map((tileId) => textById[tileId]!).toList(),
         );
+      case 'match_pairs':
+        final leftTiles = (json['left_tiles'] as List).cast<Map<String, dynamic>>();
+        final rightTiles = (json['right_tiles'] as List).cast<Map<String, dynamic>>();
+        final correctPairs = (json['correct_pairs'] as List)
+            .cast<List<dynamic>>();
+        return MatchPairsExercise(
+          id: id,
+          prompt: json['prompt'] as String,
+          leftTiles: leftTiles
+              .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+              .toList(),
+          rightTiles: rightTiles
+              .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+              .toList(),
+          correctPairs: {
+            for (final pair in correctPairs) pair[0] as String: pair[1] as String,
+          },
+        );
       default:
         throw LessonApiException('Unknown exercise type: $type');
     }

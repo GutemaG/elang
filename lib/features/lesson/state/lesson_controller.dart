@@ -72,6 +72,12 @@ class LessonController extends ChangeNotifier {
 
   TileFeedback _feedback = TileFeedback.none;
   Object? _selectedAnswer;
+
+  /// The left tile currently awaiting a right-tile tap to complete a pair
+  /// (match-pairs only) — transient UI selection state, not part of the
+  /// graded answer itself, so it lives here rather than in
+  /// [selectedAnswer].
+  String? _armedLeftTileId;
   bool _lessonInterrupted = false;
   bool _lessonFinished = false;
   bool _awaitingRetryIntro = false;
@@ -91,6 +97,7 @@ class LessonController extends ChangeNotifier {
 
   TileFeedback get feedback => _feedback;
   Object? get selectedAnswer => _selectedAnswer;
+  String? get armedLeftTileId => _armedLeftTileId;
 
   /// True once a wrong answer has dropped beans to 0 — the lesson stops
   /// accepting further answers and the out-of-beans modal takes over.
@@ -142,6 +149,35 @@ class LessonController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Handles a tap on a match-pairs tile. Tapping a left tile arms it
+  /// (awaiting the right-tile tap that completes a pair) or, if it's
+  /// already linked, unlinks it. Tapping a right tile while a left tile
+  /// is armed completes that pair — replacing any prior pair either tile
+  /// held, so the mapping stays one-to-one. A right-tile tap with nothing
+  /// armed is a no-op.
+  void selectMatchPairsTile(String tileId, {required bool isLeft}) {
+    if (isChecked || _lessonInterrupted) return;
+    final current = Map<String, String>.of(
+      (_selectedAnswer as Map<String, String>?) ?? const {},
+    );
+    if (isLeft) {
+      if (current.containsKey(tileId)) {
+        current.remove(tileId);
+        _armedLeftTileId = null;
+      } else {
+        _armedLeftTileId = tileId;
+      }
+    } else {
+      final armedLeftId = _armedLeftTileId;
+      if (armedLeftId == null) return;
+      current.removeWhere((_, rightId) => rightId == tileId);
+      current[armedLeftId] = tileId;
+      _armedLeftTileId = null;
+    }
+    _selectedAnswer = current;
+    notifyListeners();
+  }
+
   /// Grades [selectedAnswer]/[toggleWordBankToken]'s current answer. A wrong
   /// answer requeues this exercise to the end of the lesson so the learner
   /// must answer it correctly before the lesson can finish.
@@ -180,6 +216,7 @@ class LessonController extends ChangeNotifier {
     }
     _queuePosition++;
     _selectedAnswer = null;
+    _armedLeftTileId = null;
     _feedback = TileFeedback.none;
     // Positions 0..exercises.length-1 always hold the original exercises
     // in their original order (the queue only ever appends); reaching a

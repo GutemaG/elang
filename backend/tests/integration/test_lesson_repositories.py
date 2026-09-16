@@ -14,7 +14,9 @@ from app.domain.lesson.value_objects import (
     ChoiceAnswerKey,
     ExerciseType,
     ListeningContent,
+    MatchPairsContent,
     MultipleChoiceContent,
+    PairAnswerKey,
     SentenceConstructionContent,
     SequenceAnswerKey,
 )
@@ -157,6 +159,47 @@ class TestSqlAlchemyLessonRepository:
         assert isinstance(sentence.content, SentenceConstructionContent)
         assert isinstance(sentence.answer_key, SequenceAnswerKey)
         assert sentence.answer_key.correct_sequence == ("w1", "w2")
+
+    async def test_get_by_id_round_trips_a_match_pairs_exercise(
+        self, db_session: AsyncSession
+    ) -> None:
+        # 004-match-pairs-exercise-type (bolt 011): content/answer_key stay
+        # separate, mirroring multiple_choice -- not one self-revealing blob.
+        db_session.add(SkillModel(id="s1", title="Food & Drink", order_index=1))
+        db_session.add(LessonModel(id="l1", skill_id="s1", title="Coffee & Tea", order_index=1))
+        db_session.add(
+            ExerciseModel(
+                id="e1",
+                lesson_id="l1",
+                order_index=1,
+                type="match_pairs",
+                prompt="Match each word to its meaning",
+                content={
+                    "left_tiles": [
+                        {"id": "l1", "text": "ቡና"},
+                        {"id": "l2", "text": "ሻይ"},
+                    ],
+                    "right_tiles": [
+                        {"id": "r1", "text": "Coffee"},
+                        {"id": "r2", "text": "Tea"},
+                    ],
+                },
+                answer_key={"correct_pairs": [["l1", "r1"], ["l2", "r2"]]},
+            )
+        )
+        await db_session.commit()
+
+        repo = SqlAlchemyLessonRepository(db_session)
+        lesson = await repo.get_by_id("l1")
+
+        assert lesson is not None
+        match_pairs = lesson.exercises[0]
+        assert match_pairs.type is ExerciseType.MATCH_PAIRS
+        assert isinstance(match_pairs.content, MatchPairsContent)
+        assert [t.text for t in match_pairs.content.left_tiles] == ["ቡና", "ሻይ"]
+        assert [t.text for t in match_pairs.content.right_tiles] == ["Coffee", "Tea"]
+        assert isinstance(match_pairs.answer_key, PairAnswerKey)
+        assert match_pairs.answer_key.correct_pairs == (("l1", "r1"), ("l2", "r2"))
 
 
 class TestSqlAlchemyUserSkillProgressRepository:

@@ -36,7 +36,9 @@ from app.domain.lesson.value_objects import (
     ChoiceAnswerKey,
     ExerciseType,
     ListeningContent,
+    MatchPairsContent,
     MultipleChoiceContent,
+    PairAnswerKey,
     SentenceConstructionContent,
     SequenceAnswerKey,
 )
@@ -58,6 +60,7 @@ from app.infrastructure.api.lesson_schemas import (
     LessonContentResponse,
     LessonSummaryResponse,
     ListeningExerciseResponse,
+    MatchPairsExerciseResponse,
     MultipleChoiceExerciseResponse,
     RefillResponse,
     SentenceConstructionExerciseResponse,
@@ -116,14 +119,25 @@ def _to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
             correct_choice_id=exercise.answer_key.correct_choice_id,
         )
-    assert isinstance(exercise.content, SentenceConstructionContent)
-    assert isinstance(exercise.answer_key, SequenceAnswerKey)
-    return SentenceConstructionExerciseResponse(
+    if exercise.type is ExerciseType.SENTENCE_CONSTRUCTION:
+        assert isinstance(exercise.content, SentenceConstructionContent)
+        assert isinstance(exercise.answer_key, SequenceAnswerKey)
+        return SentenceConstructionExerciseResponse(
+            id=exercise.id,
+            order_index=exercise.order_index,
+            prompt=exercise.prompt,
+            word_bank=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.word_bank],
+            correct_sequence=list(exercise.answer_key.correct_sequence),
+        )
+    assert isinstance(exercise.content, MatchPairsContent)
+    assert isinstance(exercise.answer_key, PairAnswerKey)
+    return MatchPairsExerciseResponse(
         id=exercise.id,
         order_index=exercise.order_index,
         prompt=exercise.prompt,
-        word_bank=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.word_bank],
-        correct_sequence=list(exercise.answer_key.correct_sequence),
+        left_tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.left_tiles],
+        right_tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.right_tiles],
+        correct_pairs=list(exercise.answer_key.correct_pairs),
     )
 
 

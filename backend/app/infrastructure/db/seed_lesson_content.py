@@ -61,11 +61,14 @@ def _choice(choice_id: str, text: str) -> dict[str, str]:
 
 
 # --- Curriculum content ------------------------------------------------
-# 2 skills, 2 lessons each, 4 exercises per lesson (2 multiple_choice,
+# 2 skills, 2 lessons each. Each lesson has 4 exercises (2 multiple_choice,
 # 1 listening, 1 sentence_construction -- a mix of all 3 types per lesson,
-# per story 005's acceptance criteria). Real, hand-authored English ->
-# Amharic vocabulary (Fidel script, UTF-8) -- a small proof-of-loop set,
-# not a complete Phase 1 course, per requirements.md's Business Constraints.
+# per story 005's acceptance criteria); "Coffee & Tea" has a 5th, match_pairs,
+# exercise added by 004-match-pairs-exercise-type (bolt 011) to satisfy that
+# intent's "at least 1 seeded match_pairs exercise" requirement. Real,
+# hand-authored English -> Amharic vocabulary (Fidel script, UTF-8) -- a
+# small proof-of-loop set, not a complete Phase 1 course, per
+# requirements.md's Business Constraints.
 
 CURRICULUM: list[dict[str, Any]] = [
     {
@@ -281,6 +284,40 @@ CURRICULUM: list[dict[str, Any]] = [
                             ]
                         },
                         "answer_key": {"correct_sequence": ["w2", "w1"]},
+                    },
+                    {
+                        # 004-match-pairs-exercise-type (bolt 011): the 4th
+                        # exercise type. `content.left_tiles`/`right_tiles`
+                        # are two independently-shuffled columns; the
+                        # correct association lives only in `answer_key`
+                        # (see `PairAnswerKey` -- this exercise type's
+                        # `content` is never self-revealing).
+                        "slug": "exercise:coffee-and-tea:5",
+                        "order_index": 5,
+                        "type": "match_pairs",
+                        "prompt": "Match each word to its meaning",
+                        "content": {
+                            "left_tiles": [
+                                _choice("l1", "ቡና"),
+                                _choice("l2", "ሻይ"),
+                                _choice("l3", "ውሃ"),
+                                _choice("l4", "ዳቦ"),
+                            ],
+                            "right_tiles": [
+                                _choice("r1", "Coffee"),
+                                _choice("r2", "Tea"),
+                                _choice("r3", "Water"),
+                                _choice("r4", "Bread"),
+                            ],
+                        },
+                        "answer_key": {
+                            "correct_pairs": [
+                                ["l1", "r1"],
+                                ["l2", "r2"],
+                                ["l3", "r3"],
+                                ["l4", "r4"],
+                            ]
+                        },
                     },
                 ],
             },

@@ -2,9 +2,11 @@
 
 Shapes match `ddd-02-technical-design.md`'s API Design section (bolts `004`
 and `005`) exactly. Exercise response schemas now include each exercise's
-correct-answer field (`correct_choice_id`/`correct_sequence`) per ADR-5,
-which supersedes ADR-4's "never expose correct answers" -- see ADR-5
-(`memory-bank/bolts/005-lesson-engagement-service/`) for why.
+correct-answer field (`correct_choice_id`/`correct_sequence`/
+`correct_pairs`) per ADR-5, which supersedes ADR-4's "never expose correct
+answers" -- see ADR-5 (`memory-bank/bolts/005-lesson-engagement-service/`)
+for why. `match_pairs` (bolt `011-match-pairs-service`) follows the same
+rule: grading is client-side, so `correct_pairs` ships in the response.
 """
 
 from __future__ import annotations
@@ -75,10 +77,21 @@ class SentenceConstructionExerciseResponse(BaseModel):
     correct_sequence: list[str]
 
 
+class MatchPairsExerciseResponse(BaseModel):
+    id: str
+    order_index: int
+    type: Literal["match_pairs"] = "match_pairs"
+    prompt: str
+    left_tiles: list[ChoiceResponse]
+    right_tiles: list[ChoiceResponse]
+    correct_pairs: list[tuple[str, str]]
+
+
 ExerciseResponse = Annotated[
     MultipleChoiceExerciseResponse
     | ListeningExerciseResponse
-    | SentenceConstructionExerciseResponse,
+    | SentenceConstructionExerciseResponse
+    | MatchPairsExerciseResponse,
     Field(discriminator="type"),
 ]
 

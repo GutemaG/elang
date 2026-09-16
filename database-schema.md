@@ -91,17 +91,17 @@ Backs the `Lesson` aggregate. One row per lesson, always loaded together with it
 
 ## `exercises`
 
-Backs the `Exercise` entity (member of the `Lesson` aggregate, not its own aggregate root). Single polymorphic table for all 3 exercise types — see ADR-3 (`memory-bank/bolts/004-lesson-content-service/adr-3-polymorphic-exercises-table.md`) for why per-type tables were rejected.
+Backs the `Exercise` entity (member of the `Lesson` aggregate, not its own aggregate root). Single polymorphic table for all 4 exercise types — see ADR-3 (`memory-bank/bolts/004-lesson-content-service/adr-3-polymorphic-exercises-table.md`) for why per-type tables were rejected.
 
 | Column | Type | Constraints | Notes |
 |---|---|---|---|
 | `id` | `UUID` (Postgres) / `TEXT` (SQLite) | `PRIMARY KEY` | Deterministic, same scheme as `skills.id`. |
 | `lesson_id` | `UUID` (Postgres) / `TEXT` (SQLite) | `NOT NULL`, `FOREIGN KEY REFERENCES lessons(id)` | |
 | `order_index` | `INTEGER` | `NOT NULL` | Position within `lesson_id`. |
-| `type` | `VARCHAR(32)` | `NOT NULL`, `CHECK (type IN ('multiple_choice', 'listening', 'sentence_construction'))` | Discriminator; the 3 types fixed by `requirements.md` FR-2. |
+| `type` | `VARCHAR(32)` | `NOT NULL`, `CHECK (type IN ('multiple_choice', 'listening', 'sentence_construction', 'match_pairs'))` | Discriminator; originally the 3 types fixed by `002-core-lesson-loop`'s `requirements.md` FR-2, widened to 4 by `004-match-pairs-exercise-type` (migration `c726efa81972`, via `batch_alter_table` since SQLite can't modify a `CHECK` constraint in place). |
 | `prompt` | `TEXT` | `NOT NULL` | The instruction/phrase-to-translate shown to the learner. |
 | `content` | `JSON` | `NOT NULL` | Type-specific **renderable** data (`choices`, `word_bank`, `audio_url`) — this, and only this, is what the lesson-content API response serializes. |
-| `answer_key` | `JSON` | `NOT NULL` | Type-specific **correct-answer** data (`correct_choice_id` or `correct_sequence`). Originally never serialized to an API response (ADR-4); **as of `005-lesson-engagement-service`, it is included in the lesson-content response** (ADR-5, `memory-bank/bolts/005-lesson-engagement-service/adr-5-client-side-grading-with-bounded-server-ledger.md`, which supersedes ADR-4) — grading moved client-side to satisfy the "no network call per exercise" NFR; the account ledger stays server-bounded instead (see ADR-5). |
+| `answer_key` | `JSON` | `NOT NULL` | Type-specific **correct-answer** data (`correct_choice_id`, `correct_sequence`, or `correct_pairs`). Originally never serialized to an API response (ADR-4); **as of `005-lesson-engagement-service`, it is included in the lesson-content response** (ADR-5, `memory-bank/bolts/005-lesson-engagement-service/adr-5-client-side-grading-with-bounded-server-ledger.md`, which supersedes ADR-4) — grading moved client-side to satisfy the "no network call per exercise" NFR; the account ledger stays server-bounded instead (see ADR-5). |
 | `created_at` | `TIMESTAMPTZ` (Postgres) / `TIMESTAMP` (SQLite) | `NOT NULL`, `DEFAULT now()` | |
 
 **Constraints**: `UNIQUE (lesson_id, order_index)`; `CHECK` on `type`.

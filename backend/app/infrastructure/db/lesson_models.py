@@ -91,16 +91,20 @@ class ExerciseModel(Base):
     """Backs the `Exercise` entity (member of the `Lesson` aggregate).
 
     Single polymorphic table with JSON `content`/`answer_key` columns per
-    ADR-3. `answer_key` is never read by the presentation layer's response
-    schemas (ADR-4) -- only by this bolt's repository (which does not
-    return it to the API) and, in a future bolt, by grading logic.
+    ADR-3. `answer_key` is now included in the lesson-content API response
+    (ADR-5, superseding ADR-4 -- grading is client-side).
+
+    `ck_exercises_type` was widened from 3 to 4 values by
+    `011-match-pairs-service` (migration `c726efa81972`) to add
+    `match_pairs` -- see that migration for why a batch-mode `ALTER` was
+    required (SQLite cannot modify a `CHECK` constraint in place).
     """
 
     __tablename__ = "exercises"
     __table_args__ = (
         UniqueConstraint("lesson_id", "order_index", name="uq_exercises_lesson_order"),
         CheckConstraint(
-            "type IN ('multiple_choice', 'listening', 'sentence_construction')",
+            "type IN ('multiple_choice', 'listening', 'sentence_construction', 'match_pairs')",
             name="ck_exercises_type",
         ),
         Index("ix_exercises_lesson_id", "lesson_id"),
