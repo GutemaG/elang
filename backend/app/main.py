@@ -16,6 +16,7 @@ from app.config import get_settings
 from app.infrastructure.api.error_handlers import register_exception_handlers
 from app.infrastructure.api.lesson_routers import router as lesson_router
 from app.infrastructure.api.routers import router as auth_router
+from app.infrastructure.api.user_routers import router as user_router
 from app.infrastructure.external.apple_verifier import AppleTokenVerifier
 from app.infrastructure.external.google_verifier import GoogleTokenVerifier
 from app.infrastructure.logging_config import configure_logging
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
     app.include_router(auth_router)
     app.include_router(lesson_router)
+    app.include_router(user_router)
 
     @app.get("/health", tags=["ops"])
     async def health() -> dict[str, str]:

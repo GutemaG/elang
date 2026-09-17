@@ -20,6 +20,7 @@ from app.domain.services import (
     AuthenticationService,
     OnboardingAttachmentPolicy,
     SessionValidationService,
+    UserPreferencesService,
 )
 from app.infrastructure.db.repositories import (
     SqlAlchemyAuthSessionRepository,
@@ -41,6 +42,15 @@ async def get_authentication_service(
         session_repo=session_repo,
         onboarding_policy=OnboardingAttachmentPolicy(),
         session_ttl=timedelta(days=settings.session_ttl_days),
+    )
+
+
+async def get_user_preferences_service(
+    session: AsyncSession = Depends(get_db_session),
+) -> UserPreferencesService:
+    user_repo = SqlAlchemyUserRepository(session)
+    return UserPreferencesService(
+        user_repo=user_repo, onboarding_policy=OnboardingAttachmentPolicy()
     )
 
 

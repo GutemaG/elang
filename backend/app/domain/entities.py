@@ -22,9 +22,15 @@ class User:
     """Aggregate Root. Invariants (enforced by domain services / repositories):
 
     1. `provider_identity` is globally unique across all users (sole dedup key).
-    2. `selected_language` and `daily_xp_target` are written exactly once, at
-       creation, and never overwritten by a later authentication.
-    3. A `User` cannot exist without a valid, non-empty `provider_user_id`
+    2. `selected_language` and `daily_xp_target` are written once, at creation.
+       After creation, the *only* sanctioned mutation path for either is
+       `UserPreferencesService.update_preferences` (ADR-7, bolt
+       `013-user-preferences-service`) — no other code path, including any
+       authentication/re-authentication flow, may write them.
+    3. `notification_enabled` carries no write-once restriction — it is
+       freely mutable via the same `update_preferences` operation and is
+       never null (existing rows were backfilled to `true`).
+    4. A `User` cannot exist without a valid, non-empty `provider_user_id`
        (enforced by `ProviderIdentity.__post_init__`).
     """
 
@@ -32,6 +38,7 @@ class User:
     provider_identity: ProviderIdentity
     selected_language: LanguageCode
     daily_xp_target: DailyXPTarget
+    notification_enabled: bool
     created_at: datetime
 
 

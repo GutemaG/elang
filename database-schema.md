@@ -15,8 +15,9 @@ Backs the `User` aggregate (`memory-bank/bolts/001-auth-service/ddd-01-domain-mo
 | `id` | `UUID` (Postgres) / `TEXT` (SQLite) | `PRIMARY KEY`, generated server-side (`uuid4`) | Surrogate key. Never the dedup key. |
 | `auth_provider` | `VARCHAR(16)` | `NOT NULL`, `CHECK (auth_provider IN ('google', 'apple'))` | Part of `ProviderIdentity` VO. |
 | `provider_user_id` | `VARCHAR(255)` | `NOT NULL` | Provider's stable subject identifier (Google `sub`, Apple stable user identifier). Never email. Part of `ProviderIdentity` VO. |
-| `selected_language` | `VARCHAR(8)` | `NOT NULL` | ISO-639-1-style code, e.g. `am`. Set exactly once at creation — never updated by this bolt's logic. |
-| `daily_xp_target` | `INTEGER` | `NOT NULL`, `CHECK (daily_xp_target > 0)` | Derived from `DailyGoalPreset` at creation via the minutes→XP mapping (see Technical Design). Set exactly once. |
+| `selected_language` | `VARCHAR(8)` | `NOT NULL` | ISO-639-1-style code, e.g. `am`. Set once at creation; after that, the only sanctioned mutation path is `PATCH /api/v1/users/me` (ADR-7, bolt `013-user-preferences-service`) — no auth/re-authentication flow may write it. |
+| `daily_xp_target` | `INTEGER` | `NOT NULL`, `CHECK (daily_xp_target > 0)` | Derived from `DailyGoalPreset` via the minutes→XP mapping (see Technical Design). Same write-once-then-sanctioned-update rule as `selected_language` (ADR-7). |
+| `notification_enabled` | `BOOLEAN` | `NOT NULL`, `DEFAULT true` | New in bolt `013-user-preferences-service` (migration `e02dd0a9ae54`). No write-once restriction — freely mutable via the same `PATCH /api/v1/users/me` endpoint. Stored but functionally inert: nothing in this codebase reads it to trigger a delivery yet. |
 | `created_at` | `TIMESTAMPTZ` (Postgres) / `TIMESTAMP` (SQLite, UTC assumed) | `NOT NULL`, `DEFAULT now()` | Account creation time. |
 
 **Constraints**:

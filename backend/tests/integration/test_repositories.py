@@ -31,6 +31,7 @@ def _make_user(provider_user_id: str) -> User:
         ),
         selected_language=LanguageCode(code="am"),
         daily_xp_target=DailyXPTarget(xp_per_day=40),
+        notification_enabled=True,
         created_at=datetime.now(UTC),
     )
 
@@ -67,6 +68,37 @@ class TestUserRepository:
         found = await repo.get_by_id(user.id)
         assert found is not None
         assert found.id == user.id
+
+    async def test_update_persists_language_goal_and_notification(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Bolt 013: `update()` is the one sanctioned post-creation mutation
+        path for `selected_language`/`daily_xp_target` (ADR-7), plus the
+        freely-mutable `notification_enabled`.
+        """
+        repo = SqlAlchemyUserRepository(db_session)
+        user = _make_user("google-sub-update")
+        await repo.add(user)
+        await db_session.commit()
+
+        changed = User(
+            id=user.id,
+            provider_identity=user.provider_identity,
+            selected_language=LanguageCode(code="am"),
+            daily_xp_target=DailyXPTarget(xp_per_day=80),
+            notification_enabled=False,
+            created_at=user.created_at,
+        )
+        updated = await repo.update(changed)
+        await db_session.commit()
+
+        assert updated.daily_xp_target.xp_per_day == 80
+        assert updated.notification_enabled is False
+
+        found = await repo.get_by_id(user.id)
+        assert found is not None
+        assert found.daily_xp_target.xp_per_day == 80
+        assert found.notification_enabled is False
 
 
 class TestAuthSessionRepositoryTimezoneRoundTrip:

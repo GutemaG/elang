@@ -29,6 +29,7 @@ class AuthUserResponse(BaseModel):
     id: str
     selected_language: str
     daily_xp_target: int
+    notification_enabled: bool
     is_new_user: bool
 
 
@@ -42,6 +43,7 @@ class SessionUserResponse(BaseModel):
     id: str
     selected_language: str
     daily_xp_target: int
+    notification_enabled: bool
 
 
 class SessionValidResponse(BaseModel):

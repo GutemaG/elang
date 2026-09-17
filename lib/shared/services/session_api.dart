@@ -24,11 +24,16 @@ class SessionUser {
     required this.id,
     required this.selectedLanguage,
     required this.dailyXpTarget,
+    required this.notificationEnabled,
   });
 
   final String id;
   final String selectedLanguage;
   final int dailyXpTarget;
+
+  /// New in `013-user-preferences-service`. Stored, functionally inert —
+  /// see `005-profile-and-settings`'s requirements for why.
+  final bool notificationEnabled;
 }
 
 /// Result of a session-validation call.
@@ -53,8 +58,11 @@ class SessionCheckResult {
 /// endpoint, but — per the plan's binding "Checkpoint Decisions" — **not**
 /// wired into `AuthFlowController`'s splash-time routing. `AuthFlowController`
 /// keeps using only the locally-stored session's expiry (no network call at
-/// launch); this client sits unused until a future feature actually needs
-/// server-side session revocation detection.
+/// launch). As of `014-profile-and-settings-ui`, `SettingsScreen` is the
+/// first real consumer — it calls [checkSession] on load to read the
+/// account's current language/daily-goal/notification state, since bolt
+/// `013-user-preferences-service` deliberately didn't add a redundant GET
+/// endpoint for that.
 class SessionApi {
   SessionApi({http.Client? client, String? baseUrl})
     : _client = client ?? http.Client(),
@@ -96,9 +104,11 @@ class SessionApi {
       final id = user['id'];
       final selectedLanguage = user['selected_language'];
       final dailyXpTarget = user['daily_xp_target'];
+      final notificationEnabled = user['notification_enabled'];
       if (id is! String ||
           selectedLanguage is! String ||
-          dailyXpTarget is! int) {
+          dailyXpTarget is! int ||
+          notificationEnabled is! bool) {
         return const SessionCheckResult.error();
       }
       return SessionCheckResult.valid(
@@ -106,6 +116,7 @@ class SessionApi {
           id: id,
           selectedLanguage: selectedLanguage,
           dailyXpTarget: dailyXpTarget,
+          notificationEnabled: notificationEnabled,
         ),
       );
     } on FormatException {

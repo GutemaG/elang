@@ -42,6 +42,7 @@ async def _build_service_with_live_session() -> SessionValidationService:
         ),
         selected_language=LanguageCode(code="am"),
         daily_xp_target=DailyXPTarget(xp_per_day=40),
+        notification_enabled=True,
         created_at=datetime.now(UTC),
     )
     user_repo = FakeUserRepository([user])

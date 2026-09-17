@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:vibration/vibration.dart';
 
+import 'sound_preference_repository.dart';
+
 /// Plays the short sound + vibration cue that fires the instant an exercise
 /// answer is graded -- one cue for correct, a distinctly different one for
 /// incorrect, so grading is felt as well as seen.
@@ -113,4 +115,36 @@ class SystemAnswerFeedbackPlayer implements AnswerFeedbackPlayer {
     await _correctPlayer.dispose();
     await _incorrectPlayer.dispose();
   }
+}
+
+/// Gates a real [AnswerFeedbackPlayer] behind the sound-on/off preference
+/// (`005-profile-and-settings`, FR-5). Checks the current preference fresh
+/// on every call -- so a toggle flipped in Settings takes effect on the
+/// very next graded answer, no restart needed -- rather than caching it at
+/// construction, since this player is built once at app start-up
+/// (`LessonDependencies`), long before any toggle could be flipped.
+class SoundGatedAnswerFeedbackPlayer implements AnswerFeedbackPlayer {
+  SoundGatedAnswerFeedbackPlayer({
+    required AnswerFeedbackPlayer player,
+    required SoundPreferenceRepository soundPreferenceRepository,
+  }) : _player = player,
+       _soundPreferenceRepository = soundPreferenceRepository;
+
+  final AnswerFeedbackPlayer _player;
+  final SoundPreferenceRepository _soundPreferenceRepository;
+
+  @override
+  Future<void> playCorrect() async {
+    if (!await _soundPreferenceRepository.getSoundEnabled()) return;
+    await _player.playCorrect();
+  }
+
+  @override
+  Future<void> playIncorrect() async {
+    if (!await _soundPreferenceRepository.getSoundEnabled()) return;
+    await _player.playIncorrect();
+  }
+
+  @override
+  Future<void> dispose() => _player.dispose();
 }

@@ -49,6 +49,9 @@ class UserModel(Base):
     provider_user_id: Mapped[str] = mapped_column(String(255), nullable=False)
     selected_language: Mapped[str] = mapped_column(String(8), nullable=False)
     daily_xp_target: Mapped[int] = mapped_column(nullable=False)
+    # New in 013-user-preferences-service. Backfilled `true` for existing
+    # rows by the migration (opt-out, not opt-in) -- never null (ADR-7).
+    notification_enabled: Mapped[bool] = mapped_column(nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )

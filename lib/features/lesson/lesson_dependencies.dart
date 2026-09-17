@@ -6,6 +6,7 @@ import '../../shared/services/lesson_audio_player.dart';
 import '../../shared/services/lesson_pack_downloader.dart';
 import '../../shared/services/lesson_pack_store.dart';
 import '../../shared/services/session_repository.dart';
+import '../../shared/services/sound_preference_repository.dart';
 import '../../shared/services/sync_engine.dart';
 
 /// Bag of shared services the lesson-loop feature depends on, constructed
@@ -23,9 +24,15 @@ import '../../shared/services/sync_engine.dart';
 /// [connectivityMonitor]/[lessonPackStore]/[lessonPackDownloader] are new
 /// as of `009-offline-caching-and-sync-ui` -- offline lesson caching and
 /// download management.
+///
+/// [feedbackPlayer] defaults to a [SoundGatedAnswerFeedbackPlayer] wrapping
+/// the real player, checking [soundPreferenceRepository] fresh on every
+/// call (`005-profile-and-settings`, FR-5) rather than the bare
+/// [SystemAnswerFeedbackPlayer].
 class LessonDependencies {
   LessonDependencies({
     required SessionRepository sessionRepository,
+    required SoundPreferenceRepository soundPreferenceRepository,
     LessonApi? lessonApi,
     LessonAudioPlayer? audioPlayer,
     AnswerFeedbackPlayer? feedbackPlayer,
@@ -35,7 +42,12 @@ class LessonDependencies {
     SyncEngine? syncEngine,
   }) : lessonApi = lessonApi ?? HttpLessonApi(sessionRepository: sessionRepository),
        audioPlayer = audioPlayer ?? AudioplayersLessonAudioPlayer(),
-       feedbackPlayer = feedbackPlayer ?? SystemAnswerFeedbackPlayer(),
+       feedbackPlayer =
+           feedbackPlayer ??
+           SoundGatedAnswerFeedbackPlayer(
+             player: SystemAnswerFeedbackPlayer(),
+             soundPreferenceRepository: soundPreferenceRepository,
+           ),
        connectivityMonitor = connectivityMonitor ?? ConnectivityPlusMonitor(),
        lessonPackStore = lessonPackStore ?? SqfliteLessonPackStore() {
     this.lessonPackDownloader =

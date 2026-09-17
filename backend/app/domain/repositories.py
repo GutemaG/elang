@@ -23,6 +23,8 @@ class UserRepository(Protocol):
 
     async def get_by_id(self, user_id: str) -> User | None: ...
 
+    async def update(self, user: User) -> User: ...
+
 
 class AuthSessionRepository(Protocol):
     """Entity: `AuthSession`.

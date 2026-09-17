@@ -1,9 +1,9 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 29
-- **Generated**: 29
-- **Completed**: 29
+- **Total stories**: 33
+- **Generated**: 33
+- **Completed**: 33
 - **Last updated**: 2026-09-17
 
 ---
@@ -72,6 +72,18 @@
 - [x] **001-match-pairs-exercise-screen** (match-pairs-ui): Take a match-pairs exercise via tap-tile-pairs (now also covers FR-2 grading) - Must - ✅ COMPLETED (bolt 012-match-pairs-ui)
 - [x] **002-offline-match-pairs-verification** (match-pairs-ui): Match-pairs exercises work fully offline - Must - ✅ COMPLETED (bolt 012-match-pairs-ui)
 
+### 005-profile-and-settings
+
+#### Unit: 001-user-preferences-service
+
+- [x] **001-update-daily-goal-and-language** (user-preferences-service): Change daily goal and language preference after account creation - Must - ✅ COMPLETED (bolt 013-user-preferences-service)
+- [x] **002-store-notification-preference** (user-preferences-service): Persist a notification on/off preference - Must - ✅ COMPLETED (bolt 013-user-preferences-service)
+
+#### Unit: 002-profile-and-settings-ui
+
+- [x] **001-settings-screen** (profile-and-settings-ui): View and edit language/daily-goal/notification/sound from one screen - Must - ✅ COMPLETED (bolt 014-profile-and-settings-ui)
+- [x] **002-logout** (profile-and-settings-ui): Log out from Settings - Must - ✅ COMPLETED (bolt 014-profile-and-settings-ui)
+
 ---
 
 ## Stories by Status
@@ -79,5 +91,5 @@
 - **Planned**: 0
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 29
+- **Completed**: 33
 - **Retired**: 1

@@ -8,8 +8,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/auth/auth_dependencies.dart';
 import 'package:elang/features/lesson/lesson_dependencies.dart';
+import 'package:elang/features/settings/settings_dependencies.dart';
 import 'package:elang/main.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
+import 'package:elang/shared/services/sound_preference_repository.dart';
 
 import 'helpers/fake_answer_feedback_player.dart';
 import 'helpers/fake_lesson_audio_player.dart';
@@ -22,14 +24,22 @@ void main() {
     final authDependencies = AuthDependencies(
       storage: InMemorySecureStorageService(),
     );
+    final soundPreferenceRepository = SoundPreferenceRepository(
+      storage: authDependencies.storage,
+    );
     await tester.pumpWidget(
       BunaApp(
         authDependencies: authDependencies,
         lessonDependencies: LessonDependencies(
           sessionRepository: authDependencies.sessionRepository,
+          soundPreferenceRepository: soundPreferenceRepository,
           lessonApi: FakeLessonApi(latency: Duration.zero),
           audioPlayer: FakeLessonAudioPlayer(),
           feedbackPlayer: FakeAnswerFeedbackPlayer(),
+        ),
+        settingsDependencies: SettingsDependencies(
+          sessionRepository: authDependencies.sessionRepository,
+          soundPreferenceRepository: soundPreferenceRepository,
         ),
       ),
     );

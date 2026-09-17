@@ -4,15 +4,28 @@ import 'features/auth/auth_dependencies.dart';
 import 'features/auth/auth_routes.dart';
 import 'features/lesson/lesson_dependencies.dart';
 import 'features/lesson/screens/skill_tree_dashboard_screen.dart';
+import 'features/settings/settings_dependencies.dart';
+import 'shared/services/sound_preference_repository.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() {
   final authDependencies = AuthDependencies();
+  // Shared with both LessonDependencies (gates AnswerFeedbackPlayer) and
+  // SettingsDependencies (the toggle UI) -- same instance, so a flip is
+  // visible on the very next graded answer, no restart needed.
+  final soundPreferenceRepository = SoundPreferenceRepository(
+    storage: authDependencies.storage,
+  );
   runApp(
     BunaApp(
       authDependencies: authDependencies,
       lessonDependencies: LessonDependencies(
         sessionRepository: authDependencies.sessionRepository,
+        soundPreferenceRepository: soundPreferenceRepository,
+      ),
+      settingsDependencies: SettingsDependencies(
+        sessionRepository: authDependencies.sessionRepository,
+        soundPreferenceRepository: soundPreferenceRepository,
       ),
     ),
   );
@@ -28,10 +41,12 @@ class BunaApp extends StatelessWidget {
     super.key,
     required this.authDependencies,
     required this.lessonDependencies,
+    required this.settingsDependencies,
   });
 
   final AuthDependencies authDependencies;
   final LessonDependencies lessonDependencies;
+  final SettingsDependencies settingsDependencies;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +64,9 @@ class BunaApp extends StatelessWidget {
           lessonPackStore: lessonDependencies.lessonPackStore,
           lessonPackDownloader: lessonDependencies.lessonPackDownloader,
           syncEngine: lessonDependencies.syncEngine,
+          sessionRepository: settingsDependencies.sessionRepository,
+          userPreferencesApi: settingsDependencies.userPreferencesApi,
+          soundPreferenceRepository: settingsDependencies.soundPreferenceRepository,
         ),
       ),
     );

@@ -25,6 +25,7 @@ from app.domain.services import (
     AuthenticationService,
     AuthResult,
     SessionValidationService,
+    UserPreferencesService,
 )
 from app.domain.value_objects import AuthProvider
 
@@ -153,3 +154,25 @@ async def validate_session(service: SessionValidationService, token_value: str) 
     non-error outcome, never raised as an exception.
     """
     return await service.validate(token_value)
+
+
+async def update_user_preferences(
+    service: UserPreferencesService,
+    user: User,
+    language_code: str | None,
+    daily_goal_minutes: int | None,
+    notification_enabled: bool | None,
+) -> User:
+    """Bolt 013, stories 001/002: applies a preference update and logs it
+    for observability. No domain event exists for this (the Domain Model
+    stage found no event-driven infrastructure anywhere in this codebase
+    to extend) -- a plain log line matches the existing observability
+    pattern instead. Raises `InvalidPreferenceValueError` (422) on an
+    invalid language/goal value; propagated as-is for the presentation
+    layer to map.
+    """
+    updated = await service.update_preferences(
+        user, language_code, daily_goal_minutes, notification_enabled
+    )
+    logger.info("user_preferences_updated user_id=%s", updated.id)
+    return updated

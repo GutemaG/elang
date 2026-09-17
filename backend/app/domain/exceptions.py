@@ -45,6 +45,20 @@ class InvalidPendingSelectionError(AuthDomainError):
     error_code = "invalid_pending_selection"
 
 
+class InvalidPreferenceValueError(AuthDomainError):
+    """A preference-update request (`013-user-preferences-service`) submitted
+    an unsupported language code or daily-goal value.
+
+    Distinct from `InvalidPendingSelectionError`: that one is raised only
+    during sign-in, for an optional, best-effort onboarding hint that is
+    silently ignored for a returning user. Here, the invalid value *is* the
+    entire substance of an authenticated user's request, so it is mapped to
+    422 (unprocessable content) rather than that flow's 400.
+    """
+
+    error_code = "invalid_preference_value"
+
+
 class ProviderUnreachableError(AuthDomainError):
     """The upstream Google/Apple verification endpoint could not be reached.
 

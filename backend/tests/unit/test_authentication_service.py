@@ -106,6 +106,7 @@ class TestReturningUserPath:
             ),
             selected_language=LanguageCode(code="am"),
             daily_xp_target=DailyXPTarget(xp_per_day=40),
+            notification_enabled=True,
             created_at=datetime.now(UTC),
         )
         return FakeUserRepository([existing]), existing

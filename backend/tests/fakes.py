@@ -55,6 +55,7 @@ class FakeUserRepository:
     def __init__(self, users: list[User] | None = None) -> None:
         self._users: dict[str, User] = {u.id: u for u in (users or [])}
         self.get_by_id_calls = 0
+        self.update_calls = 0
 
     async def find_by_provider_identity(
         self, auth_provider: AuthProvider, provider_user_id: str
@@ -74,6 +75,11 @@ class FakeUserRepository:
     async def get_by_id(self, user_id: str) -> User | None:
         self.get_by_id_calls += 1
         return self._users.get(user_id)
+
+    async def update(self, user: User) -> User:
+        self.update_calls += 1
+        self._users[user.id] = user
+        return user
 
 
 class FakeAuthSessionRepository:

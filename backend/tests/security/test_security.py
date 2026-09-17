@@ -39,6 +39,7 @@ def _make_user(provider_user_id: str) -> User:
         ),
         selected_language=LanguageCode(code="am"),
         daily_xp_target=DailyXPTarget(xp_per_day=40),
+        notification_enabled=True,
         created_at=datetime.now(UTC),
     )
 

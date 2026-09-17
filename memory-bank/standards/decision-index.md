@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-16T22:00:00Z
-total_decisions: 6
+last_updated: 2026-09-17T08:35:00Z
+total_decisions: 7
 ---
 
 # Decision Index
@@ -17,6 +17,14 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-7: `User.selected_language`/`daily_xp_target` amended from strict write-once to write-once-then-only-via-`UpdateUserPreferences`
+- **Status**: accepted
+- **Date**: 2026-09-17
+- **Bolt**: 013-user-preferences-service (001-user-preferences-service)
+- **Path**: `bolts/013-user-preferences-service/adr-7-user-preferences-write-once-exception.md`
+- **Summary**: `User`'s "written exactly once, never overwritten by a later authentication" invariant was written to prevent an auth-flow bug, not to block a deliberate user-initiated settings change. Decided: the invariant is amended, not removed — these fields are still write-once at creation, and after creation the only sanctioned mutation path is the new `UpdateUserPreferences` operation; no auth/re-authentication path may ever write them.
+- **Read when**: Modifying `User`/`entities.py`, any authentication or re-authentication flow that touches `selected_language`/`daily_xp_target`, or adding any further legitimate way to change these fields (must extend this ADR's exception list explicitly, not bypass it silently).
 
 ### ADR-6: Offline sync replays the existing per-completion endpoint; no batch-sync endpoint
 - **Status**: accepted

@@ -19,7 +19,10 @@ import 'package:elang/shared/services/answer_feedback_player.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
 import 'package:elang/shared/services/lesson_api.dart';
 import 'package:elang/shared/services/lesson_audio_player.dart';
+import 'package:elang/shared/services/http_user_preferences_api.dart';
 import 'package:elang/shared/services/lesson_pack_downloader.dart';
+import 'package:elang/shared/services/session_repository.dart';
+import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/sync_engine.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
@@ -28,12 +31,22 @@ import '../../../helpers/fake_connectivity_monitor.dart';
 import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
+import '../../../helpers/in_memory_secure_storage_service.dart';
+
+// The dashboard only threads these through to build `SettingsScreen` on
+// tap -- no test here opens Settings, so a real-but-unused
+// `HttpUserPreferencesApi` and in-memory-backed repositories are enough.
+SessionRepository _settingsSessionRepository() =>
+    SessionRepository(storage: InMemorySecureStorageService());
+SoundPreferenceRepository _settingsSoundPreferenceRepository() =>
+    SoundPreferenceRepository(storage: InMemorySecureStorageService());
 
 Widget _wrapped({
   required LessonApi lessonApi,
   required LessonAudioPlayer audioPlayer,
   AnswerFeedbackPlayer? feedbackPlayer,
 }) {
+  final sessionRepository = _settingsSessionRepository();
   return MaterialApp(
     home: SkillTreeDashboardScreen(
       lessonApi: lessonApi,
@@ -50,6 +63,9 @@ Widget _wrapped({
         connectivityMonitor: FakeConnectivityMonitor(),
         queueStore: FakePendingSyncQueueStore(),
       ),
+      sessionRepository: sessionRepository,
+      userPreferencesApi: HttpUserPreferencesApi(sessionRepository: sessionRepository),
+      soundPreferenceRepository: _settingsSoundPreferenceRepository(),
     ),
   );
 }
@@ -269,6 +285,7 @@ void main() {
         );
       final downloader = LessonPackDownloader(lessonApi: api, packStore: packStore);
 
+      final sessionRepository = _settingsSessionRepository();
       await tester.pumpWidget(
         MaterialApp(
           home: SkillTreeDashboardScreen(
@@ -283,6 +300,9 @@ void main() {
               connectivityMonitor: FakeConnectivityMonitor(),
               queueStore: FakePendingSyncQueueStore(),
             ),
+            sessionRepository: sessionRepository,
+            userPreferencesApi: HttpUserPreferencesApi(sessionRepository: sessionRepository),
+            soundPreferenceRepository: _settingsSoundPreferenceRepository(),
           ),
         ),
       );
@@ -300,6 +320,7 @@ void main() {
       final api = FakeLessonApi(latency: Duration.zero);
       final packStore = FakeLessonPackStore();
       final downloader = LessonPackDownloader(lessonApi: api, packStore: packStore);
+      final sessionRepository = _settingsSessionRepository();
 
       await tester.pumpWidget(
         MaterialApp(
@@ -315,6 +336,9 @@ void main() {
               connectivityMonitor: FakeConnectivityMonitor(),
               queueStore: FakePendingSyncQueueStore(),
             ),
+            sessionRepository: sessionRepository,
+            userPreferencesApi: HttpUserPreferencesApi(sessionRepository: sessionRepository),
+            soundPreferenceRepository: _settingsSoundPreferenceRepository(),
           ),
         ),
       );

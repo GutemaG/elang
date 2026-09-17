@@ -17,10 +17,12 @@ import 'package:elang/features/auth/auth_dependencies.dart';
 import 'package:elang/features/auth/auth_flow_controller.dart';
 import 'package:elang/features/auth/screens/splash_screen.dart';
 import 'package:elang/features/lesson/lesson_dependencies.dart';
+import 'package:elang/features/settings/settings_dependencies.dart';
 import 'package:elang/main.dart';
 import 'package:elang/shared/models/session_state.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
 import 'package:elang/shared/services/session_repository.dart';
+import 'package:elang/shared/services/sound_preference_repository.dart';
 
 import '../../helpers/fake_answer_feedback_player.dart';
 import '../../helpers/fake_lesson_audio_player.dart';
@@ -30,9 +32,17 @@ LessonDependencies _lessonDeps() => LessonDependencies(
   // Unused (a fake `lessonApi` is supplied below), but required by the
   // constructor -- only `HttpLessonApi`'s default would ever read it.
   sessionRepository: SessionRepository(storage: InMemorySecureStorageService()),
+  soundPreferenceRepository: SoundPreferenceRepository(
+    storage: InMemorySecureStorageService(),
+  ),
   lessonApi: FakeLessonApi(latency: Duration.zero),
   audioPlayer: FakeLessonAudioPlayer(),
   feedbackPlayer: FakeAnswerFeedbackPlayer(),
+);
+
+SettingsDependencies _settingsDeps(AuthDependencies deps) => SettingsDependencies(
+  sessionRepository: deps.sessionRepository,
+  soundPreferenceRepository: SoundPreferenceRepository(storage: deps.storage),
 );
 
 /// Advances past the splash screen's ~1.4s "brewing" animation so the
@@ -74,7 +84,11 @@ void main() {
       final deps = AuthDependencies(storage: InMemorySecureStorageService());
 
       await tester.pumpWidget(
-        BunaApp(authDependencies: deps, lessonDependencies: _lessonDeps()),
+        BunaApp(
+          authDependencies: deps,
+          lessonDependencies: _lessonDeps(),
+          settingsDependencies: _settingsDeps(deps),
+        ),
       );
       await _finishSplashAnimation(tester);
 
@@ -98,7 +112,11 @@ void main() {
       );
 
       await tester.pumpWidget(
-        BunaApp(authDependencies: deps, lessonDependencies: _lessonDeps()),
+        BunaApp(
+          authDependencies: deps,
+          lessonDependencies: _lessonDeps(),
+          settingsDependencies: _settingsDeps(deps),
+        ),
       );
       await _finishSplashAnimation(tester);
 
@@ -120,7 +138,11 @@ void main() {
       );
 
       await tester.pumpWidget(
-        BunaApp(authDependencies: deps, lessonDependencies: _lessonDeps()),
+        BunaApp(
+          authDependencies: deps,
+          lessonDependencies: _lessonDeps(),
+          settingsDependencies: _settingsDeps(deps),
+        ),
       );
       await _finishSplashAnimation(tester);
 

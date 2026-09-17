@@ -9,11 +9,16 @@ import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
 import '../../../shared/services/lesson_pack_downloader.dart';
 import '../../../shared/services/lesson_pack_store.dart';
+import '../../../shared/services/session_api.dart';
+import '../../../shared/services/session_repository.dart';
+import '../../../shared/services/sound_preference_repository.dart';
 import '../../../shared/services/sync_engine.dart';
+import '../../../shared/services/user_preferences_api.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
+import '../../settings/screens/settings_screen.dart';
 import '../widgets/lesson_hud.dart';
 import '../widgets/skill_path_node.dart';
 import '../widgets/sync_status_banner.dart';
@@ -38,6 +43,9 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     required this.lessonPackStore,
     required this.lessonPackDownloader,
     required this.syncEngine,
+    required this.sessionRepository,
+    required this.userPreferencesApi,
+    required this.soundPreferenceRepository,
   });
 
   final LessonApi lessonApi;
@@ -47,6 +55,12 @@ class SkillTreeDashboardScreen extends StatefulWidget {
   final LessonPackStore lessonPackStore;
   final LessonPackDownloader lessonPackDownloader;
   final SyncEngine syncEngine;
+
+  /// Threaded down purely to build [SettingsScreen] on tap -- the
+  /// dashboard itself has no other use for these.
+  final SessionRepository sessionRepository;
+  final UserPreferencesApi userPreferencesApi;
+  final SoundPreferenceRepository soundPreferenceRepository;
 
   @override
   State<SkillTreeDashboardScreen> createState() =>
@@ -75,6 +89,19 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
         builder: (_) => DownloadManagementScreen(
           lessonPackStore: widget.lessonPackStore,
           syncEngine: widget.syncEngine,
+        ),
+      ),
+    );
+  }
+
+  void _openSettings() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => SettingsScreen(
+          sessionApi: SessionApi(),
+          userPreferencesApi: widget.userPreferencesApi,
+          soundPreferenceRepository: widget.soundPreferenceRepository,
+          sessionRepository: widget.sessionRepository,
         ),
       ),
     );
@@ -144,6 +171,14 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                         ),
                         tooltip: 'Manage Downloads',
                         onPressed: _openDownloadManagement,
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.settings_outlined,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        tooltip: 'Settings',
+                        onPressed: _openSettings,
                       ),
                     ],
                   ),

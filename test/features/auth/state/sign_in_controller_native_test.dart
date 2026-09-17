@@ -107,6 +107,11 @@ void main() {
       await future;
 
       expect(controller.status, SignInStatus.idle);
+      // `014-profile-and-settings-ui`: the saved session records which
+      // provider was used, purely client-side (the backend never carries
+      // this) -- needed for Settings' "Signed in with Google/Apple" label.
+      final saved = await sessionRepository.getSessionState();
+      expect(saved.authProvider, 'google');
     },
   );
 

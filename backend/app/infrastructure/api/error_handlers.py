@@ -18,6 +18,7 @@ from app.domain.exceptions import (
     AuthDomainError,
     ExpiredTokenError,
     InvalidPendingSelectionError,
+    InvalidPreferenceValueError,
     InvalidSessionError,
     InvalidTokenError,
     MissingCredentialsError,
@@ -40,6 +41,7 @@ _AUTH_STATUS_BY_EXCEPTION: dict[type[AuthDomainError], int] = {
     ProviderUnreachableError: 502,
     MissingCredentialsError: 401,
     InvalidSessionError: 401,
+    InvalidPreferenceValueError: 422,
 }
 _AUTH_DEFAULT_STATUS = 400
 

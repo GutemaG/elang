@@ -57,6 +57,7 @@ def _to_auth_response(result: AuthResult) -> AuthResponse:
             id=result.user.id,
             selected_language=result.user.selected_language.code,
             daily_xp_target=result.user.daily_xp_target.xp_per_day,
+            notification_enabled=result.user.notification_enabled,
             is_new_user=result.is_new_user,
         ),
     )
@@ -109,5 +110,6 @@ async def get_session(
             id=user.id,
             selected_language=user.selected_language.code,
             daily_xp_target=user.daily_xp_target.xp_per_day,
+            notification_enabled=user.notification_enabled,
         )
     )

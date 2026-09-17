@@ -15,6 +15,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
 from app.domain.entities import AuthSession, User
+from app.domain.exceptions import InvalidPendingSelectionError, InvalidPreferenceValueError
 from app.domain.repositories import AuthSessionRepository, UserRepository
 from app.domain.value_objects import (
     DEFAULT_DAILY_XP_TARGET,
@@ -207,6 +208,7 @@ class AuthenticationService:
                 provider_identity=identity,
                 selected_language=language,
                 daily_xp_target=xp_target,
+                notification_enabled=True,
                 created_at=datetime.now(UTC),
             )
             user = await self._user_repo.add(new_user)
@@ -225,3 +227,65 @@ class AuthenticationService:
             raw_session_token=raw_token,
             is_new_user=is_new_user,
         )
+
+
+class UserPreferencesService:
+    """Bolt `013-user-preferences-service` (FR-2/FR-3/FR-4). The one
+    sanctioned post-creation mutation path for `User.selected_language`/
+    `daily_xp_target`, per ADR-7. Also freely updates `notification_enabled`,
+    which carries no write-once restriction.
+
+    Reuses `OnboardingAttachmentPolicy.map_minutes_to_daily_xp_target` for
+    the minutes->XP mapping so the allowed daily-goal values stay defined
+    in exactly one place (the same lookup table onboarding already uses) --
+    this service introduces no new allowed values for either field.
+    """
+
+    def __init__(
+        self, user_repo: UserRepository, onboarding_policy: OnboardingAttachmentPolicy
+    ) -> None:
+        self._user_repo = user_repo
+        self._onboarding_policy = onboarding_policy
+
+    async def update_preferences(
+        self,
+        user: User,
+        language_code: str | None,
+        daily_goal_minutes: int | None,
+        notification_enabled: bool | None,
+    ) -> User:
+        """Applies only the non-`None` fields; omitted fields, and fields
+        resubmitted with their current value, are a no-op (per story
+        001-update-daily-goal-and-language's edge cases).
+
+        Raises `InvalidPreferenceValueError` (422) for an unsupported
+        language code or daily-goal value -- re-wrapping the value objects'
+        own validation errors rather than letting sign-up's
+        `InvalidPendingSelectionError` (400) leak into this endpoint's
+        distinct error contract.
+        """
+        language = user.selected_language
+        daily_xp_target = user.daily_xp_target
+        try:
+            if language_code is not None:
+                language = LanguageCode(code=language_code)
+            if daily_goal_minutes is not None:
+                daily_xp_target = self._onboarding_policy.map_minutes_to_daily_xp_target(
+                    daily_goal_minutes
+                )
+        except (InvalidPendingSelectionError, ValueError) as exc:
+            raise InvalidPreferenceValueError(str(exc)) from exc
+
+        updated_user = User(
+            id=user.id,
+            provider_identity=user.provider_identity,
+            selected_language=language,
+            daily_xp_target=daily_xp_target,
+            notification_enabled=(
+                user.notification_enabled
+                if notification_enabled is None
+                else notification_enabled
+            ),
+            created_at=user.created_at,
+        )
+        return await self._user_repo.update(updated_user)

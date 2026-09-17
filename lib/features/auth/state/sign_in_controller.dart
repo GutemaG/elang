@@ -113,7 +113,11 @@ class SignInController extends ChangeNotifier {
     switch (result) {
       case AuthSuccess(sessionToken: final token, expiresAt: final expiresAt):
         await _sessionRepository.saveSession(
-          SessionState(token: token, expiresAt: expiresAt),
+          SessionState(
+            token: token,
+            expiresAt: expiresAt,
+            authProvider: provider.name,
+          ),
         );
         _status = SignInStatus.idle;
         notifyListeners();
