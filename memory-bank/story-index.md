@@ -1,8 +1,8 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 37
-- **Generated**: 37
+- **Total stories**: 46
+- **Generated**: 46
 - **Completed**: 33
 - **Last updated**: 2026-09-17
 
@@ -96,12 +96,37 @@
 - [x] **001-speak-check-exercise-screen** (speak-check-ui): Record, submit, and see pass/fail feedback - Must - ✅ GENERATED
 - [x] **002-exclude-speak-check-from-offline-packs** (speak-check-ui): Exclude speak-check from offline downloadable packs - Must - ✅ GENERATED
 
+### 007-amole-currency
+
+#### Unit: 001-amole-service
+
+- [x] **001-ledger-backed-amole-balance** (amole-service): Retrofit spend/balance onto a new amole_transactions ledger - Must - ✅ GENERATED
+- [x] **002-award-amole-on-completion** (amole-service): Award Amole on lesson completion, perfect lesson, streak milestones - Must - ✅ GENERATED
+
+#### Unit: 002-amole-ui
+
+- [x] **001-amole-balance-on-dashboard** (amole-ui): Show Amole balance on the home dashboard - Must - ✅ GENERATED
+
+### 008-srs-and-practice
+
+#### Unit: 001-srs-tracking-service
+
+- [x] **001-vocab-item-content-model** (srs-tracking-service): New vocab_items content model + exercises FK - Must - ✅ GENERATED
+- [x] **002-vocab-progress-retrofit** (srs-tracking-service): Track per-user vocab progress from complete_lesson - Must - ✅ GENERATED
+- [x] **003-leitner-box-algorithm** (srs-tracking-service): 5-box spaced-repetition transition math - Must - ✅ GENERATED
+- [x] **004-due-items-and-count-endpoints** (srs-tracking-service): Due-items + due-count endpoints - Must - ✅ GENERATED
+
+#### Unit: 002-practice-ui
+
+- [x] **001-practice-entry-point-and-due-count** (practice-ui): Due-count entry point, disabled (not hidden) offline - Must - ✅ GENERATED
+- [x] **002-practice-session-assembly-and-completion** (practice-ui): Assemble + complete a practice session via existing exercise widgets - Must - ✅ GENERATED
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 4
+- **Generated**: 13
 - **In Progress**: 0
 - **Completed**: 33
 - **Retired**: 1
