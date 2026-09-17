@@ -1,8 +1,8 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 33
-- **Generated**: 33
+- **Total stories**: 37
+- **Generated**: 37
 - **Completed**: 33
 - **Last updated**: 2026-09-17
 
@@ -84,12 +84,24 @@
 - [x] **001-settings-screen** (profile-and-settings-ui): View and edit language/daily-goal/notification/sound from one screen - Must - ✅ COMPLETED (bolt 014-profile-and-settings-ui)
 - [x] **002-logout** (profile-and-settings-ui): Log out from Settings - Must - ✅ COMPLETED (bolt 014-profile-and-settings-ui)
 
+### 006-speak-check-exercise-type
+
+#### Unit: 001-speak-check-service
+
+- [x] **001-serve-speak-check-exercise-content** (speak-check-service): Serve speak-check exercise content (target phrase + translation) - Must - ✅ GENERATED
+- [x] **002-grade-speak-check-attempt** (speak-check-service): Grade a recorded attempt via Google Cloud Speech-to-Text - Must - ✅ GENERATED — 🚫 BLOCKED (GCP not yet provisioned)
+
+#### Unit: 002-speak-check-ui
+
+- [x] **001-speak-check-exercise-screen** (speak-check-ui): Record, submit, and see pass/fail feedback - Must - ✅ GENERATED
+- [x] **002-exclude-speak-check-from-offline-packs** (speak-check-ui): Exclude speak-check from offline downloadable packs - Must - ✅ GENERATED
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 0
+- **Generated**: 4
 - **In Progress**: 0
 - **Completed**: 33
 - **Retired**: 1
