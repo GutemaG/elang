@@ -3,7 +3,7 @@ id: 016-speak-check-ui
 unit: 002-speak-check-ui
 intent: 006-speak-check-exercise-type
 type: simple-construction-bolt
-status: planned
+status: deferred
 stories:
   - 001-speak-check-exercise-screen
   - 002-exclude-speak-check-from-offline-packs
@@ -29,9 +29,9 @@ complexity:
 
 # Bolt: 016-speak-check-ui
 
-## ⛔ DO NOT START — Blocked on 015-speak-check-service
+## ⛔ DEFERRED — Do Not Start
 
-Blocked on `015-speak-check-service`, which is itself blocked on Google Cloud Speech-to-Text provisioning. Do not start this bolt until `015` is complete.
+Blocked on `015-speak-check-service`, which is itself **deferred by explicit user decision on 2026-09-17** (Google Cloud Speech-to-Text provisioning postponed to the future). Do not start this bolt until `015` is complete and un-deferred.
 
 ## Overview
 

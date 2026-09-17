@@ -3,7 +3,7 @@ id: 015-speak-check-service
 unit: 001-speak-check-service
 intent: 006-speak-check-exercise-type
 type: ddd-construction-bolt
-status: planned
+status: deferred
 stories:
   - 001-serve-speak-check-exercise-content
   - 002-grade-speak-check-attempt
@@ -28,9 +28,9 @@ complexity:
 
 # Bolt: 015-speak-check-service
 
-## ⛔ DO NOT START — External Precondition Not Met
+## ⛔ DEFERRED — Do Not Start
 
-**Google Cloud Speech-to-Text has not been provisioned** (no GCP account/project/billing/API credentials exist yet, per intent `006-speak-check-exercise-type`'s requirements.md Constraints/Assumptions). This bolt exists so Construction has a ready starting point the moment provisioning is confirmed — it is **not** ready to start today. If asked to start this bolt, confirm provisioning status with the user first rather than proceeding or substituting a placeholder/mock credential silently.
+**Deferred by explicit user decision on 2026-09-17**: Google Cloud Speech-to-Text will be provisioned in the future, but not now. This bolt exists so Construction has a ready starting point whenever the user chooses to revisit it — it is **not** ready to start today, and this is not a temporary blocker to work around. If asked to start this bolt, confirm with the user that they want to un-defer it and that GCP provisioning is actually done, rather than proceeding or substituting a placeholder/mock credential silently.
 
 ## Overview
 

@@ -45,7 +45,8 @@ status: complete
 | Date | Decision | Rationale | Approved |
 |------|----------|-----------|----------|
 | 2026-09-17 | Sequenced last of the 3 gap-closing intents, after 004-match-pairs-exercise-type and 005-profile-and-settings | Needs Google Cloud Speech-to-Text (external dependency, bigger lift) per user's explicit instruction | Yes |
-| 2026-09-17 | Full Inception produced now; Construction explicitly not started for this intent | Google Cloud Speech-to-Text is not yet provisioned — user's explicit Checkpoint 1 direction: document the requirement, don't implement/defer it | Yes |
+| 2026-09-17 | Full Inception produced now; Construction explicitly not started for this intent | Google Cloud Speech-to-Text is not yet provisioned — user's explicit Checkpoint 1 direction: document the requirement, don't implement it yet | Yes |
+| 2026-09-17 | Intent formally deferred: both bolts (`015`, `016`) marked `status: deferred`, not just "planned" | User's explicit decision after Inception closed: GCP Speech-to-Text will be added in the future, not now — this is an intentional pause, not an oversight or a blocker to work around | Yes |
 | 2026-09-17 | speak_check exercises excluded from downloadable offline packs entirely (not a record-now-score-later queue) | User's explicit Checkpoint 1 choice — simplest, safest, given grading fundamentally requires network | Yes |
 | 2026-09-17 | Fuzzy similarity threshold, unlimited retries | User's explicit Checkpoint 1 choice — matches this app's low-stakes, practice-oriented tone | Yes |
 | 2026-09-17 | Grading stays server-side for this exercise type (FR-2), a deliberate deviation from ADR-5 | No client-side speech-recognition capability exists in this stack; flagged for its own ADR at Construction rather than silently exempted | Yes |
@@ -66,13 +67,14 @@ status: complete
 - [x] Bolts planned
 - [x] Human review complete
 
-**⛔ Construction is explicitly not started for this intent.** Both bolts (`015-speak-check-service`, `016-speak-check-ui`) are marked `status: planned` with a prominent "DO NOT START" notice, blocked on Google Cloud Speech-to-Text provisioning (external, not a code dependency).
+**⛔ This intent is deferred.** Both bolts (`015-speak-check-service`, `016-speak-check-ui`) are marked `status: deferred` with a prominent "DEFERRED — Do Not Start" notice. The user has explicitly chosen to provision Google Cloud Speech-to-Text at a later time, not now — this is a deliberate pause, not a technical blocker to work around.
 
 ## Next Steps
 
-1. **Provision Google Cloud Speech-to-Text** (account, project, billing, API credentials) — a precondition for Construction, not for Inception.
-2. Once provisioned, begin Construction on `015-speak-check-service`.
+1. **When the user is ready**: provision Google Cloud Speech-to-Text (account, project, billing, API credentials).
+2. **When the user says so**: un-defer both bolts (change `status: deferred` back to `planned`) and begin Construction on `015-speak-check-service`.
 3. Then `016-speak-check-ui`.
+4. Until then: no action needed on this intent. Do not start either bolt on your own initiative even if asked to "continue" generically — confirm the user actually wants to un-defer it first.
 
 ## Dependencies
 
