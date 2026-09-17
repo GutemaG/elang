@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 46
 - **Generated**: 46
-- **Completed**: 33
+- **Completed**: 36
 - **Last updated**: 2026-09-17
 
 ---
@@ -100,12 +100,12 @@
 
 #### Unit: 001-amole-service
 
-- [x] **001-ledger-backed-amole-balance** (amole-service): Retrofit spend/balance onto a new amole_transactions ledger - Must - ✅ GENERATED
-- [x] **002-award-amole-on-completion** (amole-service): Award Amole on lesson completion, perfect lesson, streak milestones - Must - ✅ GENERATED
+- [x] **001-ledger-backed-amole-balance** (amole-service): Retrofit spend/balance onto a new amole_transactions ledger - Must - ✅ COMPLETED (bolt 017-amole-service)
+- [x] **002-award-amole-on-completion** (amole-service): Award Amole on lesson completion, perfect lesson, streak milestones - Must - ✅ COMPLETED (bolt 017-amole-service)
 
 #### Unit: 002-amole-ui
 
-- [x] **001-amole-balance-on-dashboard** (amole-ui): Show Amole balance on the home dashboard - Must - ✅ GENERATED
+- [x] **001-amole-balance-on-dashboard** (amole-ui): Show Amole balance on the home dashboard - Must - ✅ COMPLETED (bolt 018-amole-ui)
 
 ### 008-srs-and-practice
 
@@ -126,7 +126,7 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 13
+- **Generated**: 10
 - **In Progress**: 0
-- **Completed**: 33
+- **Completed**: 36
 - **Retired**: 1

@@ -163,19 +163,50 @@ class UserSkillProgressModel(Base):
 
 class UserBeansModel(Base):
     """Backs the `UserBeans` aggregate (bolt 005). One row per user,
-    created lazily on first write; absence = full beans + starting Amole.
+    created lazily on first write; absence = full beans.
+
+    As of bolt `017-amole-service` (ADR-8), no longer carries Amole state --
+    see `AmoleTransactionModel` below.
     """
 
     __tablename__ = "user_beans"
     __table_args__ = (
         CheckConstraint("current_count >= 0", name="ck_user_beans_current_count_non_negative"),
-        CheckConstraint("amole_balance >= 0", name="ck_user_beans_amole_balance_non_negative"),
     )
 
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), primary_key=True)
     current_count: Mapped[int] = mapped_column(Integer, nullable=False)
     last_regen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    amole_balance: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
+class AmoleTransactionModel(Base):
+    """Backs the `AmoleTransaction` aggregate (bolt `017-amole-service`,
+    ADR-8). Append-only -- no code path ever updates or deletes a row.
+    Balance is always `SUM(amount)`, computed by the repository, never
+    stored here.
+    """
+
+    __tablename__ = "amole_transactions"
+    __table_args__ = (
+        UniqueConstraint(
+            "source", "reference_id", name="uq_amole_transactions_source_reference"
+        ),
+        CheckConstraint(
+            "source IN ('wallet_created', 'migration_backfill', 'lesson_completion', "
+            "'perfect_lesson', 'streak_milestone_7', 'streak_milestone_30', 'bean_refill')",
+            name="ck_amole_transactions_source",
+        ),
+        Index("ix_amole_transactions_user_id", "user_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    source: Mapped[str] = mapped_column(String(32), nullable=False)
+    reference_id: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )

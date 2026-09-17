@@ -20,6 +20,43 @@ REFILL_COST_AMOLE = 350
 STARTING_AMOLE_BALANCE = 500
 FREEZE_GRANTED_AT_CROWN_LEVEL = 5
 
+# --- Bolt 017 constants (ddd-02-technical-design.md) ---
+AMOLE_LESSON_COMPLETION_AWARD = 20
+AMOLE_PERFECT_LESSON_BONUS = 10
+AMOLE_STREAK_MILESTONE_7_BONUS = 150
+AMOLE_STREAK_MILESTONE_30_BONUS = 500
+STREAK_MILESTONE_7_DAYS = 7
+STREAK_MILESTONE_30_DAYS = 30
+
+
+class AmoleSource(StrEnum):
+    """Closed vocabulary for `AmoleTransaction.source` (ADR-8) -- adding a
+    new source is a deliberate code change, never runtime-configurable,
+    same closed-enum-as-CHECK-constraint pattern as `ExerciseType`.
+    """
+
+    WALLET_CREATED = "wallet_created"
+    MIGRATION_BACKFILL = "migration_backfill"
+    LESSON_COMPLETION = "lesson_completion"
+    PERFECT_LESSON = "perfect_lesson"
+    STREAK_MILESTONE_7 = "streak_milestone_7"
+    STREAK_MILESTONE_30 = "streak_milestone_30"
+    BEAN_REFILL = "bean_refill"
+
+
+@dataclass(frozen=True)
+class AmoleAward:
+    """One proposed positive ledger entry -- `AmoleAwardPolicy`'s output,
+    not yet posted. The caller (`complete_lesson`) turns each of these into
+    an `AmoleTransaction` sharing the completion's own `attempt_id` as
+    `reference_id` (ADR-8) -- this value object doesn't carry a
+    `reference_id` itself since it has no notion of which completion it
+    came from.
+    """
+
+    amount: int
+    source: AmoleSource
+
 
 class ExerciseType(StrEnum):
     """The exercise types this lesson engine supports. Originally the 3

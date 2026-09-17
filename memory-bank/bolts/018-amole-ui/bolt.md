@@ -3,22 +3,29 @@ id: 018-amole-ui
 unit: 002-amole-ui
 intent: 007-amole-currency
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-amole-balance-on-dashboard
 created: '2026-09-17T16:30:00Z'
-started: null
-completed: null
+started: '2026-09-17T20:00:00Z'
+completed: '2026-09-17T16:16:57Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: plan
+    completed: '2026-09-17T20:00:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-17T20:20:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-17T20:35:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 017-amole-service
 enables_bolts: []
 requires_units:
   - 001-amole-service
 blocks: false
-
 complexity:
   avg_complexity: 1
   avg_uncertainty: 1
@@ -47,9 +54,9 @@ The dashboard shows the current Amole balance next to XP/streak, updating after 
 
 ## Stages
 
-- [ ] **1. Plan**: Pending → implementation-plan.md
-- [ ] **2. Implement**: Pending → implementation-walkthrough.md
-- [ ] **3. Test**: Pending → test-walkthrough.md
+- [x] **1. Plan**: ✅ Complete → implementation-plan.md
+- [x] **2. Implement**: ✅ Complete → implementation-walkthrough.md
+- [x] **3. Test**: ✅ Complete → test-walkthrough.md
 
 ## Dependencies
 

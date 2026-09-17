@@ -17,9 +17,7 @@ _NOW = datetime(2026, 9, 16, 12, 0, tzinfo=UTC)
 
 
 def _beans(current_count: int, last_regen_at: datetime = _NOW) -> UserBeans:
-    return UserBeans(
-        user_id="u1", current_count=current_count, last_regen_at=last_regen_at, amole_balance=500
-    )
+    return UserBeans(user_id="u1", current_count=current_count, last_regen_at=last_regen_at)
 
 
 class TestRegenerate:

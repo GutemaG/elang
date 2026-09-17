@@ -2,7 +2,7 @@
 unit: 001-amole-service
 intent: 007-amole-currency
 phase: inception
-status: ready
+status: complete
 created: '2026-09-17T16:15:00Z'
 updated: '2026-09-17T16:15:00Z'
 ---

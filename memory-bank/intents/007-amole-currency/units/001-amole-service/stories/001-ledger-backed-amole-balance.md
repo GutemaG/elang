@@ -2,11 +2,11 @@
 id: 001-ledger-backed-amole-balance
 unit: 001-amole-service
 intent: 007-amole-currency
-status: ready
+status: complete
 priority: must
 created: '2026-09-17T16:20:00Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 001-ledger-backed-amole-balance

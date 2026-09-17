@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.domain.lesson.entities import (
+    AmoleTransaction,
     Exercise,
     Lesson,
     LessonAttempt,
@@ -42,6 +43,7 @@ from app.domain.lesson.value_objects import (
 )
 from app.domain.lesson.value_objects import Choice as ChoiceVO
 from app.infrastructure.db.lesson_models import (
+    AmoleTransactionModel,
     ExerciseModel,
     LessonAttemptModel,
     LessonModel,
@@ -138,7 +140,6 @@ def _beans_model_to_domain(model: UserBeansModel) -> UserBeans:
         user_id=model.user_id,
         current_count=model.current_count,
         last_regen_at=_ensure_utc(model.last_regen_at),
-        amole_balance=model.amole_balance,
     )
 
 
@@ -335,7 +336,56 @@ class SqlAlchemyUserBeansRepository:
             self._session.add(model)
         model.current_count = beans.current_count
         model.last_regen_at = beans.last_regen_at
-        model.amole_balance = beans.amole_balance
+
+
+class SqlAlchemyAmoleTransactionRepository:
+    """Implements `app.domain.lesson.repositories.AmoleTransactionRepository`
+    (bolt `017-amole-service`, ADR-8).
+
+    `add_if_new` checks for an existing `(source, reference_id)` row before
+    inserting rather than catching a DB-level `IntegrityError` -- same
+    check-then-write style already used by every other `upsert` in this
+    module, and the DB's own `UNIQUE` constraint still backstops a genuine
+    race (this project doesn't guard `LessonAttemptRepository.add`'s
+    equivalent race either, so this matches existing risk tolerance, not a
+    new gap).
+    """
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add_if_new(self, transaction: AmoleTransaction) -> None:
+        stmt = select(AmoleTransactionModel).where(
+            AmoleTransactionModel.source == transaction.source,
+            AmoleTransactionModel.reference_id == transaction.reference_id,
+        )
+        result = await self._session.execute(stmt)
+        if result.scalar_one_or_none() is not None:
+            return
+        self._session.add(
+            AmoleTransactionModel(
+                id=transaction.id,
+                user_id=transaction.user_id,
+                amount=transaction.amount,
+                source=transaction.source,
+                reference_id=transaction.reference_id,
+                created_at=transaction.created_at,
+            )
+        )
+        # The session factory disables autoflush (`db/session.py`), and
+        # callers routinely post a transaction then immediately read
+        # `sum_by_user` back in the same request/session (e.g.
+        # `get_amole_balance`, `refill_beans`) -- without this flush, that
+        # read would not see the row just added until the request-ending
+        # commit, undercounting the balance by exactly this transaction.
+        await self._session.flush()
+
+    async def sum_by_user(self, user_id: str) -> int:
+        stmt = select(func.sum(AmoleTransactionModel.amount)).where(
+            AmoleTransactionModel.user_id == user_id
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar() or 0
 
 
 class SqlAlchemyUserStreakRepository:

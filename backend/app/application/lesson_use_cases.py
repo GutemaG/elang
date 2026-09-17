@@ -7,10 +7,12 @@ response mapping.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from app.domain.lesson.entities import (
+    AmoleTransaction,
     Lesson,
     LessonAttempt,
     UserBeans,
@@ -23,6 +25,7 @@ from app.domain.lesson.exceptions import (
     LessonNotFoundError,
 )
 from app.domain.lesson.repositories import (
+    AmoleTransactionRepository,
     LessonAttemptRepository,
     LessonRepository,
     SkillRepository,
@@ -31,6 +34,7 @@ from app.domain.lesson.repositories import (
     UserStreakRepository,
 )
 from app.domain.lesson.services import (
+    AmoleAwardPolicy,
     BeanLedger,
     CompletionTimestampValidator,
     LessonAccessPolicy,
@@ -42,6 +46,7 @@ from app.domain.lesson.value_objects import (
     BEANS_MAX,
     REFILL_COST_AMOLE,
     STARTING_AMOLE_BALANCE,
+    AmoleSource,
     LessonCompletionOutcome,
 )
 
@@ -60,12 +65,38 @@ _NO_CONTENT_VERSION = datetime(1970, 1, 1, tzinfo=UTC)
 
 
 def _default_beans(user_id: str, now: datetime) -> UserBeans:
-    return UserBeans(
-        user_id=user_id,
-        current_count=BEANS_MAX,
-        last_regen_at=now,
-        amole_balance=STARTING_AMOLE_BALANCE,
+    return UserBeans(user_id=user_id, current_count=BEANS_MAX, last_regen_at=now)
+
+
+async def _ensure_amole_wallet(
+    user_id: str, amole_repo: AmoleTransactionRepository, now: datetime
+) -> None:
+    """Bolt 017: lazily grants the one-time `STARTING_AMOLE_BALANCE`, the
+    same "absence is meaningful, materialized on first real access" laziness
+    `_default_beans` used to provide for Amole before ADR-8 split it out of
+    `UserBeans`. Idempotent via `add_if_new` -- safe to call on every
+    balance read/spend-validation, not just once.
+    """
+    await amole_repo.add_if_new(
+        AmoleTransaction(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            amount=STARTING_AMOLE_BALANCE,
+            source=AmoleSource.WALLET_CREATED,
+            reference_id=user_id,
+            created_at=now,
+        )
     )
+
+
+async def get_amole_balance(
+    user_id: str, amole_repo: AmoleTransactionRepository, now: datetime
+) -> int:
+    """Bolt 017: the account's Amole balance -- always `SUM(amount)`
+    (ADR-8), never a cached column.
+    """
+    await _ensure_amole_wallet(user_id, amole_repo, now)
+    return await amole_repo.sum_by_user(user_id)
 
 
 def _default_streak(user_id: str) -> UserStreak:
@@ -220,21 +251,27 @@ class BeansStatusResult:
 
 
 async def get_beans_status(
-    user_id: str, beans_repo: UserBeansRepository, now: datetime
+    user_id: str,
+    beans_repo: UserBeansRepository,
+    amole_repo: AmoleTransactionRepository,
+    now: datetime,
 ) -> BeansStatusResult:
     """The account's current beans/refill state (regenerated as of `now`),
-    for the out-of-beans modal and dashboard HUD. Read-only -- never
-    writes a row, same "absence is meaningful" convention as
-    `get_skill_tree`.
+    for the out-of-beans modal and dashboard HUD. Beans side is
+    read-only -- never writes a row, same "absence is meaningful"
+    convention as `get_skill_tree`. Amole side (bolt 017) may lazily grant
+    the one-time starting balance on first-ever access (`_ensure_amole_wallet`),
+    which is itself idempotent, not a repeated grant.
     """
     beans = await beans_repo.get(user_id) or _default_beans(user_id, now)
     ledger = BeanLedger()
     regenerated = ledger.regenerate(beans, now)
+    amole_balance = await get_amole_balance(user_id, amole_repo, now)
     return BeansStatusResult(
         beans=regenerated.current_count,
         beans_max=BEANS_MAX,
         next_bean_at=ledger.next_bean_at(regenerated),
-        amole_balance=regenerated.amole_balance,
+        amole_balance=amole_balance,
         refill_cost_amole=REFILL_COST_AMOLE,
     )
 
@@ -246,23 +283,42 @@ class RefillResult:
 
 
 async def refill_beans(
-    user_id: str, beans_repo: UserBeansRepository, now: datetime
+    user_id: str,
+    beans_repo: UserBeansRepository,
+    amole_repo: AmoleTransactionRepository,
+    now: datetime,
 ) -> RefillResult:
     """Story 003: an immediate Beans refill using the account's Amole
     balance. Raises `InsufficientAmoleError` (422) if the balance can't
     cover `REFILL_COST_AMOLE`.
+
+    Bolt 017 (ADR-9): the posted `bean_refill` ledger row uses a fresh
+    reference per call, matching this endpoint's pre-existing (and
+    unchanged) lack of retry protection -- a retried refill request can
+    still double-spend today, exactly as it could before this bolt.
     """
     beans = await beans_repo.get(user_id) or _default_beans(user_id, now)
     ledger = BeanLedger()
     regenerated = ledger.regenerate(beans, now)
-    if regenerated.amole_balance < REFILL_COST_AMOLE:
+    balance = await get_amole_balance(user_id, amole_repo, now)
+    if balance < REFILL_COST_AMOLE:
         raise InsufficientAmoleError(
-            f"Refill costs {REFILL_COST_AMOLE} Amole; account has {regenerated.amole_balance}"
+            f"Refill costs {REFILL_COST_AMOLE} Amole; account has {balance}"
         )
     refilled = ledger.refill(regenerated, now)
-    refilled = replace(refilled, amole_balance=refilled.amole_balance - REFILL_COST_AMOLE)
     await beans_repo.upsert(refilled)
-    return RefillResult(beans=refilled.current_count, amole_balance=refilled.amole_balance)
+    await amole_repo.add_if_new(
+        AmoleTransaction(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            amount=-REFILL_COST_AMOLE,
+            source=AmoleSource.BEAN_REFILL,
+            reference_id=str(uuid.uuid4()),
+            created_at=now,
+        )
+    )
+    new_balance = await amole_repo.sum_by_user(user_id)
+    return RefillResult(beans=refilled.current_count, amole_balance=new_balance)
 
 
 async def complete_lesson(
@@ -282,6 +338,7 @@ async def complete_lesson(
     beans_repo: UserBeansRepository,
     streak_repo: UserStreakRepository,
     attempt_repo: LessonAttemptRepository,
+    amole_repo: AmoleTransactionRepository,
     now: datetime,
 ) -> LessonCompletionOutcome:
     """Stories 002/003/004: the account-ledger side of one completed lesson
@@ -289,6 +346,13 @@ async def complete_lesson(
     orchestrates Beans consumption (bounded by ADR-5's Decision 1), XP
     award, skill-progress/crown-level update, and streak update, all in one
     transaction, idempotent on `attempt_id` (story 003).
+
+    Bolt 017 (intent 007-amole-currency): also awards Amole (flat
+    completion amount, perfect-lesson bonus, 7-/30-day streak-milestone
+    bonus), all keyed to this same `attempt_id` as their ledger
+    `reference_id` (ADR-8) -- the top-level idempotency check below is the
+    primary guard against a retried request re-awarding; the ledger's own
+    `(source, reference_id)` uniqueness is a backstop, not the only guard.
 
     Bolt 008 (`003-offline-caching-and-sync`): `client_completed_at` is the
     moment the user actually completed the lesson (identical to `now` for
@@ -351,6 +415,24 @@ async def complete_lesson(
         now=client_completed_at,
         completion_date=completion_date,
     )
+
+    awards = AmoleAwardPolicy().awards_for_completion(
+        correct_count=correct_count,
+        total_count=total_count,
+        previous_streak=streak.current_streak,
+        new_streak=completion.streak.current_streak,
+    )
+    for award in awards:
+        await amole_repo.add_if_new(
+            AmoleTransaction(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                amount=award.amount,
+                source=award.source,
+                reference_id=attempt_id,
+                created_at=client_completed_at,
+            )
+        )
 
     await beans_repo.upsert(new_beans)
     await progress_repo.upsert(completion.progress)

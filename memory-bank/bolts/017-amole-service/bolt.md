@@ -3,22 +3,35 @@ id: 017-amole-service
 unit: 001-amole-service
 intent: 007-amole-currency
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-ledger-backed-amole-balance
   - 002-award-amole-on-completion
 created: '2026-09-17T16:30:00Z'
-started: null
-completed: null
+started: '2026-09-17T17:30:00Z'
+completed: '2026-09-17T14:45:29Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: model
+    completed: '2026-09-17T17:45:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-17T18:00:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr
+    completed: '2026-09-17T18:20:00Z'
+    artifact: adr-8-amole-ledger-not-column.md, adr-9-bean-refill-idempotency-gap-accepted.md
+  - name: implement
+    completed: '2026-09-17T19:00:00Z'
+    artifact: backend/ (amended)
+  - name: test
+    completed: '2026-09-17T19:30:00Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts:
   - 018-amole-ui
 requires_units: []
 blocks: false
-
 complexity:
   avg_complexity: 3
   avg_uncertainty: 2
@@ -48,11 +61,11 @@ Amole becomes a real earn-and-spend loop: lesson completion, perfect-lesson bonu
 
 ## Stages
 
-- [ ] **1. Domain Model**: Pending → ddd-01-domain-model.md
-- [ ] **2. Technical Design**: Pending → ddd-02-technical-design.md
-- [ ] **3. ADR Analysis**: Pending → adr-*.md (this amends a shipped aggregate's persisted shape — treat seriously, don't rubber-stamp "no ADR needed")
-- [ ] **4. Implement**: Pending → backend/ (amended)
-- [ ] **5. Test**: Pending → ddd-03-test-report.md
+- [x] **1. Domain Model**: ✅ Complete → ddd-01-domain-model.md
+- [x] **2. Technical Design**: ✅ Complete → ddd-02-technical-design.md
+- [x] **3. ADR Analysis**: ✅ Complete → adr-8-amole-ledger-not-column.md, adr-9-bean-refill-idempotency-gap-accepted.md
+- [x] **4. Implement**: ✅ Complete → backend/ (amended)
+- [x] **5. Test**: ✅ Complete → ddd-03-test-report.md
 
 ## Dependencies
 

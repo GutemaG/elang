@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/lesson/screens/skill_tree_dashboard_screen.dart';
+import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
@@ -36,6 +37,18 @@ import '../../../helpers/in_memory_secure_storage_service.dart';
 // The dashboard only threads these through to build `SettingsScreen` on
 // tap -- no test here opens Settings, so a real-but-unused
 // `HttpUserPreferencesApi` and in-memory-backed repositories are enough.
+// Bolt 018-amole-ui: the dashboard now also fetches beans-status (for the
+// Amole HUD pill) alongside the skill tree -- `ControllableLessonApi`'s
+// `getBeansStatus` null-checks its field, so every dashboard test using it
+// must set this, not just the skill-tree-focused ones.
+const _fixtureBeansStatus = BeansStatus(
+  beans: 5,
+  beansMax: 5,
+  regenMinutesPerBean: 30,
+  amoleBalance: 500,
+  refillCostAmole: 350,
+);
+
 SessionRepository _settingsSessionRepository() =>
     SessionRepository(storage: InMemorySecureStorageService());
 SoundPreferenceRepository _settingsSoundPreferenceRepository() =>
@@ -71,6 +84,166 @@ Widget _wrapped({
 }
 
 void main() {
+  testWidgets(
+    'shows the Amole balance from beans-status next to streak/beans/XP',
+    (tester) async {
+      final api = ControllableLessonApi()
+        ..skillTree = const SkillTreeResponse(
+          unitTitle: 'Unit 1',
+          unitSubtitle: 'sub',
+          nodes: [
+            SkillTreeNode(
+              id: 'skill-a',
+              lessonId: 'lesson-a',
+              title: 'Skill A',
+              subtitle: 'a',
+              state: SkillNodeState.active,
+            ),
+          ],
+          streakCount: 1,
+          beans: 5,
+          beansMax: 5,
+          totalXp: 0,
+        )
+        ..beansStatus = _fixtureBeansStatus; // amoleBalance: 500
+
+      await tester.pumpWidget(
+        _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('500'), findsOneWidget);
+      expect(find.byIcon(Icons.paid), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a zero Amole balance is shown as 0, not hidden',
+    (tester) async {
+      final api = ControllableLessonApi()
+        ..skillTree = const SkillTreeResponse(
+          unitTitle: 'Unit 1',
+          unitSubtitle: 'sub',
+          nodes: [
+            SkillTreeNode(
+              id: 'skill-a',
+              lessonId: 'lesson-a',
+              title: 'Skill A',
+              subtitle: 'a',
+              state: SkillNodeState.active,
+            ),
+          ],
+          streakCount: 1,
+          beans: 5,
+          beansMax: 5,
+          totalXp: 20,
+        )
+        ..beansStatus = const BeansStatus(
+          beans: 5,
+          beansMax: 5,
+          regenMinutesPerBean: 30,
+          amoleBalance: 0,
+          refillCostAmole: 350,
+        );
+
+      await tester.pumpWidget(
+        _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('0'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'the Amole balance reflects a change after the dashboard reloads',
+    (tester) async {
+      final api = ControllableLessonApi()
+        ..skillTree = const SkillTreeResponse(
+          unitTitle: 'Unit 1',
+          unitSubtitle: 'sub',
+          nodes: [
+            SkillTreeNode(
+              id: 'skill-a',
+              lessonId: 'lesson-a',
+              title: 'Skill A',
+              subtitle: 'a',
+              state: SkillNodeState.active,
+            ),
+          ],
+          streakCount: 1,
+          beans: 5,
+          beansMax: 5,
+          totalXp: 0,
+        )
+        ..lessonContent = const LessonContent(
+          lessonId: 'lesson-a',
+          skillId: 'skill-a',
+          title: 'Skill A',
+          beansAtStart: 5,
+          beansMax: 5,
+          exercises: [
+            MultipleChoiceExercise(
+              id: 'ex-1',
+              prompt: 'ሀ',
+              promptTranslation: 'sound?',
+              options: ['ha', 'le'],
+              correctOptionIndex: 0,
+            ),
+          ],
+        )
+        ..completionResult = const LessonCompletionResult(
+          xpEarned: 5,
+          dailyXpTotal: 5,
+          dailyXpTarget: 30,
+          streakCount: 2,
+          streakIncreasedToday: true,
+          accuracyPercent: 100,
+          correctCount: 1,
+          totalCount: 1,
+          timeSpent: Duration(seconds: 5),
+        )
+        ..beansStatus = const BeansStatus(
+          beans: 5,
+          beansMax: 5,
+          regenMinutesPerBean: 30,
+          amoleBalance: 100,
+          refillCostAmole: 350,
+        );
+
+      await tester.pumpWidget(
+        _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('100'), findsOneWidget);
+
+      // Simulate the backend having awarded Amole for the completion
+      // that's about to happen -- the next dashboard reload should pick
+      // up this new value with no other wiring.
+      api.beansStatus = const BeansStatus(
+        beans: 5,
+        beansMax: 5,
+        regenMinutesPerBean: 30,
+        amoleBalance: 120,
+        refillCostAmole: 350,
+      );
+
+      await tester.tap(find.text('Skill A'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ha'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('120'), findsOneWidget);
+    },
+  );
+
   testWidgets(
     'renders locked/active/completed nodes with crown badges, matching seed data',
     (tester) async {
@@ -144,7 +317,9 @@ void main() {
   testWidgets('a fetch failure shows inline error + retry, then recovers', (
     tester,
   ) async {
-    final api = ControllableLessonApi()..skillTreeError = Exception('boom');
+    final api = ControllableLessonApi()
+      ..skillTreeError = Exception('boom')
+      ..beansStatus = _fixtureBeansStatus;
     await tester.pumpWidget(
       _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
     );
@@ -200,6 +375,7 @@ void main() {
           beansMax: 5,
           totalXp: 0,
         )
+        ..beansStatus = _fixtureBeansStatus
         ..lessonContent = const LessonContent(
           lessonId: 'lesson-a',
           skillId: 'skill-a',

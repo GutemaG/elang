@@ -24,6 +24,7 @@ from app.application.lesson_use_cases import (
 from app.domain.entities import User
 from app.domain.lesson.entities import Exercise
 from app.domain.lesson.repositories import (
+    AmoleTransactionRepository,
     LessonAttemptRepository,
     LessonRepository,
     SkillRepository,
@@ -44,6 +45,7 @@ from app.domain.lesson.value_objects import (
 )
 from app.infrastructure.api.dependencies import get_current_user
 from app.infrastructure.api.lesson_dependencies import (
+    get_amole_transaction_repository,
     get_lesson_attempt_repository,
     get_lesson_repository,
     get_skill_repository,
@@ -206,11 +208,13 @@ async def get_lesson_content_endpoint(
 async def get_beans_status_endpoint(
     user: User = Depends(get_current_user),
     beans_repo: UserBeansRepository = Depends(get_user_beans_repository),
+    amole_repo: AmoleTransactionRepository = Depends(get_amole_transaction_repository),
 ) -> BeansStatusResponse:
     """Story 002: the account's current Beans/Amole state, for the
-    out-of-beans modal and dashboard HUD.
+    out-of-beans modal and dashboard HUD. Amole balance is now ledger-backed
+    (bolt 017, ADR-8) -- same response shape as before.
     """
-    result = await get_beans_status(user.id, beans_repo, datetime.now(UTC))
+    result = await get_beans_status(user.id, beans_repo, amole_repo, datetime.now(UTC))
     return BeansStatusResponse(
         beans=result.beans,
         beans_max=result.beans_max,
@@ -225,11 +229,12 @@ async def get_beans_status_endpoint(
 async def refill_beans_endpoint(
     user: User = Depends(get_current_user),
     beans_repo: UserBeansRepository = Depends(get_user_beans_repository),
+    amole_repo: AmoleTransactionRepository = Depends(get_amole_transaction_repository),
 ) -> RefillResponse:
     """Story 003: an immediate Beans refill using the account's Amole
     balance. 422 (`insufficient_amole`) if the balance can't cover it.
     """
-    result = await refill_beans(user.id, beans_repo, datetime.now(UTC))
+    result = await refill_beans(user.id, beans_repo, amole_repo, datetime.now(UTC))
     return RefillResponse(beans=result.beans, amole_balance=result.amole_balance)
 
 
@@ -244,12 +249,14 @@ async def complete_lesson_endpoint(
     beans_repo: UserBeansRepository = Depends(get_user_beans_repository),
     streak_repo: UserStreakRepository = Depends(get_user_streak_repository),
     attempt_repo: LessonAttemptRepository = Depends(get_lesson_attempt_repository),
+    amole_repo: AmoleTransactionRepository = Depends(get_amole_transaction_repository),
 ) -> CompleteLessonResponse:
     """Stories 002/003/004: the account-ledger side of one completed lesson
     attempt (Beans consumption, XP award, skill-progress/crown-level
-    update, streak update). Idempotent on `request.attempt_id`. 404 if the
-    lesson doesn't exist; 422 `beans_exhausted`/`invalid_completion` for a
-    malformed or beans-implausible completion (ADR-5).
+    update, streak update, and bolt-017 Amole awards). Idempotent on
+    `request.attempt_id`. 404 if the lesson doesn't exist; 422
+    `beans_exhausted`/`invalid_completion` for a malformed or
+    beans-implausible completion (ADR-5).
     """
     outcome = await complete_lesson(
         user_id=user.id,
@@ -267,6 +274,7 @@ async def complete_lesson_endpoint(
         beans_repo=beans_repo,
         streak_repo=streak_repo,
         attempt_repo=attempt_repo,
+        amole_repo=amole_repo,
         now=datetime.now(UTC),
     )
     return CompleteLessonResponse(

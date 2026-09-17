@@ -16,11 +16,19 @@ from app.domain.lesson.exceptions import (
     SkillLockedError,
 )
 from app.domain.lesson.value_objects import (
+    AMOLE_LESSON_COMPLETION_AWARD,
+    AMOLE_PERFECT_LESSON_BONUS,
+    AMOLE_STREAK_MILESTONE_7_BONUS,
+    AMOLE_STREAK_MILESTONE_30_BONUS,
     BEAN_REGEN_MINUTES,
     BEANS_MAX,
     FREEZE_GRANTED_AT_CROWN_LEVEL,
     MAX_CROWN_LEVEL,
+    STREAK_MILESTONE_7_DAYS,
+    STREAK_MILESTONE_30_DAYS,
     XP_PER_CORRECT_ANSWER,
+    AmoleAward,
+    AmoleSource,
     LessonCompletionOutcome,
     SkillState,
 )
@@ -178,6 +186,48 @@ class BeanLedger:
 
     def refill(self, beans: UserBeans, now: datetime) -> UserBeans:
         return replace(beans, current_count=BEANS_MAX, last_regen_at=now)
+
+
+class AmoleAwardPolicy:
+    """Pure domain logic -- no repository/DB dependency (bolt
+    `017-amole-service`, ADR-8). Decides which Amole awards a completion
+    qualifies for; the application layer turns each result into an
+    `AmoleTransaction` keyed to the completion's own `attempt_id` and posts
+    it -- idempotency lives entirely in that posting step's uniqueness
+    constraint, not here.
+
+    Streak milestones are decided by *transition*, not by "has this ever
+    happened before": a milestone qualifies exactly when this completion's
+    streak update carries the streak from below the threshold to at or
+    above it. This needs no repository read (the caller already has both
+    values from its own streak-update step) and means one completion can
+    only cross a given threshold once, by construction -- no separate
+    "already awarded" tracking is needed.
+    """
+
+    def awards_for_completion(
+        self, *, correct_count: int, total_count: int, previous_streak: int, new_streak: int
+    ) -> list[AmoleAward]:
+        awards = [
+            AmoleAward(amount=AMOLE_LESSON_COMPLETION_AWARD, source=AmoleSource.LESSON_COMPLETION)
+        ]
+        if correct_count == total_count:
+            awards.append(
+                AmoleAward(amount=AMOLE_PERFECT_LESSON_BONUS, source=AmoleSource.PERFECT_LESSON)
+            )
+        if previous_streak < STREAK_MILESTONE_7_DAYS <= new_streak:
+            awards.append(
+                AmoleAward(
+                    amount=AMOLE_STREAK_MILESTONE_7_BONUS, source=AmoleSource.STREAK_MILESTONE_7
+                )
+            )
+        if previous_streak < STREAK_MILESTONE_30_DAYS <= new_streak:
+            awards.append(
+                AmoleAward(
+                    amount=AMOLE_STREAK_MILESTONE_30_BONUS, source=AmoleSource.STREAK_MILESTONE_30
+                )
+            )
+        return awards
 
 
 @dataclass(frozen=True)

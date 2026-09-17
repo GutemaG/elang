@@ -11,6 +11,7 @@ from datetime import date, datetime
 from typing import Protocol
 
 from app.domain.lesson.entities import (
+    AmoleTransaction,
     Lesson,
     LessonAttempt,
     Skill,
@@ -92,6 +93,24 @@ class UserBeansRepository(Protocol):
     async def get(self, user_id: str) -> UserBeans | None: ...
 
     async def upsert(self, beans: UserBeans) -> None: ...
+
+
+class AmoleTransactionRepository(Protocol):
+    """Entity: `AmoleTransaction` (bolt `017-amole-service`, ADR-8).
+    Append-only -- no update/delete method exists by design.
+    """
+
+    async def add_if_new(self, transaction: AmoleTransaction) -> None:
+        """Inserts unless a row for `(source, reference_id)` already
+        exists, in which case this is a no-op -- the idempotency mechanism
+        for every ledger writer (awards and, per ADR-9, best-effort for
+        spends).
+        """
+        ...
+
+    async def sum_by_user(self, user_id: str) -> int:
+        """The account's Amole balance -- always computed, never cached."""
+        ...
 
 
 class UserStreakRepository(Protocol):

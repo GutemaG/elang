@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-17T08:35:00Z
-total_decisions: 7
+last_updated: 2026-09-17T18:20:00Z
+total_decisions: 9
 ---
 
 # Decision Index
@@ -17,6 +17,22 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-9: Bean-refill retry double-spend gap is knowingly preserved, not fixed, by this bolt
+- **Status**: accepted
+- **Date**: 2026-09-17
+- **Bolt**: 017-amole-service (001-amole-service)
+- **Path**: `bolts/017-amole-service/adr-9-bean-refill-idempotency-gap-accepted.md`
+- **Summary**: A retried Bean-refill request has no idempotency protection today (the existing column mutation has the same gap) and this bolt's ledger retrofit doesn't fix it either, since doing so would require a request-contract change beyond this bolt's scope. Decided: accept the pre-existing gap explicitly, narrow the Reliability NFR to awards only, and leave a client-supplied idempotency key as a future story if real-world double-spends are ever observed.
+- **Read when**: Modifying the Bean-refill endpoint/flow, adding a new spend category for Amole (streak-freeze, cosmetics — Phase 2), or designing idempotency for any other client-mutation endpoint that currently lacks a client-supplied key.
+
+### ADR-8: Amole balance moves to a real append-only ledger table, not a mutable column — accepting an asymmetry with XP
+- **Status**: accepted
+- **Date**: 2026-09-17
+- **Bolt**: 017-amole-service (001-amole-service)
+- **Path**: `bolts/017-amole-service/adr-8-amole-ledger-not-column.md`
+- **Summary**: `user_beans.amole_balance` was a plain mutable column with no audit trail, insufficient once Amole gained multiple independent award writers. Decided: introduce `amole_transactions` (SUM(amount) = balance, UNIQUE(source, reference_id) for idempotency), removing the column entirely — but deliberately do not build the analogous `xp_transactions` table, since XP has no current multi-writer correctness problem to solve.
+- **Read when**: Modifying Amole balance/award/spend logic, adding a new Amole source, or considering whether XP (or any other account-ledger-like value) should move from a computed-sum/mutable-column representation to a real ledger table.
 
 ### ADR-7: `User.selected_language`/`daily_xp_target` amended from strict write-once to write-once-then-only-via-`UpdateUserPreferences`
 - **Status**: accepted

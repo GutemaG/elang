@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../shared/models/beans_status.dart';
 import '../../../shared/models/skill_tree.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/connectivity_monitor.dart';
@@ -67,13 +68,24 @@ class SkillTreeDashboardScreen extends StatefulWidget {
       _SkillTreeDashboardScreenState();
 }
 
+/// Bolt 018-amole-ui: `GET /api/v1/skill-tree` carries no Amole field
+/// (that's `GET /api/v1/beans`, already called elsewhere by
+/// `LessonScreen`'s out-of-Beans modal) -- so the dashboard combines both
+/// fetches here rather than reusing a single existing one.
+class _DashboardData {
+  const _DashboardData({required this.tree, required this.beansStatus});
+
+  final SkillTreeResponse tree;
+  final BeansStatus beansStatus;
+}
+
 class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
-  late Future<SkillTreeResponse> _future;
+  late Future<_DashboardData> _future;
 
   @override
   void initState() {
     super.initState();
-    _future = widget.lessonApi.getSkillTree();
+    _future = _load();
     // So a previously-downloaded pack shows as downloaded immediately,
     // without the user re-tapping the download affordance.
     unawaited(widget.lessonPackDownloader.refreshDownloadedStatuses());
@@ -81,6 +93,17 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     // app restart" durability requirement (010-offline-caching-and-
     // sync-ui, story 003).
     unawaited(widget.syncEngine.refresh());
+  }
+
+  Future<_DashboardData> _load() async {
+    final results = await Future.wait([
+      widget.lessonApi.getSkillTree(),
+      widget.lessonApi.getBeansStatus(),
+    ]);
+    return _DashboardData(
+      tree: results[0] as SkillTreeResponse,
+      beansStatus: results[1] as BeansStatus,
+    );
   }
 
   void _openDownloadManagement() {
@@ -109,7 +132,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
 
   void _reload() {
     setState(() {
-      _future = widget.lessonApi.getSkillTree();
+      _future = _load();
     });
   }
 
@@ -136,7 +159,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: FutureBuilder<SkillTreeResponse>(
+        child: FutureBuilder<_DashboardData>(
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -145,7 +168,8 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
             if (snapshot.hasError) {
               return _ErrorState(onRetry: _reload);
             }
-            final tree = snapshot.data!;
+            final tree = snapshot.data!.tree;
+            final beansStatus = snapshot.data!.beansStatus;
             return Column(
               children: [
                 Padding(
@@ -186,6 +210,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                 Expanded(
                   child: _DashboardContent(
                     tree: tree,
+                    amoleBalance: beansStatus.amoleBalance,
                     onNodeTap: _onNodeTap,
                     downloader: widget.lessonPackDownloader,
                   ),
@@ -202,11 +227,13 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
 class _DashboardContent extends StatelessWidget {
   const _DashboardContent({
     required this.tree,
+    required this.amoleBalance,
     required this.onNodeTap,
     required this.downloader,
   });
 
   final SkillTreeResponse tree;
+  final int amoleBalance;
   final ValueChanged<SkillTreeNode> onNodeTap;
   final LessonPackDownloader downloader;
 
@@ -225,6 +252,7 @@ class _DashboardContent extends StatelessWidget {
               beans: tree.beans,
               beansMax: tree.beansMax,
               totalXp: tree.totalXp,
+              amoleBalance: amoleBalance,
             ),
           ),
         ),

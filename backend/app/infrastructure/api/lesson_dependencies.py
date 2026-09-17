@@ -11,6 +11,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.lesson.repositories import (
+    AmoleTransactionRepository,
     LessonAttemptRepository,
     LessonRepository,
     SkillRepository,
@@ -19,6 +20,7 @@ from app.domain.lesson.repositories import (
     UserStreakRepository,
 )
 from app.infrastructure.db.lesson_repositories import (
+    SqlAlchemyAmoleTransactionRepository,
     SqlAlchemyLessonAttemptRepository,
     SqlAlchemyLessonRepository,
     SqlAlchemySkillRepository,
@@ -63,3 +65,9 @@ async def get_lesson_attempt_repository(
     session: AsyncSession = Depends(get_db_session),
 ) -> LessonAttemptRepository:
     return SqlAlchemyLessonAttemptRepository(session)
+
+
+async def get_amole_transaction_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> AmoleTransactionRepository:
+    return SqlAlchemyAmoleTransactionRepository(session)

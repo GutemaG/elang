@@ -10,7 +10,14 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from app.application.lesson_use_cases import complete_lesson, get_beans_status, refill_beans
-from app.domain.lesson.entities import Exercise, Lesson, Skill, UserBeans
+from app.domain.lesson.entities import (
+    AmoleTransaction,
+    Exercise,
+    Lesson,
+    Skill,
+    UserBeans,
+    UserStreak,
+)
 from app.domain.lesson.exceptions import (
     BeansExhaustedError,
     InsufficientAmoleError,
@@ -20,16 +27,22 @@ from app.domain.lesson.exceptions import (
     SkillLockedError,
 )
 from app.domain.lesson.value_objects import (
+    AMOLE_LESSON_COMPLETION_AWARD,
+    AMOLE_PERFECT_LESSON_BONUS,
+    AMOLE_STREAK_MILESTONE_7_BONUS,
+    AMOLE_STREAK_MILESTONE_30_BONUS,
     BEANS_MAX,
     REFILL_COST_AMOLE,
     STARTING_AMOLE_BALANCE,
     XP_PER_CORRECT_ANSWER,
+    AmoleSource,
     ChoiceAnswerKey,
     ExerciseType,
     MultipleChoiceContent,
 )
 from app.domain.lesson.value_objects import Choice as ChoiceVO
 from tests.fakes import (
+    FakeAmoleTransactionRepository,
     FakeLessonAttemptRepository,
     FakeLessonRepositoryWithSkillIndex,
     FakeSkillRepository,
@@ -74,6 +87,7 @@ def _repos(lessons: list[Lesson], skills: list[Skill]):
         "beans_repo": FakeUserBeansRepository(),
         "streak_repo": FakeUserStreakRepository(),
         "attempt_repo": FakeLessonAttemptRepository(),
+        "amole_repo": FakeAmoleTransactionRepository(),
     }
 
 
@@ -190,7 +204,7 @@ class TestCompleteLesson:
     async def test_raises_beans_exhausted_when_wrong_count_exceeds_beans_balance(self) -> None:
         repos = _repos(_LESSONS, _SKILLS)
         await repos["beans_repo"].upsert(
-            UserBeans(user_id="u1", current_count=1, last_regen_at=_NOW, amole_balance=500)
+            UserBeans(user_id="u1", current_count=1, last_regen_at=_NOW)
         )
 
         with pytest.raises(BeansExhaustedError):
@@ -366,36 +380,262 @@ class TestCompleteLessonOfflineTimestamp:
 class TestGetBeansStatus:
     async def test_new_user_gets_full_beans_and_starting_amole(self) -> None:
         beans_repo = FakeUserBeansRepository()
+        amole_repo = FakeAmoleTransactionRepository()
 
-        result = await get_beans_status("u1", beans_repo, _NOW)
+        result = await get_beans_status("u1", beans_repo, amole_repo, _NOW)
 
         assert result.beans == BEANS_MAX
         assert result.amole_balance == STARTING_AMOLE_BALANCE
         assert result.next_bean_at is None  # already full
 
-    async def test_never_writes_a_row_on_a_pure_read(self) -> None:
+    async def test_never_writes_a_beans_row_on_a_pure_read(self) -> None:
         beans_repo = FakeUserBeansRepository()
+        amole_repo = FakeAmoleTransactionRepository()
 
-        await get_beans_status("u1", beans_repo, _NOW)
+        await get_beans_status("u1", beans_repo, amole_repo, _NOW)
 
         assert await beans_repo.get("u1") is None
+
+    async def test_repeated_reads_grant_the_starting_balance_exactly_once(self) -> None:
+        # `_ensure_amole_wallet` is idempotent -- calling the balance read
+        # twice must not double-grant `STARTING_AMOLE_BALANCE` (bolt 017's
+        # lazy-wallet-creation design, ddd-02-technical-design.md).
+        beans_repo = FakeUserBeansRepository()
+        amole_repo = FakeAmoleTransactionRepository()
+
+        first = await get_beans_status("u1", beans_repo, amole_repo, _NOW)
+        second = await get_beans_status("u1", beans_repo, amole_repo, _NOW)
+
+        assert first.amole_balance == STARTING_AMOLE_BALANCE
+        assert second.amole_balance == STARTING_AMOLE_BALANCE
 
 
 class TestRefillBeans:
     async def test_success_deducts_amole_and_maxes_out_beans(self) -> None:
         beans_repo = FakeUserBeansRepository(
-            [UserBeans(user_id="u1", current_count=0, last_regen_at=_NOW, amole_balance=500)]
+            [UserBeans(user_id="u1", current_count=0, last_regen_at=_NOW)]
+        )
+        amole_repo = FakeAmoleTransactionRepository(
+            [
+                AmoleTransaction(
+                    id="t1",
+                    user_id="u1",
+                    amount=500,
+                    source=AmoleSource.WALLET_CREATED,
+                    reference_id="u1",
+                    created_at=_NOW,
+                )
+            ]
         )
 
-        result = await refill_beans("u1", beans_repo, _NOW)
+        result = await refill_beans("u1", beans_repo, amole_repo, _NOW)
 
         assert result.beans == BEANS_MAX
         assert result.amole_balance == 500 - REFILL_COST_AMOLE
 
     async def test_raises_insufficient_amole_when_balance_too_low(self) -> None:
         beans_repo = FakeUserBeansRepository(
-            [UserBeans(user_id="u1", current_count=0, last_regen_at=_NOW, amole_balance=10)]
+            [UserBeans(user_id="u1", current_count=0, last_regen_at=_NOW)]
+        )
+        amole_repo = FakeAmoleTransactionRepository(
+            [
+                AmoleTransaction(
+                    id="t1",
+                    user_id="u1",
+                    amount=10,
+                    source=AmoleSource.WALLET_CREATED,
+                    reference_id="u1",
+                    created_at=_NOW,
+                )
+            ]
         )
 
         with pytest.raises(InsufficientAmoleError):
-            await refill_beans("u1", beans_repo, _NOW)
+            await refill_beans("u1", beans_repo, amole_repo, _NOW)
+
+    async def test_posts_a_bean_refill_ledger_row(self) -> None:
+        beans_repo = FakeUserBeansRepository(
+            [UserBeans(user_id="u1", current_count=0, last_regen_at=_NOW)]
+        )
+        amole_repo = FakeAmoleTransactionRepository(
+            [
+                AmoleTransaction(
+                    id="t1",
+                    user_id="u1",
+                    amount=500,
+                    source=AmoleSource.WALLET_CREATED,
+                    reference_id="u1",
+                    created_at=_NOW,
+                )
+            ]
+        )
+
+        await refill_beans("u1", beans_repo, amole_repo, _NOW)
+
+        assert amole_repo.add_calls == 1
+
+
+class TestCompleteLessonAmoleAwards:
+    """Bolt 017 (intent 007-amole-currency): `complete_lesson` gains
+    Amole-award side effects alongside its existing Beans/XP/streak
+    orchestration.
+    """
+
+    async def test_awards_flat_amount_and_perfect_bonus_for_a_perfect_lesson(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        balance = await repos["amole_repo"].sum_by_user("u1")
+        assert balance == AMOLE_LESSON_COMPLETION_AWARD + AMOLE_PERFECT_LESSON_BONUS
+
+    async def test_no_perfect_bonus_for_an_imperfect_lesson(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=3,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        balance = await repos["amole_repo"].sum_by_user("u1")
+        assert balance == AMOLE_LESSON_COMPLETION_AWARD
+
+    async def test_awards_streak_milestone_bonus_exactly_on_the_crossing_completion(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+        # Streak already at 6 -- this completion pushes it to 7, crossing
+        # the milestone.
+        await repos["streak_repo"].upsert(
+            UserStreak(
+                user_id="u1",
+                current_streak=6,
+                last_completed_date=(_NOW - timedelta(days=1)).date(),
+                active_freeze_count=0,
+            )
+        )
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        balance = await repos["amole_repo"].sum_by_user("u1")
+        expected = (
+            AMOLE_LESSON_COMPLETION_AWARD
+            + AMOLE_PERFECT_LESSON_BONUS
+            + AMOLE_STREAK_MILESTONE_7_BONUS
+        )
+        assert balance == expected
+
+    async def test_awards_both_milestone_bonuses_when_crossing_30_from_29(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+        await repos["streak_repo"].upsert(
+            UserStreak(
+                user_id="u1",
+                current_streak=29,
+                last_completed_date=(_NOW - timedelta(days=1)).date(),
+                active_freeze_count=0,
+            )
+        )
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        balance = await repos["amole_repo"].sum_by_user("u1")
+        expected = (
+            AMOLE_LESSON_COMPLETION_AWARD
+            + AMOLE_PERFECT_LESSON_BONUS
+            + AMOLE_STREAK_MILESTONE_30_BONUS
+        )
+        assert balance == expected
+
+    async def test_no_repeat_milestone_bonus_once_past_the_threshold(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+        # Streak already at 10 -- past the 7-day milestone, not crossing it
+        # on this completion.
+        await repos["streak_repo"].upsert(
+            UserStreak(
+                user_id="u1",
+                current_streak=10,
+                last_completed_date=(_NOW - timedelta(days=1)).date(),
+                active_freeze_count=0,
+            )
+        )
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        balance = await repos["amole_repo"].sum_by_user("u1")
+        assert balance == AMOLE_LESSON_COMPLETION_AWARD + AMOLE_PERFECT_LESSON_BONUS
+
+    async def test_retried_completion_does_not_double_award(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+        kwargs = dict(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        await complete_lesson(now=_NOW, **kwargs)
+        await complete_lesson(now=_NOW, **kwargs)
+
+        balance = await repos["amole_repo"].sum_by_user("u1")
+        assert balance == AMOLE_LESSON_COMPLETION_AWARD + AMOLE_PERFECT_LESSON_BONUS

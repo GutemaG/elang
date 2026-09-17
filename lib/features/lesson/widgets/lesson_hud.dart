@@ -5,7 +5,8 @@ import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 
 /// The "Stat Badges & Floating HUD" component (`DESIGN.md` component 3):
-/// streak, beans, and XP pills shown at the top of the dashboard.
+/// streak, beans, XP, and (bolt 018-amole-ui) Amole pills shown at the top
+/// of the dashboard.
 class LessonHud extends StatelessWidget {
   const LessonHud({
     super.key,
@@ -13,12 +14,14 @@ class LessonHud extends StatelessWidget {
     required this.beans,
     required this.beansMax,
     required this.totalXp,
+    required this.amoleBalance,
   });
 
   final int streakCount;
   final int beans;
   final int beansMax;
   final int totalXp;
+  final int amoleBalance;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +50,16 @@ class LessonHud extends StatelessWidget {
               label: '$totalXp',
               textColor: AppColors.secondary,
               semanticLabel: '$totalXp total XP',
+            ),
+            const SizedBox(width: AppSpacing.spaceXs),
+            _HudPill(
+              // Distinct from XP's `Icons.bolt`, to avoid the two pills
+              // reading as the same currency at a glance.
+              icon: Icons.paid,
+              iconColor: AppColors.primaryContainer,
+              label: '$amoleBalance',
+              textColor: AppColors.primaryContainer,
+              semanticLabel: '$amoleBalance Amole',
             ),
           ],
         ),

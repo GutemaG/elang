@@ -11,10 +11,17 @@ from datetime import UTC, date, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.domain.lesson.entities import LessonAttempt, UserBeans, UserSkillProgress, UserStreak
-from app.domain.lesson.value_objects import LessonCompletionOutcome
+from app.domain.lesson.entities import (
+    AmoleTransaction,
+    LessonAttempt,
+    UserBeans,
+    UserSkillProgress,
+    UserStreak,
+)
+from app.domain.lesson.value_objects import AmoleSource, LessonCompletionOutcome
 from app.infrastructure.db.lesson_models import LessonModel, SkillModel
 from app.infrastructure.db.lesson_repositories import (
+    SqlAlchemyAmoleTransactionRepository,
     SqlAlchemyLessonAttemptRepository,
     SqlAlchemyLessonRepository,
     SqlAlchemyUserBeansRepository,
@@ -131,7 +138,6 @@ class TestSqlAlchemyUserBeansRepository:
                 user_id="u1",
                 current_count=3,
                 last_regen_at=datetime(2026, 9, 16, 10, 0, tzinfo=UTC),
-                amole_balance=250,
             )
         )
         await db_session.commit()
@@ -144,7 +150,6 @@ class TestSqlAlchemyUserBeansRepository:
 
         assert stored is not None
         assert stored.current_count == 3
-        assert stored.amole_balance == 250
         assert stored.last_regen_at.tzinfo is not None
 
     async def test_get_returns_none_when_no_row_exists(self, db_session: AsyncSession) -> None:
@@ -158,19 +163,97 @@ class TestSqlAlchemyUserBeansRepository:
         repo = SqlAlchemyUserBeansRepository(db_session)
         now = datetime(2026, 9, 16, 10, 0, tzinfo=UTC)
 
-        await repo.upsert(
-            UserBeans(user_id="u1", current_count=5, last_regen_at=now, amole_balance=500)
-        )
+        await repo.upsert(UserBeans(user_id="u1", current_count=5, last_regen_at=now))
         await db_session.commit()
-        await repo.upsert(
-            UserBeans(user_id="u1", current_count=2, last_regen_at=now, amole_balance=150)
-        )
+        await repo.upsert(UserBeans(user_id="u1", current_count=2, last_regen_at=now))
         await db_session.commit()
 
         stored = await repo.get("u1")
         assert stored is not None
         assert stored.current_count == 2
-        assert stored.amole_balance == 150
+
+
+class TestSqlAlchemyAmoleTransactionRepository:
+    """Bolt 017-amole-service (ADR-8)."""
+
+    async def test_sum_by_user_is_zero_with_no_rows(self, db_session: AsyncSession) -> None:
+        repo = SqlAlchemyAmoleTransactionRepository(db_session)
+        assert await repo.sum_by_user("no-such-user") == 0
+
+    async def test_add_if_new_then_sum_reflects_the_row(self, db_session: AsyncSession) -> None:
+        await _make_user(db_session)
+        repo = SqlAlchemyAmoleTransactionRepository(db_session)
+
+        await repo.add_if_new(
+            AmoleTransaction(
+                id="t1",
+                user_id="u1",
+                amount=500,
+                source=AmoleSource.WALLET_CREATED,
+                reference_id="u1",
+                created_at=datetime(2026, 9, 16, tzinfo=UTC),
+            )
+        )
+        await db_session.commit()
+
+        assert await repo.sum_by_user("u1") == 500
+
+    async def test_add_if_new_is_idempotent_on_source_and_reference_id(
+        self, db_session: AsyncSession
+    ) -> None:
+        await _make_user(db_session)
+        repo = SqlAlchemyAmoleTransactionRepository(db_session)
+        transaction = AmoleTransaction(
+            id="t1",
+            user_id="u1",
+            amount=20,
+            source=AmoleSource.LESSON_COMPLETION,
+            reference_id="attempt-1",
+            created_at=datetime(2026, 9, 16, tzinfo=UTC),
+        )
+
+        await repo.add_if_new(transaction)
+        await db_session.commit()
+        # A retried post for the same (source, reference_id) -- even with a
+        # different `id`/`amount` -- must not post a second row.
+        await repo.add_if_new(
+            AmoleTransaction(
+                id="t2",
+                user_id="u1",
+                amount=999,
+                source=AmoleSource.LESSON_COMPLETION,
+                reference_id="attempt-1",
+                created_at=datetime(2026, 9, 16, tzinfo=UTC),
+            )
+        )
+        await db_session.commit()
+
+        assert await repo.sum_by_user("u1") == 20
+
+    async def test_sum_by_user_only_includes_that_users_rows(
+        self, db_session: AsyncSession
+    ) -> None:
+        await _make_user(db_session, "u1")
+        await _make_user(db_session, "u2")
+        repo = SqlAlchemyAmoleTransactionRepository(db_session)
+        now = datetime(2026, 9, 16, tzinfo=UTC)
+
+        await repo.add_if_new(
+            AmoleTransaction(
+                id="t1", user_id="u1", amount=20, source=AmoleSource.LESSON_COMPLETION,
+                reference_id="a1", created_at=now,
+            )
+        )
+        await repo.add_if_new(
+            AmoleTransaction(
+                id="t2", user_id="u2", amount=500, source=AmoleSource.WALLET_CREATED,
+                reference_id="u2", created_at=now,
+            )
+        )
+        await db_session.commit()
+
+        assert await repo.sum_by_user("u1") == 20
+        assert await repo.sum_by_user("u2") == 500
 
 
 class TestSqlAlchemyUserStreakRepository:

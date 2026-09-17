@@ -14,6 +14,7 @@ from datetime import UTC, date, datetime
 
 from app.domain.entities import AuthSession, User
 from app.domain.lesson.entities import (
+    AmoleTransaction,
     Lesson,
     LessonAttempt,
     Skill,
@@ -243,3 +244,27 @@ class FakeLessonAttemptRepository:
             for a in self._rows.values()
             if a.user_id == user_id and start <= a.completed_at.date() < end
         )
+
+
+class FakeAmoleTransactionRepository:
+    """In-memory stand-in for
+    `app.domain.lesson.repositories.AmoleTransactionRepository` (bolt
+    `017-amole-service`). `add_if_new` enforces the same `(source,
+    reference_id)` uniqueness the real DB `UNIQUE` constraint would.
+    """
+
+    def __init__(self, transactions: list[AmoleTransaction] | None = None) -> None:
+        self._rows: dict[tuple[str, str], AmoleTransaction] = {
+            (t.source, t.reference_id): t for t in (transactions or [])
+        }
+        self.add_calls = 0
+
+    async def add_if_new(self, transaction: AmoleTransaction) -> None:
+        key = (transaction.source, transaction.reference_id)
+        if key in self._rows:
+            return
+        self.add_calls += 1
+        self._rows[key] = transaction
+
+    async def sum_by_user(self, user_id: str) -> int:
+        return sum(t.amount for t in self._rows.values() if t.user_id == user_id)

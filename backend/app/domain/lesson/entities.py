@@ -100,18 +100,22 @@ class UserSkillProgress:
 
 @dataclass
 class UserBeans:
-    """Aggregate Root. Per-user Beans + Amole wallet state.
+    """Aggregate Root. Per-user Beans wallet state.
 
     Invariants: `0 <= current_count <= BEANS_MAX`; at most one row per
-    `user_id`. A user with no row is a valid default state (full beans,
-    `STARTING_AMOLE_BALANCE` Amole, no regen owed) -- same "absence is
-    meaningful" pattern as `UserSkillProgress`.
+    `user_id`. A user with no row is a valid default state (full beans, no
+    regen owed) -- same "absence is meaningful" pattern as
+    `UserSkillProgress`.
+
+    As of bolt `017-amole-service` (ADR-8), this aggregate no longer holds
+    Amole state -- `amole_balance` moved to the `AmoleTransaction` ledger
+    below. Beans and Amole are now two independent concerns that happened
+    to share a row purely as an implementation detail of bolt `005`.
     """
 
     user_id: str
     current_count: int
     last_regen_at: datetime
-    amole_balance: int
 
 
 @dataclass
@@ -127,6 +131,27 @@ class UserStreak:
     current_streak: int
     last_completed_date: date | None
     active_freeze_count: int
+
+
+@dataclass
+class AmoleTransaction:
+    """Aggregate Root (bolt `017-amole-service`, ADR-8). One append-only
+    ledger row -- a trivial aggregate boundary, since nothing ever needs to
+    load "all of a user's transactions" as one consistency unit; balance is
+    always `SUM(amount)`, a repository query, never this entity's state.
+
+    Invariants: immutable once created (no update/delete operation exists
+    anywhere in this codebase for it); `(source, reference_id)` is unique
+    per row -- the idempotency mechanism for every writer (awards and
+    spends alike).
+    """
+
+    id: str
+    user_id: str
+    amount: int
+    source: str
+    reference_id: str
+    created_at: datetime
 
 
 @dataclass

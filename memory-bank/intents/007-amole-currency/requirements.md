@@ -81,7 +81,8 @@ The real gap: **nothing ever increases `amole_balance`.** A user spends down the
 ### Reliability
 | Requirement | Standard | Notes |
 |-------------|----------|-------|
-| A retried award or spend request must never double-post | New | Enforced by FR-1's uniqueness constraint, not application-logic-only |
+| A retried award request must never double-post | New | Enforced by FR-1's uniqueness constraint, keyed to `attempt_id`, not application-logic-only |
+| A retried Bean-refill (spend) request may still double-post | **Narrowed at Construction (ADR-9, bolt `017-amole-service`)** | The existing refill flow has no client-supplied idempotency key and never has; fixing this would be a request-contract change beyond this bolt's scope. Knowingly accepted, not silently unmet — see ADR-9 for the full reasoning and the conditions under which it should be revisited. |
 
 ### Migration Safety
 | Requirement | Standard | Notes |

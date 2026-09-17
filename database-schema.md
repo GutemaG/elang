@@ -136,17 +136,39 @@ Backs the `UserSkillProgress` aggregate. Per-user, per-skill progress state. Rea
 
 ## `user_beans`
 
-Backs the `UserBeans` aggregate (`memory-bank/bolts/005-lesson-engagement-service/ddd-01-domain-model.md`). Per-user Beans + Amole wallet. One row per user, created lazily on first write (a refill or a lesson completion that consumes a bean) — a user with no row is a valid default state (full beans, `STARTING_AMOLE_BALANCE` Amole, no regen owed).
+Backs the `UserBeans` aggregate (`memory-bank/bolts/005-lesson-engagement-service/ddd-01-domain-model.md`). Per-user Beans wallet. One row per user, created lazily on first write (a refill or a lesson completion that consumes a bean) — a user with no row is a valid default state (full beans, no regen owed).
 
 | Column | Type | Constraints | Notes |
 |---|---|---|---|
 | `user_id` | `UUID` (Postgres) / `TEXT` (SQLite) | `PRIMARY KEY`, `FOREIGN KEY REFERENCES users(id)` | One row per user — the user id is the primary key directly, no separate surrogate key needed (same pattern choice as a 1:1 wallet, not a 1:many history table). |
 | `current_count` | `INTEGER` | `NOT NULL`, `CHECK (current_count >= 0)` | Regenerated lazily on every read/write from `last_regen_at`, never a scheduled job (Technical Design's `BeanLedger`). Capped at `BEANS_MAX = 5`, enforced in application logic, not a DB constraint (the max is a tunable constant, not a schema invariant). |
 | `last_regen_at` | `TIMESTAMPTZ` (Postgres) / `TIMESTAMP` (SQLite) | `NOT NULL` | Advances only by whole regen intervals actually consumed, so partial progress toward the next bean isn't lost between reads. |
-| `amole_balance` | `INTEGER` | `NOT NULL`, `CHECK (amole_balance >= 0)` | The minimal beans-refill currency `requirements.md` explicitly scopes in (no full gem economy/IAP). |
 | `created_at` | `TIMESTAMPTZ` (Postgres) / `TIMESTAMP` (SQLite) | `NOT NULL`, `DEFAULT now()` | |
 
 **Indexes**: Primary key index on `user_id` (the sole lookup path).
+
+**As of bolt `017-amole-service` (migration `f4a8b1c9d3e6`, ADR-8)**: this table no longer carries `amole_balance` — Amole moved entirely to `amole_transactions` below, which existing balances were backfilled into exactly, preserving them.
+
+---
+
+## `amole_transactions`
+
+Backs the `AmoleTransaction` aggregate (`memory-bank/bolts/017-amole-service/ddd-01-domain-model.md`). This codebase's first true append-only ledger table (ADR-8) — Amole balance is always `SUM(amount)`, never a stored running total.
+
+| Column | Type | Constraints | Notes |
+|---|---|---|---|
+| `id` | `UUID` (Postgres) / `TEXT` (SQLite) | `PRIMARY KEY`, generated server-side (`uuid4`) | Runtime-created row, same convention as `auth_sessions`/`user_skill_progress`. |
+| `user_id` | `UUID` (Postgres) / `TEXT` (SQLite) | `NOT NULL`, `FOREIGN KEY REFERENCES users(id)` | Plain reference, same independence pattern as `auth_sessions.user_id`. |
+| `amount` | `INTEGER` | `NOT NULL` | Signed — positive award, negative spend. Sign is a domain-logic invariant (`AmoleAwardPolicy`/spend flow), not a DB `CHECK` — same as `lesson_attempts.xp_awarded`. |
+| `source` | `VARCHAR(32)` | `NOT NULL`, `CHECK (source IN ('wallet_created', 'migration_backfill', 'lesson_completion', 'perfect_lesson', 'streak_milestone_7', 'streak_milestone_30', 'bean_refill'))` | Closed vocabulary (ADR-3's enum-as-CHECK pattern). |
+| `reference_id` | `VARCHAR(64)` | `NOT NULL` | `attempt_id` for `lesson_completion`/`perfect_lesson`/`streak_milestone_*` (transition-based, not a synthesized "already awarded" flag — ADR-8); `user_id` for `wallet_created`/`migration_backfill`; a fresh id per call for `bean_refill` (ADR-9 — not retry-protected, a knowingly preserved pre-existing gap). |
+| `created_at` | `TIMESTAMPTZ` (Postgres) / `TIMESTAMP` (SQLite) | `NOT NULL`, `DEFAULT now()` | |
+
+**Constraints**: `UNIQUE (source, reference_id)` — the idempotency mechanism for every writer; `CHECK` on `source`.
+
+**Indexes**: Primary key index on `id`; implicit unique index from `UNIQUE (source, reference_id)`; `ix_amole_transactions_user_id` on `user_id` (the sole query pattern `sum_by_user` needs).
+
+**Explicitly not modeled here**: no update/delete path exists anywhere in this codebase for this table — every row, once written, is permanent (ADR-8).
 
 ---
 
