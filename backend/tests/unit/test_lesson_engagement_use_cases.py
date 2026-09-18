@@ -17,6 +17,7 @@ from app.domain.lesson.entities import (
     Skill,
     UserBeans,
     UserStreak,
+    UserVocabProgress,
 )
 from app.domain.lesson.exceptions import (
     BeansExhaustedError,
@@ -49,13 +50,16 @@ from tests.fakes import (
     FakeUserBeansRepository,
     FakeUserSkillProgressRepository,
     FakeUserStreakRepository,
+    FakeUserVocabProgressRepository,
 )
 
 _NOW = datetime(2026, 9, 16, 12, 0, tzinfo=UTC)
 _ACCOUNT_CREATED_AT = datetime(2026, 1, 1, tzinfo=UTC)
 
 
-def _exercise(id_: str, lesson_id: str, order_index: int) -> Exercise:
+def _exercise(
+    id_: str, lesson_id: str, order_index: int, vocab_item_id: str | None = None
+) -> Exercise:
     return Exercise(
         id=id_,
         lesson_id=lesson_id,
@@ -66,16 +70,26 @@ def _exercise(id_: str, lesson_id: str, order_index: int) -> Exercise:
             choices=(ChoiceVO(id="a", text="ሰላም"), ChoiceVO(id="b", text="ደህና"))
         ),
         answer_key=ChoiceAnswerKey(correct_choice_id="a"),
+        vocab_item_id=vocab_item_id,
     )
 
 
-def _lesson(id_: str, skill_id: str, order_index: int, n_exercises: int = 4) -> Lesson:
+def _lesson(
+    id_: str,
+    skill_id: str,
+    order_index: int,
+    n_exercises: int = 4,
+    vocab_item_ids: dict[int, str] | None = None,
+) -> Lesson:
+    vocab_item_ids = vocab_item_ids or {}
     return Lesson(
         id=id_,
         skill_id=skill_id,
         title="Hello & Goodbye",
         order_index=order_index,
-        exercises=[_exercise(f"{id_}-e{i}", id_, i) for i in range(n_exercises)],
+        exercises=[
+            _exercise(f"{id_}-e{i}", id_, i, vocab_item_ids.get(i)) for i in range(n_exercises)
+        ],
     )
 
 
@@ -88,6 +102,7 @@ def _repos(lessons: list[Lesson], skills: list[Skill]):
         "streak_repo": FakeUserStreakRepository(),
         "attempt_repo": FakeLessonAttemptRepository(),
         "amole_repo": FakeAmoleTransactionRepository(),
+        "vocab_progress_repo": FakeUserVocabProgressRepository(),
     }
 
 
@@ -639,3 +654,137 @@ class TestCompleteLessonAmoleAwards:
 
         balance = await repos["amole_repo"].sum_by_user("u1")
         assert balance == AMOLE_LESSON_COMPLETION_AWARD + AMOLE_PERFECT_LESSON_BONUS
+
+
+_VOCAB_LESSON = _lesson("lesson-vocab", "skill-a", 1, vocab_item_ids={0: "vocab-hello"})
+
+
+class TestCompleteLessonVocabProgress:
+    """Bolt 019 (008-srs-and-practice, ADR-10): `complete_lesson` gains a
+    vocab-progress side effect for every vocab-linked exercise in the
+    lesson.
+    """
+
+    async def test_first_appearance_creates_a_row_at_box_1(self) -> None:
+        repos = _repos([_VOCAB_LESSON], _SKILLS)
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-vocab",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        progress = await repos["vocab_progress_repo"].get("u1", "vocab-hello")
+        assert progress is not None
+        assert progress.box_level == 1
+        assert progress.next_review_at == _NOW + timedelta(days=1)
+
+    async def test_seen_before_and_answered_correctly_moves_up_one_box(self) -> None:
+        repos = _repos([_VOCAB_LESSON], _SKILLS)
+        await repos["vocab_progress_repo"].upsert(
+            UserVocabProgress(
+                user_id="u1",
+                vocab_item_id="vocab-hello",
+                box_level=2,
+                next_review_at=_NOW - timedelta(days=1),
+                last_seen_at=_NOW - timedelta(days=4),
+            )
+        )
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-vocab",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            missed_exercise_ids=frozenset(),
+            **repos,
+        )
+
+        progress = await repos["vocab_progress_repo"].get("u1", "vocab-hello")
+        assert progress.box_level == 3
+        assert progress.next_review_at == _NOW + timedelta(days=7)
+
+    async def test_seen_before_and_missed_resets_to_box_1(self) -> None:
+        repos = _repos([_VOCAB_LESSON], _SKILLS)
+        await repos["vocab_progress_repo"].upsert(
+            UserVocabProgress(
+                user_id="u1",
+                vocab_item_id="vocab-hello",
+                box_level=4,
+                next_review_at=_NOW - timedelta(days=1),
+                last_seen_at=_NOW - timedelta(days=15),
+            )
+        )
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-vocab",
+            attempt_id="attempt-1",
+            correct_count=3,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            missed_exercise_ids=frozenset({"lesson-vocab-e0"}),
+            **repos,
+        )
+
+        progress = await repos["vocab_progress_repo"].get("u1", "vocab-hello")
+        assert progress.box_level == 1
+        assert progress.next_review_at == _NOW + timedelta(days=1)
+
+    async def test_no_vocab_linked_exercises_writes_nothing_and_raises_nothing(self) -> None:
+        repos = _repos(_LESSONS, _SKILLS)
+
+        await complete_lesson(
+            user_id="u1",
+            lesson_id="lesson-a1",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            now=_NOW,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        assert await repos["vocab_progress_repo"].count_due("u1", _NOW + timedelta(days=365)) == 0
+
+    async def test_retried_completion_does_not_double_update_vocab_progress(self) -> None:
+        repos = _repos([_VOCAB_LESSON], _SKILLS)
+        kwargs = dict(
+            user_id="u1",
+            lesson_id="lesson-vocab",
+            attempt_id="attempt-1",
+            correct_count=4,
+            total_count=4,
+            time_spent_seconds=30.0,
+            daily_xp_target=40,
+            client_completed_at=_NOW,
+            account_created_at=_ACCOUNT_CREATED_AT,
+            **repos,
+        )
+
+        await complete_lesson(now=_NOW, **kwargs)
+        await complete_lesson(now=_NOW, **kwargs)
+
+        progress = await repos["vocab_progress_repo"].get("u1", "vocab-hello")
+        assert progress.box_level == 1  # still first-appearance box, not advanced twice

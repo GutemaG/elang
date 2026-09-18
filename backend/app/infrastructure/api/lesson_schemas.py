@@ -134,6 +134,13 @@ class CompleteLessonRequest(BaseModel):
     # "now" for an online completion; earlier for one queued while offline
     # and synced later (see `CompletionTimestampValidator`).
     client_completed_at: datetime
+    # bolt 019 (ADR-10): exercise ids answered wrong at least once before
+    # eventually being answered correctly (the client's retry-until-correct
+    # design guarantees every exercise in a completed lesson was eventually
+    # gotten right, so this -- not a final pass/fail -- is the only
+    # per-exercise signal available). Defaults to empty for older clients;
+    # drives vocab-progress box-up/box-reset, nothing else.
+    missed_exercise_ids: list[str] = Field(default_factory=list)
 
 
 class CompleteLessonResponse(BaseModel):
@@ -150,3 +157,53 @@ class CompleteLessonResponse(BaseModel):
     crown_level: int | None
     crown_leveled_up: bool
     streak_freeze_unlocked: bool
+
+
+class DueItemResponse(BaseModel):
+    """Bolt 019/020, story 004: one due vocab item, resolved to its full
+    exercise content -- not just an id -- so Practice (bolt 020) can render
+    it via the existing exercise-engine components with zero further
+    round trips. Widened from a bare `exercise_id` at bolt 020's Plan
+    stage: `GET /lessons/{lesson_id}` (the only other way to fetch this)
+    enforces `LessonAccessPolicy`, which would 403 a locked skill's lesson
+    -- something Practice must not be blocked by.
+    """
+
+    vocab_item_id: str
+    word: str
+    translation: str
+    exercise: ExerciseResponse
+    box_level: int
+    next_review_at: datetime
+
+
+class DueItemsResponse(BaseModel):
+    items: list[DueItemResponse]
+
+
+class DueCountResponse(BaseModel):
+    due_count: int
+
+
+class PracticeResultItem(BaseModel):
+    """One graded vocab item from a completed Practice session (bolt
+    `020-practice-ui`)."""
+
+    vocab_item_id: str
+    correct: bool
+
+
+class CompletePracticeSessionRequest(BaseModel):
+    # Client-generated idempotency key, same convention as
+    # `CompleteLessonRequest.attempt_id`.
+    session_id: str
+    results: list[PracticeResultItem]
+    time_spent_seconds: float
+
+
+class CompletePracticeSessionResponse(BaseModel):
+    xp_earned: int
+    amole_earned: int
+    correct_count: int
+    total_count: int
+    accuracy_percent: int

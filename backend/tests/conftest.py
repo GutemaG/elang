@@ -37,6 +37,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.infrastructure.api.error_handlers import register_exception_handlers
 from app.infrastructure.api.lesson_routers import router as lesson_router
+from app.infrastructure.api.practice_routers import router as practice_router
 from app.infrastructure.api.routers import router as auth_router
 from app.infrastructure.api.user_routers import router as user_router
 
@@ -123,6 +124,7 @@ def make_client(app_engine: AsyncEngine) -> Generator[Any]:
         app.include_router(auth_router)
         app.include_router(lesson_router)
         app.include_router(user_router)
+        app.include_router(practice_router)
         app.state.google_verifier = google_verifier
         app.state.apple_verifier = apple_verifier
         app.dependency_overrides[get_db_session] = override_get_db_session

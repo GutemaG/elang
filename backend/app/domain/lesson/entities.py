@@ -33,6 +33,10 @@ class Exercise:
     prompt: str
     content: ExerciseContent
     answer_key: AnswerKey
+    # Bolt 019 (008-srs-and-practice): not every exercise tests a specific
+    # vocab item, so this is nullable, not required -- `None` means this
+    # exercise has no SRS tracking at all, not "not yet linked."
+    vocab_item_id: str | None = None
 
 
 @dataclass
@@ -152,6 +156,59 @@ class AmoleTransaction:
     source: str
     reference_id: str
     created_at: datetime
+
+
+@dataclass
+class VocabItem:
+    """Aggregate Root (bolt `019-srs-tracking-service`). Content only -- no
+    per-user state, same category as `Skill`/`Lesson`.
+    """
+
+    id: str
+    word: str
+    translation: str
+    created_at: datetime
+
+
+@dataclass
+class UserVocabProgress:
+    """Aggregate Root (bolt `019-srs-tracking-service`). Per-user Leitner
+    spacing state for one vocab item.
+
+    Invariants: `1 <= box_level <= 5`; at most one row per
+    `(user_id, vocab_item_id)` pair -- same "one row per user per X"
+    wallet-like shape as `UserSkillProgress`/`UserBeans`, deliberately not a
+    ledger (ADR-8's reasoning doesn't apply here: single writer per update,
+    no audit-trail requirement).
+    """
+
+    user_id: str
+    vocab_item_id: str
+    box_level: int
+    next_review_at: datetime
+    last_seen_at: datetime
+
+
+@dataclass
+class PracticeAttempt:
+    """Aggregate Root (bolt `020-practice-ui`). One completed Practice
+    session -- structurally similar to `LessonAttempt` (client-supplied
+    `id` is the idempotency key) but its own table, since a Practice
+    session spans arbitrary vocab items/exercises across lessons and skills
+    and has no `lesson_id`/`skill_id` to anchor to.
+
+    Invariants: `id` is globally unique (idempotency key); `correct_count
+    <= total_count`; every field is fixed forever once written, same as
+    `LessonAttempt`.
+    """
+
+    id: str
+    user_id: str
+    correct_count: int
+    total_count: int
+    xp_awarded: int
+    amole_awarded: int
+    completed_at: datetime
 
 
 @dataclass

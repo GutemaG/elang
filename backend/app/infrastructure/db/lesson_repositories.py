@@ -23,10 +23,13 @@ from app.domain.lesson.entities import (
     Exercise,
     Lesson,
     LessonAttempt,
+    PracticeAttempt,
     Skill,
     UserBeans,
     UserSkillProgress,
     UserStreak,
+    UserVocabProgress,
+    VocabItem,
 )
 from app.domain.lesson.value_objects import (
     AnswerKey,
@@ -47,10 +50,13 @@ from app.infrastructure.db.lesson_models import (
     ExerciseModel,
     LessonAttemptModel,
     LessonModel,
+    PracticeAttemptModel,
     SkillModel,
     UserBeansModel,
     UserSkillProgressModel,
     UserStreakModel,
+    UserVocabProgressModel,
+    VocabItemModel,
 )
 
 
@@ -104,6 +110,7 @@ def _exercise_model_to_domain(model: ExerciseModel) -> Exercise:
         prompt=model.prompt,
         content=_content_from_json(exercise_type, model.content),
         answer_key=_answer_key_from_json(exercise_type, model.answer_key),
+        vocab_item_id=model.vocab_item_id,
     )
 
 
@@ -149,6 +156,25 @@ def _streak_model_to_domain(model: UserStreakModel) -> UserStreak:
         current_streak=model.current_streak,
         last_completed_date=model.last_completed_date,
         active_freeze_count=model.active_freeze_count,
+    )
+
+
+def _vocab_item_model_to_domain(model: VocabItemModel) -> VocabItem:
+    return VocabItem(
+        id=model.id,
+        word=model.word,
+        translation=model.translation,
+        created_at=_ensure_utc(model.created_at),
+    )
+
+
+def _vocab_progress_model_to_domain(model: UserVocabProgressModel) -> UserVocabProgress:
+    return UserVocabProgress(
+        user_id=model.user_id,
+        vocab_item_id=model.vocab_item_id,
+        box_level=model.box_level,
+        next_review_at=_ensure_utc(model.next_review_at),
+        last_seen_at=_ensure_utc(model.last_seen_at),
     )
 
 
@@ -273,6 +299,24 @@ class SqlAlchemyLessonRepository:
             grouped.setdefault(skill_id, []).append(lesson_id)
         return {skill_id: tuple(ids) for skill_id, ids in grouped.items()}
 
+    async def list_exercises_by_vocab_item_ids(
+        self, vocab_item_ids: Sequence[str]
+    ) -> dict[str, Exercise]:
+        if not vocab_item_ids:
+            return {}
+        stmt = (
+            select(ExerciseModel)
+            .where(ExerciseModel.vocab_item_id.in_(vocab_item_ids))
+            .order_by(ExerciseModel.vocab_item_id, ExerciseModel.id)
+        )
+        result = await self._session.execute(stmt)
+        # First row per vocab_item_id wins (rows arrive ordered by exercise
+        # id) -- deterministic, not "first inserted."
+        resolved: dict[str, Exercise] = {}
+        for model in result.scalars().all():
+            resolved.setdefault(model.vocab_item_id, _exercise_model_to_domain(model))
+        return resolved
+
 
 class SqlAlchemyUserSkillProgressRepository:
     """Implements `app.domain.lesson.repositories.UserSkillProgressRepository`.
@@ -388,6 +432,84 @@ class SqlAlchemyAmoleTransactionRepository:
         return result.scalar() or 0
 
 
+class SqlAlchemyVocabItemRepository:
+    """Implements `app.domain.lesson.repositories.VocabItemRepository`
+    (bolt `019-srs-tracking-service`)."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_id(self, vocab_item_id: str) -> VocabItem | None:
+        stmt = select(VocabItemModel).where(VocabItemModel.id == vocab_item_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return _vocab_item_model_to_domain(model) if model is not None else None
+
+    async def list_by_ids(self, vocab_item_ids: Sequence[str]) -> list[VocabItem]:
+        if not vocab_item_ids:
+            return []
+        stmt = select(VocabItemModel).where(VocabItemModel.id.in_(vocab_item_ids))
+        result = await self._session.execute(stmt)
+        return [_vocab_item_model_to_domain(m) for m in result.scalars().all()]
+
+
+class SqlAlchemyUserVocabProgressRepository:
+    """Implements `app.domain.lesson.repositories.UserVocabProgressRepository`
+    (bolt `019-srs-tracking-service`). `upsert` follows the same
+    fetch-then-insert-or-update convention as every other `upsert` in this
+    module.
+    """
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get(self, user_id: str, vocab_item_id: str) -> UserVocabProgress | None:
+        stmt = select(UserVocabProgressModel).where(
+            UserVocabProgressModel.user_id == user_id,
+            UserVocabProgressModel.vocab_item_id == vocab_item_id,
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return _vocab_progress_model_to_domain(model) if model is not None else None
+
+    async def upsert(self, progress: UserVocabProgress) -> None:
+        stmt = select(UserVocabProgressModel).where(
+            UserVocabProgressModel.user_id == progress.user_id,
+            UserVocabProgressModel.vocab_item_id == progress.vocab_item_id,
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if model is None:
+            model = UserVocabProgressModel(
+                user_id=progress.user_id, vocab_item_id=progress.vocab_item_id
+            )
+            self._session.add(model)
+        model.box_level = progress.box_level
+        model.next_review_at = progress.next_review_at
+        model.last_seen_at = progress.last_seen_at
+
+    async def list_due(self, user_id: str, now: datetime, limit: int) -> list[UserVocabProgress]:
+        stmt = (
+            select(UserVocabProgressModel)
+            .where(
+                UserVocabProgressModel.user_id == user_id,
+                UserVocabProgressModel.next_review_at <= now,
+            )
+            .order_by(UserVocabProgressModel.next_review_at)
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return [_vocab_progress_model_to_domain(m) for m in result.scalars().all()]
+
+    async def count_due(self, user_id: str, now: datetime) -> int:
+        stmt = select(func.count(UserVocabProgressModel.vocab_item_id)).where(
+            UserVocabProgressModel.user_id == user_id,
+            UserVocabProgressModel.next_review_at <= now,
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar() or 0
+
+
 class SqlAlchemyUserStreakRepository:
     """Implements `app.domain.lesson.repositories.UserStreakRepository`."""
 
@@ -476,3 +598,44 @@ class SqlAlchemyLessonAttemptRepository:
         )
         result = await self._session.execute(stmt)
         return result.scalar() or 0
+
+
+def _practice_attempt_model_to_domain(model: PracticeAttemptModel) -> PracticeAttempt:
+    return PracticeAttempt(
+        id=model.id,
+        user_id=model.user_id,
+        correct_count=model.correct_count,
+        total_count=model.total_count,
+        xp_awarded=model.xp_awarded,
+        amole_awarded=model.amole_awarded,
+        completed_at=_ensure_utc(model.completed_at),
+    )
+
+
+class SqlAlchemyPracticeAttemptRepository:
+    """Implements `app.domain.lesson.repositories.PracticeAttemptRepository`
+    (bolt `020-practice-ui`). Same "id is the idempotency key, `add` never
+    updates" convention as `SqlAlchemyLessonAttemptRepository`.
+    """
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get(self, session_id: str) -> PracticeAttempt | None:
+        stmt = select(PracticeAttemptModel).where(PracticeAttemptModel.id == session_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return _practice_attempt_model_to_domain(model) if model is not None else None
+
+    async def add(self, attempt: PracticeAttempt) -> None:
+        self._session.add(
+            PracticeAttemptModel(
+                id=attempt.id,
+                user_id=attempt.user_id,
+                correct_count=attempt.correct_count,
+                total_count=attempt.total_count,
+                xp_awarded=attempt.xp_awarded,
+                amole_awarded=attempt.amole_awarded,
+                completed_at=attempt.completed_at,
+            )
+        )

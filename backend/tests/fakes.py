@@ -15,12 +15,15 @@ from datetime import UTC, date, datetime
 from app.domain.entities import AuthSession, User
 from app.domain.lesson.entities import (
     AmoleTransaction,
+    Exercise,
     Lesson,
     LessonAttempt,
     Skill,
     UserBeans,
     UserSkillProgress,
     UserStreak,
+    UserVocabProgress,
+    VocabItem,
 )
 from app.domain.value_objects import AuthProvider
 
@@ -168,6 +171,17 @@ class FakeLessonRepositoryWithSkillIndex(FakeLessonRepository):
             if any(lesson.skill_id == skill_id for lesson in self._lessons.values())
         }
 
+    async def list_exercises_by_vocab_item_ids(
+        self, vocab_item_ids: Sequence[str]
+    ) -> dict[str, Exercise]:
+        wanted = set(vocab_item_ids)
+        resolved: dict[str, Exercise] = {}
+        for lesson in self._lessons.values():
+            for exercise in lesson.exercises:
+                if exercise.vocab_item_id in wanted and exercise.vocab_item_id not in resolved:
+                    resolved[exercise.vocab_item_id] = exercise
+        return resolved
+
 
 class FakeUserSkillProgressRepository:
     """In-memory stand-in for
@@ -268,3 +282,55 @@ class FakeAmoleTransactionRepository:
 
     async def sum_by_user(self, user_id: str) -> int:
         return sum(t.amount for t in self._rows.values() if t.user_id == user_id)
+
+
+class FakeVocabItemRepository:
+    """In-memory stand-in for
+    `app.domain.lesson.repositories.VocabItemRepository` (bolt
+    `019-srs-tracking-service`).
+    """
+
+    def __init__(self, vocab_items: list[VocabItem] | None = None) -> None:
+        self._rows: dict[str, VocabItem] = {v.id: v for v in (vocab_items or [])}
+
+    async def get_by_id(self, vocab_item_id: str) -> VocabItem | None:
+        return self._rows.get(vocab_item_id)
+
+    async def list_by_ids(self, vocab_item_ids: Sequence[str]) -> list[VocabItem]:
+        return [self._rows[vid] for vid in vocab_item_ids if vid in self._rows]
+
+
+class FakeUserVocabProgressRepository:
+    """In-memory stand-in for
+    `app.domain.lesson.repositories.UserVocabProgressRepository` (bolt
+    `019-srs-tracking-service`).
+    """
+
+    def __init__(self, rows: list[UserVocabProgress] | None = None) -> None:
+        self._rows: dict[tuple[str, str], UserVocabProgress] = {
+            (row.user_id, row.vocab_item_id): row for row in (rows or [])
+        }
+
+    async def get(self, user_id: str, vocab_item_id: str) -> UserVocabProgress | None:
+        return self._rows.get((user_id, vocab_item_id))
+
+    async def upsert(self, progress: UserVocabProgress) -> None:
+        self._rows[(progress.user_id, progress.vocab_item_id)] = progress
+
+    async def list_due(self, user_id: str, now: datetime, limit: int) -> list[UserVocabProgress]:
+        due = sorted(
+            (
+                row
+                for row in self._rows.values()
+                if row.user_id == user_id and row.next_review_at <= now
+            ),
+            key=lambda row: row.next_review_at,
+        )
+        return due[:limit]
+
+    async def count_due(self, user_id: str, now: datetime) -> int:
+        return sum(
+            1
+            for row in self._rows.values()
+            if row.user_id == user_id and row.next_review_at <= now
+        )

@@ -14,19 +14,25 @@ from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
     LessonAttemptRepository,
     LessonRepository,
+    PracticeAttemptRepository,
     SkillRepository,
     UserBeansRepository,
     UserSkillProgressRepository,
     UserStreakRepository,
+    UserVocabProgressRepository,
+    VocabItemRepository,
 )
 from app.infrastructure.db.lesson_repositories import (
     SqlAlchemyAmoleTransactionRepository,
     SqlAlchemyLessonAttemptRepository,
     SqlAlchemyLessonRepository,
+    SqlAlchemyPracticeAttemptRepository,
     SqlAlchemySkillRepository,
     SqlAlchemyUserBeansRepository,
     SqlAlchemyUserSkillProgressRepository,
     SqlAlchemyUserStreakRepository,
+    SqlAlchemyUserVocabProgressRepository,
+    SqlAlchemyVocabItemRepository,
 )
 from app.infrastructure.db.session import get_db_session
 
@@ -71,3 +77,21 @@ async def get_amole_transaction_repository(
     session: AsyncSession = Depends(get_db_session),
 ) -> AmoleTransactionRepository:
     return SqlAlchemyAmoleTransactionRepository(session)
+
+
+async def get_vocab_item_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> VocabItemRepository:
+    return SqlAlchemyVocabItemRepository(session)
+
+
+async def get_user_vocab_progress_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> UserVocabProgressRepository:
+    return SqlAlchemyUserVocabProgressRepository(session)
+
+
+async def get_practice_attempt_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> PracticeAttemptRepository:
+    return SqlAlchemyPracticeAttemptRepository(session)

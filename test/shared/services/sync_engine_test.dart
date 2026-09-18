@@ -20,7 +20,11 @@ import '../../helpers/controllable_lesson_api.dart';
 import '../../helpers/fake_connectivity_monitor.dart';
 import '../../helpers/fake_pending_sync_queue_store.dart';
 
-PendingSyncEntry _entry(String attemptId, {String lessonId = 'lesson-a'}) {
+PendingSyncEntry _entry(
+  String attemptId, {
+  String lessonId = 'lesson-a',
+  List<String> missedExerciseIds = const [],
+}) {
   return PendingSyncEntry(
     attemptId: attemptId,
     lessonId: lessonId,
@@ -29,6 +33,7 @@ PendingSyncEntry _entry(String attemptId, {String lessonId = 'lesson-a'}) {
     timeSpent: const Duration(seconds: 10),
     beansRemainingAtEnd: 4,
     clientCompletedAt: DateTime.now().toUtc(),
+    missedExerciseIds: missedExerciseIds,
   );
 }
 
@@ -79,6 +84,25 @@ void main() {
     expect(engine.pendingCount, 0);
     expect(engine.status, SyncStatus.idle);
   });
+
+  test(
+    'replays a queued entry\'s missedExerciseIds unchanged (bolt 019, ADR-10)',
+    () async {
+      final api = _apiWithCompletionResult();
+      final engine = SyncEngine(
+        lessonApi: api,
+        connectivityMonitor: FakeConnectivityMonitor(online: true),
+        queueStore: FakePendingSyncQueueStore(),
+      );
+
+      await engine.enqueueOfflineCompletion(
+        _entry('a1', missedExerciseIds: ['ex-1', 'ex-2']),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(api.completeLessonCalls.single.missedExerciseIds, ['ex-1', 'ex-2']);
+    },
+  );
 
   test('multiple queued entries drain strictly in completion order', () async {
     final api = _apiWithCompletionResult();

@@ -1,6 +1,8 @@
 import '../models/beans_status.dart';
+import '../models/due_item.dart';
 import '../models/lesson_completion_result.dart';
 import '../models/lesson_content.dart';
+import '../models/practice_completion_result.dart';
 import '../models/skill_tree.dart';
 
 /// The `001-lesson-service` boundary this UI needs, independent of that
@@ -41,6 +43,13 @@ abstract class LessonApi {
   ///
   /// Never called for an interrupted (out-of-beans, dismissed) attempt —
   /// that's what keeps "no partial XP on interruption" true.
+  ///
+  /// [missedExerciseIds] (bolt 019, ADR-10): ids of exercises answered
+  /// wrong at least once before eventually being answered correctly during
+  /// this attempt — the retry-until-correct lesson flow means every
+  /// exercise is eventually right by completion, so this "was ever missed"
+  /// signal (not a final pass/fail) is what drives vocab-progress
+  /// box-up/box-reset server-side. Empty for a lesson with no misses.
   Future<LessonCompletionResult> completeLesson({
     required String lessonId,
     required String attemptId,
@@ -49,6 +58,7 @@ abstract class LessonApi {
     required Duration timeSpent,
     required int beansRemainingAtEnd,
     required DateTime clientCompletedAt,
+    List<String> missedExerciseIds = const [],
   });
 
   /// Current beans/refill state, for the out-of-beans modal.
@@ -56,4 +66,24 @@ abstract class LessonApi {
 
   /// Attempts an immediate refill using the account's Amole balance.
   Future<RefillResult> refillBeansWithAmole();
+
+  /// Bolt 020-practice-ui, story 001: the Practice entry point's due-count
+  /// badge.
+  Future<int> getDueCount();
+
+  /// Bolt 020-practice-ui, story 002: every vocab item due right now, each
+  /// resolved to its full exercise content -- ready to hand directly to
+  /// [LessonScreen.practice] with no further round trip.
+  Future<List<DueItem>> getDueItems({int limit = 20});
+
+  /// Bolt 020-practice-ui, story 002: reports a completed Practice
+  /// session's graded results. [sessionId] is generated once per session
+  /// (mirrors [completeLesson]'s `attemptId`) and is the idempotency key a
+  /// retry reuses. Deliberately does not touch streak/skill-progress --
+  /// Practice is independent of skill-tree progression.
+  Future<PracticeCompletionResult> completePracticeSession({
+    required String sessionId,
+    required List<PracticeResult> results,
+    required Duration timeSpent,
+  });
 }

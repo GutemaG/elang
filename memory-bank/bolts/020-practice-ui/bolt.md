@@ -3,23 +3,30 @@ id: 020-practice-ui
 unit: 002-practice-ui
 intent: 008-srs-and-practice
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-practice-entry-point-and-due-count
   - 002-practice-session-assembly-and-completion
 created: '2026-09-17T17:10:00Z'
-started: null
-completed: null
+started: '2026-09-17T23:15:00Z'
+completed: '2026-09-18T20:36:04Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: plan
+    completed: '2026-09-17T23:15:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-18T00:00:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-18T00:30:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 019-srs-tracking-service
 enables_bolts: []
 requires_units:
   - 001-srs-tracking-service
 blocks: false
-
 complexity:
   avg_complexity: 3
   avg_uncertainty: 3
@@ -49,9 +56,9 @@ A learner can see how many words are due, start a practice session covering exac
 
 ## Stages
 
-- [ ] **1. Plan**: Pending → implementation-plan.md
-- [ ] **2. Implement**: Pending → implementation-walkthrough.md
-- [ ] **3. Test**: Pending → test-walkthrough.md
+- [x] **1. Plan**: ✅ Complete → implementation-plan.md
+- [x] **2. Implement**: ✅ Complete → implementation-walkthrough.md
+- [x] **3. Test**: ✅ Complete → test-walkthrough.md
 
 ## Dependencies
 
@@ -63,11 +70,11 @@ A learner can see how many words are due, start a practice session covering exac
 
 ## Success Criteria
 
-- [ ] Due-count visible and accurate before entering a session
-- [ ] Session includes only exercises linked to due vocab items
-- [ ] Zero new exercise-rendering code
-- [ ] Offline: entry point visibly disabled, not hidden
-- [ ] No regression to the regular lesson-taking flow
+- [x] Due-count visible and accurate before entering a session
+- [x] Session includes only exercises linked to due vocab items
+- [x] Zero new exercise-rendering code
+- [x] Offline: entry point visibly disabled, not hidden
+- [x] No regression to the regular lesson-taking flow
 
 ## Notes
 

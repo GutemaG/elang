@@ -7,6 +7,7 @@ import '../../../shared/models/exercise.dart';
 import '../../../shared/models/lesson_completion_result.dart';
 import '../../../shared/models/lesson_content.dart';
 import '../../../shared/models/pending_sync_entry.dart';
+import '../../../shared/models/practice_completion_result.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/sync_engine.dart';
@@ -28,15 +29,34 @@ class LessonController extends ChangeNotifier {
     required this._syncEngine,
     required LessonContent content,
     this.startedOffline = false,
+    this.isPractice = false,
+    Map<String, String>? vocabItemIdByExerciseId,
   }) : _content = content,
        _beansRemaining = content.beansAtStart,
        _queue = List<int>.generate(content.exercises.length, (i) => i),
-       _attemptId = _generateAttemptId();
+       _attemptId = _generateAttemptId(),
+       _vocabItemIdByExerciseId = vocabItemIdByExerciseId ?? const {};
 
   final LessonApi _lessonApi;
   final AnswerFeedbackPlayer _feedbackPlayer;
   final SyncEngine _syncEngine;
   final LessonContent _content;
+
+  /// Bolt 020 (008-srs-and-practice): true for a Practice session, built
+  /// via `LessonScreen.practice`. Skips Beans consumption/interruption
+  /// entirely (Practice isn't gated by mistake tolerance) and completes
+  /// through `LessonApi.completePracticeSession` instead of
+  /// `completeLesson` -- a Practice due-set spans arbitrary lessons/skills
+  /// and must work even for a locked skill's item, which `completeLesson`
+  /// structurally cannot support.
+  final bool isPractice;
+
+  /// Practice-only: resolves each of [content.exercises]' ids to the vocab
+  /// item it tests, so `_finishLesson` can report per-item correctness by
+  /// vocab item (what the practice-completion endpoint needs) rather than
+  /// by exercise id (what `missedExerciseIds` uses). Empty/unused for a
+  /// regular lesson.
+  final Map<String, String> _vocabItemIdByExerciseId;
 
   /// Whether this attempt was started with the device offline -- fixed
   /// once at construction (mirrors whichever choice `LessonScreen` made
@@ -69,6 +89,13 @@ class LessonController extends ChangeNotifier {
   int _beansRemaining;
   int _correctCount = 0;
   int _wrongCount = 0;
+
+  /// Ids of exercises answered wrong at least once before eventually being
+  /// answered correctly this attempt (bolt 019, ADR-10) -- the
+  /// retry-until-correct queue below means every exercise is eventually
+  /// right by the time the lesson finishes, so "was ever missed" (not a
+  /// final pass/fail) is the only per-exercise signal there is to report.
+  final Set<String> _missedExerciseIds = {};
 
   TileFeedback _feedback = TileFeedback.none;
   Object? _selectedAnswer;
@@ -192,12 +219,15 @@ class LessonController extends ChangeNotifier {
       unawaited(_feedbackPlayer.playCorrect());
     } else {
       _wrongCount++;
-      _beansRemaining = (_beansRemaining - 1).clamp(0, _content.beansMax);
+      _missedExerciseIds.add(currentExercise.id);
+      if (!isPractice) {
+        _beansRemaining = (_beansRemaining - 1).clamp(0, _content.beansMax);
+        if (_beansRemaining <= 0) {
+          _lessonInterrupted = true;
+        }
+      }
       _feedback = TileFeedback.incorrect;
       _queue.add(exerciseIndex);
-      if (_beansRemaining <= 0) {
-        _lessonInterrupted = true;
-      }
       unawaited(_feedbackPlayer.playIncorrect());
     }
     notifyListeners();
@@ -252,6 +282,47 @@ class LessonController extends ChangeNotifier {
     _stopwatch.stop();
     final clientCompletedAt = DateTime.now().toUtc();
 
+    if (isPractice) {
+      try {
+        final results = exercises
+            .map(
+              (exercise) => PracticeResult(
+                vocabItemId: _vocabItemIdByExerciseId[exercise.id]!,
+                correct: !_missedExerciseIds.contains(exercise.id),
+              ),
+            )
+            .toList();
+        final result = await _lessonApi.completePracticeSession(
+          sessionId: _attemptId,
+          results: results,
+          timeSpent: _stopwatch.elapsed,
+        );
+        // No streak/crown/skill-unlock fields -- Practice doesn't touch
+        // any of those (this bolt's Plan-stage decision), same "safe
+        // defaults when not applicable" convention this model's
+        // `pendingSync` branch already uses.
+        _completionResult = LessonCompletionResult(
+          xpEarned: result.xpEarned,
+          dailyXpTotal: 0,
+          dailyXpTarget: 0,
+          streakCount: 0,
+          streakIncreasedToday: false,
+          accuracyPercent: result.accuracyPercent,
+          correctCount: result.correctCount,
+          totalCount: result.totalCount,
+          timeSpent: _stopwatch.elapsed,
+        );
+        _lessonFinished = true;
+        _completionError = null;
+      } catch (e) {
+        // Idempotent on `_attemptId` server-side, same guarantee as a
+        // regular lesson's retry -- tapping "Continue" again is safe.
+        _completionError = e;
+      }
+      notifyListeners();
+      return;
+    }
+
     if (startedOffline) {
       // Never calls the network endpoint at all -- queued for `SyncEngine`
       // to replay once connectivity returns (010-offline-caching-and-
@@ -267,6 +338,7 @@ class LessonController extends ChangeNotifier {
           timeSpent: _stopwatch.elapsed,
           beansRemainingAtEnd: _beansRemaining,
           clientCompletedAt: clientCompletedAt,
+          missedExerciseIds: _missedExerciseIds.toList(),
         ),
       );
       final accuracyPercent = exercises.isEmpty
@@ -302,6 +374,7 @@ class LessonController extends ChangeNotifier {
         // itself a retry -- identical to "now" for a normal online
         // completion.
         clientCompletedAt: clientCompletedAt,
+        missedExerciseIds: _missedExerciseIds.toList(),
       );
       _completionResult = result;
       _lessonFinished = true;

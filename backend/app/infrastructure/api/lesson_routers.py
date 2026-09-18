@@ -22,7 +22,6 @@ from app.application.lesson_use_cases import (
     refill_beans,
 )
 from app.domain.entities import User
-from app.domain.lesson.entities import Exercise
 from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
     LessonAttemptRepository,
@@ -31,19 +30,11 @@ from app.domain.lesson.repositories import (
     UserBeansRepository,
     UserSkillProgressRepository,
     UserStreakRepository,
+    UserVocabProgressRepository,
 )
-from app.domain.lesson.value_objects import (
-    BEAN_REGEN_MINUTES,
-    ChoiceAnswerKey,
-    ExerciseType,
-    ListeningContent,
-    MatchPairsContent,
-    MultipleChoiceContent,
-    PairAnswerKey,
-    SentenceConstructionContent,
-    SequenceAnswerKey,
-)
+from app.domain.lesson.value_objects import BEAN_REGEN_MINUTES
 from app.infrastructure.api.dependencies import get_current_user
+from app.infrastructure.api.exercise_mapping import to_exercise_response
 from app.infrastructure.api.lesson_dependencies import (
     get_amole_transaction_repository,
     get_lesson_attempt_repository,
@@ -52,20 +43,15 @@ from app.infrastructure.api.lesson_dependencies import (
     get_user_beans_repository,
     get_user_skill_progress_repository,
     get_user_streak_repository,
+    get_user_vocab_progress_repository,
 )
 from app.infrastructure.api.lesson_schemas import (
     BeansStatusResponse,
-    ChoiceResponse,
     CompleteLessonRequest,
     CompleteLessonResponse,
-    ExerciseResponse,
     LessonContentResponse,
     LessonSummaryResponse,
-    ListeningExerciseResponse,
-    MatchPairsExerciseResponse,
-    MultipleChoiceExerciseResponse,
     RefillResponse,
-    SentenceConstructionExerciseResponse,
     SkillTreeEntryResponse,
     SkillTreeResponse,
 )
@@ -96,53 +82,6 @@ def _to_skill_tree_response(summary: SkillTreeSummary) -> SkillTreeResponse:
     )
 
 
-def _to_exercise_response(exercise: Exercise) -> ExerciseResponse:
-    # Built from `exercise.content` (renderable) and `exercise.answer_key`
-    # (correct-answer) -- the latter is now included per ADR-5, which
-    # supersedes ADR-4's "never expose correct answers".
-    if exercise.type is ExerciseType.MULTIPLE_CHOICE:
-        assert isinstance(exercise.content, MultipleChoiceContent)
-        assert isinstance(exercise.answer_key, ChoiceAnswerKey)
-        return MultipleChoiceExerciseResponse(
-            id=exercise.id,
-            order_index=exercise.order_index,
-            prompt=exercise.prompt,
-            choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
-            correct_choice_id=exercise.answer_key.correct_choice_id,
-        )
-    if exercise.type is ExerciseType.LISTENING:
-        assert isinstance(exercise.content, ListeningContent)
-        assert isinstance(exercise.answer_key, ChoiceAnswerKey)
-        return ListeningExerciseResponse(
-            id=exercise.id,
-            order_index=exercise.order_index,
-            prompt=exercise.prompt,
-            audio_url=exercise.content.audio_url,
-            choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
-            correct_choice_id=exercise.answer_key.correct_choice_id,
-        )
-    if exercise.type is ExerciseType.SENTENCE_CONSTRUCTION:
-        assert isinstance(exercise.content, SentenceConstructionContent)
-        assert isinstance(exercise.answer_key, SequenceAnswerKey)
-        return SentenceConstructionExerciseResponse(
-            id=exercise.id,
-            order_index=exercise.order_index,
-            prompt=exercise.prompt,
-            word_bank=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.word_bank],
-            correct_sequence=list(exercise.answer_key.correct_sequence),
-        )
-    assert isinstance(exercise.content, MatchPairsContent)
-    assert isinstance(exercise.answer_key, PairAnswerKey)
-    return MatchPairsExerciseResponse(
-        id=exercise.id,
-        order_index=exercise.order_index,
-        prompt=exercise.prompt,
-        left_tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.left_tiles],
-        right_tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.right_tiles],
-        correct_pairs=list(exercise.answer_key.correct_pairs),
-    )
-
-
 def _to_lesson_content_response(result: LessonContentResult) -> LessonContentResponse:
     lesson = result.lesson
     return LessonContentResponse(
@@ -152,7 +91,7 @@ def _to_lesson_content_response(result: LessonContentResult) -> LessonContentRes
             title=lesson.title,
             order_index=lesson.order_index,
         ),
-        exercises=[_to_exercise_response(e) for e in lesson.exercises],
+        exercises=[to_exercise_response(e) for e in lesson.exercises],
         content_version=result.content_version,
     )
 
@@ -250,13 +189,14 @@ async def complete_lesson_endpoint(
     streak_repo: UserStreakRepository = Depends(get_user_streak_repository),
     attempt_repo: LessonAttemptRepository = Depends(get_lesson_attempt_repository),
     amole_repo: AmoleTransactionRepository = Depends(get_amole_transaction_repository),
+    vocab_progress_repo: UserVocabProgressRepository = Depends(get_user_vocab_progress_repository),
 ) -> CompleteLessonResponse:
     """Stories 002/003/004: the account-ledger side of one completed lesson
     attempt (Beans consumption, XP award, skill-progress/crown-level
-    update, streak update, and bolt-017 Amole awards). Idempotent on
-    `request.attempt_id`. 404 if the lesson doesn't exist; 422
-    `beans_exhausted`/`invalid_completion` for a malformed or
-    beans-implausible completion (ADR-5).
+    update, streak update, bolt-017 Amole awards, and bolt-019 vocab
+    progress -- ADR-10). Idempotent on `request.attempt_id`. 404 if the
+    lesson doesn't exist; 422 `beans_exhausted`/`invalid_completion` for a
+    malformed or beans-implausible completion (ADR-5).
     """
     outcome = await complete_lesson(
         user_id=user.id,
@@ -275,6 +215,8 @@ async def complete_lesson_endpoint(
         streak_repo=streak_repo,
         attempt_repo=attempt_repo,
         amole_repo=amole_repo,
+        vocab_progress_repo=vocab_progress_repo,
+        missed_exercise_ids=frozenset(request.missed_exercise_ids),
         now=datetime.now(UTC),
     )
     return CompleteLessonResponse(

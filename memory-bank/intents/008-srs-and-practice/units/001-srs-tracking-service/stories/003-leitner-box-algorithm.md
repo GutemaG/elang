@@ -2,11 +2,11 @@
 id: 003-leitner-box-algorithm
 unit: 001-srs-tracking-service
 intent: 008-srs-and-practice
-status: ready
+status: complete
 priority: must
 created: '2026-09-17T17:00:00Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 003-leitner-box-algorithm

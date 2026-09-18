@@ -7,6 +7,7 @@ concerns, per `ddd-02-technical-design.md`'s layering rule.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
 from enum import StrEnum
 
 MIN_CROWN_LEVEL = 0
@@ -28,6 +29,33 @@ AMOLE_STREAK_MILESTONE_30_BONUS = 500
 STREAK_MILESTONE_7_DAYS = 7
 STREAK_MILESTONE_30_DAYS = 30
 
+# --- Bolt 019 constants (ddd-01-domain-model.md / ddd-02-technical-design.md) ---
+MIN_BOX_LEVEL = 1
+MAX_BOX_LEVEL = 5
+
+# Fixed Leitner spacing per box level -- named constants, not a
+# runtime-configurable table (same tuning-constant convention as
+# `REFILL_COST_AMOLE`/the `AMOLE_*` awards above).
+LEITNER_BOX_INTERVALS: dict[int, timedelta] = {
+    1: timedelta(days=1),
+    2: timedelta(days=3),
+    3: timedelta(days=7),
+    4: timedelta(days=14),
+    5: timedelta(days=30),
+}
+
+# A wrong answer's next-review offset is its own named constant, not a reuse
+# of `LEITNER_BOX_INTERVALS[1]` -- so a future change to box 1's interval
+# can't silently change how soon a missed item resurfaces (story
+# `003-leitner-box-algorithm`'s explicit requirement). Both currently
+# resolve to 1 day, which is a coincidence, not a coupling.
+INCORRECT_RESET_INTERVAL = timedelta(days=1)
+
+# --- Bolt 020 constant (implementation-plan.md) ---
+# Smaller than AMOLE_LESSON_COMPLETION_AWARD -- a practice session is
+# typically shorter than a full lesson.
+AMOLE_PRACTICE_SESSION_AWARD = 10
+
 
 class AmoleSource(StrEnum):
     """Closed vocabulary for `AmoleTransaction.source` (ADR-8) -- adding a
@@ -42,6 +70,10 @@ class AmoleSource(StrEnum):
     STREAK_MILESTONE_7 = "streak_milestone_7"
     STREAK_MILESTONE_30 = "streak_milestone_30"
     BEAN_REFILL = "bean_refill"
+    # Bolt 020 (008-srs-and-practice): a completed Practice session's flat
+    # bonus -- Practice deliberately does not touch streak/skill-progress,
+    # so this is its only account-ledger effect.
+    PRACTICE_SESSION = "practice_session"
 
 
 @dataclass(frozen=True)

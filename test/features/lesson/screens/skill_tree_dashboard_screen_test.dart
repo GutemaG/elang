@@ -12,9 +12,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'package:elang/shared/models/beans_status.dart';
+import 'package:elang/shared/models/due_item.dart';
 import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
+import 'package:elang/shared/models/practice_completion_result.dart';
 import 'package:elang/shared/models/skill_tree.dart';
 import 'package:elang/shared/services/answer_feedback_player.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
@@ -58,14 +60,20 @@ Widget _wrapped({
   required LessonApi lessonApi,
   required LessonAudioPlayer audioPlayer,
   AnswerFeedbackPlayer? feedbackPlayer,
+  FakeConnectivityMonitor? connectivityMonitor,
 }) {
   final sessionRepository = _settingsSessionRepository();
+  // The practice-entry card reads `SyncEngine.isOnline` -- the *same*
+  // connectivity monitor instance must back both the widget's own
+  // `connectivityMonitor` field and the `SyncEngine` it's given, or
+  // toggling one wouldn't affect the other.
+  final connectivity = connectivityMonitor ?? FakeConnectivityMonitor();
   return MaterialApp(
     home: SkillTreeDashboardScreen(
       lessonApi: lessonApi,
       audioPlayer: audioPlayer,
       feedbackPlayer: feedbackPlayer ?? FakeAnswerFeedbackPlayer(),
-      connectivityMonitor: FakeConnectivityMonitor(),
+      connectivityMonitor: connectivity,
       lessonPackStore: FakeLessonPackStore(),
       lessonPackDownloader: LessonPackDownloader(
         lessonApi: lessonApi,
@@ -73,7 +81,7 @@ Widget _wrapped({
       ),
       syncEngine: SyncEngine(
         lessonApi: lessonApi,
-        connectivityMonitor: FakeConnectivityMonitor(),
+        connectivityMonitor: connectivity,
         queueStore: FakePendingSyncQueueStore(),
       ),
       sessionRepository: sessionRepository,
@@ -105,7 +113,8 @@ void main() {
           beansMax: 5,
           totalXp: 0,
         )
-        ..beansStatus = _fixtureBeansStatus; // amoleBalance: 500
+        ..beansStatus = _fixtureBeansStatus // amoleBalance: 500
+        ..dueCount = 0;
 
       await tester.pumpWidget(
         _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
@@ -144,7 +153,8 @@ void main() {
           regenMinutesPerBean: 30,
           amoleBalance: 0,
           refillCostAmole: 350,
-        );
+        )
+        ..dueCount = 0;
 
       await tester.pumpWidget(
         _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
@@ -209,7 +219,8 @@ void main() {
           regenMinutesPerBean: 30,
           amoleBalance: 100,
           refillCostAmole: 350,
-        );
+        )
+        ..dueCount = 0;
 
       await tester.pumpWidget(
         _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
@@ -319,7 +330,8 @@ void main() {
   ) async {
     final api = ControllableLessonApi()
       ..skillTreeError = Exception('boom')
-      ..beansStatus = _fixtureBeansStatus;
+      ..beansStatus = _fixtureBeansStatus
+      ..dueCount = 0;
     await tester.pumpWidget(
       _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
     );
@@ -376,6 +388,7 @@ void main() {
           totalXp: 0,
         )
         ..beansStatus = _fixtureBeansStatus
+        ..dueCount = 0
         ..lessonContent = const LessonContent(
           lessonId: 'lesson-a',
           skillId: 'skill-a',
@@ -533,4 +546,147 @@ void main() {
       expect(find.byIcon(Icons.download_outlined), findsNWidgets(2));
     },
   );
+
+  group('Practice entry card (008-srs-and-practice, bolt 020)', () {
+    final practiceTree = SkillTreeResponse(
+      unitTitle: 'Unit 1',
+      unitSubtitle: 'sub',
+      nodes: const [
+        SkillTreeNode(
+          id: 'skill-a',
+          lessonId: 'lesson-a',
+          title: 'Skill A',
+          subtitle: 'a',
+          state: SkillNodeState.active,
+        ),
+      ],
+      streakCount: 1,
+      beans: 5,
+      beansMax: 5,
+      totalXp: 0,
+    );
+
+    final dueItem = DueItem(
+      vocabItemId: 'vocab-1',
+      word: 'ቡና',
+      translation: 'coffee',
+      exercise: const MultipleChoiceExercise(
+        id: 'due-ex-1',
+        prompt: 'ቡና',
+        promptTranslation: 'Which word means this?',
+        options: ['coffee', 'tea'],
+        correctOptionIndex: 0,
+      ),
+      boxLevel: 1,
+      nextReviewAt: DateTime(2026, 1, 1),
+    );
+
+    testWidgets('shows the due count, disabled when there is nothing due', (
+      tester,
+    ) async {
+      final api = ControllableLessonApi()
+        ..skillTree = practiceTree
+        ..beansStatus = _fixtureBeansStatus
+        ..dueCount = 0;
+
+      await tester.pumpWidget(
+        _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("You're all caught up -- nothing due today"), findsOneWidget);
+
+      await tester.tap(find.text('Practice'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      // Disabled -- no navigation happened, still on the dashboard.
+      expect(find.text('Skill A'), findsOneWidget);
+      expect(api.completePracticeSessionCalls, isEmpty);
+    });
+
+    testWidgets(
+      'disabled (not hidden) when offline, even with due items',
+      (tester) async {
+        final api = ControllableLessonApi()
+          ..skillTree = practiceTree
+          ..beansStatus = _fixtureBeansStatus
+          ..dueCount = 3;
+
+        await tester.pumpWidget(
+          _wrapped(
+            lessonApi: api,
+            audioPlayer: FakeLessonAudioPlayer(),
+            connectivityMonitor: FakeConnectivityMonitor(online: false),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Offline -- Practice needs a connection'), findsOneWidget);
+
+        await tester.tap(find.text('Practice'), warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Skill A'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'tapping it with due items launches a practice session, and completing it refreshes the due count',
+      (tester) async {
+        final api = ControllableLessonApi()
+          ..skillTree = practiceTree
+          ..beansStatus = _fixtureBeansStatus
+          ..dueCount = 1
+          ..dueItems = [dueItem]
+          ..practiceCompletionResult = const PracticeCompletionResult(
+            xpEarned: 5,
+            amoleEarned: 10,
+            correctCount: 1,
+            totalCount: 1,
+            accuracyPercent: 100,
+          );
+
+        await tester.pumpWidget(
+          _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('1 word to review today'), findsOneWidget);
+
+        await tester.tap(find.text('Practice'));
+        await tester.pumpAndSettle();
+
+        // The due item's exercise renders via the same exercise-engine
+        // widgets a regular lesson uses.
+        expect(find.text('ቡና'), findsOneWidget);
+
+        await tester.tap(find.text('coffee'));
+        await tester.pump();
+        await tester.tap(find.text('Check'));
+        await tester.pump();
+
+        // Simulate the backend no longer considering this item due --
+        // set *before* the lesson-finishing tap below, since finishing
+        // the (single-exercise) session immediately replaces this route
+        // with `LessonCompleteScreen`, which is what resolves the
+        // dashboard's awaited `Navigator.push` and fires its reload --
+        // not the later pop back to the dashboard.
+        api.dueCount = 0;
+        await tester.tap(find.text('Continue'));
+        await tester.pumpAndSettle();
+
+        expect(api.completePracticeSessionCalls, hasLength(1));
+        expect(
+          api.completePracticeSessionCalls.single.results.single.vocabItemId,
+          'vocab-1',
+        );
+
+        await tester.tap(find.text('Continue'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Skill A'), findsOneWidget);
+        expect(find.text("You're all caught up -- nothing due today"), findsOneWidget);
+      },
+    );
+  });
 }

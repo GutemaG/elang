@@ -23,7 +23,11 @@ from app.domain.lesson.value_objects import (
     BEAN_REGEN_MINUTES,
     BEANS_MAX,
     FREEZE_GRANTED_AT_CROWN_LEVEL,
+    INCORRECT_RESET_INTERVAL,
+    LEITNER_BOX_INTERVALS,
+    MAX_BOX_LEVEL,
     MAX_CROWN_LEVEL,
+    MIN_BOX_LEVEL,
     STREAK_MILESTONE_7_DAYS,
     STREAK_MILESTONE_30_DAYS,
     XP_PER_CORRECT_ANSWER,
@@ -228,6 +232,27 @@ class AmoleAwardPolicy:
                 )
             )
         return awards
+
+
+class LeitnerBoxPolicy:
+    """Pure domain logic -- no repository/DB dependency (bolt
+    `019-srs-tracking-service`, designed pure from the start per the lesson
+    learned in bolt `017`'s Stage-4 correction: domain services in this
+    codebase never hold I/O).
+
+    A vocab item's *first* appearance is not this policy's concern -- there
+    is no "box 0" to transition from, so the application layer creates that
+    row directly at box 1 rather than calling `apply`. This policy only
+    handles the transition for an item the user has already seen before.
+    """
+
+    def apply(
+        self, current_box_level: int, was_correct: bool, now: datetime
+    ) -> tuple[int, datetime]:
+        if was_correct:
+            new_box_level = min(MAX_BOX_LEVEL, current_box_level + 1)
+            return new_box_level, now + LEITNER_BOX_INTERVALS[new_box_level]
+        return MIN_BOX_LEVEL, now + INCORRECT_RESET_INTERVAL
 
 
 @dataclass(frozen=True)

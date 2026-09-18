@@ -24,6 +24,7 @@ import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
+import 'package:elang/shared/models/practice_completion_result.dart';
 
 import 'package:elang/shared/services/lesson_pack_downloader.dart';
 import 'package:elang/shared/services/sync_engine.dart';
@@ -198,6 +199,28 @@ Widget _wrapped(
   );
 }
 
+/// Bolt 020-practice-ui: a practice session has no `beansAtStart`/
+/// `lessonId`/`skillId` to speak of (see `LessonScreen.practice`'s doc
+/// comment) -- these fixture values are never read, only
+/// `practiceVocabItemIdByExerciseId`'s mapping back to each exercise's
+/// vocab item matters for completion reporting.
+Widget _wrappedPractice(
+  ControllableLessonApi api, {
+  required LessonContent content,
+  required Map<String, String> vocabItemIdByExerciseId,
+}) {
+  return MaterialApp(
+    home: LessonScreen.practice(
+      practiceContent: content,
+      practiceVocabItemIdByExerciseId: vocabItemIdByExerciseId,
+      lessonApi: api,
+      audioPlayer: FakeLessonAudioPlayer(),
+      feedbackPlayer: FakeAnswerFeedbackPlayer(),
+      syncEngine: _syncEngineFor(api),
+    ),
+  );
+}
+
 void main() {
   testWidgets(
     'a correct multiple-choice answer shows correct feedback and advances',
@@ -322,6 +345,10 @@ void main() {
 
       expect(api.completeLessonCalls, hasLength(1));
       expect(api.completeLessonCalls.single.correctCount, 2);
+      // Bolt 019, ADR-10: mc-1 was missed once before eventually being
+      // answered correctly -- reported even though the lesson finished
+      // with a perfect final answer on every exercise.
+      expect(api.completeLessonCalls.single.missedExerciseIds, ['mc-1']);
     },
   );
 
@@ -1041,4 +1068,108 @@ void main() {
       engine.dispose();
     },
   );
+
+  group('practice mode (008-srs-and-practice, bolt 020)', () {
+    testWidgets(
+      'hides the beans indicator entirely, and a wrong answer neither decrements beans nor interrupts',
+      (tester) async {
+        final api = ControllableLessonApi()
+          ..practiceCompletionResult = const PracticeCompletionResult(
+            xpEarned: 10,
+            amoleEarned: 10,
+            correctCount: 1,
+            totalCount: 2,
+            accuracyPercent: 50,
+          );
+        await tester.pumpWidget(
+          _wrappedPractice(
+            api,
+            content: _multipleChoice,
+            vocabItemIdByExerciseId: const {'mc-1': 'vocab-1', 'mc-2': 'vocab-2'},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // No beans heart icon anywhere on the practice screen.
+        expect(find.byIcon(Icons.favorite), findsNothing);
+
+        // Answer the first exercise incorrectly -- in a regular lesson
+        // this decrements beans and, at 0, shows the out-of-beans modal;
+        // in practice mode it should just show feedback and let the user
+        // continue.
+        await tester.tap(find.text('le'));
+        await tester.pump();
+        await tester.tap(find.text('Check'));
+        await tester.pump();
+
+        expect(find.byIcon(Icons.cancel), findsOneWidget);
+        expect(find.text('Refill Beans'), findsNothing);
+
+        await tester.tap(find.text('Continue'));
+        await tester.pump();
+
+        expect(find.text('ለ'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'finishing calls completePracticeSession (not completeLesson) with correctness per vocab item',
+      (tester) async {
+        final api = ControllableLessonApi()
+          ..practiceCompletionResult = const PracticeCompletionResult(
+            xpEarned: 10,
+            amoleEarned: 10,
+            correctCount: 1,
+            totalCount: 2,
+            accuracyPercent: 50,
+          );
+        await tester.pumpWidget(
+          _wrappedPractice(
+            api,
+            content: _multipleChoice,
+            vocabItemIdByExerciseId: const {'mc-1': 'vocab-1', 'mc-2': 'vocab-2'},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // mc-1 (prompt 'ሀ') answered wrong ('le' instead of correct 'ha') --
+        // requeued to the end, same retry mechanics as a regular lesson.
+        await tester.tap(find.text('le'));
+        await tester.pump();
+        await tester.tap(find.text('Check'));
+        await tester.pump();
+        await tester.tap(find.text('Continue'));
+        await tester.pump();
+
+        // mc-2 (prompt 'ለ') answered correctly.
+        await tester.tap(find.text('le'));
+        await tester.pump();
+        await tester.tap(find.text('Check'));
+        await tester.pump();
+        await tester.tap(find.text('Continue'));
+        await tester.pump();
+
+        // "Let's review your mistakes" interstitial, then the requeued
+        // mc-1 reappears -- answer it correctly this time.
+        expect(find.text("Let's review your mistakes"), findsOneWidget);
+        await tester.tap(find.text('Continue'));
+        await tester.pump();
+        await tester.tap(find.text('ha'));
+        await tester.pump();
+        await tester.tap(find.text('Check'));
+        await tester.pump();
+        await tester.tap(find.text('Continue'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Lesson Complete!'), findsOneWidget);
+        expect(api.completeLessonCalls, isEmpty);
+        expect(api.completePracticeSessionCalls, hasLength(1));
+        final call = api.completePracticeSessionCalls.single;
+        expect(
+          call.results.map((r) => (r.vocabItemId, r.correct)),
+          containsAll(const [('vocab-1', false), ('vocab-2', true)]),
+        );
+      },
+    );
+  });
 }

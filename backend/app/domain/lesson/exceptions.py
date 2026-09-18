@@ -60,6 +60,18 @@ class InsufficientAmoleError(LessonDomainError):
     error_code = "insufficient_amole"
 
 
+class InvalidPracticeCompletionError(LessonDomainError):
+    """A Practice-session completion request is malformed: no results,
+    or a `correct_count` implied by the results that doesn't match
+    `total_count` -- rejected before any state change (bolt
+    `020-practice-ui`), same category as `InvalidCompletionError` but kept
+    distinct since Practice completions are a different domain concept
+    from a lesson completion (no `lesson_id`, no Beans).
+    """
+
+    error_code = "invalid_practice_completion"
+
+
 class InvalidCompletionTimestampError(LessonDomainError):
     """A completion's `client_completed_at` is implausible: more than a
     small clock-skew allowance in the future, or earlier than the

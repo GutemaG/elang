@@ -118,6 +118,7 @@ class SyncEngine extends ChangeNotifier {
             timeSpent: entry.timeSpent,
             beansRemainingAtEnd: entry.beansRemainingAtEnd,
             clientCompletedAt: entry.clientCompletedAt,
+            missedExerciseIds: entry.missedExerciseIds,
           );
           await _queueStore.remove(entry.attemptId);
           succeededAny = true;

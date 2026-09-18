@@ -8,10 +8,24 @@
 // `LessonController` always runs for real against this double.
 
 import 'package:elang/shared/models/beans_status.dart';
+import 'package:elang/shared/models/due_item.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
+import 'package:elang/shared/models/practice_completion_result.dart';
 import 'package:elang/shared/models/skill_tree.dart';
 import 'package:elang/shared/services/lesson_api.dart';
+
+class CompletePracticeSessionCall {
+  CompletePracticeSessionCall({
+    required this.sessionId,
+    required this.results,
+    required this.timeSpent,
+  });
+
+  final String sessionId;
+  final List<PracticeResult> results;
+  final Duration timeSpent;
+}
 
 class CompleteLessonCall {
   CompleteLessonCall({
@@ -22,6 +36,7 @@ class CompleteLessonCall {
     required this.timeSpent,
     required this.beansRemainingAtEnd,
     required this.clientCompletedAt,
+    required this.missedExerciseIds,
   });
 
   final String lessonId;
@@ -31,6 +46,7 @@ class CompleteLessonCall {
   final Duration timeSpent;
   final int beansRemainingAtEnd;
   final DateTime clientCompletedAt;
+  final List<String> missedExerciseIds;
 }
 
 class ControllableLessonApi implements LessonApi {
@@ -69,6 +85,12 @@ class ControllableLessonApi implements LessonApi {
   final List<CompleteLessonCall> completeLessonCalls = [];
   int refillCallCount = 0;
 
+  int? dueCount;
+  List<DueItem>? dueItems;
+  PracticeCompletionResult? practiceCompletionResult;
+  Object? completePracticeSessionError;
+  final List<CompletePracticeSessionCall> completePracticeSessionCalls = [];
+
   @override
   Future<SkillTreeResponse> getSkillTree() async {
     if (skillTreeError != null) throw skillTreeError!;
@@ -90,6 +112,7 @@ class ControllableLessonApi implements LessonApi {
     required Duration timeSpent,
     required int beansRemainingAtEnd,
     required DateTime clientCompletedAt,
+    List<String> missedExerciseIds = const [],
   }) async {
     completeLessonCalls.add(
       CompleteLessonCall(
@@ -100,6 +123,7 @@ class ControllableLessonApi implements LessonApi {
         timeSpent: timeSpent,
         beansRemainingAtEnd: beansRemainingAtEnd,
         clientCompletedAt: clientCompletedAt,
+        missedExerciseIds: missedExerciseIds,
       ),
     );
     if (completeLessonGate != null) await completeLessonGate;
@@ -117,5 +141,24 @@ class ControllableLessonApi implements LessonApi {
   Future<RefillResult> refillBeansWithAmole() async {
     refillCallCount++;
     return refillResult!;
+  }
+
+  @override
+  Future<int> getDueCount() async => dueCount!;
+
+  @override
+  Future<List<DueItem>> getDueItems({int limit = 20}) async => dueItems!;
+
+  @override
+  Future<PracticeCompletionResult> completePracticeSession({
+    required String sessionId,
+    required List<PracticeResult> results,
+    required Duration timeSpent,
+  }) async {
+    completePracticeSessionCalls.add(
+      CompletePracticeSessionCall(sessionId: sessionId, results: results, timeSpent: timeSpent),
+    );
+    if (completePracticeSessionError != null) throw completePracticeSessionError!;
+    return practiceCompletionResult!;
   }
 }

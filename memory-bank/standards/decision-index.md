@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-17T18:20:00Z
-total_decisions: 9
+last_updated: 2026-09-17T21:45:00Z
+total_decisions: 10
 ---
 
 # Decision Index
@@ -17,6 +17,14 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-10: Widen `complete_lesson`'s request contract to carry missed-exercise data, amending ADR-5's server-bounded-ledger boundary
+- **Status**: accepted
+- **Date**: 2026-09-17
+- **Bolt**: 019-srs-tracking-service (001-srs-tracking-service)
+- **Path**: `bolts/019-srs-tracking-service/adr-10-widen-completion-contract-for-vocab-tracking.md`
+- **Summary**: `CompleteLessonRequest` only ever carried aggregate `correct_count`/`total_count` (ADR-5), which can't support per-vocab-item box-up/box-reset on lesson completion. Decided: add `missed_exercise_ids: list[str] = []`, populated from `LessonController`'s already-tracked (but previously unexposed) retry-queue state — touches already-shipped `002-core-lesson-loop-ui` code, chosen over keeping regular lessons box-up-only and reserving resets for Practice.
+- **Read when**: Modifying `CompleteLessonRequest`/`complete_lesson`, `LessonController`'s retry-queue logic, or any future feature needing per-exercise (not just aggregate) signal from a lesson completion.
 
 ### ADR-9: Bean-refill retry double-spend gap is knowingly preserved, not fixed, by this bolt
 - **Status**: accepted

@@ -2,11 +2,11 @@
 id: 002-practice-session-assembly-and-completion
 unit: 002-practice-ui
 intent: 008-srs-and-practice
-status: ready
+status: complete
 priority: must
 created: '2026-09-17T17:05:00Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 002-practice-session-assembly-and-completion

@@ -3,8 +3,8 @@
 ## Overview
 - **Total stories**: 46
 - **Generated**: 46
-- **Completed**: 36
-- **Last updated**: 2026-09-17
+- **Completed**: 42
+- **Last updated**: 2026-09-18
 
 ---
 
@@ -111,22 +111,22 @@
 
 #### Unit: 001-srs-tracking-service
 
-- [x] **001-vocab-item-content-model** (srs-tracking-service): New vocab_items content model + exercises FK - Must - ✅ GENERATED
-- [x] **002-vocab-progress-retrofit** (srs-tracking-service): Track per-user vocab progress from complete_lesson - Must - ✅ GENERATED
-- [x] **003-leitner-box-algorithm** (srs-tracking-service): 5-box spaced-repetition transition math - Must - ✅ GENERATED
-- [x] **004-due-items-and-count-endpoints** (srs-tracking-service): Due-items + due-count endpoints - Must - ✅ GENERATED
+- [x] **001-vocab-item-content-model** (srs-tracking-service): New vocab_items content model + exercises FK - Must - ✅ COMPLETED (bolt 019-srs-tracking-service)
+- [x] **002-vocab-progress-retrofit** (srs-tracking-service): Track per-user vocab progress from complete_lesson - Must - ✅ COMPLETED (bolt 019-srs-tracking-service)
+- [x] **003-leitner-box-algorithm** (srs-tracking-service): 5-box spaced-repetition transition math - Must - ✅ COMPLETED (bolt 019-srs-tracking-service)
+- [x] **004-due-items-and-count-endpoints** (srs-tracking-service): Due-items + due-count endpoints - Must - ✅ COMPLETED (bolt 019-srs-tracking-service)
 
 #### Unit: 002-practice-ui
 
-- [x] **001-practice-entry-point-and-due-count** (practice-ui): Due-count entry point, disabled (not hidden) offline - Must - ✅ GENERATED
-- [x] **002-practice-session-assembly-and-completion** (practice-ui): Assemble + complete a practice session via existing exercise widgets - Must - ✅ GENERATED
+- [x] **001-practice-entry-point-and-due-count** (practice-ui): Due-count entry point, disabled (not hidden) offline - Must - ✅ COMPLETED (bolt 020-practice-ui)
+- [x] **002-practice-session-assembly-and-completion** (practice-ui): Assemble + complete a practice session via existing exercise widgets - Must - ✅ COMPLETED (bolt 020-practice-ui)
 
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 10
+- **Generated**: 4
 - **In Progress**: 0
-- **Completed**: 36
+- **Completed**: 42
 - **Retired**: 1

@@ -39,7 +39,7 @@ class SqflitePendingSyncQueueStore implements PendingSyncQueueStore {
     final documentsDir = await getApplicationDocumentsDirectory();
     final db = await openDatabase(
       '${documentsDir.path}/$_dbFileName',
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE $_table ('
@@ -50,9 +50,23 @@ class SqflitePendingSyncQueueStore implements PendingSyncQueueStore {
           'total_count INTEGER NOT NULL, '
           'time_spent_ms INTEGER NOT NULL, '
           'beans_remaining_at_end INTEGER NOT NULL, '
-          'client_completed_at TEXT NOT NULL'
+          'client_completed_at TEXT NOT NULL, '
+          'missed_exercise_ids TEXT NOT NULL DEFAULT \'\''
           ')',
         );
+      },
+      // Bolt 019 (008-srs-and-practice, ADR-10): a queue entry created
+      // before this column existed has no missed-exercise data to backfill
+      // -- the default empty string (parsed as "no misses") is the correct
+      // fallback, not a data-loss bug, since box-up-only is what those
+      // already-queued completions' vocab items would have gotten anyway
+      // under the pre-ADR-10 contract.
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            "ALTER TABLE $_table ADD COLUMN missed_exercise_ids TEXT NOT NULL DEFAULT ''",
+          );
+        }
       },
     );
     _db = db;
@@ -70,6 +84,7 @@ class SqflitePendingSyncQueueStore implements PendingSyncQueueStore {
       'time_spent_ms': entry.timeSpent.inMilliseconds,
       'beans_remaining_at_end': entry.beansRemainingAtEnd,
       'client_completed_at': entry.clientCompletedAt.toUtc().toIso8601String(),
+      'missed_exercise_ids': entry.missedExerciseIds.join(','),
     }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
@@ -94,6 +109,7 @@ class SqflitePendingSyncQueueStore implements PendingSyncQueueStore {
   }
 
   PendingSyncEntry _entryFromRow(Map<String, Object?> row) {
+    final rawMissedIds = row['missed_exercise_ids'] as String? ?? '';
     return PendingSyncEntry(
       attemptId: row['attempt_id'] as String,
       lessonId: row['lesson_id'] as String,
@@ -102,6 +118,7 @@ class SqflitePendingSyncQueueStore implements PendingSyncQueueStore {
       timeSpent: Duration(milliseconds: row['time_spent_ms'] as int),
       beansRemainingAtEnd: row['beans_remaining_at_end'] as int,
       clientCompletedAt: DateTime.parse(row['client_completed_at'] as String),
+      missedExerciseIds: rawMissedIds.isEmpty ? const [] : rawMissedIds.split(','),
     );
   }
 }

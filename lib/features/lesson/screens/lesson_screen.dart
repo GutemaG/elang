@@ -44,15 +44,40 @@ class LessonScreen extends StatefulWidget {
     required this.connectivityMonitor,
     required this.lessonPackStore,
     required this.syncEngine,
-  });
+  }) : practiceContent = null,
+       practiceVocabItemIdByExerciseId = null;
+
+  /// Bolt 020 (008-srs-and-practice): launches a Practice session instead
+  /// of a regular lesson. [practiceContent] is pre-assembled from due
+  /// items (no `startLesson` fetch-by-id) and [practiceVocabItemIdByExerciseId]
+  /// resolves each of its exercises back to the vocab item it tests, for
+  /// completion reporting. Beans/offline-pack machinery is bypassed
+  /// entirely -- Practice is online-only (FR-5) and has no mistake-
+  /// tolerance gating -- so [connectivityMonitor]/[lessonPackStore] are
+  /// not needed here.
+  const LessonScreen.practice({
+    super.key,
+    required this.practiceContent,
+    required this.practiceVocabItemIdByExerciseId,
+    required this.lessonApi,
+    required this.audioPlayer,
+    required this.feedbackPlayer,
+    required this.syncEngine,
+  }) : lessonId = '',
+       connectivityMonitor = null,
+       lessonPackStore = null;
 
   final String lessonId;
   final LessonApi lessonApi;
   final LessonAudioPlayer audioPlayer;
   final AnswerFeedbackPlayer feedbackPlayer;
-  final ConnectivityMonitor connectivityMonitor;
-  final LessonPackStore lessonPackStore;
+  final ConnectivityMonitor? connectivityMonitor;
+  final LessonPackStore? lessonPackStore;
   final SyncEngine syncEngine;
+  final LessonContent? practiceContent;
+  final Map<String, String>? practiceVocabItemIdByExerciseId;
+
+  bool get isPractice => practiceContent != null;
 
   @override
   State<LessonScreen> createState() => _LessonScreenState();
@@ -79,6 +104,8 @@ class _LessonScreenState extends State<LessonScreen> {
         syncEngine: widget.syncEngine,
         content: content,
         startedOffline: _startedOffline,
+        isPractice: widget.isPractice,
+        vocabItemIdByExerciseId: widget.practiceVocabItemIdByExerciseId,
       );
       controller.addListener(_onControllerChanged);
       _controller = controller;
@@ -86,18 +113,26 @@ class _LessonScreenState extends State<LessonScreen> {
     });
   }
 
-  /// Online -> unchanged (fetches from `001-lesson-service`). Offline ->
-  /// falls back to a downloaded pack (009-offline-caching-and-sync-ui,
-  /// story 002); throws [LessonNotDownloadedOfflineException] if this
-  /// lesson was never downloaded, so the screen can show a distinct
-  /// "download this lesson first" state instead of a generic error.
+  /// Practice -> the pre-assembled [LessonScreen.practiceContent], no
+  /// fetch at all (never offline, per FR-5). Regular lesson, online ->
+  /// unchanged (fetches from `001-lesson-service`). Regular lesson,
+  /// offline -> falls back to a downloaded pack
+  /// (009-offline-caching-and-sync-ui, story 002); throws
+  /// [LessonNotDownloadedOfflineException] if this lesson was never
+  /// downloaded, so the screen can show a distinct "download this lesson
+  /// first" state instead of a generic error.
   Future<LessonContent> _loadLessonContent() async {
-    final online = await widget.connectivityMonitor.isOnline();
+    final practiceContent = widget.practiceContent;
+    if (practiceContent != null) {
+      _startedOffline = false;
+      return practiceContent;
+    }
+    final online = await widget.connectivityMonitor!.isOnline();
     _startedOffline = !online;
     if (online) {
       return widget.lessonApi.startLesson(widget.lessonId);
     }
-    final cached = await widget.lessonPackStore.load(widget.lessonId);
+    final cached = await widget.lessonPackStore!.load(widget.lessonId);
     if (cached == null) {
       throw const LessonNotDownloadedOfflineException();
     }
@@ -469,22 +504,24 @@ class _ProgressHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: AppSpacing.spaceSm),
-        Semantics(
-          label: '${controller.beansRemaining} beans remaining',
-          child: Row(
-            children: [
-              const Icon(Icons.favorite, color: AppColors.tertiaryBrand, size: 18),
-              const SizedBox(width: 2),
-              Text(
-                '${controller.beansRemaining}',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.tertiaryBrand,
+        if (!controller.isPractice) ...[
+          const SizedBox(width: AppSpacing.spaceSm),
+          Semantics(
+            label: '${controller.beansRemaining} beans remaining',
+            child: Row(
+              children: [
+                const Icon(Icons.favorite, color: AppColors.tertiaryBrand, size: 18),
+                const SizedBox(width: 2),
+                Text(
+                  '${controller.beansRemaining}',
+                  style: AppTypography.labelMd.copyWith(
+                    color: AppColors.tertiaryBrand,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

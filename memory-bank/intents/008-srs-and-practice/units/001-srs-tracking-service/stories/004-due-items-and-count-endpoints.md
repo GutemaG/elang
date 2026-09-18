@@ -2,11 +2,11 @@
 id: 004-due-items-and-count-endpoints
 unit: 001-srs-tracking-service
 intent: 008-srs-and-practice
-status: ready
+status: complete
 priority: must
 created: '2026-09-17T17:02:00Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 004-due-items-and-count-endpoints

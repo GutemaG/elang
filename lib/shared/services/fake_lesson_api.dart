@@ -1,7 +1,9 @@
 import '../models/beans_status.dart';
+import '../models/due_item.dart';
 import '../models/exercise.dart';
 import '../models/lesson_completion_result.dart';
 import '../models/lesson_content.dart';
+import '../models/practice_completion_result.dart';
 import '../models/skill_tree.dart';
 import 'lesson_api.dart';
 
@@ -230,6 +232,7 @@ class FakeLessonApi implements LessonApi {
     required Duration timeSpent,
     required int beansRemainingAtEnd,
     required DateTime clientCompletedAt,
+    List<String> missedExerciseIds = const [],
   }) async {
     await Future<void>.delayed(latency);
 
@@ -350,5 +353,39 @@ class FakeLessonApi implements LessonApi {
     _amoleBalance -= _refillCostAmole;
     _beans = _beansMax;
     return RefillSuccess(newBeans: _beans, newAmoleBalance: _amoleBalance);
+  }
+
+  // Bolt 020-practice-ui: this fake predates Practice and has no vocab-item
+  // content to draw from -- no seeded content ever has anything due, same
+  // "nothing modeled" honesty as a fresh account would see for real.
+  @override
+  Future<int> getDueCount() async {
+    await Future<void>.delayed(latency);
+    return 0;
+  }
+
+  @override
+  Future<List<DueItem>> getDueItems({int limit = 20}) async {
+    await Future<void>.delayed(latency);
+    return const [];
+  }
+
+  @override
+  Future<PracticeCompletionResult> completePracticeSession({
+    required String sessionId,
+    required List<PracticeResult> results,
+    required Duration timeSpent,
+  }) async {
+    await Future<void>.delayed(latency);
+    final correctCount = results.where((r) => r.correct).length;
+    return PracticeCompletionResult(
+      xpEarned: correctCount * _xpPerCorrectAnswer,
+      amoleEarned: 0,
+      correctCount: correctCount,
+      totalCount: results.length,
+      accuracyPercent: results.isEmpty
+          ? 0
+          : ((correctCount / results.length) * 100).round(),
+    );
   }
 }

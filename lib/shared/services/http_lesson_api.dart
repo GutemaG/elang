@@ -4,9 +4,11 @@ import 'package:http/http.dart' as http;
 
 import '../config/auth_config.dart';
 import '../models/beans_status.dart';
+import '../models/due_item.dart';
 import '../models/exercise.dart';
 import '../models/lesson_completion_result.dart';
 import '../models/lesson_content.dart';
+import '../models/practice_completion_result.dart';
 import '../models/skill_tree.dart';
 import 'lesson_api.dart';
 import 'lesson_api_exception.dart';
@@ -269,6 +271,7 @@ class HttpLessonApi implements LessonApi {
     required Duration timeSpent,
     required int beansRemainingAtEnd,
     required DateTime clientCompletedAt,
+    List<String> missedExerciseIds = const [],
   }) async {
     final json = _decodeOrThrow(
       await _post(
@@ -279,6 +282,7 @@ class HttpLessonApi implements LessonApi {
           'total_count': totalCount,
           'time_spent_seconds': timeSpent.inMilliseconds / 1000,
           'client_completed_at': clientCompletedAt.toUtc().toIso8601String(),
+          'missed_exercise_ids': missedExerciseIds,
         },
       ),
     );
@@ -326,6 +330,57 @@ class HttpLessonApi implements LessonApi {
     return RefillSuccess(
       newBeans: json['beans'] as int,
       newAmoleBalance: json['amole_balance'] as int,
+    );
+  }
+
+  @override
+  Future<int> getDueCount() async {
+    final json = _decodeOrThrow(await _get('/api/v1/practice/due-count'));
+    return json['due_count'] as int;
+  }
+
+  @override
+  Future<List<DueItem>> getDueItems({int limit = 20}) async {
+    final json = _decodeOrThrow(await _get('/api/v1/practice/due-items?limit=$limit'));
+    final items = (json['items'] as List).cast<Map<String, dynamic>>();
+    return items.map(_toDueItem).toList();
+  }
+
+  DueItem _toDueItem(Map<String, dynamic> json) {
+    return DueItem(
+      vocabItemId: json['vocab_item_id'] as String,
+      word: json['word'] as String,
+      translation: json['translation'] as String,
+      exercise: _toExercise(json['exercise'] as Map<String, dynamic>),
+      boxLevel: json['box_level'] as int,
+      nextReviewAt: DateTime.parse(json['next_review_at'] as String),
+    );
+  }
+
+  @override
+  Future<PracticeCompletionResult> completePracticeSession({
+    required String sessionId,
+    required List<PracticeResult> results,
+    required Duration timeSpent,
+  }) async {
+    final json = _decodeOrThrow(
+      await _post(
+        '/api/v1/practice/complete',
+        body: {
+          'session_id': sessionId,
+          'results': results
+              .map((r) => {'vocab_item_id': r.vocabItemId, 'correct': r.correct})
+              .toList(),
+          'time_spent_seconds': timeSpent.inMilliseconds / 1000,
+        },
+      ),
+    );
+    return PracticeCompletionResult(
+      xpEarned: json['xp_earned'] as int,
+      amoleEarned: json['amole_earned'] as int,
+      correctCount: json['correct_count'] as int,
+      totalCount: json['total_count'] as int,
+      accuracyPercent: json['accuracy_percent'] as int,
     );
   }
 }

@@ -7,26 +7,36 @@ timezone-round-trip normalization other repositories already need), and
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.domain.lesson.entities import (
     AmoleTransaction,
     LessonAttempt,
+    PracticeAttempt,
     UserBeans,
     UserSkillProgress,
     UserStreak,
+    UserVocabProgress,
 )
 from app.domain.lesson.value_objects import AmoleSource, LessonCompletionOutcome
-from app.infrastructure.db.lesson_models import LessonModel, SkillModel
+from app.infrastructure.db.lesson_models import (
+    ExerciseModel,
+    LessonModel,
+    SkillModel,
+    VocabItemModel,
+)
 from app.infrastructure.db.lesson_repositories import (
     SqlAlchemyAmoleTransactionRepository,
     SqlAlchemyLessonAttemptRepository,
     SqlAlchemyLessonRepository,
+    SqlAlchemyPracticeAttemptRepository,
     SqlAlchemyUserBeansRepository,
     SqlAlchemyUserSkillProgressRepository,
     SqlAlchemyUserStreakRepository,
+    SqlAlchemyUserVocabProgressRepository,
+    SqlAlchemyVocabItemRepository,
 )
 from app.infrastructure.db.models import UserModel
 
@@ -42,6 +52,10 @@ async def _make_user(session: AsyncSession, user_id: str = "u1") -> None:
         )
     )
     await session.commit()
+
+
+def _vocab_item(id_: str, word: str, translation: str) -> VocabItemModel:
+    return VocabItemModel(id=id_, word=word, translation=translation)
 
 
 def _outcome(**overrides) -> LessonCompletionOutcome:
@@ -371,6 +385,41 @@ class TestSqlAlchemyLessonAttemptRepository:
         assert await repo.sum_xp_by_user("no-such-user") == 0
 
 
+class TestSqlAlchemyPracticeAttemptRepository:
+    """Bolt 020-practice-ui."""
+
+    async def test_add_then_get_round_trips_all_fields(self, db_session: AsyncSession) -> None:
+        await _make_user(db_session)
+        repo = SqlAlchemyPracticeAttemptRepository(db_session)
+
+        await repo.add(
+            PracticeAttempt(
+                id="session-1",
+                user_id="u1",
+                correct_count=3,
+                total_count=4,
+                xp_awarded=15,
+                amole_awarded=10,
+                completed_at=datetime(2026, 9, 18, 12, 0, tzinfo=UTC),
+            )
+        )
+        await db_session.commit()
+
+        stored = await repo.get("session-1")
+        assert stored is not None
+        assert stored.correct_count == 3
+        assert stored.total_count == 4
+        assert stored.xp_awarded == 15
+        assert stored.amole_awarded == 10
+        assert stored.completed_at.tzinfo is not None
+
+    async def test_get_returns_none_for_unknown_session_id(
+        self, db_session: AsyncSession
+    ) -> None:
+        repo = SqlAlchemyPracticeAttemptRepository(db_session)
+        assert await repo.get("does-not-exist") is None
+
+
 class TestSqlAlchemyLessonRepositoryListLessonIdsBySkill:
     async def test_returns_every_lesson_id_for_the_skill_only(
         self, db_session: AsyncSession
@@ -427,3 +476,182 @@ class TestSqlAlchemyLessonRepositoryListLessonIdsBySkills:
     ) -> None:
         repo = SqlAlchemyLessonRepository(db_session)
         assert await repo.list_lesson_ids_by_skills([]) == {}
+
+
+class TestSqlAlchemyLessonRepositoryListExercisesByVocabItemIds:
+    """Bolt 019-srs-tracking-service, story 004: resolving due vocab items
+    to a renderable exercise.
+    """
+
+    async def test_resolves_one_exercise_id_per_vocab_item(
+        self, db_session: AsyncSession
+    ) -> None:
+        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(LessonModel(id="l1", skill_id="s1", title="Hello", order_index=1))
+        db_session.add(_vocab_item("v-hello", "ሰላም", "Hello"))
+        db_session.add(
+            ExerciseModel(
+                id="ex-1",
+                lesson_id="l1",
+                order_index=1,
+                type="multiple_choice",
+                prompt="How do you say 'Hello'?",
+                content={"choices": [{"id": "a", "text": "ሰላም"}, {"id": "b", "text": "ደህና"}]},
+                answer_key={"correct_choice_id": "a"},
+                vocab_item_id="v-hello",
+            )
+        )
+        await db_session.commit()
+
+        repo = SqlAlchemyLessonRepository(db_session)
+        resolved = await repo.list_exercises_by_vocab_item_ids(["v-hello", "v-no-such-item"])
+
+        assert list(resolved.keys()) == ["v-hello"]
+        assert resolved["v-hello"].id == "ex-1"
+        assert resolved["v-hello"].vocab_item_id == "v-hello"
+
+    async def test_returns_empty_dict_for_an_empty_id_list(self, db_session: AsyncSession) -> None:
+        repo = SqlAlchemyLessonRepository(db_session)
+        assert await repo.list_exercises_by_vocab_item_ids([]) == {}
+
+
+class TestSqlAlchemyVocabItemRepository:
+    """Bolt 019-srs-tracking-service."""
+
+    async def test_get_by_id_returns_none_when_absent(self, db_session: AsyncSession) -> None:
+        repo = SqlAlchemyVocabItemRepository(db_session)
+        assert await repo.get_by_id("no-such-item") is None
+
+    async def test_get_by_id_returns_the_stored_item(self, db_session: AsyncSession) -> None:
+        db_session.add(_vocab_item("v-hello", "ሰላም", "Hello"))
+        await db_session.commit()
+
+        repo = SqlAlchemyVocabItemRepository(db_session)
+        item = await repo.get_by_id("v-hello")
+
+        assert item is not None
+        assert item.word == "ሰላም"
+        assert item.translation == "Hello"
+
+    async def test_list_by_ids_returns_only_matching_items(self, db_session: AsyncSession) -> None:
+        db_session.add(_vocab_item("v-hello", "ሰላም", "Hello"))
+        db_session.add(_vocab_item("v-goodbye", "ደህና ሁን", "Goodbye"))
+        await db_session.commit()
+
+        repo = SqlAlchemyVocabItemRepository(db_session)
+        items = await repo.list_by_ids(["v-hello", "no-such-item"])
+
+        assert [item.id for item in items] == ["v-hello"]
+
+    async def test_list_by_ids_returns_empty_list_for_empty_input(
+        self, db_session: AsyncSession
+    ) -> None:
+        repo = SqlAlchemyVocabItemRepository(db_session)
+        assert await repo.list_by_ids([]) == []
+
+
+class TestSqlAlchemyUserVocabProgressRepository:
+    """Bolt 019-srs-tracking-service."""
+
+    async def test_upsert_inserts_a_new_row_when_none_exists(
+        self, db_session: AsyncSession
+    ) -> None:
+        await _make_user(db_session)
+        db_session.add(_vocab_item("v-hello", "ሰላም", "Hello"))
+        await db_session.commit()
+
+        repo = SqlAlchemyUserVocabProgressRepository(db_session)
+        now = datetime(2026, 9, 17, 12, 0, tzinfo=UTC)
+        await repo.upsert(
+            UserVocabProgress(
+                user_id="u1",
+                vocab_item_id="v-hello",
+                box_level=1,
+                next_review_at=now,
+                last_seen_at=now,
+            )
+        )
+        await db_session.commit()
+
+        stored = await repo.get("u1", "v-hello")
+        assert stored is not None
+        assert stored.box_level == 1
+        assert stored.next_review_at.tzinfo is not None
+
+    async def test_upsert_updates_rather_than_duplicates(self, db_session: AsyncSession) -> None:
+        await _make_user(db_session)
+        db_session.add(_vocab_item("v-hello", "ሰላም", "Hello"))
+        await db_session.commit()
+        repo = SqlAlchemyUserVocabProgressRepository(db_session)
+        now = datetime(2026, 9, 17, 12, 0, tzinfo=UTC)
+
+        await repo.upsert(
+            UserVocabProgress(
+                user_id="u1", vocab_item_id="v-hello", box_level=1,
+                next_review_at=now, last_seen_at=now,
+            )
+        )
+        await db_session.commit()
+        await repo.upsert(
+            UserVocabProgress(
+                user_id="u1", vocab_item_id="v-hello", box_level=3,
+                next_review_at=now + timedelta(days=7), last_seen_at=now + timedelta(days=7),
+            )
+        )
+        await db_session.commit()
+
+        stored = await repo.get("u1", "v-hello")
+        assert stored.box_level == 3
+
+    async def test_get_returns_none_when_no_row_exists(self, db_session: AsyncSession) -> None:
+        repo = SqlAlchemyUserVocabProgressRepository(db_session)
+        assert await repo.get("u1", "no-such-item") is None
+
+    async def test_list_due_and_count_due_share_the_same_predicate(
+        self, db_session: AsyncSession
+    ) -> None:
+        await _make_user(db_session)
+        db_session.add(_vocab_item("v-hello", "ሰላም", "Hello"))
+        db_session.add(_vocab_item("v-goodbye", "ደህና ሁን", "Goodbye"))
+        await db_session.commit()
+        repo = SqlAlchemyUserVocabProgressRepository(db_session)
+        now = datetime(2026, 9, 17, 12, 0, tzinfo=UTC)
+        await repo.upsert(
+            UserVocabProgress(
+                user_id="u1", vocab_item_id="v-hello", box_level=1,
+                next_review_at=now - timedelta(hours=1), last_seen_at=now - timedelta(days=1),
+            )
+        )
+        await repo.upsert(
+            UserVocabProgress(
+                user_id="u1", vocab_item_id="v-goodbye", box_level=1,
+                next_review_at=now + timedelta(days=3), last_seen_at=now - timedelta(days=1),
+            )
+        )
+        await db_session.commit()
+
+        due_items = await repo.list_due("u1", now, limit=10)
+        due_count = await repo.count_due("u1", now)
+
+        assert [item.vocab_item_id for item in due_items] == ["v-hello"]
+        assert due_count == 1
+
+    async def test_list_due_respects_the_limit(self, db_session: AsyncSession) -> None:
+        await _make_user(db_session)
+        now = datetime(2026, 9, 17, 12, 0, tzinfo=UTC)
+        repo = SqlAlchemyUserVocabProgressRepository(db_session)
+        for i in range(3):
+            vocab_id = f"v-{i}"
+            db_session.add(_vocab_item(vocab_id, f"word{i}", f"trans{i}"))
+            await db_session.commit()
+            await repo.upsert(
+                UserVocabProgress(
+                    user_id="u1", vocab_item_id=vocab_id, box_level=1,
+                    next_review_at=now - timedelta(hours=i), last_seen_at=now,
+                )
+            )
+        await db_session.commit()
+
+        due_items = await repo.list_due("u1", now, limit=2)
+
+        assert len(due_items) == 2

@@ -15,6 +15,7 @@ class PendingSyncEntry {
     required this.timeSpent,
     required this.beansRemainingAtEnd,
     required this.clientCompletedAt,
+    this.missedExerciseIds = const [],
   });
 
   final String attemptId;
@@ -24,4 +25,10 @@ class PendingSyncEntry {
   final Duration timeSpent;
   final int beansRemainingAtEnd;
   final DateTime clientCompletedAt;
+
+  /// Bolt 019 (008-srs-and-practice, ADR-10): threaded through unchanged to
+  /// the replayed `completeLesson` call once connectivity returns, so an
+  /// offline-completed lesson's vocab progress is no less accurate than an
+  /// online one's.
+  final List<String> missedExerciseIds;
 }

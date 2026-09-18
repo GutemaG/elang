@@ -8,44 +8,56 @@ response mapping.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 
 from app.domain.lesson.entities import (
     AmoleTransaction,
+    Exercise,
     Lesson,
     LessonAttempt,
+    PracticeAttempt,
     UserBeans,
     UserSkillProgress,
     UserStreak,
+    UserVocabProgress,
 )
 from app.domain.lesson.exceptions import (
     InsufficientAmoleError,
     InvalidCompletionError,
+    InvalidPracticeCompletionError,
     LessonNotFoundError,
 )
 from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
     LessonAttemptRepository,
     LessonRepository,
+    PracticeAttemptRepository,
     SkillRepository,
     UserBeansRepository,
     UserSkillProgressRepository,
     UserStreakRepository,
+    UserVocabProgressRepository,
+    VocabItemRepository,
 )
 from app.domain.lesson.services import (
     AmoleAwardPolicy,
     BeanLedger,
     CompletionTimestampValidator,
+    LeitnerBoxPolicy,
     LessonAccessPolicy,
     LessonCompletionService,
     SkillTreeEntry,
     SkillTreeProgressionPolicy,
 )
 from app.domain.lesson.value_objects import (
+    AMOLE_PRACTICE_SESSION_AWARD,
     BEANS_MAX,
+    LEITNER_BOX_INTERVALS,
+    MIN_BOX_LEVEL,
     REFILL_COST_AMOLE,
     STARTING_AMOLE_BALANCE,
+    XP_PER_CORRECT_ANSWER,
     AmoleSource,
     LessonCompletionOutcome,
 )
@@ -109,6 +121,38 @@ def _default_progress(user_id: str, skill_id: str) -> UserSkillProgress:
     return UserSkillProgress(
         user_id=user_id, skill_id=skill_id, unlocked=True, crown_level=0, completed_at=None
     )
+
+
+async def _apply_vocab_progress_update(
+    *,
+    user_id: str,
+    vocab_item_id: str,
+    was_correct: bool,
+    now: datetime,
+    vocab_progress_repo: UserVocabProgressRepository,
+) -> None:
+    """Bolt 019/020: the one place `UserVocabProgress` is ever written --
+    shared by `complete_lesson` (per vocab-linked exercise in the lesson)
+    and `complete_practice_session` (per graded result), so the two call
+    sites can't drift apart on first-appearance/box-transition semantics.
+    """
+    existing = await vocab_progress_repo.get(user_id, vocab_item_id)
+    if existing is None:
+        new_progress = UserVocabProgress(
+            user_id=user_id,
+            vocab_item_id=vocab_item_id,
+            box_level=MIN_BOX_LEVEL,
+            next_review_at=now + LEITNER_BOX_INTERVALS[MIN_BOX_LEVEL],
+            last_seen_at=now,
+        )
+    else:
+        new_box_level, next_review_at = LeitnerBoxPolicy().apply(
+            existing.box_level, was_correct, now
+        )
+        new_progress = replace(
+            existing, box_level=new_box_level, next_review_at=next_review_at, last_seen_at=now
+        )
+    await vocab_progress_repo.upsert(new_progress)
 
 
 @dataclass(frozen=True)
@@ -339,7 +383,9 @@ async def complete_lesson(
     streak_repo: UserStreakRepository,
     attempt_repo: LessonAttemptRepository,
     amole_repo: AmoleTransactionRepository,
+    vocab_progress_repo: UserVocabProgressRepository,
     now: datetime,
+    missed_exercise_ids: frozenset[str] = frozenset(),
 ) -> LessonCompletionOutcome:
     """Stories 002/003/004: the account-ledger side of one completed lesson
     attempt. Grading itself already happened client-side (ADR-5) -- this
@@ -363,6 +409,15 @@ async def complete_lesson(
     the completion is attributed to. The idempotency check happens before
     timestamp validation so an already-accepted attempt is never rejected
     on retry, no matter what the validator's bounds are.
+
+    Bolt 019 (`008-srs-and-practice`, ADR-10): also updates
+    `UserVocabProgress` for every vocab-linked exercise in this lesson --
+    first appearance creates a row at box 1; a repeat appearance advances or
+    resets it via `LeitnerBoxPolicy`, using `missed_exercise_ids` (an
+    exercise id is in this set if it was ever answered wrong before
+    eventually being answered correctly, per the client's retry-until-correct
+    design) to decide which. Sits inside this same idempotency boundary, so
+    a replayed offline-sync completion never double-updates vocab progress.
     """
     existing = await attempt_repo.get(attempt_id)
     if existing is not None:
@@ -434,6 +489,17 @@ async def complete_lesson(
             )
         )
 
+    for exercise in lesson.exercises:
+        if exercise.vocab_item_id is None:
+            continue
+        await _apply_vocab_progress_update(
+            user_id=user_id,
+            vocab_item_id=exercise.vocab_item_id,
+            was_correct=exercise.id not in missed_exercise_ids,
+            now=client_completed_at,
+            vocab_progress_repo=vocab_progress_repo,
+        )
+
     await beans_repo.upsert(new_beans)
     await progress_repo.upsert(completion.progress)
     if completion.unlocked_progress is not None:
@@ -453,3 +519,171 @@ async def complete_lesson(
     )
 
     return completion.outcome
+
+
+@dataclass(frozen=True)
+class DueItem:
+    """One due vocab item plus the full exercise that tests it (bolt
+    `019-srs-tracking-service`/`020-practice-ui`, story
+    `004-due-items-and-count-endpoints`). Never persisted -- assembled
+    fresh per request from `UserVocabProgress` + `VocabItem` + the
+    resolved `Exercise`.
+
+    Carries the full `Exercise` (not just its id) since bolt 020 found
+    `GET /lessons/{lesson_id}` can't be used to fetch it separately -- that
+    endpoint's `LessonAccessPolicy` check would 403 a locked skill's
+    lesson, which Practice must not be blocked by.
+    """
+
+    vocab_item_id: str
+    word: str
+    translation: str
+    exercise: Exercise
+    box_level: int
+    next_review_at: datetime
+
+
+DEFAULT_DUE_ITEMS_LIMIT = 20
+
+
+async def get_due_items(
+    user_id: str,
+    vocab_progress_repo: UserVocabProgressRepository,
+    vocab_item_repo: VocabItemRepository,
+    lesson_repo: LessonRepository,
+    now: datetime,
+    limit: int = DEFAULT_DUE_ITEMS_LIMIT,
+) -> list[DueItem]:
+    """Story 004: every vocab item due for `user_id` right now, each
+    resolved to its word/translation and one exercise that tests it, ready
+    for Practice session assembly (bolt 020). A due item whose vocab
+    content or linked exercise has since disappeared (shouldn't happen with
+    real content) is silently omitted rather than raising.
+    """
+    due_rows = await vocab_progress_repo.list_due(user_id, now, limit)
+    if not due_rows:
+        return []
+
+    vocab_item_ids = [row.vocab_item_id for row in due_rows]
+    vocab_items = await vocab_item_repo.list_by_ids(vocab_item_ids)
+    vocab_items_by_id = {item.id: item for item in vocab_items}
+    exercise_by_vocab_item = await lesson_repo.list_exercises_by_vocab_item_ids(vocab_item_ids)
+
+    items: list[DueItem] = []
+    for row in due_rows:
+        vocab_item = vocab_items_by_id.get(row.vocab_item_id)
+        exercise = exercise_by_vocab_item.get(row.vocab_item_id)
+        if vocab_item is None or exercise is None:
+            continue
+        items.append(
+            DueItem(
+                vocab_item_id=row.vocab_item_id,
+                word=vocab_item.word,
+                translation=vocab_item.translation,
+                exercise=exercise,
+                box_level=row.box_level,
+                next_review_at=row.next_review_at,
+            )
+        )
+    return items
+
+
+async def get_due_count(
+    user_id: str, vocab_progress_repo: UserVocabProgressRepository, now: datetime
+) -> int:
+    """Story 004: the Practice entry point's due-count badge. Shares
+    `UserVocabProgressRepository`'s predicate with `get_due_items` (via the
+    repository's own `count_due`/`list_due` implementations), so the two
+    can never disagree.
+    """
+    return await vocab_progress_repo.count_due(user_id, now)
+
+
+@dataclass(frozen=True)
+class PracticeSessionCompletionResult:
+    xp_earned: int
+    amole_earned: int
+    correct_count: int
+    total_count: int
+    accuracy_percent: int
+
+
+async def complete_practice_session(
+    *,
+    user_id: str,
+    session_id: str,
+    results: list[tuple[str, bool]],
+    now: datetime,
+    vocab_progress_repo: UserVocabProgressRepository,
+    amole_repo: AmoleTransactionRepository,
+    practice_attempt_repo: PracticeAttemptRepository,
+) -> PracticeSessionCompletionResult:
+    """Story 002 (bolt `020-practice-ui`): the account-ledger side of one
+    completed Practice session -- `results` is `(vocab_item_id, correct)`
+    per graded item. Idempotent on `session_id`, same convention as
+    `complete_lesson`'s `attempt_id`.
+
+    Deliberately does not touch `UserStreak` or `UserSkillProgress` --
+    Practice is independent of skill-tree/streak progression (user
+    decision, this bolt's Plan stage). `complete_lesson` could not be
+    reused for this at all: a Practice session spans arbitrary lessons/
+    skills (no single `lesson_id`) and must work even for a locked skill's
+    item, which `LessonAccessPolicy` would otherwise block.
+    """
+    existing = await practice_attempt_repo.get(session_id)
+    if existing is not None:
+        total = existing.total_count
+        accuracy = round((existing.correct_count / total) * 100) if total > 0 else 0
+        return PracticeSessionCompletionResult(
+            xp_earned=existing.xp_awarded,
+            amole_earned=existing.amole_awarded,
+            correct_count=existing.correct_count,
+            total_count=existing.total_count,
+            accuracy_percent=accuracy,
+        )
+
+    total_count = len(results)
+    correct_count = sum(1 for _, correct in results if correct)
+    if total_count == 0:
+        raise InvalidPracticeCompletionError("A practice session must grade at least one item")
+
+    for vocab_item_id, correct in results:
+        await _apply_vocab_progress_update(
+            user_id=user_id,
+            vocab_item_id=vocab_item_id,
+            was_correct=correct,
+            now=now,
+            vocab_progress_repo=vocab_progress_repo,
+        )
+
+    xp_awarded = correct_count * XP_PER_CORRECT_ANSWER
+    amole_awarded = AMOLE_PRACTICE_SESSION_AWARD
+    await amole_repo.add_if_new(
+        AmoleTransaction(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            amount=amole_awarded,
+            source=AmoleSource.PRACTICE_SESSION,
+            reference_id=session_id,
+            created_at=now,
+        )
+    )
+    await practice_attempt_repo.add(
+        PracticeAttempt(
+            id=session_id,
+            user_id=user_id,
+            correct_count=correct_count,
+            total_count=total_count,
+            xp_awarded=xp_awarded,
+            amole_awarded=amole_awarded,
+            completed_at=now,
+        )
+    )
+
+    return PracticeSessionCompletionResult(
+        xp_earned=xp_awarded,
+        amole_earned=amole_awarded,
+        correct_count=correct_count,
+        total_count=total_count,
+        accuracy_percent=round((correct_count / total_count) * 100),
+    )

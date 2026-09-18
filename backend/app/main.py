@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.infrastructure.api.error_handlers import register_exception_handlers
 from app.infrastructure.api.lesson_routers import router as lesson_router
+from app.infrastructure.api.practice_routers import router as practice_router
 from app.infrastructure.api.routers import router as auth_router
 from app.infrastructure.api.user_routers import router as user_router
 from app.infrastructure.external.apple_verifier import AppleTokenVerifier
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(lesson_router)
     app.include_router(user_router)
+    app.include_router(practice_router)
 
     @app.get("/health", tags=["ops"])
     async def health() -> dict[str, str]:

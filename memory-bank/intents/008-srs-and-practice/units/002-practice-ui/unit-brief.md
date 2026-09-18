@@ -2,7 +2,7 @@
 unit: 002-practice-ui
 intent: 008-srs-and-practice
 phase: inception
-status: ready
+status: complete
 created: '2026-09-17T16:55:00Z'
 updated: '2026-09-17T16:55:00Z'
 ---

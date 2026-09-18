@@ -108,6 +108,7 @@ class ExerciseModel(Base):
             name="ck_exercises_type",
         ),
         Index("ix_exercises_lesson_id", "lesson_id"),
+        Index("ix_exercises_vocab_item_id", "vocab_item_id"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
@@ -117,6 +118,11 @@ class ExerciseModel(Base):
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     content: Mapped[dict] = mapped_column(JSON, nullable=False)
     answer_key: Mapped[dict] = mapped_column(JSON, nullable=False)
+    # Bolt 019 (008-srs-and-practice): not every exercise tests a specific
+    # vocab item -- nullable, not required.
+    vocab_item_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("vocab_items.id"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )
@@ -196,7 +202,8 @@ class AmoleTransactionModel(Base):
         ),
         CheckConstraint(
             "source IN ('wallet_created', 'migration_backfill', 'lesson_completion', "
-            "'perfect_lesson', 'streak_milestone_7', 'streak_milestone_30', 'bean_refill')",
+            "'perfect_lesson', 'streak_milestone_7', 'streak_milestone_30', 'bean_refill', "
+            "'practice_session')",
             name="ck_amole_transactions_source",
         ),
         Index("ix_amole_transactions_user_id", "user_id"),
@@ -262,6 +269,73 @@ class LessonAttemptModel(Base):
     # completion time" is what a retry must see again, not "what's true
     # now" (which could have drifted, e.g. today's running XP total).
     result: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
+class VocabItemModel(Base):
+    """Backs the `VocabItem` aggregate (bolt `019-srs-tracking-service`).
+    Content only -- no per-user state.
+    """
+
+    __tablename__ = "vocab_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    word: Mapped[str] = mapped_column(String(255), nullable=False)
+    translation: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
+class UserVocabProgressModel(Base):
+    """Backs the `UserVocabProgress` aggregate (bolt
+    `019-srs-tracking-service`). Composite primary key enforces "at most one
+    row per `(user_id, vocab_item_id)`" at the DB layer, same style as
+    `user_skill_progress`'s `UniqueConstraint`.
+    """
+
+    __tablename__ = "user_vocab_progress"
+    __table_args__ = (
+        CheckConstraint(
+            "box_level >= 1 AND box_level <= 5", name="ck_user_vocab_progress_box_level"
+        ),
+        Index("ix_user_vocab_progress_user_next_review", "user_id", "next_review_at"),
+    )
+
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), primary_key=True)
+    vocab_item_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("vocab_items.id"), primary_key=True
+    )
+    box_level: Mapped[int] = mapped_column(Integer, nullable=False)
+    next_review_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class PracticeAttemptModel(Base):
+    """Backs the `PracticeAttempt` aggregate (bolt `020-practice-ui`). `id`
+    is client-supplied (the idempotency key), same convention as
+    `LessonAttemptModel`. No `lesson_id`/`skill_id` -- a Practice session
+    spans arbitrary lessons/skills, so there is nothing single to anchor to.
+    """
+
+    __tablename__ = "practice_attempts"
+    __table_args__ = (
+        CheckConstraint(
+            "correct_count >= 0 AND correct_count <= total_count",
+            name="ck_practice_attempts_correct_le_total",
+        ),
+        Index("ix_practice_attempts_user_completed", "user_id", "completed_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    correct_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    xp_awarded: Mapped[int] = mapped_column(Integer, nullable=False)
+    amole_awarded: Mapped[int] = mapped_column(Integer, nullable=False)
+    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )

@@ -36,7 +36,12 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.db.lesson_models import ExerciseModel, LessonModel, SkillModel
+from app.infrastructure.db.lesson_models import (
+    ExerciseModel,
+    LessonModel,
+    SkillModel,
+    VocabItemModel,
+)
 from app.infrastructure.db.session import get_session_factory
 
 # Fixed namespace for this project's seeded content -- combined with a
@@ -58,6 +63,24 @@ def _audio_url(slug: str) -> str:
 
 def _choice(choice_id: str, text: str) -> dict[str, str]:
     return {"id": choice_id, "text": text}
+
+
+# --- Bolt 019 (008-srs-and-practice): vocab content, seeded alongside the
+# curriculum and linked to the exercise that most directly teaches each
+# word. Not every exercise links to a vocab item (listening/
+# sentence_construction exercises test a phrase, not a single tracked
+# word, per requirements.md's Assumptions) -- only the multiple_choice
+# "how do you say X" exercises below are linked.
+VOCABULARY: list[dict[str, str]] = [
+    {"slug": "vocab:hello", "word": "ሰላም", "translation": "Hello"},
+    {"slug": "vocab:goodbye", "word": "ደህና ሁን", "translation": "Goodbye"},
+    {"slug": "vocab:thank-you", "word": "አመሰግናለሁ", "translation": "Thank you"},
+    {"slug": "vocab:please", "word": "እባክዎ", "translation": "Please"},
+    {"slug": "vocab:coffee", "word": "ቡና", "translation": "Coffee"},
+    {"slug": "vocab:tea", "word": "ሻይ", "translation": "Tea"},
+    {"slug": "vocab:bread", "word": "ዳቦ", "translation": "Bread"},
+    {"slug": "vocab:food", "word": "ምግብ", "translation": "Food"},
+]
 
 
 # --- Curriculum content ------------------------------------------------
@@ -85,6 +108,7 @@ CURRICULUM: list[dict[str, Any]] = [
                         "slug": "exercise:hello-and-goodbye:1",
                         "order_index": 1,
                         "type": "multiple_choice",
+                        "vocab_slug": "vocab:hello",
                         "prompt": "How do you say 'Hello' in Amharic?",
                         "content": {
                             "choices": [
@@ -100,6 +124,7 @@ CURRICULUM: list[dict[str, Any]] = [
                         "slug": "exercise:hello-and-goodbye:2",
                         "order_index": 2,
                         "type": "multiple_choice",
+                        "vocab_slug": "vocab:goodbye",
                         "prompt": "How do you say 'Goodbye' in Amharic?",
                         "content": {
                             "choices": [
@@ -153,6 +178,7 @@ CURRICULUM: list[dict[str, Any]] = [
                         "slug": "exercise:please-and-thank-you:1",
                         "order_index": 1,
                         "type": "multiple_choice",
+                        "vocab_slug": "vocab:thank-you",
                         "prompt": "How do you say 'Thank you'?",
                         "content": {
                             "choices": [
@@ -168,6 +194,7 @@ CURRICULUM: list[dict[str, Any]] = [
                         "slug": "exercise:please-and-thank-you:2",
                         "order_index": 2,
                         "type": "multiple_choice",
+                        "vocab_slug": "vocab:please",
                         "prompt": "How do you say 'Please'?",
                         "content": {
                             "choices": [
@@ -228,6 +255,7 @@ CURRICULUM: list[dict[str, Any]] = [
                         "slug": "exercise:coffee-and-tea:1",
                         "order_index": 1,
                         "type": "multiple_choice",
+                        "vocab_slug": "vocab:coffee",
                         "prompt": "How do you say 'Coffee'?",
                         "content": {
                             "choices": [
@@ -243,6 +271,7 @@ CURRICULUM: list[dict[str, Any]] = [
                         "slug": "exercise:coffee-and-tea:2",
                         "order_index": 2,
                         "type": "multiple_choice",
+                        "vocab_slug": "vocab:tea",
                         "prompt": "How do you say 'Tea'?",
                         "content": {
                             "choices": [
@@ -330,6 +359,7 @@ CURRICULUM: list[dict[str, Any]] = [
                         "slug": "exercise:im-hungry:1",
                         "order_index": 1,
                         "type": "multiple_choice",
+                        "vocab_slug": "vocab:bread",
                         "prompt": "How do you say 'Bread'?",
                         "content": {
                             "choices": [
@@ -345,6 +375,7 @@ CURRICULUM: list[dict[str, Any]] = [
                         "slug": "exercise:im-hungry:2",
                         "order_index": 2,
                         "type": "multiple_choice",
+                        "vocab_slug": "vocab:food",
                         "prompt": "How do you say 'Food'?",
                         "content": {
                             "choices": [
@@ -401,6 +432,15 @@ async def seed(session: AsyncSession) -> None:
     absent, inserted; if present, updated in place. No rows are ever
     deleted here.
     """
+    for vocab_data in VOCABULARY:
+        vocab_id = _content_id(vocab_data["slug"])
+        vocab_item = await session.get(VocabItemModel, vocab_id)
+        if vocab_item is None:
+            vocab_item = VocabItemModel(id=vocab_id)
+            session.add(vocab_item)
+        vocab_item.word = vocab_data["word"]
+        vocab_item.translation = vocab_data["translation"]
+
     for skill_data in CURRICULUM:
         skill_id = _content_id(skill_data["slug"])
         skill = await session.get(SkillModel, skill_id)
@@ -432,6 +472,8 @@ async def seed(session: AsyncSession) -> None:
                 exercise.prompt = exercise_data["prompt"]
                 exercise.content = exercise_data["content"]
                 exercise.answer_key = exercise_data["answer_key"]
+                vocab_slug = exercise_data.get("vocab_slug")
+                exercise.vocab_item_id = _content_id(vocab_slug) if vocab_slug else None
 
     await session.flush()
 

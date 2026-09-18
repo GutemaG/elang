@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/beans_status.dart';
+import '../../../shared/models/lesson_content.dart';
 import '../../../shared/models/skill_tree.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/connectivity_monitor.dart';
@@ -73,10 +74,15 @@ class SkillTreeDashboardScreen extends StatefulWidget {
 /// `LessonScreen`'s out-of-Beans modal) -- so the dashboard combines both
 /// fetches here rather than reusing a single existing one.
 class _DashboardData {
-  const _DashboardData({required this.tree, required this.beansStatus});
+  const _DashboardData({
+    required this.tree,
+    required this.beansStatus,
+    required this.dueCount,
+  });
 
   final SkillTreeResponse tree;
   final BeansStatus beansStatus;
+  final int dueCount;
 }
 
 class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
@@ -99,10 +105,12 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     final results = await Future.wait([
       widget.lessonApi.getSkillTree(),
       widget.lessonApi.getBeansStatus(),
+      widget.lessonApi.getDueCount(),
     ]);
     return _DashboardData(
       tree: results[0] as SkillTreeResponse,
       beansStatus: results[1] as BeansStatus,
+      dueCount: results[2] as int,
     );
   }
 
@@ -154,6 +162,41 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     _reload();
   }
 
+  /// Assembles a [LessonContent] directly from the fetched due items (no
+  /// `startLesson` fetch-by-id -- there is no single lesson to fetch) and
+  /// launches [LessonScreen.practice]. The synthetic `lessonId`/`skillId`
+  /// and zeroed beans fields are never read in practice mode -- Beans
+  /// consumption is bypassed entirely (see `LessonController.isPractice`).
+  Future<void> _openPractice() async {
+    final dueItems = await widget.lessonApi.getDueItems();
+    if (!mounted) return;
+    final content = LessonContent(
+      lessonId: '',
+      skillId: '',
+      title: 'Practice',
+      exercises: dueItems.map((item) => item.exercise).toList(),
+      beansAtStart: 0,
+      beansMax: 0,
+    );
+    final vocabItemIdByExerciseId = {
+      for (final item in dueItems) item.exercise.id: item.vocabItemId,
+    };
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => LessonScreen.practice(
+          practiceContent: content,
+          practiceVocabItemIdByExerciseId: vocabItemIdByExerciseId,
+          lessonApi: widget.lessonApi,
+          audioPlayer: widget.audioPlayer,
+          feedbackPlayer: widget.feedbackPlayer,
+          syncEngine: widget.syncEngine,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    _reload();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,6 +213,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
             }
             final tree = snapshot.data!.tree;
             final beansStatus = snapshot.data!.beansStatus;
+            final dueCount = snapshot.data!.dueCount;
             return Column(
               children: [
                 Padding(
@@ -211,7 +255,10 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                   child: _DashboardContent(
                     tree: tree,
                     amoleBalance: beansStatus.amoleBalance,
+                    dueCount: dueCount,
+                    syncEngine: widget.syncEngine,
                     onNodeTap: _onNodeTap,
+                    onPracticeTap: _openPractice,
                     downloader: widget.lessonPackDownloader,
                   ),
                 ),
@@ -228,13 +275,19 @@ class _DashboardContent extends StatelessWidget {
   const _DashboardContent({
     required this.tree,
     required this.amoleBalance,
+    required this.dueCount,
+    required this.syncEngine,
     required this.onNodeTap,
+    required this.onPracticeTap,
     required this.downloader,
   });
 
   final SkillTreeResponse tree;
   final int amoleBalance;
+  final int dueCount;
+  final SyncEngine syncEngine;
   final ValueChanged<SkillTreeNode> onNodeTap;
+  final VoidCallback onPracticeTap;
   final LessonPackDownloader downloader;
 
   @override
@@ -253,6 +306,19 @@ class _DashboardContent extends StatelessWidget {
               beansMax: tree.beansMax,
               totalXp: tree.totalXp,
               amoleBalance: amoleBalance,
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.marginMobile,
+            vertical: AppSpacing.spaceSm,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: _PracticeEntryCard(
+              dueCount: dueCount,
+              syncEngine: syncEngine,
+              onTap: onPracticeTap,
             ),
           ),
         ),
@@ -385,6 +451,92 @@ class _UnitBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Dashboard entry point into a Practice session (008-srs-and-practice,
+/// bolt 020, story 001). Shows the due-count as the entry hook and is
+/// disabled -- never hidden -- both when there is nothing due and when
+/// the device is offline (Practice is online-only per FR-5), reusing
+/// [SyncEngine.isOnline] -- the same reactive connectivity plumbing
+/// [SyncStatusBanner] already listens to on this screen, rather than
+/// polling `ConnectivityMonitor` separately.
+class _PracticeEntryCard extends StatelessWidget {
+  const _PracticeEntryCard({
+    required this.dueCount,
+    required this.syncEngine,
+    required this.onTap,
+  });
+
+  final int dueCount;
+  final SyncEngine syncEngine;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: syncEngine,
+      builder: (context, _) {
+        final offline = !syncEngine.isOnline;
+        final enabled = !offline && dueCount > 0;
+        final subtitle = offline
+            ? 'Offline -- Practice needs a connection'
+            : dueCount > 0
+            ? '$dueCount word${dueCount == 1 ? '' : 's'} to review today'
+            : "You're all caught up -- nothing due today";
+        return Opacity(
+          opacity: enabled ? 1.0 : 0.5,
+          child: Material(
+            color: AppColors.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(AppRadii.base),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadii.base),
+              onTap: enabled ? onTap : null,
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.spaceMd),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadii.base),
+                  border: Border.all(color: AppColors.outlineVariant),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.refresh,
+                      color: AppColors.primaryContainer,
+                    ),
+                    const SizedBox(width: AppSpacing.spaceSm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Practice',
+                            style: AppTypography.headlineSm.copyWith(
+                              color: AppColors.onSurface,
+                            ),
+                          ),
+                          Text(
+                            subtitle,
+                            style: AppTypography.bodySm.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (enabled)
+                      const Icon(
+                        Icons.chevron_right,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
