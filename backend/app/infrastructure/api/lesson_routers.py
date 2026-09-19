@@ -21,6 +21,7 @@ from app.application.lesson_use_cases import (
     get_skill_tree,
     refill_beans,
 )
+from app.domain.course import CourseRepository
 from app.domain.entities import User
 from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
@@ -34,11 +35,13 @@ from app.domain.lesson.repositories import (
     UserVocabProgressRepository,
 )
 from app.domain.lesson.value_objects import BEAN_REGEN_MINUTES
+from app.infrastructure.api.course_schemas import CourseInfoResponse
 from app.infrastructure.api.dependencies import get_current_user
 from app.infrastructure.api.exercise_mapping import to_exercise_response
 from app.infrastructure.api.lesson_dependencies import (
     get_amole_transaction_repository,
     get_category_repository,
+    get_course_repository,
     get_lesson_attempt_repository,
     get_lesson_repository,
     get_skill_repository,
@@ -70,6 +73,16 @@ def _to_skill_tree_response(summary: SkillTreeSummary) -> SkillTreeResponse:
             CategoryResponse(id=c.id, title=c.title, subtitle=c.subtitle, order_index=c.order_index)
             for c in summary.categories
         ],
+        course=(
+            CourseInfoResponse(
+                id=summary.course.id,
+                learning_language=summary.course.learning_language,
+                from_language=summary.course.from_language,
+                title=summary.course.title,
+            )
+            if summary.course is not None
+            else None
+        ),
         skills=[
             SkillTreeEntryResponse(
                 id=entry.skill.id,
@@ -114,6 +127,7 @@ async def get_skill_tree_endpoint(
     attempt_repo: LessonAttemptRepository = Depends(get_lesson_attempt_repository),
     lesson_repo: LessonRepository = Depends(get_lesson_repository),
     category_repo: CategoryRepository = Depends(get_category_repository),
+    course_repo: CourseRepository = Depends(get_course_repository),
 ) -> SkillTreeResponse:
     """Story 001: the caller's skill tree with accurate per-skill
     locked/active/completed state and crown level -- including a brand-new
@@ -131,6 +145,8 @@ async def get_skill_tree_endpoint(
         lesson_repo,
         category_repo,
         datetime.now(UTC),
+        course_repo=course_repo,
+        active_course_id=user.active_course_id,
     )
     return _to_skill_tree_response(summary)
 
@@ -142,6 +158,7 @@ async def get_lesson_content_endpoint(
     lesson_repo: LessonRepository = Depends(get_lesson_repository),
     skill_repo: SkillRepository = Depends(get_skill_repository),
     progress_repo: UserSkillProgressRepository = Depends(get_user_skill_progress_repository),
+    course_repo: CourseRepository = Depends(get_course_repository),
 ) -> LessonContentResponse:
     """Story 001: a lesson's full, ordered exercise list in one request.
     404 if the lesson doesn't exist; 403 if its owning skill is locked for
@@ -149,7 +166,9 @@ async def get_lesson_content_endpoint(
     carries its correct-answer data, so the client can grade instantly and
     locally with zero further network calls.
     """
-    result = await get_lesson_content(user.id, lesson_id, lesson_repo, skill_repo, progress_repo)
+    result = await get_lesson_content(
+        user.id, lesson_id, lesson_repo, skill_repo, progress_repo, course_repo
+    )
     return _to_lesson_content_response(result)
 
 
@@ -200,6 +219,7 @@ async def complete_lesson_endpoint(
     attempt_repo: LessonAttemptRepository = Depends(get_lesson_attempt_repository),
     amole_repo: AmoleTransactionRepository = Depends(get_amole_transaction_repository),
     vocab_progress_repo: UserVocabProgressRepository = Depends(get_user_vocab_progress_repository),
+    course_repo: CourseRepository = Depends(get_course_repository),
 ) -> CompleteLessonResponse:
     """Stories 002/003/004: the account-ledger side of one completed lesson
     attempt (Beans consumption, XP award, skill-progress/crown-level
@@ -227,6 +247,7 @@ async def complete_lesson_endpoint(
         amole_repo=amole_repo,
         vocab_progress_repo=vocab_progress_repo,
         missed_exercise_ids=frozenset(request.missed_exercise_ids),
+        course_repo=course_repo,
         now=datetime.now(UTC),
     )
     return CompleteLessonResponse(

@@ -20,6 +20,7 @@ Two different construction strategies are used deliberately:
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Generator
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.infrastructure.api.course_routers import router as course_router
 from app.infrastructure.api.error_handlers import register_exception_handlers
 from app.infrastructure.api.lesson_routers import router as lesson_router
 from app.infrastructure.api.practice_routers import router as practice_router
@@ -47,6 +49,7 @@ from app.infrastructure.api.user_routers import router as user_router
 from app.infrastructure.db import lesson_models  # noqa: F401
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.session import get_db_session
+from tests.fakes import EN_AM_COURSE_ID
 
 
 @pytest.fixture
@@ -61,6 +64,21 @@ def db_path(tmp_path: Path) -> Path:
     path = tmp_path / "test.db"
     sync_engine = create_engine(f"sqlite:///{path}")
     Base.metadata.create_all(sync_engine)
+    # Bolt 024: every account, category and vocab item belongs to a course, so
+    # each test database starts with the English to Amharic course (what the
+    # migration creates for a real database).
+    with sync_engine.begin() as conn:
+        conn.execute(
+            lesson_models.CourseModel.__table__.insert().values(
+                id=EN_AM_COURSE_ID,
+                learning_language="am",
+                from_language="en",
+                title="English to Amharic",
+                status="available",
+                order_index=1,
+                created_at=datetime.now(UTC),
+            )
+        )
     sync_engine.dispose()
     return path
 
@@ -125,6 +143,7 @@ def make_client(app_engine: AsyncEngine) -> Generator[Any]:
         app.include_router(lesson_router)
         app.include_router(user_router)
         app.include_router(practice_router)
+        app.include_router(course_router)
         app.state.google_verifier = google_verifier
         app.state.apple_verifier = apple_verifier
         app.dependency_overrides[get_db_session] = override_get_db_session

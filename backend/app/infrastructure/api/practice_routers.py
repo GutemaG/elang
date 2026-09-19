@@ -53,7 +53,9 @@ async def get_due_count_endpoint(
     vocab_progress_repo: UserVocabProgressRepository = Depends(get_user_vocab_progress_repository),
 ) -> DueCountResponse:
     """Story 004: the Practice entry point's due-count badge."""
-    count = await get_due_count(user.id, vocab_progress_repo, datetime.now(UTC))
+    count = await get_due_count(
+        user.id, vocab_progress_repo, datetime.now(UTC), course_id=user.active_course_id
+    )
     return DueCountResponse(due_count=count)
 
 
@@ -72,7 +74,13 @@ async def get_due_items_endpoint(
     skill's item must still appear (story 002's edge case).
     """
     items = await get_due_items(
-        user.id, vocab_progress_repo, vocab_item_repo, lesson_repo, datetime.now(UTC), limit
+        user.id,
+        vocab_progress_repo,
+        vocab_item_repo,
+        lesson_repo,
+        datetime.now(UTC),
+        limit,
+        course_id=user.active_course_id,
     )
     return DueItemsResponse(
         items=[

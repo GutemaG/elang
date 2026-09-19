@@ -46,6 +46,7 @@ def _to_pending_selection_input(
     return PendingSelectionInput(
         language=pending_selection.language,
         daily_goal_minutes=pending_selection.daily_goal_minutes,
+        from_language=pending_selection.from_language,
     )
 
 
@@ -59,6 +60,7 @@ def _to_auth_response(result: AuthResult) -> AuthResponse:
             daily_xp_target=result.user.daily_xp_target.xp_per_day,
             notification_enabled=result.user.notification_enabled,
             is_new_user=result.is_new_user,
+            active_course_id=result.user.active_course_id,
         ),
     )
 
@@ -111,5 +113,6 @@ async def get_session(
             selected_language=user.selected_language.code,
             daily_xp_target=user.daily_xp_target.xp_per_day,
             notification_enabled=user.notification_enabled,
+            active_course_id=user.active_course_id,
         )
     )

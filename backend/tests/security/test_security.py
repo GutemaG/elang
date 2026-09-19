@@ -26,7 +26,7 @@ from app.infrastructure.db.repositories import (
     SqlAlchemyAuthSessionRepository,
     SqlAlchemyUserRepository,
 )
-from tests.fakes import FakeTokenVerifier
+from tests.fakes import EN_AM_COURSE_ID, FakeTokenVerifier
 
 ClientFactory = Callable[[object, object], TestClient]
 
@@ -41,6 +41,7 @@ def _make_user(provider_user_id: str) -> User:
         daily_xp_target=DailyXPTarget(xp_per_day=40),
         notification_enabled=True,
         created_at=datetime.now(UTC),
+        active_course_id=EN_AM_COURSE_ID,
     )
 
 

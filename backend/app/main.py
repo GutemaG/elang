@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.infrastructure.api.course_routers import router as course_router
 from app.infrastructure.api.error_handlers import register_exception_handlers
 from app.infrastructure.api.lesson_routers import router as lesson_router
 from app.infrastructure.api.practice_routers import router as practice_router
@@ -67,6 +68,7 @@ def create_app() -> FastAPI:
     app.include_router(lesson_router)
     app.include_router(user_router)
     app.include_router(practice_router)
+    app.include_router(course_router)
 
     @app.get("/health", tags=["ops"])
     async def health() -> dict[str, str]:

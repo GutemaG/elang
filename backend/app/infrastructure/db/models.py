@@ -52,6 +52,12 @@ class UserModel(Base):
     # New in 013-user-preferences-service. Backfilled `true` for existing
     # rows by the migration (opt-out, not opt-in) -- never null (ADR-7).
     notification_enabled: Mapped[bool] = mapped_column(nullable=False, default=True)
+    # Bolt 024 (ADR-12/ADR-13): the user's active course; `selected_language`
+    # mirrors its learning language and both are written only by
+    # `activate_course_for_user`.
+    active_course_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("courses.id"), nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )

@@ -10,6 +10,7 @@ from __future__ import annotations
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.course import CourseRepository
 from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
     CategoryRepository,
@@ -26,6 +27,7 @@ from app.domain.lesson.repositories import (
 from app.infrastructure.db.lesson_repositories import (
     SqlAlchemyAmoleTransactionRepository,
     SqlAlchemyCategoryRepository,
+    SqlAlchemyCourseRepository,
     SqlAlchemyLessonAttemptRepository,
     SqlAlchemyLessonRepository,
     SqlAlchemyPracticeAttemptRepository,
@@ -49,6 +51,12 @@ async def get_category_repository(
     session: AsyncSession = Depends(get_db_session),
 ) -> CategoryRepository:
     return SqlAlchemyCategoryRepository(session)
+
+
+async def get_course_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> CourseRepository:
+    return SqlAlchemyCourseRepository(session)
 
 
 async def get_lesson_repository(

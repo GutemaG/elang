@@ -21,7 +21,7 @@ from app.infrastructure.db.lesson_models import (
     LessonModel,
     SkillModel,
 )
-from tests.fakes import FakeTokenVerifier
+from tests.fakes import EN_AM_COURSE_ID, FakeTokenVerifier
 
 # (category id, title, subtitle, order) -- deliberately inserted out of order.
 _CATEGORIES = [
@@ -42,7 +42,10 @@ def seeded_categories(db_path: Path) -> None:
     engine = create_engine(f"sqlite:///{db_path}")
     with SyncSession(engine) as session:
         session.add_all(
-            [CategoryModel(id=i, title=t, subtitle=s, order_index=o) for i, t, s, o in _CATEGORIES]
+            [
+                CategoryModel(id=i, course_id=EN_AM_COURSE_ID, title=t, subtitle=s, order_index=o)
+                for i, t, s, o in _CATEGORIES
+            ]
         )
         session.add_all(
             [

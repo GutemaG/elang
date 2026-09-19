@@ -39,6 +39,12 @@ class CategoryRepository(Protocol):
         """Every category, ordered by `order_index`."""
         ...
 
+    async def list_by_course(self, course_id: str) -> list[Category]:
+        """The categories of one course (bolt `024-courses-service`), ordered
+        by `order_index`.
+        """
+        ...
+
 
 class LessonRepository(Protocol):
     """Entity: `Lesson` (aggregate includes its ordered `Exercise` list)."""
@@ -180,14 +186,19 @@ class UserVocabProgressRepository(Protocol):
 
     async def upsert(self, progress: UserVocabProgress) -> None: ...
 
-    async def list_due(self, user_id: str, now: datetime, limit: int) -> list[UserVocabProgress]:
+    async def list_due(
+        self, user_id: str, now: datetime, limit: int, course_id: str | None = None
+    ) -> list[UserVocabProgress]:
         """`WHERE user_id = ? AND next_review_at <= now ORDER BY
         next_review_at LIMIT limit` -- shares its predicate with
-        `count_due` (FR-4) so the two can never disagree.
+        `count_due` (FR-4) so the two can never disagree. Bolt 024
+        (ADR-12): when `course_id` is given, only words belonging to that
+        course; `None` means unscoped (used by unit tests, never by the
+        HTTP routers, which always pass the active course).
         """
         ...
 
-    async def count_due(self, user_id: str, now: datetime) -> int:
+    async def count_due(self, user_id: str, now: datetime, course_id: str | None = None) -> int:
         """The same predicate as `list_due`, without the `LIMIT`."""
         ...
 

@@ -38,15 +38,46 @@ def _uuid_str() -> str:
     return str(uuid.uuid4())
 
 
+class CourseModel(Base):
+    """Backs the `Course` aggregate (bolt `024-courses-service`, ADR-12): a
+    learning language taught from a given from-language, e.g. English to
+    Amharic. Content only -- no per-user state.
+    """
+
+    __tablename__ = "courses"
+    __table_args__ = (
+        UniqueConstraint("learning_language", "from_language", name="uq_courses_language_pair"),
+        UniqueConstraint("order_index", name="uq_courses_order_index"),
+        CheckConstraint("status IN ('available', 'coming_soon')", name="ck_courses_status"),
+        CheckConstraint("learning_language <> from_language", name="ck_courses_languages_differ"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    learning_language: Mapped[str] = mapped_column(String(8), nullable=False)
+    from_language: Mapped[str] = mapped_column(String(8), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
 class CategoryModel(Base):
     """Backs the `Category` aggregate (bolt `021-categories-service`,
-    ADR-11): a named group of skills, e.g. "Family & People".
+    ADR-11): a named group of skills, e.g. "Family & People". Belongs to one
+    course (bolt 024, ADR-12); its `order_index` is its position in it.
     """
 
     __tablename__ = "categories"
-    __table_args__ = (UniqueConstraint("order_index", name="uq_categories_order_index"),)
+    __table_args__ = (
+        UniqueConstraint("course_id", "order_index", name="uq_categories_course_order_index"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    course_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("courses.id"), nullable=False, index=True
+    )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     subtitle: Mapped[str] = mapped_column(String(255), nullable=False)
     order_index: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -302,6 +333,11 @@ class VocabItemModel(Base):
     __tablename__ = "vocab_items"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    # Bolt 024 (ADR-12): the course this word is taught in; Practice filters
+    # due words by it.
+    course_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("courses.id"), nullable=False, index=True
+    )
     word: Mapped[str] = mapped_column(String(255), nullable=False)
     translation: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(

@@ -8,11 +8,13 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 
+from app.domain.course import Course
 from app.domain.lesson.entities import Skill, UserBeans, UserSkillProgress, UserStreak
 from app.domain.lesson.exceptions import (
     BeansExhaustedError,
     InvalidCompletionError,
     InvalidCompletionTimestampError,
+    LessonCourseUnavailableError,
     SkillLockedError,
 )
 from app.domain.lesson.value_objects import (
@@ -186,6 +188,14 @@ class LessonAccessPolicy:
     def ensure_accessible(self, skill_state: SkillState) -> None:
         if skill_state == SkillState.LOCKED:
             raise SkillLockedError("This skill is locked for the current user")
+
+    def ensure_course_available(self, course: Course | None) -> None:
+        """Bolt 024 (ADR-12): a lesson is startable/completable when its own
+        course is available -- regardless of the user's active course, so a
+        completion queued offline before a course switch still syncs.
+        """
+        if course is not None and not course.is_available:
+            raise LessonCourseUnavailableError(f"Course {course.title!r} is not available yet")
 
 
 class BeanLedger:

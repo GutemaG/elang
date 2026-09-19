@@ -39,6 +39,7 @@ from app.infrastructure.db.lesson_repositories import (
     SqlAlchemyVocabItemRepository,
 )
 from app.infrastructure.db.models import UserModel
+from tests.fakes import EN_AM_COURSE_ID
 
 
 async def _make_user(session: AsyncSession, user_id: str = "u1") -> None:
@@ -49,13 +50,14 @@ async def _make_user(session: AsyncSession, user_id: str = "u1") -> None:
             provider_user_id=f"sub-{user_id}",
             selected_language="am",
             daily_xp_target=40,
+            active_course_id=EN_AM_COURSE_ID,
         )
     )
     await session.commit()
 
 
 def _vocab_item(id_: str, word: str, translation: str) -> VocabItemModel:
-    return VocabItemModel(id=id_, word=word, translation=translation)
+    return VocabItemModel(id=id_, course_id=EN_AM_COURSE_ID, word=word, translation=translation)
 
 
 def _outcome(**overrides) -> LessonCompletionOutcome:

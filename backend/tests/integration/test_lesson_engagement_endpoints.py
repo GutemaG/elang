@@ -15,15 +15,29 @@ import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session as SyncSession
 
-from app.infrastructure.db.lesson_models import ExerciseModel, LessonModel, SkillModel
+from app.infrastructure.db.lesson_models import (
+    CategoryModel,
+    ExerciseModel,
+    LessonModel,
+    SkillModel,
+)
 from app.infrastructure.db.models import UserModel
-from tests.fakes import FakeTokenVerifier
+from tests.fakes import EN_AM_COURSE_ID, FakeTokenVerifier
 
 
 @pytest.fixture
 def seeded_content(db_path: Path) -> dict[str, str]:
     engine = create_engine(f"sqlite:///{db_path}")
     with SyncSession(engine) as session:
+        session.add(
+            CategoryModel(
+                id="cat-1",
+                course_id=EN_AM_COURSE_ID,
+                title="Foundations & Greetings",
+                subtitle="ሰላምታ",
+                order_index=1,
+            )
+        )
         session.add_all(
             [
                 SkillModel(

@@ -22,7 +22,7 @@ from app.infrastructure.db.lesson_models import (
     UserVocabProgressModel,
     VocabItemModel,
 )
-from tests.fakes import FakeTokenVerifier
+from tests.fakes import EN_AM_COURSE_ID, FakeTokenVerifier
 
 
 @pytest.fixture
@@ -35,7 +35,11 @@ def seeded_content(db_path: Path) -> dict[str, str]:
         session.add(
             LessonModel(id="lesson-a1", skill_id="skill-a", title="Hello & Goodbye", order_index=1)
         )
-        session.add(VocabItemModel(id="vocab-hello", word="ሰላም", translation="Hello"))
+        session.add(
+            VocabItemModel(
+                id="vocab-hello", course_id=EN_AM_COURSE_ID, word="ሰላም", translation="Hello"
+            )
+        )
         session.add_all(
             [
                 ExerciseModel(
@@ -202,7 +206,11 @@ class TestDueItemsEndpoint:
             session.add(
                 LessonModel(id="lesson-b1", skill_id="skill-b", title="Coffee & Tea", order_index=1)
             )
-            session.add(VocabItemModel(id="vocab-coffee", word="ቡና", translation="Coffee"))
+            session.add(
+                VocabItemModel(
+                    id="vocab-coffee", course_id=EN_AM_COURSE_ID, word="ቡና", translation="Coffee"
+                )
+            )
             session.add(
                 ExerciseModel(
                     id="ex-b1-1",

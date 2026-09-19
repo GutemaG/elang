@@ -38,6 +38,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.db.lesson_models import (
     CategoryModel,
+    CourseModel,
     ExerciseModel,
     LessonModel,
     SkillModel,
@@ -70,6 +71,25 @@ def _audio_url(slug: str) -> str:
 
 def _choice(choice_id: str, text: str) -> dict[str, str]:
     return {"id": choice_id, "text": text}
+
+
+# --- Courses (bolt 024-courses-service, ADR-12) ---------------------------
+# English to Amharic's id matches the row the courses migration inserts (same
+# slug -> same uuid5), so the seed updates it in place. Content dicts below
+# may name another course with `course_slug`; without one they belong to this
+# default course.
+DEFAULT_COURSE_SLUG = "course:en-am"
+
+COURSES: list[dict[str, Any]] = [
+    {
+        "slug": DEFAULT_COURSE_SLUG,
+        "learning_language": "am",
+        "from_language": "en",
+        "title": "English to Amharic",
+        "status": "available",
+        "order_index": 1,
+    },
+]
 
 
 # --- Bolt 019 (008-srs-and-practice): vocab content, seeded alongside the
@@ -461,12 +481,26 @@ async def seed(session: AsyncSession) -> None:
     absent, inserted; if present, updated in place. No rows are ever
     deleted here.
     """
+    for course_data in COURSES:
+        course_id = _content_id(course_data["slug"])
+        course = await session.get(CourseModel, course_id)
+        if course is None:
+            course = CourseModel(id=course_id)
+            session.add(course)
+        course.learning_language = course_data["learning_language"]
+        course.from_language = course_data["from_language"]
+        course.title = course_data["title"]
+        course.status = course_data["status"]
+        course.order_index = course_data["order_index"]
+    await session.flush()
+
     for vocab_data in VOCABULARY:
         vocab_id = _content_id(vocab_data["slug"])
         vocab_item = await session.get(VocabItemModel, vocab_id)
         if vocab_item is None:
             vocab_item = VocabItemModel(id=vocab_id)
             session.add(vocab_item)
+        vocab_item.course_id = _content_id(vocab_data.get("course_slug", DEFAULT_COURSE_SLUG))
         vocab_item.word = vocab_data["word"]
         vocab_item.translation = vocab_data["translation"]
 
@@ -476,6 +510,7 @@ async def seed(session: AsyncSession) -> None:
         if category is None:
             category = CategoryModel(id=category_id)
             session.add(category)
+        category.course_id = _content_id(category_data.get("course_slug", DEFAULT_COURSE_SLUG))
         category.title = category_data["title"]
         category.subtitle = category_data["subtitle"]
         category.order_index = category_data["order_index"]
@@ -525,7 +560,7 @@ async def main() -> None:
         await seed(session)
         await session.commit()
     print(  # noqa: T201 -- CLI seed script, intentional operator-facing output
-        f"Seeded {len(CATEGORIES)} categories, {len(CURRICULUM)} skills "
+        f"Seeded {len(COURSES)} courses, {len(CATEGORIES)} categories, {len(CURRICULUM)} skills "
         f"({sum(len(s['lessons']) for s in CURRICULUM)} lessons, "
         f"{sum(len(lesson['exercises']) for s in CURRICULUM for lesson in s['lessons'])} "
         "exercises)."

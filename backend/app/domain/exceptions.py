@@ -59,6 +59,18 @@ class InvalidPreferenceValueError(AuthDomainError):
     error_code = "invalid_preference_value"
 
 
+class CourseNotFoundError(AuthDomainError):
+    """No course exists with the given id (bolt `024-courses-service`)."""
+
+    error_code = "course_not_found"
+
+
+class CourseNotAvailableError(AuthDomainError):
+    """The course exists but is `coming_soon`, so it cannot be selected."""
+
+    error_code = "course_not_available"
+
+
 class ProviderUnreachableError(AuthDomainError):
     """The upstream Google/Apple verification endpoint could not be reached.
 

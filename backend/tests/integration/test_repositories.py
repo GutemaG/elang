@@ -21,6 +21,7 @@ from app.infrastructure.db.repositories import (
     SqlAlchemyAuthSessionRepository,
     SqlAlchemyUserRepository,
 )
+from tests.fakes import EN_AM_COURSE_ID
 
 
 def _make_user(provider_user_id: str) -> User:
@@ -33,6 +34,7 @@ def _make_user(provider_user_id: str) -> User:
         daily_xp_target=DailyXPTarget(xp_per_day=40),
         notification_enabled=True,
         created_at=datetime.now(UTC),
+        active_course_id=EN_AM_COURSE_ID,
     )
 
 
@@ -88,6 +90,7 @@ class TestUserRepository:
             daily_xp_target=DailyXPTarget(xp_per_day=80),
             notification_enabled=False,
             created_at=user.created_at,
+            active_course_id=EN_AM_COURSE_ID,
         )
         updated = await repo.update(changed)
         await db_session.commit()
@@ -205,6 +208,7 @@ class TestModelColumnDefaults:
             provider_user_id="sub-defaults-1",
             selected_language="am",
             daily_xp_target=40,
+            active_course_id=EN_AM_COURSE_ID,
         )
         db_session.add(model)
         await db_session.flush()

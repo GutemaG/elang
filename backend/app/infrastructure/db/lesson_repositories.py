@@ -18,6 +18,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.domain.course import Course, CourseStatus
 from app.domain.lesson.entities import (
     AmoleTransaction,
     Category,
@@ -49,6 +50,7 @@ from app.domain.lesson.value_objects import Choice as ChoiceVO
 from app.infrastructure.db.lesson_models import (
     AmoleTransactionModel,
     CategoryModel,
+    CourseModel,
     ExerciseModel,
     LessonAttemptModel,
     LessonModel,
@@ -131,6 +133,18 @@ def _category_model_to_domain(model: CategoryModel) -> Category:
         title=model.title,
         subtitle=model.subtitle,
         order_index=model.order_index,
+        course_id=model.course_id,
+    )
+
+
+def _course_model_to_domain(model: CourseModel) -> Course:
+    return Course(
+        id=model.id,
+        learning_language=model.learning_language,
+        from_language=model.from_language,
+        title=model.title,
+        status=CourseStatus(model.status),
+        order_index=model.order_index,
     )
 
 
@@ -181,6 +195,7 @@ def _vocab_item_model_to_domain(model: VocabItemModel) -> VocabItem:
         word=model.word,
         translation=model.translation,
         created_at=_ensure_utc(model.created_at),
+        course_id=model.course_id,
     )
 
 
@@ -226,9 +241,70 @@ class SqlAlchemyCategoryRepository:
         self._session = session
 
     async def list_all(self) -> list[Category]:
-        stmt = select(CategoryModel).order_by(CategoryModel.order_index)
+        stmt = select(CategoryModel).order_by(CategoryModel.course_id, CategoryModel.order_index)
         result = await self._session.execute(stmt)
         return [_category_model_to_domain(m) for m in result.scalars().all()]
+
+    async def list_by_course(self, course_id: str) -> list[Category]:
+        stmt = (
+            select(CategoryModel)
+            .where(CategoryModel.course_id == course_id)
+            .order_by(CategoryModel.order_index)
+        )
+        result = await self._session.execute(stmt)
+        return [_category_model_to_domain(m) for m in result.scalars().all()]
+
+
+class SqlAlchemyCourseRepository:
+    """Implements `app.domain.course.CourseRepository` (bolt
+    `024-courses-service`, ADR-12).
+    """
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def list_all(self) -> list[Course]:
+        stmt = select(CourseModel).order_by(CourseModel.order_index)
+        result = await self._session.execute(stmt)
+        return [_course_model_to_domain(m) for m in result.scalars().all()]
+
+    async def get_by_id(self, course_id: str) -> Course | None:
+        model = await self._session.get(CourseModel, course_id)
+        return _course_model_to_domain(model) if model is not None else None
+
+    async def get_for_skill(self, skill_id: str) -> Course | None:
+        stmt = (
+            select(CourseModel)
+            .join(CategoryModel, CategoryModel.course_id == CourseModel.id)
+            .join(SkillModel, SkillModel.category_id == CategoryModel.id)
+            .where(SkillModel.id == skill_id)
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return _course_model_to_domain(model) if model is not None else None
+
+    async def count_skills_by_course(self) -> dict[str, int]:
+        stmt = (
+            select(CategoryModel.course_id, func.count(SkillModel.id))
+            .join(SkillModel, SkillModel.category_id == CategoryModel.id)
+            .group_by(CategoryModel.course_id)
+        )
+        result = await self._session.execute(stmt)
+        return {course_id: count for course_id, count in result.all()}
+
+    async def count_completed_skills_by_course(self, user_id: str) -> dict[str, int]:
+        stmt = (
+            select(CategoryModel.course_id, func.count(UserSkillProgressModel.skill_id))
+            .join(SkillModel, SkillModel.category_id == CategoryModel.id)
+            .join(UserSkillProgressModel, UserSkillProgressModel.skill_id == SkillModel.id)
+            .where(
+                UserSkillProgressModel.user_id == user_id,
+                UserSkillProgressModel.completed_at.is_not(None),
+            )
+            .group_by(CategoryModel.course_id)
+        )
+        result = await self._session.execute(stmt)
+        return {course_id: count for course_id, count in result.all()}
 
 
 class SqlAlchemyLessonRepository:
@@ -516,24 +592,30 @@ class SqlAlchemyUserVocabProgressRepository:
         model.next_review_at = progress.next_review_at
         model.last_seen_at = progress.last_seen_at
 
-    async def list_due(self, user_id: str, now: datetime, limit: int) -> list[UserVocabProgress]:
-        stmt = (
-            select(UserVocabProgressModel)
-            .where(
-                UserVocabProgressModel.user_id == user_id,
-                UserVocabProgressModel.next_review_at <= now,
-            )
-            .order_by(UserVocabProgressModel.next_review_at)
-            .limit(limit)
+    async def list_due(
+        self, user_id: str, now: datetime, limit: int, course_id: str | None = None
+    ) -> list[UserVocabProgress]:
+        stmt = select(UserVocabProgressModel).where(
+            UserVocabProgressModel.user_id == user_id,
+            UserVocabProgressModel.next_review_at <= now,
         )
+        if course_id is not None:
+            stmt = stmt.join(
+                VocabItemModel, VocabItemModel.id == UserVocabProgressModel.vocab_item_id
+            ).where(VocabItemModel.course_id == course_id)
+        stmt = stmt.order_by(UserVocabProgressModel.next_review_at).limit(limit)
         result = await self._session.execute(stmt)
         return [_vocab_progress_model_to_domain(m) for m in result.scalars().all()]
 
-    async def count_due(self, user_id: str, now: datetime) -> int:
+    async def count_due(self, user_id: str, now: datetime, course_id: str | None = None) -> int:
         stmt = select(func.count(UserVocabProgressModel.vocab_item_id)).where(
             UserVocabProgressModel.user_id == user_id,
             UserVocabProgressModel.next_review_at <= now,
         )
+        if course_id is not None:
+            stmt = stmt.join(
+                VocabItemModel, VocabItemModel.id == UserVocabProgressModel.vocab_item_id
+            ).where(VocabItemModel.course_id == course_id)
         result = await self._session.execute(stmt)
         return result.scalar() or 0
 

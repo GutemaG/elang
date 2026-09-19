@@ -16,7 +16,7 @@ from app.domain.entities import User
 from app.domain.exceptions import InvalidPreferenceValueError
 from app.domain.services import OnboardingAttachmentPolicy, UserPreferencesService
 from app.domain.value_objects import AuthProvider, DailyXPTarget, LanguageCode, ProviderIdentity
-from tests.fakes import FakeUserRepository
+from tests.fakes import EN_AM_COURSE_ID, FakeCourseRepository, FakeUserRepository
 
 
 def _make_user(
@@ -34,12 +34,17 @@ def _make_user(
         daily_xp_target=DailyXPTarget(xp_per_day=daily_xp_target),
         notification_enabled=notification_enabled,
         created_at=datetime.now(UTC),
+        active_course_id=EN_AM_COURSE_ID,
     )
 
 
 def _make_service(user: User) -> tuple[UserPreferencesService, FakeUserRepository]:
     repo = FakeUserRepository([user])
-    service = UserPreferencesService(user_repo=repo, onboarding_policy=OnboardingAttachmentPolicy())
+    service = UserPreferencesService(
+        user_repo=repo,
+        onboarding_policy=OnboardingAttachmentPolicy(),
+        course_repo=FakeCourseRepository(),
+    )
     return service, repo
 
 

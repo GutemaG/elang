@@ -32,6 +32,7 @@ from app.infrastructure.db.lesson_repositories import (
     SqlAlchemyUserSkillProgressRepository,
 )
 from app.infrastructure.db.models import UserModel
+from tests.fakes import EN_AM_COURSE_ID
 
 
 class TestSqlAlchemySkillRepository:
@@ -217,6 +218,7 @@ class TestSqlAlchemyUserSkillProgressRepository:
                 provider_user_id="google-sub-1",
                 selected_language="am",
                 daily_xp_target=40,
+                active_course_id=EN_AM_COURSE_ID,
             )
         )
         db_session.add(

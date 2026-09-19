@@ -70,6 +70,9 @@ class Category:
     title: str
     subtitle: str
     order_index: int
+    # Bolt 024 (ADR-12): every category belongs to exactly one course, and its
+    # `order_index` is its position inside that course.
+    course_id: str
 
 
 @dataclass
@@ -185,6 +188,9 @@ class VocabItem:
     word: str
     translation: str
     created_at: datetime
+    # Bolt 024 (ADR-12): a vocab item is the answer to one question in one
+    # direction, so it belongs to exactly one course.
+    course_id: str
 
 
 @dataclass

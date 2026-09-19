@@ -11,6 +11,7 @@ import uuid
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 
+from app.domain.course import Course, CourseRepository
 from app.domain.lesson.entities import (
     AmoleTransaction,
     Category,
@@ -161,6 +162,9 @@ class SkillTreeSummary:
     lesson_id_by_skill: dict[str, str | None]
     content_version_by_skill: dict[str, datetime]
     categories: list[Category]
+    # Bolt 024 (ADR-12): the course this tree belongs to; `None` only when the
+    # tree was read unscoped (unit tests), never from the HTTP router.
+    course: Course | None
     # Deprecated (ADR-11): derived from the first category, kept only so a
     # client that still reads `unit_title`/`unit_subtitle` keeps working.
     unit_title: str
@@ -181,6 +185,8 @@ async def get_skill_tree(
     lesson_repo: LessonRepository,
     category_repo: CategoryRepository,
     now: datetime,
+    course_repo: CourseRepository | None = None,
+    active_course_id: str | None = None,
 ) -> SkillTreeSummary:
     """Story 001: the skill tree, with accurate per-skill state/crown level
     for `user_id` -- including a brand-new user with zero progress rows
@@ -188,14 +194,27 @@ async def get_skill_tree(
     (bolt 005) with the account's streak/beans/lifetime-XP HUD stats, and
     (bolt 007) with each skill's "next lesson to work on" id, all in this
     same single request.
+
+    Bolt 024 (ADR-12): when `active_course_id` is given, only that course's
+    categories and skills are returned (the HTTP router always passes it);
+    progression is unchanged because it is already per category.
     """
-    categories = await category_repo.list_all()
+    course: Course | None = None
+    if active_course_id is not None:
+        categories = await category_repo.list_by_course(active_course_id)
+        if course_repo is not None:
+            course = await course_repo.get_by_id(active_course_id)
+    else:
+        categories = await category_repo.list_all()
     category_rank = {c.id: rank for rank, c in enumerate(categories)}
+    all_skills = await skill_repo.list_all()
+    if active_course_id is not None:
+        all_skills = [s for s in all_skills if s.category_id in category_rank]
     # Categories in their own order, then each category's skills; the
     # policy keeps that grouping (ADR-11). Skills whose category isn't
     # listed sort last rather than being dropped.
     skills = sorted(
-        await skill_repo.list_all(),
+        all_skills,
         key=lambda s: (category_rank.get(s.category_id, len(categories)), s.order_index),
     )
     progress_rows = await progress_repo.list_by_user(user_id)
@@ -239,6 +258,7 @@ async def get_skill_tree(
         lesson_id_by_skill=lesson_id_by_skill,
         content_version_by_skill=content_version_by_skill,
         categories=categories,
+        course=course,
         unit_title=categories[0].title if categories else "",
         unit_subtitle=categories[0].subtitle if categories else "",
         streak_count=streak.current_streak,
@@ -266,6 +286,7 @@ async def get_lesson_content(
     lesson_repo: LessonRepository,
     skill_repo: SkillRepository,
     progress_repo: UserSkillProgressRepository,
+    course_repo: CourseRepository | None = None,
 ) -> LessonContentResult:
     """Story 001: a lesson's full, ordered exercise list in one call.
 
@@ -278,6 +299,13 @@ async def get_lesson_content(
     lesson = await lesson_repo.get_by_id(lesson_id)
     if lesson is None:
         raise LessonNotFoundError(f"No lesson found with id {lesson_id!r}")
+
+    # Bolt 024 (ADR-12): the lesson's own course must be available (not the
+    # user's active course); the HTTP router always passes `course_repo`.
+    if course_repo is not None:
+        LessonAccessPolicy().ensure_course_available(
+            await course_repo.get_for_skill(lesson.skill_id)
+        )
 
     skills = await skill_repo.list_all()
     progress_rows = await progress_repo.list_by_user(user_id)
@@ -394,6 +422,7 @@ async def complete_lesson(
     vocab_progress_repo: UserVocabProgressRepository,
     now: datetime,
     missed_exercise_ids: frozenset[str] = frozenset(),
+    course_repo: CourseRepository | None = None,
 ) -> LessonCompletionOutcome:
     """Stories 002/003/004: the account-ledger side of one completed lesson
     attempt. Grading itself already happened client-side (ADR-5) -- this
@@ -440,6 +469,13 @@ async def complete_lesson(
         raise InvalidCompletionError(
             f"total_count={total_count} does not match the lesson's "
             f"{len(lesson.exercises)} exercises"
+        )
+
+    # Bolt 024 (ADR-12): gated on the lesson's own course, so a completion
+    # queued offline before a course switch still syncs (ADR-6).
+    if course_repo is not None:
+        LessonAccessPolicy().ensure_course_available(
+            await course_repo.get_for_skill(lesson.skill_id)
         )
 
     skills = await skill_repo.list_all()
@@ -561,14 +597,16 @@ async def get_due_items(
     lesson_repo: LessonRepository,
     now: datetime,
     limit: int = DEFAULT_DUE_ITEMS_LIMIT,
+    course_id: str | None = None,
 ) -> list[DueItem]:
     """Story 004: every vocab item due for `user_id` right now, each
     resolved to its word/translation and one exercise that tests it, ready
     for Practice session assembly (bolt 020). A due item whose vocab
     content or linked exercise has since disappeared (shouldn't happen with
-    real content) is silently omitted rather than raising.
+    real content) is silently omitted rather than raising. Bolt 024
+    (ADR-12): `course_id` limits it to the active course's words.
     """
-    due_rows = await vocab_progress_repo.list_due(user_id, now, limit)
+    due_rows = await vocab_progress_repo.list_due(user_id, now, limit, course_id)
     if not due_rows:
         return []
 
@@ -597,14 +635,17 @@ async def get_due_items(
 
 
 async def get_due_count(
-    user_id: str, vocab_progress_repo: UserVocabProgressRepository, now: datetime
+    user_id: str,
+    vocab_progress_repo: UserVocabProgressRepository,
+    now: datetime,
+    course_id: str | None = None,
 ) -> int:
     """Story 004: the Practice entry point's due-count badge. Shares
     `UserVocabProgressRepository`'s predicate with `get_due_items` (via the
     repository's own `count_due`/`list_due` implementations), so the two
     can never disagree.
     """
-    return await vocab_progress_repo.count_due(user_id, now)
+    return await vocab_progress_repo.count_due(user_id, now, course_id)
 
 
 @dataclass(frozen=True)

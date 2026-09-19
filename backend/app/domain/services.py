@@ -10,15 +10,23 @@ from __future__ import annotations
 
 import secrets
 import uuid
-from dataclasses import dataclass
+from collections.abc import Sequence
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
+from app.domain.course import (
+    Course,
+    CourseRepository,
+    CourseSelectionPolicy,
+    LanguagePair,
+)
 from app.domain.entities import AuthSession, User
 from app.domain.exceptions import InvalidPendingSelectionError, InvalidPreferenceValueError
 from app.domain.repositories import AuthSessionRepository, UserRepository
 from app.domain.value_objects import (
     DEFAULT_DAILY_XP_TARGET,
+    DEFAULT_FROM_LANGUAGE_CODE,
     DEFAULT_LANGUAGE_CODE,
     MINUTES_TO_XP_TARGET,
     AuthProvider,
@@ -56,6 +64,21 @@ class AuthResult:
     session: AuthSession
     raw_session_token: str
     is_new_user: bool
+
+
+def activate_course_for_user(user: User, course: Course) -> User:
+    """The one place a user's active course and its `selected_language`
+    mirror are set together (ADR-13). Signup, the switch-course endpoint and
+    `UserPreferencesService`'s `language` field all go through this, so the
+    two fields can never disagree. Raises `CourseNotAvailableError` for a
+    course that is not available.
+    """
+    CourseSelectionPolicy().ensure_activatable(course)
+    return replace(
+        user,
+        selected_language=LanguageCode(code=course.learning_language),
+        active_course_id=course.id,
+    )
 
 
 class OnboardingAttachmentPolicy:
@@ -105,6 +128,31 @@ class OnboardingAttachmentPolicy:
         xp_target = self.map_minutes_to_daily_xp_target(selection.daily_goal.minutes_per_day)
         return selection.language, xp_target
 
+    def resolve_course_for_new_user(
+        self,
+        language: LanguageCode,
+        from_language_code: str | None,
+        courses: Sequence[Course],
+    ) -> Course:
+        """Bolt 024 (ADR-12): the course a brand-new user starts on, from the
+        onboarding pair. An absent from-language means `en`, so a client that
+        only sends the language to learn still gets English to <language>. An
+        unresolvable pair (same language twice, unsupported code, or no
+        available course) is `InvalidPendingSelectionError`, so no user is
+        created.
+        """
+        from_language = LanguageCode(code=from_language_code or DEFAULT_FROM_LANGUAGE_CODE)
+        try:
+            pair = LanguagePair(learning=language.code, from_language=from_language.code)
+        except ValueError as exc:
+            raise InvalidPendingSelectionError(str(exc)) from exc
+        course = CourseSelectionPolicy().resolve_for_pair(pair, courses)
+        if course is None:
+            raise InvalidPendingSelectionError(
+                f"No available course to learn {pair.learning!r} from {pair.from_language!r}"
+            )
+        return course
+
 
 class SessionValidationService:
     """Looks up an `AuthSession` by token, checks expiry, and only then loads
@@ -138,6 +186,7 @@ class AuthenticationService:
         user_repo: UserRepository,
         session_repo: AuthSessionRepository,
         onboarding_policy: OnboardingAttachmentPolicy,
+        course_repo: CourseRepository,
         session_ttl: timedelta = DEFAULT_SESSION_TTL,
     ) -> None:
         self._verifiers: dict[AuthProvider, TokenVerifier] = {
@@ -147,6 +196,7 @@ class AuthenticationService:
         self._user_repo = user_repo
         self._session_repo = session_repo
         self._onboarding_policy = onboarding_policy
+        self._course_repo = course_repo
         self._session_ttl = session_ttl
 
     async def authenticate_with_google(
@@ -154,12 +204,14 @@ class AuthenticationService:
         id_token: str,
         pending_language_code: str | None,
         pending_daily_goal_minutes: int | None,
+        pending_from_language_code: str | None = None,
     ) -> AuthResult:
         return await self._authenticate(
             AuthProvider.GOOGLE,
             id_token,
             pending_language_code,
             pending_daily_goal_minutes,
+            pending_from_language_code,
         )
 
     async def authenticate_with_apple(
@@ -167,12 +219,14 @@ class AuthenticationService:
         identity_token: str,
         pending_language_code: str | None,
         pending_daily_goal_minutes: int | None,
+        pending_from_language_code: str | None = None,
     ) -> AuthResult:
         return await self._authenticate(
             AuthProvider.APPLE,
             identity_token,
             pending_language_code,
             pending_daily_goal_minutes,
+            pending_from_language_code,
         )
 
     async def _authenticate(
@@ -181,6 +235,7 @@ class AuthenticationService:
         token: str,
         pending_language_code: str | None,
         pending_daily_goal_minutes: int | None,
+        pending_from_language_code: str | None = None,
     ) -> AuthResult:
         verifier = self._verifiers[auth_provider]
         # Raises InvalidTokenError / ExpiredTokenError / ProviderUnreachableError
@@ -203,13 +258,22 @@ class AuthenticationService:
             language, xp_target = self._onboarding_policy.resolve_selection_for_new_user(
                 pending_language_code, pending_daily_goal_minutes
             )
-            new_user = User(
-                id=str(uuid.uuid4()),
-                provider_identity=identity,
-                selected_language=language,
-                daily_xp_target=xp_target,
-                notification_enabled=True,
-                created_at=datetime.now(UTC),
+            # Bolt 024: the onboarding pair picks the starting course; an
+            # unresolvable pair rejects the sign-up before any user exists.
+            course = self._onboarding_policy.resolve_course_for_new_user(
+                language, pending_from_language_code, await self._course_repo.list_all()
+            )
+            new_user = activate_course_for_user(
+                User(
+                    id=str(uuid.uuid4()),
+                    provider_identity=identity,
+                    selected_language=language,
+                    daily_xp_target=xp_target,
+                    notification_enabled=True,
+                    created_at=datetime.now(UTC),
+                    active_course_id=course.id,
+                ),
+                course,
             )
             user = await self._user_repo.add(new_user)
 
@@ -242,10 +306,14 @@ class UserPreferencesService:
     """
 
     def __init__(
-        self, user_repo: UserRepository, onboarding_policy: OnboardingAttachmentPolicy
+        self,
+        user_repo: UserRepository,
+        onboarding_policy: OnboardingAttachmentPolicy,
+        course_repo: CourseRepository,
     ) -> None:
         self._user_repo = user_repo
         self._onboarding_policy = onboarding_policy
+        self._course_repo = course_repo
 
     async def update_preferences(
         self,
@@ -264,11 +332,16 @@ class UserPreferencesService:
         `InvalidPendingSelectionError` (400) leak into this endpoint's
         distinct error contract.
         """
-        language = user.selected_language
+        updated_user = user
         daily_xp_target = user.daily_xp_target
         try:
-            if language_code is not None:
-                language = LanguageCode(code=language_code)
+            if language_code is not None and language_code != user.selected_language.code:
+                # Bolt 024 (ADR-13): a language change means "activate the
+                # available course for (language, my current from-language)",
+                # through the one course-activation path.
+                updated_user = activate_course_for_user(
+                    user, await self._course_for_language_change(user, language_code)
+                )
             if daily_goal_minutes is not None:
                 daily_xp_target = self._onboarding_policy.map_minutes_to_daily_xp_target(
                     daily_goal_minutes
@@ -276,16 +349,23 @@ class UserPreferencesService:
         except (InvalidPendingSelectionError, ValueError) as exc:
             raise InvalidPreferenceValueError(str(exc)) from exc
 
-        updated_user = User(
-            id=user.id,
-            provider_identity=user.provider_identity,
-            selected_language=language,
+        updated_user = replace(
+            updated_user,
             daily_xp_target=daily_xp_target,
             notification_enabled=(
-                user.notification_enabled
-                if notification_enabled is None
-                else notification_enabled
+                user.notification_enabled if notification_enabled is None else notification_enabled
             ),
-            created_at=user.created_at,
         )
         return await self._user_repo.update(updated_user)
+
+    async def _course_for_language_change(self, user: User, language_code: str) -> Course:
+        target = LanguageCode(code=language_code)
+        current = await self._course_repo.get_by_id(user.active_course_id)
+        from_code = current.from_language if current else DEFAULT_FROM_LANGUAGE_CODE
+        pair = LanguagePair(learning=target.code, from_language=from_code)
+        course = CourseSelectionPolicy().resolve_for_pair(pair, await self._course_repo.list_all())
+        if course is None:
+            raise InvalidPreferenceValueError(
+                f"No available course to learn {pair.learning!r} from {pair.from_language!r}"
+            )
+        return course

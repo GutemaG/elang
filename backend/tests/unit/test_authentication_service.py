@@ -25,7 +25,13 @@ from app.domain.value_objects import (
     LanguageCode,
     ProviderIdentity,
 )
-from tests.fakes import FakeAuthSessionRepository, FakeTokenVerifier, FakeUserRepository
+from tests.fakes import (
+    EN_AM_COURSE_ID,
+    FakeAuthSessionRepository,
+    FakeCourseRepository,
+    FakeTokenVerifier,
+    FakeUserRepository,
+)
 
 
 def _make_service(
@@ -42,6 +48,7 @@ def _make_service(
         user_repo=user_repo,
         session_repo=session_repo,
         onboarding_policy=OnboardingAttachmentPolicy(),
+        course_repo=FakeCourseRepository(),
     )
     return service, user_repo, session_repo
 
@@ -108,6 +115,7 @@ class TestReturningUserPath:
             daily_xp_target=DailyXPTarget(xp_per_day=40),
             notification_enabled=True,
             created_at=datetime.now(UTC),
+            active_course_id=EN_AM_COURSE_ID,
         )
         return FakeUserRepository([existing]), existing
 

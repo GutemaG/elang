@@ -26,10 +26,14 @@ MINUTES_TO_XP_TARGET: dict[int, int] = {
 DEFAULT_LANGUAGE_CODE = "am"
 DEFAULT_DAILY_XP_TARGET = 40
 
-# Supported course languages. Amharic only in Phase 1, but this set — not a
-# hardcoded single-language assumption — is what LanguageCode validates
-# against, per the domain model's explicit note.
-SUPPORTED_LANGUAGE_CODES: frozenset[str] = frozenset({"am"})
+# The from-language assumed when a client (e.g. the shipped app) sends only a
+# language to learn (bolt `024-courses-service`, ADR-12).
+DEFAULT_FROM_LANGUAGE_CODE = "en"
+
+# Known language codes (Amharic, Afaan Oromo, English). Whether a language can
+# actually be *learned* is decided by a course existing for it (ADR-12), not by
+# this set -- e.g. no course teaches English, so learning `en` is rejected.
+SUPPORTED_LANGUAGE_CODES: frozenset[str] = frozenset({"am", "om", "en"})
 
 
 class AuthProvider(StrEnum):
@@ -108,6 +112,8 @@ class PendingOnboardingSelection:
 
     language: LanguageCode
     daily_goal: DailyGoalPreset
+    # Bolt 024: the language the learner speaks (the course's from-language).
+    from_language: LanguageCode = LanguageCode(code=DEFAULT_FROM_LANGUAGE_CODE)
 
 
 @dataclass(frozen=True)

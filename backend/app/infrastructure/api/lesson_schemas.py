@@ -16,6 +16,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from app.infrastructure.api.course_schemas import CourseInfoResponse
+
 
 class ChoiceResponse(BaseModel):
     id: str
@@ -55,6 +57,9 @@ class SkillTreeResponse(BaseModel):
     unit_title: str
     unit_subtitle: str
     categories: list[CategoryResponse]
+    # Bolt 024 (ADR-12): the course this tree belongs to (the caller's active
+    # course); the client keys its offline cache by `course.id`.
+    course: CourseInfoResponse | None = None
     skills: list[SkillTreeEntryResponse]
     streak_count: int
     beans: int

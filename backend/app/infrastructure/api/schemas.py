@@ -13,6 +13,8 @@ from pydantic import BaseModel
 class PendingSelectionRequest(BaseModel):
     language: str
     daily_goal_minutes: Literal[5, 10, 15, 20]
+    # Bolt 024: the language the learner speaks; absent means `en`.
+    from_language: str | None = None
 
 
 class GoogleAuthRequest(BaseModel):
@@ -31,6 +33,7 @@ class AuthUserResponse(BaseModel):
     daily_xp_target: int
     notification_enabled: bool
     is_new_user: bool
+    active_course_id: str
 
 
 class AuthResponse(BaseModel):
@@ -44,6 +47,7 @@ class SessionUserResponse(BaseModel):
     selected_language: str
     daily_xp_target: int
     notification_enabled: bool
+    active_course_id: str
 
 
 class SessionValidResponse(BaseModel):

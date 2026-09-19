@@ -9,9 +9,11 @@ the `UserRepository`/`AuthSessionRepository` Protocols (DB) -- never
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Sequence
 from datetime import UTC, date, datetime
 
+from app.domain.course import Course, CourseStatus
 from app.domain.entities import AuthSession, User
 from app.domain.lesson.entities import (
     AmoleTransaction,
@@ -27,6 +29,70 @@ from app.domain.lesson.entities import (
     VocabItem,
 )
 from app.domain.value_objects import AuthProvider
+
+# Bolt 024: the deterministic id of the English to Amharic course -- the same
+# one the migration and the seed create (uuid5 of the "course:en-am" slug), so
+# fixtures, the fake repositories and the real test database all agree.
+EN_AM_COURSE_ID = str(
+    uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_DNS, "buna.app/lesson-content"), "course:en-am")
+)
+
+
+def make_course(
+    course_id: str = EN_AM_COURSE_ID,
+    *,
+    learning: str = "am",
+    from_language: str = "en",
+    title: str = "English to Amharic",
+    status: CourseStatus = CourseStatus.AVAILABLE,
+    order_index: int = 1,
+) -> Course:
+    return Course(
+        id=course_id,
+        learning_language=learning,
+        from_language=from_language,
+        title=title,
+        status=status,
+        order_index=order_index,
+    )
+
+
+class FakeCourseRepository:
+    """In-memory stand-in for `app.domain.course.CourseRepository` (bolt
+    `024-courses-service`). `get_for_skill` answers from `course_by_skill`,
+    falling back to the first course, so tests that do not care about courses
+    just get an available English to Amharic course.
+    """
+
+    def __init__(
+        self,
+        courses: list[Course] | None = None,
+        course_by_skill: dict[str, str] | None = None,
+        skill_totals: dict[str, int] | None = None,
+        completed_skills: dict[str, int] | None = None,
+    ) -> None:
+        self._courses = list(courses) if courses is not None else [make_course()]
+        self._course_by_skill = dict(course_by_skill or {})
+        self._skill_totals = dict(skill_totals or {})
+        self._completed_skills = dict(completed_skills or {})
+
+    async def list_all(self) -> list[Course]:
+        return sorted(self._courses, key=lambda c: c.order_index)
+
+    async def get_by_id(self, course_id: str) -> Course | None:
+        return next((c for c in self._courses if c.id == course_id), None)
+
+    async def get_for_skill(self, skill_id: str) -> Course | None:
+        course_id = self._course_by_skill.get(skill_id)
+        if course_id is not None:
+            return await self.get_by_id(course_id)
+        return self._courses[0] if self._courses else None
+
+    async def count_skills_by_course(self) -> dict[str, int]:
+        return dict(self._skill_totals)
+
+    async def count_completed_skills_by_course(self, user_id: str) -> dict[str, int]:
+        return dict(self._completed_skills)
 
 
 class FakeTokenVerifier:
@@ -117,6 +183,12 @@ class FakeCategoryRepository:
 
     async def list_all(self) -> list[Category]:
         return sorted(self._categories, key=lambda c: c.order_index)
+
+    async def list_by_course(self, course_id: str) -> list[Category]:
+        return sorted(
+            (c for c in self._categories if c.course_id == course_id),
+            key=lambda c: c.order_index,
+        )
 
 
 class FakeSkillRepository:
@@ -317,10 +389,20 @@ class FakeUserVocabProgressRepository:
     `019-srs-tracking-service`).
     """
 
-    def __init__(self, rows: list[UserVocabProgress] | None = None) -> None:
+    def __init__(
+        self,
+        rows: list[UserVocabProgress] | None = None,
+        course_by_vocab_item: dict[str, str] | None = None,
+    ) -> None:
         self._rows: dict[tuple[str, str], UserVocabProgress] = {
             (row.user_id, row.vocab_item_id): row for row in (rows or [])
         }
+        # Bolt 024: which course each vocab item belongs to, for the
+        # course-scoped due queries (unmapped items belong to no course).
+        self._course_by_vocab_item = dict(course_by_vocab_item or {})
+
+    def _in_course(self, row: UserVocabProgress, course_id: str | None) -> bool:
+        return course_id is None or self._course_by_vocab_item.get(row.vocab_item_id) == course_id
 
     async def get(self, user_id: str, vocab_item_id: str) -> UserVocabProgress | None:
         return self._rows.get((user_id, vocab_item_id))
@@ -328,18 +410,26 @@ class FakeUserVocabProgressRepository:
     async def upsert(self, progress: UserVocabProgress) -> None:
         self._rows[(progress.user_id, progress.vocab_item_id)] = progress
 
-    async def list_due(self, user_id: str, now: datetime, limit: int) -> list[UserVocabProgress]:
+    async def list_due(
+        self, user_id: str, now: datetime, limit: int, course_id: str | None = None
+    ) -> list[UserVocabProgress]:
         due = sorted(
             (
                 row
                 for row in self._rows.values()
-                if row.user_id == user_id and row.next_review_at <= now
+                if row.user_id == user_id
+                and row.next_review_at <= now
+                and self._in_course(row, course_id)
             ),
             key=lambda row: row.next_review_at,
         )
         return due[:limit]
 
-    async def count_due(self, user_id: str, now: datetime) -> int:
+    async def count_due(self, user_id: str, now: datetime, course_id: str | None = None) -> int:
         return sum(
-            1 for row in self._rows.values() if row.user_id == user_id and row.next_review_at <= now
+            1
+            for row in self._rows.values()
+            if row.user_id == user_id
+            and row.next_review_at <= now
+            and self._in_course(row, course_id)
         )

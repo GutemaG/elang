@@ -22,11 +22,17 @@ class User:
     """Aggregate Root. Invariants (enforced by domain services / repositories):
 
     1. `provider_identity` is globally unique across all users (sole dedup key).
-    2. `selected_language` and `daily_xp_target` are written once, at creation.
-       After creation, the *only* sanctioned mutation path for either is
+    2. `daily_xp_target` is written once, at creation; after creation the
+       *only* sanctioned mutation path is
        `UserPreferencesService.update_preferences` (ADR-7, bolt
        `013-user-preferences-service`) — no other code path, including any
-       authentication/re-authentication flow, may write them.
+       authentication/re-authentication flow, may write it.
+       `selected_language` is a mirror of the active course's learning
+       language (ADR-13, bolt `024-courses-service`): it and
+       `active_course_id` are written together, and only by
+       `activate_course_for_user` (signup resolving the onboarding pair, the
+       switch-course endpoint, and `update_preferences`' `language` field
+       all go through it). No authentication path may write either.
     3. `notification_enabled` carries no write-once restriction — it is
        freely mutable via the same `update_preferences` operation and is
        never null (existing rows were backfilled to `true`).
@@ -40,6 +46,10 @@ class User:
     daily_xp_target: DailyXPTarget
     notification_enabled: bool
     created_at: datetime
+    # Bolt 024 (ADR-12/ADR-13): the user's one active course; must reference
+    # an available course. Its learning language is mirrored in
+    # `selected_language`.
+    active_course_id: str
 
 
 @dataclass

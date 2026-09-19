@@ -20,7 +20,7 @@ from app.infrastructure.db.lesson_models import (
     LessonModel,
     SkillModel,
 )
-from tests.fakes import FakeTokenVerifier
+from tests.fakes import EN_AM_COURSE_ID, FakeTokenVerifier
 
 
 @pytest.fixture
@@ -35,7 +35,11 @@ def seeded_content(db_path: Path) -> dict[str, str]:
     with SyncSession(engine) as session:
         session.add(
             CategoryModel(
-                id="cat-1", title="Foundations & Greetings", subtitle="ሰላምታ", order_index=1
+                id="cat-1",
+                course_id=EN_AM_COURSE_ID,
+                title="Foundations & Greetings",
+                subtitle="ሰላምታ",
+                order_index=1,
             )
         )
         session.add_all(

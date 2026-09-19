@@ -27,10 +27,11 @@ async def update_my_preferences_endpoint(
     user: User = Depends(get_current_user),
     service: UserPreferencesService = Depends(get_user_preferences_service),
 ) -> UserPreferencesResponse:
-    """Stories 001/002: the one sanctioned post-creation mutation path for
-    `selected_language`/`daily_xp_target` (ADR-7), plus the notification
-    toggle. All fields optional; resubmitting the current value is a no-op
-    success. Invalid `language`/`daily_goal_minutes` values raise
+    """Stories 001/002: the sanctioned post-creation mutation path for
+    `daily_xp_target` (ADR-7), plus the notification toggle. A `language`
+    change is translated into activating the matching course (ADR-13). All
+    fields optional; resubmitting the current value is a no-op success.
+    Invalid `language`/`daily_goal_minutes` values raise
     `InvalidPreferenceValueError` (422).
     """
     updated = await update_user_preferences(
@@ -45,4 +46,5 @@ async def update_my_preferences_endpoint(
         selected_language=updated.selected_language.code,
         daily_xp_target=updated.daily_xp_target.xp_per_day,
         notification_enabled=updated.notification_enabled,
+        active_course_id=updated.active_course_id,
     )

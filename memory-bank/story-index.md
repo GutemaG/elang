@@ -1,9 +1,9 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 52
-- **Generated**: 52
-- **Completed**: 52
+- **Total stories**: 62
+- **Generated**: 62
+- **Completed**: 57
 - **Last updated**: 2026-09-20
 
 ---
@@ -135,12 +135,30 @@
 - [x] **001-dashboard-grouped-by-category** (categories-ui): Banner + skill path per category - Must - ✅ COMPLETED (bolt 023-categories-ui)
 - [x] **002-new-category-end-to-end-verification** (categories-ui): New-category lessons work fully - Must - ✅ COMPLETED (bolt 023-categories-ui)
 
+### 010-multi-language-courses
+
+#### Unit: 001-courses-service
+
+- [x] **001-course-model-and-migration** (courses-service): courses table + categories.course_id + data-preserving migration - Must - ✅ COMPLETED (bolt 024-courses-service)
+- [x] **002-active-course-per-user** (courses-service): Saved active course, signup with a language pair - Must - ✅ COMPLETED (bolt 024-courses-service)
+- [x] **003-course-list-api** (courses-service): List all courses, mark active - Must - ✅ COMPLETED (bolt 024-courses-service)
+- [x] **004-course-scoped-skill-tree-and-progress** (courses-service): Separate skills, crowns, unlocks per course - Must - ✅ COMPLETED (bolt 024-courses-service)
+- [x] **005-course-scoped-practice** (courses-service): Practice only from the active course - Must - ✅ COMPLETED (bolt 024-courses-service)
+- [ ] **006-seed-afaan-oromo-starter-courses** (courses-service): Three Afaan Oromo/Amharic starter courses - Must - 📋 GENERATED (bolt 025-course-content-seed)
+
+#### Unit: 002-courses-ui
+
+- [ ] **001-course-switcher-and-settings-picker** (courses-ui): Dashboard chip, picker, Settings picker - Must - 📋 GENERATED (bolt 026-course-picker-ui)
+- [ ] **002-onboarding-language-pair** (courses-ui): "I speak" and "I want to learn" in onboarding - Must - 📋 GENERATED (bolt 026-course-picker-ui)
+- [ ] **003-offline-per-course** (courses-ui): Cache and packs keyed by course - Must - 📋 GENERATED (bolt 027-course-offline-and-verification)
+- [ ] **004-multi-course-end-to-end-verification** (courses-ui): End-to-end and regression proof - Must - 📋 GENERATED (bolt 027-course-offline-and-verification)
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 4
+- **Generated**: 9
 - **In Progress**: 0
-- **Completed**: 52
+- **Completed**: 57
 - **Retired**: 1

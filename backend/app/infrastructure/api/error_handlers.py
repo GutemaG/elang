@@ -16,6 +16,8 @@ from fastapi.responses import JSONResponse
 
 from app.domain.exceptions import (
     AuthDomainError,
+    CourseNotAvailableError,
+    CourseNotFoundError,
     ExpiredTokenError,
     InvalidPendingSelectionError,
     InvalidPreferenceValueError,
@@ -30,6 +32,7 @@ from app.domain.lesson.exceptions import (
     InvalidCompletionError,
     InvalidCompletionTimestampError,
     InvalidPracticeCompletionError,
+    LessonCourseUnavailableError,
     LessonDomainError,
     LessonNotFoundError,
     SkillLockedError,
@@ -43,12 +46,15 @@ _AUTH_STATUS_BY_EXCEPTION: dict[type[AuthDomainError], int] = {
     MissingCredentialsError: 401,
     InvalidSessionError: 401,
     InvalidPreferenceValueError: 422,
+    CourseNotFoundError: 404,
+    CourseNotAvailableError: 422,
 }
 _AUTH_DEFAULT_STATUS = 400
 
 _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     LessonNotFoundError: 404,
     SkillLockedError: 403,
+    LessonCourseUnavailableError: 403,
     BeansExhaustedError: 422,
     InvalidCompletionError: 422,
     InsufficientAmoleError: 422,

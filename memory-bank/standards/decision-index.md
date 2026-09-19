@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-19T20:45:00Z
-total_decisions: 11
+last_updated: 2026-09-20T15:10:00Z
+total_decisions: 13
 ---
 
 # Decision Index
@@ -17,6 +17,22 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-13: `User.selected_language` becomes a mirror of the active course, written only by `ActivateCourse` (amends ADR-7)
+- **Status**: accepted
+- **Date**: 2026-09-20
+- **Bolt**: 024-courses-service (001-courses-service)
+- **Path**: `bolts/024-courses-service/adr-13-selected-language-as-mirror-of-active-course.md`
+- **Summary**: ADR-7 allowed `selected_language` to change only via `UpdateUserPreferences`; with courses, the learning language is determined by the active course and the shipped client still reads `selected_language`. Decided: the column stays as a mirror of the active course's learning language; a single `ActivateCourse` operation (used by signup, the switch endpoint and `UpdateUserPreferences`) is its only writer, in one transaction with `active_course_id`; the from-language is derived, not stored.
+- **Read when**: Modifying `User`, signup/onboarding, `UpdateUserPreferences`, `selected_language`, or adding any other way to change a user's language or course (must go through `ActivateCourse`).
+
+### ADR-12: Courses as the top content level: explicit `course_id` on categories and vocab, active course on `users`, additive skill-tree envelope, lessons accessed by their own course
+- **Status**: accepted
+- **Date**: 2026-09-20
+- **Bolt**: 024-courses-service (001-courses-service)
+- **Path**: `bolts/024-courses-service/adr-12-courses-as-top-content-level.md`
+- **Summary**: The app had one implicit course, but learners need any (learning, from) language pair. Decided: a `courses` table above categories; explicit `course_id` on `categories` and `vocab_items`; `users.active_course_id`; the skill-tree response stays additive (scoped to the active course, gains a `course` object); a lesson is startable/completable by its own course being available, not the active one, so queued offline completions survive a switch; progress separates per course through content ownership.
+- **Read when**: Adding a language or course, changing the skill-tree, Practice, or lesson-access rules, working on offline caching or sync across courses, or anything that assumes a single global course.
 
 ### ADR-11: Categories as a first-class level: per-category skill ordering, additive skill-tree envelope, one shared `SkillPath` rule
 - **Status**: accepted
@@ -56,7 +72,7 @@ Use this to find relevant prior decisions when working on related features.
 - **Bolt**: 013-user-preferences-service (001-user-preferences-service)
 - **Path**: `bolts/013-user-preferences-service/adr-7-user-preferences-write-once-exception.md`
 - **Summary**: `User`'s "written exactly once, never overwritten by a later authentication" invariant was written to prevent an auth-flow bug, not to block a deliberate user-initiated settings change. Decided: the invariant is amended, not removed — these fields are still write-once at creation, and after creation the only sanctioned mutation path is the new `UpdateUserPreferences` operation; no auth/re-authentication path may ever write them.
-- **Read when**: Modifying `User`/`entities.py`, any authentication or re-authentication flow that touches `selected_language`/`daily_xp_target`, or adding any further legitimate way to change these fields (must extend this ADR's exception list explicitly, not bypass it silently).
+- **Read when**: Modifying `User`/`entities.py`, any authentication or re-authentication flow that touches `selected_language`/`daily_xp_target`, or adding any further legitimate way to change these fields (must extend this ADR's exception list explicitly, not bypass it silently). Amended by ADR-13 for `selected_language`.
 
 ### ADR-6: Offline sync replays the existing per-completion endpoint; no batch-sync endpoint
 - **Status**: accepted

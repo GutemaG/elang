@@ -25,3 +25,4 @@ class UserPreferencesResponse(BaseModel):
     selected_language: str
     daily_xp_target: int
     notification_enabled: bool
+    active_course_id: str

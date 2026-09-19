@@ -12,6 +12,7 @@ from app.domain.lesson.entities import Exercise, Lesson, UserVocabProgress, Voca
 from app.domain.lesson.value_objects import Choice as ChoiceVO
 from app.domain.lesson.value_objects import ChoiceAnswerKey, ExerciseType, MultipleChoiceContent
 from tests.fakes import (
+    EN_AM_COURSE_ID,
     FakeLessonRepositoryWithSkillIndex,
     FakeUserVocabProgressRepository,
     FakeVocabItemRepository,
@@ -49,7 +50,15 @@ class TestGetDueItems:
             ]
         )
         vocab_item_repo = FakeVocabItemRepository(
-            [VocabItem(id="vocab-hello", word="ሰላም", translation="Hello", created_at=_NOW)]
+            [
+                VocabItem(
+                    id="vocab-hello",
+                    word="ሰላም",
+                    translation="Hello",
+                    created_at=_NOW,
+                    course_id=EN_AM_COURSE_ID,
+                )
+            ]
         )
         vocab_progress_repo = FakeUserVocabProgressRepository(
             [
@@ -97,7 +106,15 @@ class TestGetDueItems:
         # crash the endpoint -- just excluded, per its own docstring.
         lesson_repo = FakeLessonRepositoryWithSkillIndex([])  # no exercises at all
         vocab_item_repo = FakeVocabItemRepository(
-            [VocabItem(id="vocab-hello", word="ሰላም", translation="Hello", created_at=_NOW)]
+            [
+                VocabItem(
+                    id="vocab-hello",
+                    word="ሰላም",
+                    translation="Hello",
+                    created_at=_NOW,
+                    course_id=EN_AM_COURSE_ID,
+                )
+            ]
         )
         vocab_progress_repo = FakeUserVocabProgressRepository(
             [
@@ -143,9 +160,19 @@ class TestGetDueCount:
         )
         vocab_item_repo = FakeVocabItemRepository(
             [
-                VocabItem(id="vocab-hello", word="ሰላም", translation="Hello", created_at=_NOW),
                 VocabItem(
-                    id="vocab-goodbye", word="ደህና ሁን", translation="Goodbye", created_at=_NOW
+                    id="vocab-hello",
+                    word="ሰላም",
+                    translation="Hello",
+                    created_at=_NOW,
+                    course_id=EN_AM_COURSE_ID,
+                ),
+                VocabItem(
+                    id="vocab-goodbye",
+                    word="ደህና ሁን",
+                    translation="Goodbye",
+                    created_at=_NOW,
+                    course_id=EN_AM_COURSE_ID,
                 ),
             ]
         )

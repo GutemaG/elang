@@ -19,6 +19,7 @@ from app.domain.lesson.value_objects import (
     MultipleChoiceContent,
 )
 from tests.fakes import (
+    EN_AM_COURSE_ID,
     FakeCategoryRepository,
     FakeLessonAttemptRepository,
     FakeLessonRepository,
@@ -106,7 +107,15 @@ class TestGetSkillTree:
             FakeLessonAttemptRepository(),
             FakeLessonRepositoryWithSkillIndex(),
             FakeCategoryRepository(
-                [Category(id="cat-1", title="Foundations", subtitle="ሰላምታ", order_index=1)]
+                [
+                    Category(
+                        id="cat-1",
+                        title="Foundations",
+                        subtitle="ሰላምታ",
+                        order_index=1,
+                        course_id=EN_AM_COURSE_ID,
+                    )
+                ]
             ),
             _NOW,
         )

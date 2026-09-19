@@ -47,6 +47,8 @@ class PendingSelectionInput:
 
     language: str
     daily_goal_minutes: int
+    # Bolt 024: the language the learner speaks; absent means `en`.
+    from_language: str | None = None
 
 
 def _log_auth_success(result: AuthResult, auth_provider: AuthProvider) -> None:
@@ -119,6 +121,7 @@ async def authenticate_with_google(
             id_token,
             pending_selection.language if pending_selection else None,
             pending_selection.daily_goal_minutes if pending_selection else None,
+            pending_selection.from_language if pending_selection else None,
         )
     except AuthDomainError as exc:
         _log_auth_rejected(AuthProvider.GOOGLE, exc)
@@ -140,6 +143,7 @@ async def authenticate_with_apple(
             identity_token,
             pending_selection.language if pending_selection else None,
             pending_selection.daily_goal_minutes if pending_selection else None,
+            pending_selection.from_language if pending_selection else None,
         )
     except AuthDomainError as exc:
         _log_auth_rejected(AuthProvider.APPLE, exc)

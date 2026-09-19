@@ -56,6 +56,7 @@ def _user_model_to_domain(model: UserModel) -> User:
         daily_xp_target=DailyXPTarget(xp_per_day=model.daily_xp_target),
         notification_enabled=model.notification_enabled,
         created_at=_ensure_utc(model.created_at),
+        active_course_id=model.active_course_id,
     )
 
 
@@ -68,6 +69,7 @@ def _user_domain_to_model(user: User) -> UserModel:
         daily_xp_target=user.daily_xp_target.xp_per_day,
         notification_enabled=user.notification_enabled,
         created_at=user.created_at,
+        active_course_id=user.active_course_id,
     )
 
 
@@ -102,13 +104,16 @@ class SqlAlchemyUserRepository:
 
     async def update(self, user: User) -> User:
         """Bolt 013: persists the one sanctioned post-creation change to
-        `selected_language`/`daily_xp_target` (ADR-7), plus
-        `notification_enabled`. `user.id` must already exist.
+        `daily_xp_target` (ADR-7), plus `notification_enabled`. Bolt 024
+        (ADR-13): also the active course and its `selected_language`
+        mirror, which the domain only ever changes together through
+        `activate_course_for_user`. `user.id` must already exist.
         """
         stmt = select(UserModel).where(UserModel.id == user.id)
         result = await self._session.execute(stmt)
         model = result.scalar_one()
         model.selected_language = user.selected_language.code
+        model.active_course_id = user.active_course_id
         model.daily_xp_target = user.daily_xp_target.xp_per_day
         model.notification_enabled = user.notification_enabled
         await self._session.flush()

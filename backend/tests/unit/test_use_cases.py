@@ -25,7 +25,12 @@ from app.domain.services import (
     OnboardingAttachmentPolicy,
     SessionValidationService,
 )
-from tests.fakes import FakeAuthSessionRepository, FakeTokenVerifier, FakeUserRepository
+from tests.fakes import (
+    FakeAuthSessionRepository,
+    FakeCourseRepository,
+    FakeTokenVerifier,
+    FakeUserRepository,
+)
 
 
 def _make_service(
@@ -37,6 +42,7 @@ def _make_service(
         user_repo=FakeUserRepository(),
         session_repo=FakeAuthSessionRepository(),
         onboarding_policy=OnboardingAttachmentPolicy(),
+        course_repo=FakeCourseRepository(),
     )
 
 

@@ -36,6 +36,14 @@ class SkillLockedError(LessonDomainError):
     error_code = "skill_locked"
 
 
+class LessonCourseUnavailableError(LessonDomainError):
+    """The lesson belongs to a course that is not `available` (bolt
+    `024-courses-service`, ADR-12), so it cannot be started or completed.
+    """
+
+    error_code = "course_not_available"
+
+
 class BeansExhaustedError(LessonDomainError):
     """A completion's implied wrong-answer count exceeds the account's
     actual beans balance at attempt start (ADR-5, Decision 1) -- the

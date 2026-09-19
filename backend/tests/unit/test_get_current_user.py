@@ -29,7 +29,7 @@ from app.domain.value_objects import (
     SessionToken,
 )
 from app.infrastructure.api.dependencies import get_current_user
-from tests.fakes import FakeAuthSessionRepository, FakeUserRepository
+from tests.fakes import EN_AM_COURSE_ID, FakeAuthSessionRepository, FakeUserRepository
 
 TOKEN_VALUE = "live-token-value"
 
@@ -44,6 +44,7 @@ async def _build_service_with_live_session() -> SessionValidationService:
         daily_xp_target=DailyXPTarget(xp_per_day=40),
         notification_enabled=True,
         created_at=datetime.now(UTC),
+        active_course_id=EN_AM_COURSE_ID,
     )
     user_repo = FakeUserRepository([user])
     session_repo = FakeAuthSessionRepository()

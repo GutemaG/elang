@@ -22,6 +22,7 @@ from app.domain.services import (
     SessionValidationService,
     UserPreferencesService,
 )
+from app.infrastructure.db.lesson_repositories import SqlAlchemyCourseRepository
 from app.infrastructure.db.repositories import (
     SqlAlchemyAuthSessionRepository,
     SqlAlchemyUserRepository,
@@ -41,6 +42,7 @@ async def get_authentication_service(
         user_repo=user_repo,
         session_repo=session_repo,
         onboarding_policy=OnboardingAttachmentPolicy(),
+        course_repo=SqlAlchemyCourseRepository(session),
         session_ttl=timedelta(days=settings.session_ttl_days),
     )
 
@@ -50,8 +52,16 @@ async def get_user_preferences_service(
 ) -> UserPreferencesService:
     user_repo = SqlAlchemyUserRepository(session)
     return UserPreferencesService(
-        user_repo=user_repo, onboarding_policy=OnboardingAttachmentPolicy()
+        user_repo=user_repo,
+        onboarding_policy=OnboardingAttachmentPolicy(),
+        course_repo=SqlAlchemyCourseRepository(session),
     )
+
+
+async def get_user_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> SqlAlchemyUserRepository:
+    return SqlAlchemyUserRepository(session)
 
 
 async def get_session_validation_service(
