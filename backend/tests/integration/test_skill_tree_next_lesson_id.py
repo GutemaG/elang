@@ -22,7 +22,9 @@ from tests.fakes import FakeTokenVerifier
 def seeded_content(db_path: Path) -> dict[str, str]:
     engine = create_engine(f"sqlite:///{db_path}")
     with SyncSession(engine) as session:
-        session.add(SkillModel(id="skill-a", title="Greetings & Basics", order_index=1))
+        session.add(
+            SkillModel(category_id="cat-1", id="skill-a", title="Greetings & Basics", order_index=1)
+        )
         session.add_all(
             [
                 LessonModel(id="lesson-a1", skill_id="skill-a", title="Hello", order_index=1),

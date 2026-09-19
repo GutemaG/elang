@@ -12,6 +12,7 @@ from typing import Protocol
 
 from app.domain.lesson.entities import (
     AmoleTransaction,
+    Category,
     Exercise,
     Lesson,
     LessonAttempt,
@@ -29,6 +30,14 @@ class SkillRepository(Protocol):
     """Entity: `Skill`."""
 
     async def list_all(self) -> list[Skill]: ...
+
+
+class CategoryRepository(Protocol):
+    """Entity: `Category` (bolt `021-categories-service`)."""
+
+    async def list_all(self) -> list[Category]:
+        """Every category, ordered by `order_index`."""
+        ...
 
 
 class LessonRepository(Protocol):

@@ -38,15 +38,37 @@ def _uuid_str() -> str:
     return str(uuid.uuid4())
 
 
+class CategoryModel(Base):
+    """Backs the `Category` aggregate (bolt `021-categories-service`,
+    ADR-11): a named group of skills, e.g. "Family & People".
+    """
+
+    __tablename__ = "categories"
+    __table_args__ = (UniqueConstraint("order_index", name="uq_categories_order_index"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    subtitle: Mapped[str] = mapped_column(String(255), nullable=False)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
 class SkillModel(Base):
-    """Backs the `Skill` aggregate. A node in the (currently linear)
-    skill tree.
+    """Backs the `Skill` aggregate. A node on its category's linear skill
+    path; `order_index` is its position within that category (ADR-11).
     """
 
     __tablename__ = "skills"
-    __table_args__ = (UniqueConstraint("order_index", name="uq_skills_order_index"),)
+    __table_args__ = (
+        UniqueConstraint("category_id", "order_index", name="uq_skills_category_order_index"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
+    category_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("categories.id"), nullable=False, index=True
+    )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     order_index: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -197,9 +219,7 @@ class AmoleTransactionModel(Base):
 
     __tablename__ = "amole_transactions"
     __table_args__ = (
-        UniqueConstraint(
-            "source", "reference_id", name="uq_amole_transactions_source_reference"
-        ),
+        UniqueConstraint("source", "reference_id", name="uq_amole_transactions_source_reference"),
         CheckConstraint(
             "source IN ('wallet_created', 'migration_backfill', 'lesson_completion', "
             "'perfect_lesson', 'streak_milestone_7', 'streak_milestone_30', 'bean_refill', "

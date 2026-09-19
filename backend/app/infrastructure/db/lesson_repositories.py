@@ -20,6 +20,7 @@ from sqlalchemy.orm import selectinload
 
 from app.domain.lesson.entities import (
     AmoleTransaction,
+    Category,
     Exercise,
     Lesson,
     LessonAttempt,
@@ -47,6 +48,7 @@ from app.domain.lesson.value_objects import (
 from app.domain.lesson.value_objects import Choice as ChoiceVO
 from app.infrastructure.db.lesson_models import (
     AmoleTransactionModel,
+    CategoryModel,
     ExerciseModel,
     LessonAttemptModel,
     LessonModel,
@@ -115,7 +117,21 @@ def _exercise_model_to_domain(model: ExerciseModel) -> Exercise:
 
 
 def _skill_model_to_domain(model: SkillModel) -> Skill:
-    return Skill(id=model.id, title=model.title, order_index=model.order_index)
+    return Skill(
+        id=model.id,
+        title=model.title,
+        order_index=model.order_index,
+        category_id=model.category_id,
+    )
+
+
+def _category_model_to_domain(model: CategoryModel) -> Category:
+    return Category(
+        id=model.id,
+        title=model.title,
+        subtitle=model.subtitle,
+        order_index=model.order_index,
+    )
 
 
 def _lesson_model_to_domain(model: LessonModel) -> Lesson:
@@ -198,9 +214,21 @@ class SqlAlchemySkillRepository:
         self._session = session
 
     async def list_all(self) -> list[Skill]:
-        stmt = select(SkillModel).order_by(SkillModel.order_index)
+        stmt = select(SkillModel).order_by(SkillModel.category_id, SkillModel.order_index)
         result = await self._session.execute(stmt)
         return [_skill_model_to_domain(m) for m in result.scalars().all()]
+
+
+class SqlAlchemyCategoryRepository:
+    """Implements `app.domain.lesson.repositories.CategoryRepository`."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def list_all(self) -> list[Category]:
+        stmt = select(CategoryModel).order_by(CategoryModel.order_index)
+        result = await self._session.execute(stmt)
+        return [_category_model_to_domain(m) for m in result.scalars().all()]
 
 
 class SqlAlchemyLessonRepository:

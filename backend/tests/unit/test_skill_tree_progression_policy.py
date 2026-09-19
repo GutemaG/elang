@@ -16,7 +16,7 @@ from app.domain.lesson.value_objects import SkillState
 
 
 def _skill(id_: str, order_index: int) -> Skill:
-    return Skill(id=id_, title=f"Skill {order_index}", order_index=order_index)
+    return Skill(category_id="cat-1", id=id_, title=f"Skill {order_index}", order_index=order_index)
 
 
 class TestSkillTreeProgressionPolicyNewUserBootstrap:

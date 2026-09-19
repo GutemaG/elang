@@ -32,8 +32,10 @@ def seeded_content(db_path: Path) -> dict[str, str]:
     with SyncSession(engine) as session:
         session.add_all(
             [
-                SkillModel(id="skill-a", title="Greetings & Basics", order_index=1),
-                SkillModel(id="skill-b", title="Food & Drink", order_index=2),
+                SkillModel(
+                    category_id="cat-1", id="skill-a", title="Greetings & Basics", order_index=1
+                ),
+                SkillModel(category_id="cat-1", id="skill-b", title="Food & Drink", order_index=2),
             ]
         )
         session.add(

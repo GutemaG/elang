@@ -40,8 +40,8 @@ class TestSqlAlchemySkillRepository:
     ) -> None:
         db_session.add_all(
             [
-                SkillModel(id="s2", title="Food & Drink", order_index=2),
-                SkillModel(id="s1", title="Greetings & Basics", order_index=1),
+                SkillModel(category_id="cat-1", id="s2", title="Food & Drink", order_index=2),
+                SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1),
             ]
         )
         await db_session.commit()
@@ -63,7 +63,7 @@ class TestSqlAlchemySkillRepository:
         # Exercises SkillModel's `default=_uuid_str` column factory --
         # every other test explicitly sets `id` (deterministic seed content
         # or a fixed test id), so this covers the fallback path directly.
-        db_session.add(SkillModel(title="Auto-ID Skill", order_index=99))
+        db_session.add(SkillModel(category_id="cat-1", title="Auto-ID Skill", order_index=99))
         await db_session.commit()
 
         repo = SqlAlchemySkillRepository(db_session)
@@ -83,7 +83,9 @@ class TestSqlAlchemyLessonRepository:
     async def test_get_by_id_loads_lesson_with_all_3_exercise_types_ordered(
         self, db_session: AsyncSession
     ) -> None:
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         db_session.add(LessonModel(id="l1", skill_id="s1", title="Hello & Goodbye", order_index=1))
         db_session.add_all(
             [
@@ -165,7 +167,9 @@ class TestSqlAlchemyLessonRepository:
     ) -> None:
         # 004-match-pairs-exercise-type (bolt 011): content/answer_key stay
         # separate, mirroring multiple_choice -- not one self-revealing blob.
-        db_session.add(SkillModel(id="s1", title="Food & Drink", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Food & Drink", order_index=1)
+        )
         db_session.add(LessonModel(id="l1", skill_id="s1", title="Coffee & Tea", order_index=1))
         db_session.add(
             ExerciseModel(
@@ -215,7 +219,9 @@ class TestSqlAlchemyUserSkillProgressRepository:
                 daily_xp_target=40,
             )
         )
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         db_session.add(
             UserSkillProgressModel(
                 id="p1",

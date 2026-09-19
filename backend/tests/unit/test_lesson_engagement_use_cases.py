@@ -107,8 +107,8 @@ def _repos(lessons: list[Lesson], skills: list[Skill]):
 
 
 _SKILLS = [
-    Skill(id="skill-a", title="Greetings & Basics", order_index=1),
-    Skill(id="skill-b", title="Food & Drink", order_index=2),
+    Skill(category_id="cat-1", id="skill-a", title="Greetings & Basics", order_index=1),
+    Skill(category_id="cat-1", id="skill-b", title="Food & Drink", order_index=2),
 ]
 _LESSONS = [_lesson("lesson-a1", "skill-a", 1)]
 

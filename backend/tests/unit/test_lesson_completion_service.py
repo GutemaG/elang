@@ -20,8 +20,8 @@ _NOW = datetime(2026, 9, 16, 12, 0, tzinfo=UTC)
 _TODAY = date(2026, 9, 16)
 
 _SKILLS = [
-    Skill(id="skill-a", title="Greetings & Basics", order_index=1),
-    Skill(id="skill-b", title="Food & Drink", order_index=2),
+    Skill(category_id="cat-1", id="skill-a", title="Greetings & Basics", order_index=1),
+    Skill(category_id="cat-1", id="skill-b", title="Food & Drink", order_index=2),
 ]
 
 

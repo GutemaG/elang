@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
+    CategoryRepository,
     LessonAttemptRepository,
     LessonRepository,
     PracticeAttemptRepository,
@@ -24,6 +25,7 @@ from app.domain.lesson.repositories import (
 )
 from app.infrastructure.db.lesson_repositories import (
     SqlAlchemyAmoleTransactionRepository,
+    SqlAlchemyCategoryRepository,
     SqlAlchemyLessonAttemptRepository,
     SqlAlchemyLessonRepository,
     SqlAlchemyPracticeAttemptRepository,
@@ -41,6 +43,12 @@ async def get_skill_repository(
     session: AsyncSession = Depends(get_db_session),
 ) -> SkillRepository:
     return SqlAlchemySkillRepository(session)
+
+
+async def get_category_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> CategoryRepository:
+    return SqlAlchemyCategoryRepository(session)
 
 
 async def get_lesson_repository(

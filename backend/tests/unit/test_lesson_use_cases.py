@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 import pytest
 
 from app.application.lesson_use_cases import get_lesson_content, get_skill_tree
-from app.domain.lesson.entities import Exercise, Lesson, Skill, UserSkillProgress
+from app.domain.lesson.entities import Category, Exercise, Lesson, Skill, UserSkillProgress
 from app.domain.lesson.exceptions import LessonNotFoundError, SkillLockedError
 from app.domain.lesson.value_objects import Choice as ChoiceVO
 from app.domain.lesson.value_objects import (
@@ -19,6 +19,7 @@ from app.domain.lesson.value_objects import (
     MultipleChoiceContent,
 )
 from tests.fakes import (
+    FakeCategoryRepository,
     FakeLessonAttemptRepository,
     FakeLessonRepository,
     FakeLessonRepositoryWithSkillIndex,
@@ -44,6 +45,7 @@ async def _get_skill_tree(
         FakeUserStreakRepository(),
         FakeLessonAttemptRepository(),
         FakeLessonRepositoryWithSkillIndex(),
+        FakeCategoryRepository(),
         _NOW,
     )
 
@@ -65,8 +67,8 @@ def _mc_exercise(id_: str, lesson_id: str, order_index: int) -> Exercise:
 class TestGetSkillTree:
     async def test_returns_computed_states_for_the_given_user(self) -> None:
         skills = [
-            Skill(id="s1", title="Greetings", order_index=1),
-            Skill(id="s2", title="Food", order_index=2),
+            Skill(category_id="cat-1", id="s1", title="Greetings", order_index=1),
+            Skill(category_id="cat-1", id="s2", title="Food", order_index=2),
         ]
         skill_repo = FakeSkillRepository(skills)
         progress_repo = FakeUserSkillProgressRepository([])
@@ -79,7 +81,7 @@ class TestGetSkillTree:
         assert entries[1].state.value == "locked"
 
     async def test_only_considers_progress_rows_for_the_requesting_user(self) -> None:
-        skills = [Skill(id="s1", title="Greetings", order_index=1)]
+        skills = [Skill(category_id="cat-1", id="s1", title="Greetings", order_index=1)]
         skill_repo = FakeSkillRepository(skills)
         progress_repo = FakeUserSkillProgressRepository([])
 
@@ -91,7 +93,7 @@ class TestGetSkillTree:
         assert summary.entries[0].state.value == "active"
 
     async def test_summary_includes_beans_streak_and_lifetime_xp_hud_stats(self) -> None:
-        skills = [Skill(id="s1", title="Greetings", order_index=1)]
+        skills = [Skill(category_id="cat-1", id="s1", title="Greetings", order_index=1)]
         skill_repo = FakeSkillRepository(skills)
         progress_repo = FakeUserSkillProgressRepository([])
 
@@ -103,6 +105,9 @@ class TestGetSkillTree:
             FakeUserStreakRepository(),
             FakeLessonAttemptRepository(),
             FakeLessonRepositoryWithSkillIndex(),
+            FakeCategoryRepository(
+                [Category(id="cat-1", title="Foundations", subtitle="ሰላምታ", order_index=1)]
+            ),
             _NOW,
         )
 
@@ -111,11 +116,13 @@ class TestGetSkillTree:
         assert summary.beans == summary.beans_max
         assert summary.streak_count == 0
         assert summary.total_xp == 0
-        assert summary.unit_title
-        assert summary.unit_subtitle
+        # Deprecated fields derive from the first category (ADR-11).
+        assert summary.unit_title == "Foundations"
+        assert summary.unit_subtitle == "ሰላምታ"
+        assert [c.id for c in summary.categories] == ["cat-1"]
 
     async def test_next_lesson_id_skips_lessons_already_completed_this_cycle(self) -> None:
-        skills = [Skill(id="s1", title="Greetings", order_index=1)]
+        skills = [Skill(category_id="cat-1", id="s1", title="Greetings", order_index=1)]
         skill_repo = FakeSkillRepository(skills)
         progress_repo = FakeUserSkillProgressRepository(
             [
@@ -144,6 +151,7 @@ class TestGetSkillTree:
             FakeUserStreakRepository(),
             FakeLessonAttemptRepository(),
             lesson_repo,
+            FakeCategoryRepository(),
             _NOW,
         )
 
@@ -152,7 +160,7 @@ class TestGetSkillTree:
 
 class TestGetLessonContent:
     async def test_returns_the_lesson_when_its_skill_is_active(self) -> None:
-        skills = [Skill(id="s1", title="Greetings", order_index=1)]
+        skills = [Skill(category_id="cat-1", id="s1", title="Greetings", order_index=1)]
         lesson = Lesson(
             id="l1",
             skill_id="s1",
@@ -185,8 +193,8 @@ class TestGetLessonContent:
         # Requesting its lesson directly by ID must still be denied (story
         # 001's edge case).
         skills = [
-            Skill(id="s1", title="Greetings", order_index=1),
-            Skill(id="s2", title="Food", order_index=2),
+            Skill(category_id="cat-1", id="s1", title="Greetings", order_index=1),
+            Skill(category_id="cat-1", id="s2", title="Food", order_index=2),
         ]
         lesson = Lesson(id="l2", skill_id="s2", title="Coffee & Tea", order_index=1, exercises=[])
         lesson_repo = FakeLessonRepository([lesson])

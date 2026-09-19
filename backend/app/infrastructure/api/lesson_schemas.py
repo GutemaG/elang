@@ -22,10 +22,20 @@ class ChoiceResponse(BaseModel):
     text: str
 
 
+class CategoryResponse(BaseModel):
+    id: str
+    title: str
+    subtitle: str
+    order_index: int
+
+
 class SkillTreeEntryResponse(BaseModel):
     id: str
     title: str
     order_index: int
+    # bolt 021 (ADR-11): the category this skill belongs to; `order_index`
+    # above is its position within that category.
+    category_id: str
     state: Literal["locked", "active", "completed"]
     crown_level: int
     # bolt 007: the lesson to start when this node is tapped -- the first
@@ -40,8 +50,11 @@ class SkillTreeEntryResponse(BaseModel):
 
 
 class SkillTreeResponse(BaseModel):
+    # Deprecated (ADR-11): the first category's title/subtitle, kept so a
+    # client that still reads them keeps working. Use `categories`.
     unit_title: str
     unit_subtitle: str
+    categories: list[CategoryResponse]
     skills: list[SkillTreeEntryResponse]
     streak_count: int
     beans: int

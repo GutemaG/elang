@@ -9,11 +9,18 @@ the documented audio placeholder scheme.
 
 from __future__ import annotations
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.db.lesson_models import ExerciseModel, LessonModel, SkillModel
-from app.infrastructure.db.seed_lesson_content import CURRICULUM, seed
+from app.infrastructure.db.lesson_models import (
+    CategoryModel,
+    ExerciseModel,
+    LessonModel,
+    SkillModel,
+)
+from app.infrastructure.db.seed_lesson_content import CATEGORIES, CURRICULUM, _content_id, seed
 
 
 class TestSeedIdempotency:
@@ -50,7 +57,9 @@ class TestSeedIdempotency:
             await seed(db_session)
             await db_session.commit()
 
-            stmt = select(SkillModel).where(SkillModel.order_index == 1)
+            # Per-category ordering (ADR-11): several skills share order_index 1,
+            # so look the edited skill up by its deterministic id instead.
+            stmt = select(SkillModel).where(SkillModel.id == _content_id(CURRICULUM[0]["slug"]))
             result = await db_session.execute(stmt)
             skill = result.scalar_one()
             assert skill.title == "Edited Title For Idempotency Test"
@@ -198,3 +207,54 @@ class TestMatchPairsSeedContent:
         for left_id, right_id in correct_pairs:
             assert left_id in left_ids
             assert right_id in right_ids
+
+
+class TestSeedCategories:
+    """Bolt 021 (ADR-11): every seeded skill belongs to a seeded category,
+    and re-running the seed never duplicates categories.
+    """
+
+    async def test_every_seeded_skill_belongs_to_a_seeded_category(
+        self, db_session: AsyncSession
+    ) -> None:
+        await seed(db_session)
+        await db_session.commit()
+
+        category_ids = {c.id for c in (await db_session.execute(select(CategoryModel))).scalars()}
+        skills = (await db_session.execute(select(SkillModel))).scalars().all()
+
+        assert category_ids
+        assert skills
+        assert all(s.category_id in category_ids for s in skills)
+
+    async def test_running_seed_twice_produces_no_duplicate_categories(
+        self, db_session: AsyncSession
+    ) -> None:
+        await seed(db_session)
+        await db_session.commit()
+        first = len((await db_session.execute(select(CategoryModel))).scalars().all())
+
+        await seed(db_session)
+        await db_session.commit()
+        second = len((await db_session.execute(select(CategoryModel))).scalars().all())
+
+        assert first == second == len(CATEGORIES)
+
+    async def test_foundations_category_id_matches_the_one_the_migration_inserts(
+        self, db_session: AsyncSession
+    ) -> None:
+        # The migration and the seed derive this id independently (the
+        # migration must not import app code); if they ever diverge, the
+        # seed would create a second "Foundations" instead of updating it.
+        await seed(db_session)
+        await db_session.commit()
+
+        migration_id = str(
+            uuid.uuid5(
+                uuid.uuid5(uuid.NAMESPACE_DNS, "buna.app/lesson-content"),
+                "category:foundations-and-greetings",
+            )
+        )
+        category = await db_session.get(CategoryModel, migration_id)
+        assert category is not None
+        assert category.title == "Foundations & Greetings"

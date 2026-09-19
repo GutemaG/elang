@@ -14,7 +14,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as SyncSession
 
-from app.infrastructure.db.lesson_models import ExerciseModel, LessonModel, SkillModel
+from app.infrastructure.db.lesson_models import (
+    CategoryModel,
+    ExerciseModel,
+    LessonModel,
+    SkillModel,
+)
 from tests.fakes import FakeTokenVerifier
 
 
@@ -28,10 +33,17 @@ def seeded_content(db_path: Path) -> dict[str, str]:
     """
     engine = create_engine(f"sqlite:///{db_path}")
     with SyncSession(engine) as session:
+        session.add(
+            CategoryModel(
+                id="cat-1", title="Foundations & Greetings", subtitle="ሰላምታ", order_index=1
+            )
+        )
         session.add_all(
             [
-                SkillModel(id="skill-a", title="Greetings & Basics", order_index=1),
-                SkillModel(id="skill-b", title="Food & Drink", order_index=2),
+                SkillModel(
+                    category_id="cat-1", id="skill-a", title="Greetings & Basics", order_index=1
+                ),
+                SkillModel(category_id="cat-1", id="skill-b", title="Food & Drink", order_index=2),
             ]
         )
         session.add_all(
@@ -271,7 +283,9 @@ def seeded_match_pairs_content(db_path: Path) -> dict[str, str]:
     """
     engine = create_engine(f"sqlite:///{db_path}")
     with SyncSession(engine) as session:
-        session.add(SkillModel(id="skill-mp", title="Food & Drink", order_index=1))
+        session.add(
+            SkillModel(category_id="cat-1", id="skill-mp", title="Food & Drink", order_index=1)
+        )
         session.add(
             LessonModel(id="lesson-mp", skill_id="skill-mp", title="Coffee & Tea", order_index=1)
         )

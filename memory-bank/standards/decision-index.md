@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-17T21:45:00Z
-total_decisions: 10
+last_updated: 2026-09-19T20:45:00Z
+total_decisions: 11
 ---
 
 # Decision Index
@@ -17,6 +17,14 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-11: Categories as a first-class level: per-category skill ordering, additive skill-tree envelope, one shared `SkillPath` rule
+- **Status**: accepted
+- **Date**: 2026-09-19
+- **Bolt**: 021-categories-service (001-categories-service)
+- **Path**: `bolts/021-categories-service/adr-11-categories-additive-envelope-and-per-category-order.md`
+- **Summary**: The curriculum was a flat, globally ordered skill list under a hardcoded "Unit 1". Decided: skill `order_index` becomes unique per category; `GET /skill-tree` gains `categories` and per-skill `category_id` additively (keeping `unit_title`/`unit_subtitle` as deprecated, derived from the first category) so the shipped client keeps working; a pure `SkillPath` value object is the single definition of "first / next skill in a category" for the tree read, access check and completion unlock. Every category is open; progression is linear only within one.
+- **Read when**: Modifying skill ordering/progression, `SkillTreeProgressionPolicy`/`LessonCompletionService`, the skill-tree response shape, or adding anything that assumes a single global skill chain.
 
 ### ADR-10: Widen `complete_lesson`'s request contract to carry missed-exercise data, amending ADR-5's server-bounded-ledger boundary
 - **Status**: accepted

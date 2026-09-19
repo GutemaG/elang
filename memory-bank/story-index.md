@@ -1,10 +1,10 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 46
-- **Generated**: 46
-- **Completed**: 42
-- **Last updated**: 2026-09-18
+- **Total stories**: 52
+- **Generated**: 52
+- **Completed**: 45
+- **Last updated**: 2026-09-19
 
 ---
 
@@ -121,12 +121,26 @@
 - [x] **001-practice-entry-point-and-due-count** (practice-ui): Due-count entry point, disabled (not hidden) offline - Must - ✅ COMPLETED (bolt 020-practice-ui)
 - [x] **002-practice-session-assembly-and-completion** (practice-ui): Assemble + complete a practice session via existing exercise widgets - Must - ✅ COMPLETED (bolt 020-practice-ui)
 
+### 009-course-categories
+
+#### Unit: 001-categories-service
+
+- [x] **001-category-content-model-and-migration** (categories-service): categories table + skills.category_id + data-preserving migration - Must - ✅ COMPLETED (bolt 021-categories-service)
+- [x] **002-per-category-progression** (categories-service): Linear within a category, all categories open - Must - ✅ COMPLETED (bolt 021-categories-service)
+- [x] **003-skill-tree-api-with-categories** (categories-service): Skill-tree API returns categories - Must - ✅ COMPLETED (bolt 021-categories-service)
+- [ ] **004-seed-four-new-categories** (categories-service): Seed Family, Numbers & Time, Travel, Colors/Body & Health - Must - 📝 GENERATED
+
+#### Unit: 002-categories-ui
+
+- [ ] **001-dashboard-grouped-by-category** (categories-ui): Banner + skill path per category - Must - 📝 GENERATED
+- [ ] **002-new-category-end-to-end-verification** (categories-ui): New-category lessons work fully - Must - 📝 GENERATED
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 4
+- **Generated**: 7
 - **In Progress**: 0
-- **Completed**: 42
+- **Completed**: 45
 - **Retired**: 1

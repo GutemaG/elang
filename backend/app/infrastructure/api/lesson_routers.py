@@ -24,6 +24,7 @@ from app.application.lesson_use_cases import (
 from app.domain.entities import User
 from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
+    CategoryRepository,
     LessonAttemptRepository,
     LessonRepository,
     SkillRepository,
@@ -37,6 +38,7 @@ from app.infrastructure.api.dependencies import get_current_user
 from app.infrastructure.api.exercise_mapping import to_exercise_response
 from app.infrastructure.api.lesson_dependencies import (
     get_amole_transaction_repository,
+    get_category_repository,
     get_lesson_attempt_repository,
     get_lesson_repository,
     get_skill_repository,
@@ -47,6 +49,7 @@ from app.infrastructure.api.lesson_dependencies import (
 )
 from app.infrastructure.api.lesson_schemas import (
     BeansStatusResponse,
+    CategoryResponse,
     CompleteLessonRequest,
     CompleteLessonResponse,
     LessonContentResponse,
@@ -63,11 +66,16 @@ def _to_skill_tree_response(summary: SkillTreeSummary) -> SkillTreeResponse:
     return SkillTreeResponse(
         unit_title=summary.unit_title,
         unit_subtitle=summary.unit_subtitle,
+        categories=[
+            CategoryResponse(id=c.id, title=c.title, subtitle=c.subtitle, order_index=c.order_index)
+            for c in summary.categories
+        ],
         skills=[
             SkillTreeEntryResponse(
                 id=entry.skill.id,
                 title=entry.skill.title,
                 order_index=entry.skill.order_index,
+                category_id=entry.skill.category_id,
                 state=entry.state.value,
                 crown_level=entry.crown_level,
                 lesson_id=summary.lesson_id_by_skill.get(entry.skill.id),
@@ -105,6 +113,7 @@ async def get_skill_tree_endpoint(
     streak_repo: UserStreakRepository = Depends(get_user_streak_repository),
     attempt_repo: LessonAttemptRepository = Depends(get_lesson_attempt_repository),
     lesson_repo: LessonRepository = Depends(get_lesson_repository),
+    category_repo: CategoryRepository = Depends(get_category_repository),
 ) -> SkillTreeResponse:
     """Story 001: the caller's skill tree with accurate per-skill
     locked/active/completed state and crown level -- including a brand-new
@@ -120,6 +129,7 @@ async def get_skill_tree_endpoint(
         streak_repo,
         attempt_repo,
         lesson_repo,
+        category_repo,
         datetime.now(UTC),
     )
     return _to_skill_tree_response(summary)

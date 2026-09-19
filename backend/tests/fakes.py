@@ -15,6 +15,7 @@ from datetime import UTC, date, datetime
 from app.domain.entities import AuthSession, User
 from app.domain.lesson.entities import (
     AmoleTransaction,
+    Category,
     Exercise,
     Lesson,
     LessonAttempt,
@@ -106,6 +107,16 @@ class FakeAuthSessionRepository:
 
     async def get_by_id(self, session_id: str) -> AuthSession | None:
         return self._sessions.get(session_id)
+
+
+class FakeCategoryRepository:
+    """In-memory stand-in for `app.domain.lesson.repositories.CategoryRepository`."""
+
+    def __init__(self, categories: list[Category] | None = None) -> None:
+        self._categories = list(categories or [])
+
+    async def list_all(self) -> list[Category]:
+        return sorted(self._categories, key=lambda c: c.order_index)
 
 
 class FakeSkillRepository:
@@ -330,7 +341,5 @@ class FakeUserVocabProgressRepository:
 
     async def count_due(self, user_id: str, now: datetime) -> int:
         return sum(
-            1
-            for row in self._rows.values()
-            if row.user_id == user_id and row.next_review_at <= now
+            1 for row in self._rows.values() if row.user_id == user_id and row.next_review_at <= now
         )

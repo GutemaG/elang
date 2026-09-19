@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from app.application.lesson_use_cases import get_skill_tree
 from app.infrastructure.db.lesson_models import ExerciseModel, LessonModel, SkillModel
 from app.infrastructure.db.lesson_repositories import (
+    SqlAlchemyCategoryRepository,
     SqlAlchemyLessonAttemptRepository,
     SqlAlchemyLessonRepository,
     SqlAlchemySkillRepository,
@@ -50,7 +51,9 @@ class TestLessonContentQueryCount:
     async def test_fetching_a_lesson_uses_a_constant_number_of_queries_regardless_of_exercise_count(
         self, db_session: AsyncSession, query_log: list[str]
     ) -> None:
-        db_session.add(SkillModel(id="s1", title="Big Lesson Skill", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Big Lesson Skill", order_index=1)
+        )
         db_session.add(LessonModel(id="l1", skill_id="s1", title="Many Exercises", order_index=1))
         db_session.add_all(
             [
@@ -89,7 +92,10 @@ class TestSkillTreeQueryCount:
         self, db_session: AsyncSession, query_log: list[str]
     ) -> None:
         db_session.add_all(
-            [SkillModel(id=f"s{i}", title=f"Skill {i}", order_index=i) for i in range(1, 51)]
+            [
+                SkillModel(category_id="cat-1", id=f"s{i}", title=f"Skill {i}", order_index=i)
+                for i in range(1, 51)
+            ]
         )
         await db_session.commit()
         query_log.clear()
@@ -108,6 +114,7 @@ class TestSkillTreeQueryCount:
             streak_repo,
             attempt_repo,
             lesson_repo,
+            SqlAlchemyCategoryRepository(db_session),
             datetime.now(UTC),
         )
 
@@ -118,5 +125,6 @@ class TestSkillTreeQueryCount:
         # 3 more constant queries on top of bolt 004's original 2; bolt 007
         # added 1 more grouped query; bolt 008 added 2 more grouped queries
         # for the content-version signal -- all grouped rather than
-        # per-skill, to avoid a real N+1).
-        assert len(query_log) <= 8
+        # per-skill, to avoid a real N+1); bolt 021 added 1 more for the
+        # category list -- one query for all categories, not per category).
+        assert len(query_log) <= 9

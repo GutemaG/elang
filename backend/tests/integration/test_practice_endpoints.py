@@ -29,7 +29,9 @@ from tests.fakes import FakeTokenVerifier
 def seeded_content(db_path: Path) -> dict[str, str]:
     engine = create_engine(f"sqlite:///{db_path}")
     with SyncSession(engine) as session:
-        session.add(SkillModel(id="skill-a", title="Greetings & Basics", order_index=1))
+        session.add(
+            SkillModel(category_id="cat-1", id="skill-a", title="Greetings & Basics", order_index=1)
+        )
         session.add(
             LessonModel(id="lesson-a1", skill_id="skill-a", title="Hello & Goodbye", order_index=1)
         )
@@ -189,14 +191,16 @@ class TestDueItemsEndpoint:
         with SyncSession(engine) as session:
             session.add_all(
                 [
-                    SkillModel(id="skill-a", title="Greetings & Basics", order_index=1),
-                    SkillModel(id="skill-b", title="Food & Drink", order_index=2),
+                    SkillModel(
+                        category_id="cat-1", id="skill-a", title="Greetings & Basics", order_index=1
+                    ),
+                    SkillModel(
+                        category_id="cat-1", id="skill-b", title="Food & Drink", order_index=2
+                    ),
                 ]
             )
             session.add(
-                LessonModel(
-                    id="lesson-b1", skill_id="skill-b", title="Coffee & Tea", order_index=1
-                )
+                LessonModel(id="lesson-b1", skill_id="skill-b", title="Coffee & Tea", order_index=1)
             )
             session.add(VocabItemModel(id="vocab-coffee", word="ቡና", translation="Coffee"))
             session.add(
@@ -218,9 +222,7 @@ class TestDueItemsEndpoint:
 
         # skill-b is locked for a brand-new user -- confirmed the same way
         # `test_locked_skills_lesson_is_unreachable_by_direct_id` does.
-        locked_response = client.get(
-            "/api/v1/lessons/lesson-b1", headers=_auth(token)
-        )
+        locked_response = client.get("/api/v1/lessons/lesson-b1", headers=_auth(token))
         assert locked_response.status_code == 403
         assert locked_response.json()["error_code"] == "skill_locked"
 
@@ -273,9 +275,7 @@ class TestCompleteLessonVocabProgress:
             session.commit()
         engine.dispose()
 
-        _complete_lesson(
-            client, token, seeded_content["lesson_a1"], "attempt-2", ["ex-a1-1"]
-        )
+        _complete_lesson(client, token, seeded_content["lesson_a1"], "attempt-2", ["ex-a1-1"])
 
         engine = create_engine(f"sqlite:///{db_path}")
         with SyncSession(engine) as session:

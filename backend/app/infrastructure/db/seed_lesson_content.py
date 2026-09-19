@@ -37,10 +37,17 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.db.lesson_models import (
+    CategoryModel,
     ExerciseModel,
     LessonModel,
     SkillModel,
     VocabItemModel,
+)
+from app.infrastructure.db.seed_category_content import (
+    NEW_CATEGORIES,
+    NEW_CURRICULUM,
+    NEW_VOCABULARY,
+    PLACEHOLDER_AUDIO_URL,
 )
 from app.infrastructure.db.session import get_session_factory
 
@@ -58,7 +65,7 @@ def _audio_url(slug: str) -> str:
     # See module docstring's "Known limitation" -- a real, resolvable
     # placeholder, not per-exercise real audio.
     del slug  # unused: every exercise currently shares one placeholder file
-    return "https://www.kozco.com/tech/piano2-CoolEdit.mp3"
+    return PLACEHOLDER_AUDIO_URL
 
 
 def _choice(choice_id: str, text: str) -> dict[str, str]:
@@ -93,9 +100,22 @@ VOCABULARY: list[dict[str, str]] = [
 # small proof-of-loop set, not a complete Phase 1 course, per
 # requirements.md's Business Constraints.
 
+# --- Categories (bolt 021-categories-service, ADR-11) -------------------
+# Foundations & Greetings' id matches the row the categories migration
+# inserts (same slug -> same uuid5), so the seed updates it in place.
+CATEGORIES: list[dict[str, Any]] = [
+    {
+        "slug": "category:foundations-and-greetings",
+        "title": "Foundations & Greetings",
+        "subtitle": "ሰላምታ እና ፊደል መግቢያ",
+        "order_index": 1,
+    },
+]
+
 CURRICULUM: list[dict[str, Any]] = [
     {
         "slug": "skill:greetings-and-basics",
+        "category_slug": "category:foundations-and-greetings",
         "title": "Greetings & Basics",
         "order_index": 1,
         "lessons": [
@@ -243,6 +263,7 @@ CURRICULUM: list[dict[str, Any]] = [
     },
     {
         "slug": "skill:food-and-drink",
+        "category_slug": "category:foundations-and-greetings",
         "title": "Food & Drink",
         "order_index": 2,
         "lessons": [
@@ -425,6 +446,14 @@ CURRICULUM: list[dict[str, Any]] = [
 ]
 
 
+# Bolt 022 (009-course-categories): four more categories of content, built
+# in `seed_category_content.py` and appended here so the one idempotent
+# loop below seeds everything.
+VOCABULARY.extend(NEW_VOCABULARY)
+CATEGORIES.extend(NEW_CATEGORIES)
+CURRICULUM.extend(NEW_CURRICULUM)
+
+
 async def seed(session: AsyncSession) -> None:
     """Idempotent: safe to call repeatedly against the same database.
 
@@ -441,12 +470,24 @@ async def seed(session: AsyncSession) -> None:
         vocab_item.word = vocab_data["word"]
         vocab_item.translation = vocab_data["translation"]
 
+    for category_data in CATEGORIES:
+        category_id = _content_id(category_data["slug"])
+        category = await session.get(CategoryModel, category_id)
+        if category is None:
+            category = CategoryModel(id=category_id)
+            session.add(category)
+        category.title = category_data["title"]
+        category.subtitle = category_data["subtitle"]
+        category.order_index = category_data["order_index"]
+    await session.flush()
+
     for skill_data in CURRICULUM:
         skill_id = _content_id(skill_data["slug"])
         skill = await session.get(SkillModel, skill_id)
         if skill is None:
             skill = SkillModel(id=skill_id)
             session.add(skill)
+        skill.category_id = _content_id(skill_data["category_slug"])
         skill.title = skill_data["title"]
         skill.order_index = skill_data["order_index"]
 
@@ -484,7 +525,7 @@ async def main() -> None:
         await seed(session)
         await session.commit()
     print(  # noqa: T201 -- CLI seed script, intentional operator-facing output
-        f"Seeded {len(CURRICULUM)} skills "
+        f"Seeded {len(CATEGORIES)} categories, {len(CURRICULUM)} skills "
         f"({sum(len(s['lessons']) for s in CURRICULUM)} lessons, "
         f"{sum(len(lesson['exercises']) for s in CURRICULUM for lesson in s['lessons'])} "
         "exercises)."

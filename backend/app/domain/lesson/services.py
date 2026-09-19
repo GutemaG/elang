@@ -77,6 +77,44 @@ class SkillTreeEntry:
     crown_level: int
 
 
+@dataclass(frozen=True)
+class SkillPath:
+    """The ordered skills of one category (ADR-11). Its two questions --
+    "which skill is first?" and "which skill follows X?" -- are the single
+    definition of linear progression, shared by `SkillTreeProgressionPolicy`
+    (which skills start active) and `LessonCompletionService` (which skill
+    a completion unlocks), so the two can never disagree.
+    """
+
+    skills: tuple[Skill, ...]
+
+    @property
+    def first(self) -> Skill | None:
+        return self.skills[0] if self.skills else None
+
+    def next_after(self, skill_id: str) -> Skill | None:
+        """The skill after `skill_id` on this path, or `None` if it is the
+        last one (or not on this path at all).
+        """
+        for index, skill in enumerate(self.skills):
+            if skill.id == skill_id:
+                return self.skills[index + 1] if index + 1 < len(self.skills) else None
+        return None
+
+    @staticmethod
+    def group(skills: list[Skill]) -> dict[str, SkillPath]:
+        """One path per category, each ordered by `order_index`. Categories
+        appear in the order they are first met in `skills`.
+        """
+        by_category: dict[str, list[Skill]] = {}
+        for skill in skills:
+            by_category.setdefault(skill.category_id, []).append(skill)
+        return {
+            category_id: SkillPath(tuple(sorted(members, key=lambda s: s.order_index)))
+            for category_id, members in by_category.items()
+        }
+
+
 class SkillTreeProgressionPolicy:
     """Pure domain logic -- no external dependencies.
 
@@ -90,10 +128,14 @@ class SkillTreeProgressionPolicy:
         self, skills: list[Skill], progress_rows: list[UserSkillProgress]
     ) -> list[SkillTreeEntry]:
         progress_by_skill = {p.skill_id: p for p in progress_rows}
-        ordered = sorted(skills, key=lambda s: s.order_index)
+        # Every category is open (ADR-11): linear only within a category's
+        # path. Entries come out grouped by category, in the order the
+        # categories first appear in `skills`.
+        paths = SkillPath.group(skills)
+        ordered = [skill for path in paths.values() for skill in path.skills]
 
         entries: list[SkillTreeEntry] = []
-        for index, skill in enumerate(ordered):
+        for skill in ordered:
             progress = progress_by_skill.get(skill.id)
             if progress is not None:
                 if progress.completed_at is not None:
@@ -104,10 +146,16 @@ class SkillTreeProgressionPolicy:
                     crown_level = 0
             else:
                 # New-user bootstrap: no row at all is the default,
-                # expected state -- the first skill by order_index is
-                # active, every other skill is locked. Computed on the fly,
-                # never requires a pre-seeded row (story 001's edge case).
-                state = SkillState.ACTIVE if index == 0 else SkillState.LOCKED
+                # expected state -- the first skill of each category's path
+                # is active, every other skill is locked. Computed on the
+                # fly, never requires a pre-seeded row (story 001's edge
+                # case).
+                first = paths[skill.category_id].first
+                state = (
+                    SkillState.ACTIVE
+                    if first is not None and first.id == skill.id
+                    else SkillState.LOCKED
+                )
                 crown_level = 0
 
             entries.append(SkillTreeEntry(skill=skill, state=state, crown_level=crown_level))
@@ -366,10 +414,9 @@ class LessonCompletionService:
                 streak = replace(streak, active_freeze_count=streak.active_freeze_count + 1)
                 streak_freeze_unlocked = True
             if not was_completed_before:
-                ordered = sorted(all_skills, key=lambda s: s.order_index)
-                current_index = next(i for i, s in enumerate(ordered) if s.id == progress.skill_id)
-                if current_index + 1 < len(ordered):
-                    next_skill = ordered[current_index + 1]
+                current = next(s for s in all_skills if s.id == progress.skill_id)
+                next_skill = SkillPath.group(all_skills)[current.category_id].next_after(current.id)
+                if next_skill is not None:
                     skill_unlocked_title = next_skill.title
                     unlocked_progress = UserSkillProgress(
                         user_id=progress.user_id,

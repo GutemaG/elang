@@ -13,6 +13,7 @@ from datetime import UTC, datetime, timedelta
 
 from app.domain.lesson.entities import (
     AmoleTransaction,
+    Category,
     Exercise,
     Lesson,
     LessonAttempt,
@@ -30,6 +31,7 @@ from app.domain.lesson.exceptions import (
 )
 from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
+    CategoryRepository,
     LessonAttemptRepository,
     LessonRepository,
     PracticeAttemptRepository,
@@ -61,13 +63,6 @@ from app.domain.lesson.value_objects import (
     AmoleSource,
     LessonCompletionOutcome,
 )
-
-# Fixed banner (Technical Design Decision 4) -- identical text to the
-# already-built `FakeLessonApi`'s hardcoded value, so bolt 007's swap to
-# the real backend changes nothing visible. Revisit if a real multi-unit
-# curriculum structure is ever scoped.
-UNIT_TITLE = "Unit 1: Foundations & Greetings"
-UNIT_SUBTITLE = "ሰላምታ እና ፊደል መግቢያ"
 
 # Bolt 008: stable fallback `content_version` for a skill with zero lessons
 # (shouldn't happen with real content, mirrors the existing `lesson_id_by_skill`
@@ -165,6 +160,9 @@ class SkillTreeSummary:
     entries: list[SkillTreeEntry]
     lesson_id_by_skill: dict[str, str | None]
     content_version_by_skill: dict[str, datetime]
+    categories: list[Category]
+    # Deprecated (ADR-11): derived from the first category, kept only so a
+    # client that still reads `unit_title`/`unit_subtitle` keeps working.
     unit_title: str
     unit_subtitle: str
     streak_count: int
@@ -181,6 +179,7 @@ async def get_skill_tree(
     streak_repo: UserStreakRepository,
     attempt_repo: LessonAttemptRepository,
     lesson_repo: LessonRepository,
+    category_repo: CategoryRepository,
     now: datetime,
 ) -> SkillTreeSummary:
     """Story 001: the skill tree, with accurate per-skill state/crown level
@@ -190,7 +189,15 @@ async def get_skill_tree(
     (bolt 007) with each skill's "next lesson to work on" id, all in this
     same single request.
     """
-    skills = await skill_repo.list_all()
+    categories = await category_repo.list_all()
+    category_rank = {c.id: rank for rank, c in enumerate(categories)}
+    # Categories in their own order, then each category's skills; the
+    # policy keeps that grouping (ADR-11). Skills whose category isn't
+    # listed sort last rather than being dropped.
+    skills = sorted(
+        await skill_repo.list_all(),
+        key=lambda s: (category_rank.get(s.category_id, len(categories)), s.order_index),
+    )
     progress_rows = await progress_repo.list_by_user(user_id)
     entries = SkillTreeProgressionPolicy().compute_states(skills, progress_rows)
     progress_by_skill = {p.skill_id: p for p in progress_rows}
@@ -231,8 +238,9 @@ async def get_skill_tree(
         entries=entries,
         lesson_id_by_skill=lesson_id_by_skill,
         content_version_by_skill=content_version_by_skill,
-        unit_title=UNIT_TITLE,
-        unit_subtitle=UNIT_SUBTITLE,
+        categories=categories,
+        unit_title=categories[0].title if categories else "",
+        unit_subtitle=categories[0].subtitle if categories else "",
         streak_count=streak.current_streak,
         beans=regenerated_beans.current_count,
         beans_max=BEANS_MAX,

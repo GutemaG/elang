@@ -18,8 +18,8 @@ from app.infrastructure.db.lesson_repositories import SqlAlchemyLessonRepository
 async def _seed(session: AsyncSession) -> None:
     session.add_all(
         [
-            SkillModel(id="s1", title="Greetings & Basics", order_index=1),
-            SkillModel(id="s2", title="Food & Drink", order_index=2),
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1),
+            SkillModel(category_id="cat-1", id="s2", title="Food & Drink", order_index=2),
         ]
     )
     session.add_all(
@@ -46,7 +46,9 @@ class TestGetContentVersion:
     async def test_returns_lesson_updated_at_when_no_exercises(
         self, db_session: AsyncSession
     ) -> None:
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         db_session.add(LessonModel(id="l1", skill_id="s1", title="Empty Lesson", order_index=1))
         await db_session.commit()
 
@@ -60,9 +62,7 @@ class TestGetContentVersion:
         repo = SqlAlchemyLessonRepository(db_session)
         assert await repo.get_content_version("does-not-exist") is None
 
-    async def test_reflects_the_most_recent_exercise_update(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_reflects_the_most_recent_exercise_update(self, db_session: AsyncSession) -> None:
         await _seed(db_session)
         repo = SqlAlchemyLessonRepository(db_session)
         version_before = await repo.get_content_version("l1")
@@ -110,7 +110,7 @@ class TestListContentVersionsBySkills:
 
     async def test_omits_a_skill_with_no_lessons(self, db_session: AsyncSession) -> None:
         await _seed(db_session)
-        db_session.add(SkillModel(id="s3", title="Empty Skill", order_index=3))
+        db_session.add(SkillModel(category_id="cat-1", id="s3", title="Empty Skill", order_index=3))
         await db_session.commit()
         repo = SqlAlchemyLessonRepository(db_session)
 

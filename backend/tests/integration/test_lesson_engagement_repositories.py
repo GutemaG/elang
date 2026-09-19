@@ -79,7 +79,9 @@ class TestSqlAlchemyUserSkillProgressRepositoryUpsert:
         self, db_session: AsyncSession
     ) -> None:
         await _make_user(db_session)
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         await db_session.commit()
 
         repo = SqlAlchemyUserSkillProgressRepository(db_session)
@@ -103,7 +105,9 @@ class TestSqlAlchemyUserSkillProgressRepositoryUpsert:
         self, db_session: AsyncSession
     ) -> None:
         await _make_user(db_session)
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         await db_session.commit()
         repo = SqlAlchemyUserSkillProgressRepository(db_session)
         await repo.upsert(
@@ -254,14 +258,22 @@ class TestSqlAlchemyAmoleTransactionRepository:
 
         await repo.add_if_new(
             AmoleTransaction(
-                id="t1", user_id="u1", amount=20, source=AmoleSource.LESSON_COMPLETION,
-                reference_id="a1", created_at=now,
+                id="t1",
+                user_id="u1",
+                amount=20,
+                source=AmoleSource.LESSON_COMPLETION,
+                reference_id="a1",
+                created_at=now,
             )
         )
         await repo.add_if_new(
             AmoleTransaction(
-                id="t2", user_id="u2", amount=500, source=AmoleSource.WALLET_CREATED,
-                reference_id="u2", created_at=now,
+                id="t2",
+                user_id="u2",
+                amount=500,
+                source=AmoleSource.WALLET_CREATED,
+                reference_id="u2",
+                created_at=now,
             )
         )
         await db_session.commit()
@@ -301,7 +313,9 @@ class TestSqlAlchemyLessonAttemptRepository:
         self, db_session: AsyncSession
     ) -> None:
         await _make_user(db_session)
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         db_session.add(LessonModel(id="l1", skill_id="s1", title="Hello", order_index=1))
         await db_session.commit()
 
@@ -331,7 +345,9 @@ class TestSqlAlchemyLessonAttemptRepository:
 
     async def test_sum_xp_by_user_sums_across_all_attempts(self, db_session: AsyncSession) -> None:
         await _make_user(db_session)
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         db_session.add(LessonModel(id="l1", skill_id="s1", title="Hello", order_index=1))
         await db_session.commit()
         repo = SqlAlchemyLessonAttemptRepository(db_session)
@@ -356,7 +372,9 @@ class TestSqlAlchemyLessonAttemptRepository:
         self, db_session: AsyncSession
     ) -> None:
         await _make_user(db_session)
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         db_session.add(LessonModel(id="l1", skill_id="s1", title="Hello", order_index=1))
         await db_session.commit()
         repo = SqlAlchemyLessonAttemptRepository(db_session)
@@ -413,9 +431,7 @@ class TestSqlAlchemyPracticeAttemptRepository:
         assert stored.amole_awarded == 10
         assert stored.completed_at.tzinfo is not None
 
-    async def test_get_returns_none_for_unknown_session_id(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_get_returns_none_for_unknown_session_id(self, db_session: AsyncSession) -> None:
         repo = SqlAlchemyPracticeAttemptRepository(db_session)
         assert await repo.get("does-not-exist") is None
 
@@ -426,8 +442,8 @@ class TestSqlAlchemyLessonRepositoryListLessonIdsBySkill:
     ) -> None:
         db_session.add_all(
             [
-                SkillModel(id="s1", title="Greetings & Basics", order_index=1),
-                SkillModel(id="s2", title="Food & Drink", order_index=2),
+                SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1),
+                SkillModel(category_id="cat-1", id="s2", title="Food & Drink", order_index=2),
             ]
         )
         db_session.add_all(
@@ -451,9 +467,9 @@ class TestSqlAlchemyLessonRepositoryListLessonIdsBySkills:
     async def test_groups_lesson_ids_by_skill_in_one_query(self, db_session: AsyncSession) -> None:
         db_session.add_all(
             [
-                SkillModel(id="s1", title="Greetings & Basics", order_index=1),
-                SkillModel(id="s2", title="Food & Drink", order_index=2),
-                SkillModel(id="s3", title="No Lessons Yet", order_index=3),
+                SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1),
+                SkillModel(category_id="cat-1", id="s2", title="Food & Drink", order_index=2),
+                SkillModel(category_id="cat-1", id="s3", title="No Lessons Yet", order_index=3),
             ]
         )
         db_session.add_all(
@@ -483,10 +499,10 @@ class TestSqlAlchemyLessonRepositoryListExercisesByVocabItemIds:
     to a renderable exercise.
     """
 
-    async def test_resolves_one_exercise_id_per_vocab_item(
-        self, db_session: AsyncSession
-    ) -> None:
-        db_session.add(SkillModel(id="s1", title="Greetings & Basics", order_index=1))
+    async def test_resolves_one_exercise_id_per_vocab_item(self, db_session: AsyncSession) -> None:
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s1", title="Greetings & Basics", order_index=1)
+        )
         db_session.add(LessonModel(id="l1", skill_id="s1", title="Hello", order_index=1))
         db_session.add(_vocab_item("v-hello", "ሰላም", "Hello"))
         db_session.add(
@@ -587,15 +603,21 @@ class TestSqlAlchemyUserVocabProgressRepository:
 
         await repo.upsert(
             UserVocabProgress(
-                user_id="u1", vocab_item_id="v-hello", box_level=1,
-                next_review_at=now, last_seen_at=now,
+                user_id="u1",
+                vocab_item_id="v-hello",
+                box_level=1,
+                next_review_at=now,
+                last_seen_at=now,
             )
         )
         await db_session.commit()
         await repo.upsert(
             UserVocabProgress(
-                user_id="u1", vocab_item_id="v-hello", box_level=3,
-                next_review_at=now + timedelta(days=7), last_seen_at=now + timedelta(days=7),
+                user_id="u1",
+                vocab_item_id="v-hello",
+                box_level=3,
+                next_review_at=now + timedelta(days=7),
+                last_seen_at=now + timedelta(days=7),
             )
         )
         await db_session.commit()
@@ -618,14 +640,20 @@ class TestSqlAlchemyUserVocabProgressRepository:
         now = datetime(2026, 9, 17, 12, 0, tzinfo=UTC)
         await repo.upsert(
             UserVocabProgress(
-                user_id="u1", vocab_item_id="v-hello", box_level=1,
-                next_review_at=now - timedelta(hours=1), last_seen_at=now - timedelta(days=1),
+                user_id="u1",
+                vocab_item_id="v-hello",
+                box_level=1,
+                next_review_at=now - timedelta(hours=1),
+                last_seen_at=now - timedelta(days=1),
             )
         )
         await repo.upsert(
             UserVocabProgress(
-                user_id="u1", vocab_item_id="v-goodbye", box_level=1,
-                next_review_at=now + timedelta(days=3), last_seen_at=now - timedelta(days=1),
+                user_id="u1",
+                vocab_item_id="v-goodbye",
+                box_level=1,
+                next_review_at=now + timedelta(days=3),
+                last_seen_at=now - timedelta(days=1),
             )
         )
         await db_session.commit()
@@ -646,8 +674,11 @@ class TestSqlAlchemyUserVocabProgressRepository:
             await db_session.commit()
             await repo.upsert(
                 UserVocabProgress(
-                    user_id="u1", vocab_item_id=vocab_id, box_level=1,
-                    next_review_at=now - timedelta(hours=i), last_seen_at=now,
+                    user_id="u1",
+                    vocab_item_id=vocab_id,
+                    box_level=1,
+                    next_review_at=now - timedelta(hours=i),
+                    last_seen_at=now,
                 )
             )
         await db_session.commit()

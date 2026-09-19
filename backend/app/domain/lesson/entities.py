@@ -59,17 +59,34 @@ class Lesson:
 
 
 @dataclass
+class Category:
+    """Aggregate Root (bolt `021-categories-service`, ADR-11): a named group
+    of related skills, e.g. "Family & People". Content only -- no per-user
+    state. It does not *contain* its skills; each `Skill` references it by
+    `category_id`, so `Skill`/`Lesson`/`Exercise` aggregates are unaffected.
+    """
+
+    id: str
+    title: str
+    subtitle: str
+    order_index: int
+
+
+@dataclass
 class Skill:
     """Aggregate Root. Invariants:
 
-    1. `order_index` is globally unique across all skills.
-    2. Has no awareness of any specific user -- per-user state lives
+    1. `order_index` is unique within its category (ADR-11) -- it is the
+       skill's position inside that category's path, not a global position.
+    2. Belongs to exactly one category (`category_id`).
+    3. Has no awareness of any specific user -- per-user state lives
        entirely in the separate `UserSkillProgress` aggregate.
     """
 
     id: str
     title: str
     order_index: int
+    category_id: str
 
 
 @dataclass
