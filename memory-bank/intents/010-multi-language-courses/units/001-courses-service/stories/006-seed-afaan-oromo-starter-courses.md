@@ -2,11 +2,11 @@
 id: 006-seed-afaan-oromo-starter-courses
 unit: 001-courses-service
 intent: 010-multi-language-courses
-status: draft
+status: complete
 priority: must
 created: '2026-09-20T13:00:00Z'
 assigned_bolt: 025-course-content-seed
-implemented: false
+implemented: true
 ---
 
 # Story: 006-seed-afaan-oromo-starter-courses

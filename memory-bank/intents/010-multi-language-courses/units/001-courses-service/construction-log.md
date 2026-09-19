@@ -27,7 +27,7 @@ last_updated: '2026-09-20T18:40:00Z'
 | Bolt ID | Stories | Status | Changed |
 |---------|---------|--------|---------|
 | 024-courses-service | 001-005 | ✅ completed | - |
-| 025-course-content-seed | 006 | [ ] planned | - |
+| 025-course-content-seed | 006 | ✅ completed | - |
 
 ## Execution History
 
@@ -39,6 +39,10 @@ last_updated: '2026-09-20T18:40:00Z'
 | 2026-09-20T15:20:00Z | 024-courses-service | stage-complete | adr → implement |
 | 2026-09-20T17:10:00Z | 024-courses-service | stage-complete | implement → test |
 | 2026-09-20T18:40:00Z | 024-courses-service | completed | All 5 stages done |
+| 2026-09-20T19:00:00Z | 025-course-content-seed | started | Stage 1: Plan |
+| 2026-09-20T19:20:00Z | 025-course-content-seed | stage-complete | plan → implement |
+| 2026-09-20T20:20:00Z | 025-course-content-seed | stage-complete | implement → test |
+| 2026-09-20T20:40:00Z | 025-course-content-seed | completed | All 3 stages done |
 
 ## Notes
 

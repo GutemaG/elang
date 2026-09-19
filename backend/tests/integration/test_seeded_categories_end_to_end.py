@@ -48,7 +48,7 @@ class TestEverySeededLessonServes:
 
         repo = SqlAlchemyLessonRepository(db_session)
         lesson_ids = [m.id for m in (await db_session.execute(select(LessonModel))).scalars()]
-        assert len(lesson_ids) == 20
+        assert len(lesson_ids) == 32
 
         exercise_total = 0
         for lesson_id in lesson_ids:
@@ -60,7 +60,7 @@ class TestEverySeededLessonServes:
                 response = to_exercise_response(exercise)
                 assert response.id == exercise.id
                 exercise_total += 1
-        assert exercise_total == 89
+        assert exercise_total == 143
 
     async def test_every_lesson_belongs_to_a_skill_in_a_seeded_category(
         self, db_session: AsyncSession

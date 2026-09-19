@@ -50,6 +50,12 @@ from app.infrastructure.db.seed_category_content import (
     NEW_VOCABULARY,
     PLACEHOLDER_AUDIO_URL,
 )
+from app.infrastructure.db.seed_course_content import (
+    NEW_COURSE_CATEGORIES,
+    NEW_COURSE_CURRICULUM,
+    NEW_COURSE_VOCABULARY,
+    NEW_COURSES,
+)
 from app.infrastructure.db.session import get_session_factory
 
 # Fixed namespace for this project's seeded content -- combined with a
@@ -472,6 +478,15 @@ CURRICULUM: list[dict[str, Any]] = [
 VOCABULARY.extend(NEW_VOCABULARY)
 CATEGORIES.extend(NEW_CATEGORIES)
 CURRICULUM.extend(NEW_CURRICULUM)
+
+# Bolt 025 (010-multi-language-courses): three more courses (English to Afaan
+# Oromo, Amharic to Afaan Oromo, Afaan Oromo to Amharic), built in
+# `seed_course_content.py`. Their categories and vocab name their course via
+# `course_slug`; skills, lessons and exercises reach it through the category.
+COURSES.extend(NEW_COURSES)
+CATEGORIES.extend(NEW_COURSE_CATEGORIES)
+CURRICULUM.extend(NEW_COURSE_CURRICULUM)
+VOCABULARY.extend(NEW_COURSE_VOCABULARY)
 
 
 async def seed(session: AsyncSession) -> None:

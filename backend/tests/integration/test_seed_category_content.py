@@ -188,11 +188,11 @@ class TestSeedingTheNewContent:
         await db_session.commit()
 
         for model, expected in (
-            (CategoryModel, 5),
-            (SkillModel, 10),
-            (LessonModel, 20),
-            (ExerciseModel, 89),
-            (VocabItemModel, 40),
+            (CategoryModel, 8),
+            (SkillModel, 16),
+            (LessonModel, 32),
+            (ExerciseModel, 143),
+            (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()
             assert got == expected, model.__name__
@@ -219,11 +219,11 @@ class TestSeedingTheNewContent:
         await db_session.commit()
 
         for model, expected in (
-            (CategoryModel, 5),
-            (SkillModel, 10),
-            (LessonModel, 20),
-            (ExerciseModel, 89),
-            (VocabItemModel, 40),
+            (CategoryModel, 8),
+            (SkillModel, 16),
+            (LessonModel, 32),
+            (ExerciseModel, 143),
+            (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()
             assert got == expected, model.__name__

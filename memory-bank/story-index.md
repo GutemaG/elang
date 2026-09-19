@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 62
 - **Generated**: 62
-- **Completed**: 57
+- **Completed**: 58
 - **Last updated**: 2026-09-20
 
 ---
@@ -144,7 +144,7 @@
 - [x] **003-course-list-api** (courses-service): List all courses, mark active - Must - ✅ COMPLETED (bolt 024-courses-service)
 - [x] **004-course-scoped-skill-tree-and-progress** (courses-service): Separate skills, crowns, unlocks per course - Must - ✅ COMPLETED (bolt 024-courses-service)
 - [x] **005-course-scoped-practice** (courses-service): Practice only from the active course - Must - ✅ COMPLETED (bolt 024-courses-service)
-- [ ] **006-seed-afaan-oromo-starter-courses** (courses-service): Three Afaan Oromo/Amharic starter courses - Must - 📋 GENERATED (bolt 025-course-content-seed)
+- [x] **006-seed-afaan-oromo-starter-courses** (courses-service): Three Afaan Oromo/Amharic starter courses - Must - ✅ COMPLETED (bolt 025-course-content-seed)
 
 #### Unit: 002-courses-ui
 
@@ -158,7 +158,7 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 9
+- **Generated**: 8
 - **In Progress**: 0
-- **Completed**: 57
+- **Completed**: 58
 - **Retired**: 1

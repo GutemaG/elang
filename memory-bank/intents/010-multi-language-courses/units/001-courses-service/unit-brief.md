@@ -2,7 +2,7 @@
 unit: 001-courses-service
 intent: 010-multi-language-courses
 phase: inception
-status: draft
+status: complete
 created: '2026-09-20T12:50:00Z'
 updated: '2026-09-20T12:50:00Z'
 ---

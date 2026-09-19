@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.db.lesson_models import (
     CategoryModel,
+    CourseModel,
     ExerciseModel,
     LessonModel,
     SkillModel,
@@ -118,6 +119,24 @@ class TestSeedContentAcceptanceCriteria:
 
         exercises = (await db_session.execute(select(ExerciseModel))).scalars().all()
         assert len(exercises) >= 1
+        # Bolt 025: only courses that involve Amharic (either side) put
+        # Ethiopic script in front of the learner; English to Afaan Oromo is
+        # Latin script throughout and is covered by `test_seed_course_content`.
+        amharic_lesson_ids = {
+            lesson_id
+            for (lesson_id,) in (
+                await db_session.execute(
+                    select(LessonModel.id)
+                    .join(SkillModel, SkillModel.id == LessonModel.skill_id)
+                    .join(CategoryModel, CategoryModel.id == SkillModel.category_id)
+                    .join(CourseModel, CourseModel.id == CategoryModel.course_id)
+                    .where(
+                        (CourseModel.learning_language == "am")
+                        | (CourseModel.from_language == "am")
+                    )
+                )
+            ).all()
+        }
 
         # Checked against the prompt + tile text only -- deliberately
         # excludes `audio_url`, which legitimately contains the substring
@@ -145,6 +164,8 @@ class TestSeedContentAcceptanceCriteria:
             # choices (the Amharic is conveyed by the audio itself), so
             # they're exempted from this particular check and covered by
             # the placeholder-audio-URL test below instead.
+            if exercise.lesson_id not in amharic_lesson_ids:
+                continue
             if exercise.type in ("multiple_choice", "sentence_construction", "match_pairs"):
                 has_ethiopic = any("ሀ" <= ch <= "፿" for ch in all_text)
                 assert has_ethiopic, f"exercise {exercise.id} has no Ethiopic-script text"

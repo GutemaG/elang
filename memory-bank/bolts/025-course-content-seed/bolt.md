@@ -3,14 +3,23 @@ id: 025-course-content-seed
 unit: 001-courses-service
 intent: 010-multi-language-courses
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 006-seed-afaan-oromo-starter-courses
 created: '2026-09-20T13:20:00Z'
-started: null
-completed: null
+started: '2026-09-20T19:00:00Z'
+completed: '2026-09-19T22:36:20Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-20T19:20:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-20T20:20:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-20T20:40:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 024-courses-service
 enables_bolts:
@@ -46,9 +55,9 @@ The dev database holds four playable courses, and users of any of the three sour
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Dependencies
 
