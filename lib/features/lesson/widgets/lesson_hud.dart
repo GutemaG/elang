@@ -25,7 +25,22 @@ class LessonHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Scales the whole row down on narrow screens instead of overflowing.
+    return LayoutBuilder(
+      builder: (context, constraints) => FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+          child: _row(),
+        ),
+      ),
+    );
+  }
+
+  Widget _row() {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _HudPill(
@@ -35,6 +50,7 @@ class LessonHud extends StatelessWidget {
           textColor: AppColors.secondary,
         ),
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             _HudPill(
               icon: Icons.favorite,

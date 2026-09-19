@@ -11,9 +11,8 @@ import '../../../shared/widgets/tactile_button.dart';
 /// Story 005's download-management screen: lists downloaded lesson packs
 /// with an approximate storage size and lets the user delete them.
 ///
-/// Deliberately plain (a `ListView` + delete buttons, not a new designed
-/// component) -- same "capability over polish" call this bolt's other new
-/// UI (the sync banner) makes, since this is a `Could`-priority story.
+/// Each pack is a card with an icon, title, size, and a quiet destructive
+/// "Delete" action (confirmed via dialog before anything is removed).
 class DownloadManagementScreen extends StatefulWidget {
   const DownloadManagementScreen({
     super.key,
@@ -137,24 +136,46 @@ class _PackRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.spaceMd),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceMd,
+        vertical: AppSpacing.spaceSm,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadii.base),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         border: Border.all(color: AppColors.outlineVariant),
+        boxShadow: const [
+          BoxShadow(color: AppColors.cardBorderDefault, offset: Offset(0, 3)),
+        ],
       ),
       child: Row(
         children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryFixed,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.download_done_rounded,
+              color: AppColors.primaryContainer,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.spaceSm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   pack.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelLg.copyWith(
                     color: AppColors.onSurface,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   _formatSize(pack.approximateSizeBytes),
                   style: AppTypography.bodySm.copyWith(
@@ -164,7 +185,12 @@ class _PackRow extends StatelessWidget {
               ],
             ),
           ),
-          TactileButton(label: 'Delete', onPressed: onDelete),
+          TextButton.icon(
+            onPressed: onDelete,
+            icon: const Icon(Icons.delete_outline_rounded, size: 20),
+            label: const Text('Delete'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+          ),
         ],
       ),
     );
