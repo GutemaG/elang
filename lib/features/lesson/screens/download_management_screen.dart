@@ -6,7 +6,6 @@ import '../../../shared/services/sync_engine.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
-import '../../../shared/widgets/tactile_button.dart';
 
 /// Story 005's download-management screen: lists downloaded lesson packs
 /// with an approximate storage size and lets the user delete them.

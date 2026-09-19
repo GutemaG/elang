@@ -102,7 +102,9 @@ class HttpLessonApi implements LessonApi {
         final errorCode = decoded['error_code'];
         final message = decoded['message'];
         return LessonApiException(
-          message is String ? message : 'Request failed (${response.statusCode})',
+          message is String
+              ? message
+              : 'Request failed (${response.statusCode})',
           errorCode: errorCode is String ? errorCode : null,
         );
       }
@@ -116,10 +118,46 @@ class HttpLessonApi implements LessonApi {
   Future<SkillTreeResponse> getSkillTree() async {
     final json = _decodeOrThrow(await _get('/api/v1/skill-tree'));
     final skills = (json['skills'] as List).cast<Map<String, dynamic>>();
+    final rawCategories = json['categories'] as List?;
+
+    // Older backends (before 009-course-categories) send only the
+    // deprecated `unit_title`/`unit_subtitle`: present them as one category
+    // holding every skill rather than failing to render.
+    final categories = rawCategories == null
+        ? [
+            SkillCategory(
+              id: _legacyCategoryId,
+              title: json['unit_title'] as String,
+              subtitle: json['unit_subtitle'] as String,
+            ),
+          ]
+        : rawCategories
+              .cast<Map<String, dynamic>>()
+              .map(
+                (c) => SkillCategory(
+                  id: c['id'] as String,
+                  title: c['title'] as String,
+                  subtitle: c['subtitle'] as String,
+                ),
+              )
+              .toList();
+    final knownIds = {for (final c in categories) c.id};
+
+    final nodes = skills.map((skill) {
+      final categoryId = rawCategories == null
+          ? _legacyCategoryId
+          : skill['category_id'] as String?;
+      // A skill outside every category would silently vanish from the
+      // dashboard, so fail clearly instead.
+      if (categoryId == null || !knownIds.contains(categoryId)) {
+        throw const LessonApiException('Malformed response body');
+      }
+      return _toSkillTreeNode(skill, categoryId);
+    }).toList();
+
     return SkillTreeResponse(
-      unitTitle: json['unit_title'] as String,
-      unitSubtitle: json['unit_subtitle'] as String,
-      nodes: skills.map(_toSkillTreeNode).toList(),
+      categories: categories,
+      nodes: nodes,
       streakCount: json['streak_count'] as int,
       beans: json['beans'] as int,
       beansMax: json['beans_max'] as int,
@@ -127,7 +165,9 @@ class HttpLessonApi implements LessonApi {
     );
   }
 
-  SkillTreeNode _toSkillTreeNode(Map<String, dynamic> json) {
+  static const _legacyCategoryId = 'legacy-unit';
+
+  SkillTreeNode _toSkillTreeNode(Map<String, dynamic> json, String categoryId) {
     return SkillTreeNode(
       id: json['id'] as String,
       // Falls back to the node's own id only if the backend somehow has no
@@ -143,6 +183,7 @@ class HttpLessonApi implements LessonApi {
       // 1), so an empty string has zero visible effect.
       subtitle: '',
       state: _toSkillNodeState(json['state'] as String),
+      categoryId: categoryId,
       crownLevel: json['crown_level'] as int,
       contentVersion: _parseContentVersion(json['content_version']),
     );
@@ -215,7 +256,9 @@ class HttpLessonApi implements LessonApi {
           prompt: json['prompt'] as String,
           promptTranslation: '',
           options: choices.map((c) => c['text'] as String).toList(),
-          correctOptionIndex: choices.indexWhere((c) => c['id'] == correctChoiceId),
+          correctOptionIndex: choices.indexWhere(
+            (c) => c['id'] == correctChoiceId,
+          ),
         );
       case 'listening':
         final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
@@ -225,36 +268,56 @@ class HttpLessonApi implements LessonApi {
           audioUrl: json['audio_url'] as String,
           instruction: json['prompt'] as String,
           options: choices.map((c) => c['text'] as String).toList(),
-          correctOptionIndex: choices.indexWhere((c) => c['id'] == correctChoiceId),
+          correctOptionIndex: choices.indexWhere(
+            (c) => c['id'] == correctChoiceId,
+          ),
         );
       case 'sentence_construction':
-        final wordBank = (json['word_bank'] as List).cast<Map<String, dynamic>>();
+        final wordBank = (json['word_bank'] as List)
+            .cast<Map<String, dynamic>>();
         final textById = {
-          for (final tile in wordBank) tile['id'] as String: tile['text'] as String,
+          for (final tile in wordBank)
+            tile['id'] as String: tile['text'] as String,
         };
-        final correctSequence = (json['correct_sequence'] as List).cast<String>();
+        final correctSequence = (json['correct_sequence'] as List)
+            .cast<String>();
         return SentenceConstructionExercise(
           id: id,
           promptTranslation: json['prompt'] as String,
           wordBank: wordBank.map((tile) => tile['text'] as String).toList(),
-          correctSentence: correctSequence.map((tileId) => textById[tileId]!).toList(),
+          correctSentence: correctSequence
+              .map((tileId) => textById[tileId]!)
+              .toList(),
         );
       case 'match_pairs':
-        final leftTiles = (json['left_tiles'] as List).cast<Map<String, dynamic>>();
-        final rightTiles = (json['right_tiles'] as List).cast<Map<String, dynamic>>();
+        final leftTiles = (json['left_tiles'] as List)
+            .cast<Map<String, dynamic>>();
+        final rightTiles = (json['right_tiles'] as List)
+            .cast<Map<String, dynamic>>();
         final correctPairs = (json['correct_pairs'] as List)
             .cast<List<dynamic>>();
         return MatchPairsExercise(
           id: id,
           prompt: json['prompt'] as String,
           leftTiles: leftTiles
-              .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+              .map(
+                (t) => MatchPairsTile(
+                  id: t['id'] as String,
+                  text: t['text'] as String,
+                ),
+              )
               .toList(),
           rightTiles: rightTiles
-              .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+              .map(
+                (t) => MatchPairsTile(
+                  id: t['id'] as String,
+                  text: t['text'] as String,
+                ),
+              )
               .toList(),
           correctPairs: {
-            for (final pair in correctPairs) pair[0] as String: pair[1] as String,
+            for (final pair in correctPairs)
+              pair[0] as String: pair[1] as String,
           },
         );
       default:
@@ -310,7 +373,9 @@ class HttpLessonApi implements LessonApi {
     return BeansStatus(
       beans: json['beans'] as int,
       beansMax: json['beans_max'] as int,
-      nextBeanAt: nextBeanAtRaw is String ? DateTime.tryParse(nextBeanAtRaw) : null,
+      nextBeanAt: nextBeanAtRaw is String
+          ? DateTime.tryParse(nextBeanAtRaw)
+          : null,
       regenMinutesPerBean: json['regen_minutes_per_bean'] as int,
       amoleBalance: json['amole_balance'] as int,
       refillCostAmole: json['refill_cost_amole'] as int,
@@ -322,7 +387,8 @@ class HttpLessonApi implements LessonApi {
     final response = await _post('/api/v1/beans/refill');
     if (response.statusCode == 422) {
       final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic> && decoded['error_code'] == 'insufficient_amole') {
+      if (decoded is Map<String, dynamic> &&
+          decoded['error_code'] == 'insufficient_amole') {
         return const RefillFailure(RefillFailureReason.insufficientAmole);
       }
     }
@@ -341,7 +407,9 @@ class HttpLessonApi implements LessonApi {
 
   @override
   Future<List<DueItem>> getDueItems({int limit = 20}) async {
-    final json = _decodeOrThrow(await _get('/api/v1/practice/due-items?limit=$limit'));
+    final json = _decodeOrThrow(
+      await _get('/api/v1/practice/due-items?limit=$limit'),
+    );
     final items = (json['items'] as List).cast<Map<String, dynamic>>();
     return items.map(_toDueItem).toList();
   }
@@ -369,7 +437,9 @@ class HttpLessonApi implements LessonApi {
         body: {
           'session_id': sessionId,
           'results': results
-              .map((r) => {'vocab_item_id': r.vocabItemId, 'correct': r.correct})
+              .map(
+                (r) => {'vocab_item_id': r.vocabItemId, 'correct': r.correct},
+              )
               .toList(),
           'time_spent_seconds': timeSpent.inMilliseconds / 1000,
         },

@@ -2,11 +2,11 @@
 id: 001-dashboard-grouped-by-category
 unit: 002-categories-ui
 intent: 009-course-categories
-status: draft
+status: complete
 priority: must
 created: '2026-09-19T19:35:00Z'
 assigned_bolt: 023-categories-ui
-implemented: false
+implemented: true
 ---
 
 # Story: 001-dashboard-grouped-by-category

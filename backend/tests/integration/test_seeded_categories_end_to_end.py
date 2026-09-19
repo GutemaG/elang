@@ -183,3 +183,40 @@ class TestNewCategoryOverHttp:
         assert states["Getting There"] == "locked"
         assert states["Body & Health"] == "locked"
         assert states["Food & Drink"] == "locked"
+
+    def test_words_learned_in_a_new_category_appear_in_practice_when_due(
+        self, make_client: Any, seeded_real_content: None, db_path: Path
+    ) -> None:
+        client, headers = _sign_in(make_client)
+        tree = client.get("/api/v1/skill-tree", headers=headers).json()
+        categories = {c["title"]: c["id"] for c in tree["categories"]}
+        first = next(
+            s
+            for s in tree["skills"]
+            if s["category_id"] == categories["Travel & Places"] and s["state"] == "active"
+        )
+        lesson = client.get(f"/api/v1/lessons/{first['lesson_id']}", headers=headers).json()
+        count = len(lesson["exercises"])
+        done = client.post(
+            f"/api/v1/lessons/{first['lesson_id']}/complete",
+            headers=headers,
+            json={
+                "attempt_id": "attempt-travel-1",
+                "correct_count": count,
+                "total_count": count,
+                "time_spent_seconds": 30.0,
+                "client_completed_at": datetime.now(UTC).isoformat(),
+            },
+        )
+        assert done.status_code == 200, done.text
+        assert client.get("/api/v1/practice/due-count", headers=headers).json()["due_count"] == 0
+
+        # Time passes: back-date the new rows so they are due.
+        with sqlite3.connect(db_path) as conn:
+            conn.execute(
+                "UPDATE user_vocab_progress SET next_review_at = ?", ("2000-01-01 00:00:00",)
+            )
+
+        assert client.get("/api/v1/practice/due-count", headers=headers).json()["due_count"] == 2
+        items = client.get("/api/v1/practice/due-items", headers=headers).json()
+        assert len(items["items"] if isinstance(items, dict) else items) == 2

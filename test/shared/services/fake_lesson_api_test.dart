@@ -12,6 +12,44 @@ import 'package:elang/shared/services/fake_lesson_api.dart';
 
 void main() {
   test(
+    'completing an active skill unlocks a later skill only within its own '
+    'category',
+    () async {
+      final api = FakeLessonApi(latency: Duration.zero);
+      final before = await api.getSkillTree();
+      expect(before.categories.length, greaterThanOrEqualTo(2));
+      final second = before.categories[1];
+      final active = before
+          .nodesIn(second)
+          .firstWhere((n) => n.state == SkillNodeState.active);
+      final lockedInSecond = before
+          .nodesIn(second)
+          .firstWhere((n) => n.state == SkillNodeState.locked);
+      final lockedInFirst = before
+          .nodesIn(before.categories[0])
+          .where((n) => n.state == SkillNodeState.locked);
+
+      await api.completeLesson(
+        lessonId: active.lessonId,
+        attemptId: 'attempt-cat-2',
+        correctCount: 1,
+        totalCount: 1,
+        timeSpent: const Duration(seconds: 10),
+        beansRemainingAtEnd: 5,
+        clientCompletedAt: DateTime.now().toUtc(),
+      );
+
+      final after = await api.getSkillTree();
+      SkillNodeState stateOf(String id) =>
+          after.nodes.firstWhere((n) => n.id == id).state;
+      expect(stateOf(lockedInSecond.id), SkillNodeState.active);
+      for (final n in lockedInFirst) {
+        expect(stateOf(n.id), SkillNodeState.locked);
+      }
+    },
+  );
+
+  test(
     'first completion of the active node unlocks the next locked node',
     () async {
       final api = FakeLessonApi(latency: Duration.zero);

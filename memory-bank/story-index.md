@@ -3,8 +3,8 @@
 ## Overview
 - **Total stories**: 52
 - **Generated**: 52
-- **Completed**: 45
-- **Last updated**: 2026-09-19
+- **Completed**: 52
+- **Last updated**: 2026-09-20
 
 ---
 
@@ -128,19 +128,19 @@
 - [x] **001-category-content-model-and-migration** (categories-service): categories table + skills.category_id + data-preserving migration - Must - ✅ COMPLETED (bolt 021-categories-service)
 - [x] **002-per-category-progression** (categories-service): Linear within a category, all categories open - Must - ✅ COMPLETED (bolt 021-categories-service)
 - [x] **003-skill-tree-api-with-categories** (categories-service): Skill-tree API returns categories - Must - ✅ COMPLETED (bolt 021-categories-service)
-- [ ] **004-seed-four-new-categories** (categories-service): Seed Family, Numbers & Time, Travel, Colors/Body & Health - Must - 📝 GENERATED
+- [x] **004-seed-four-new-categories** (categories-service): Seed Family, Numbers & Time, Travel, Colors/Body & Health - Must - ✅ COMPLETED (bolt 022-category-content-seed)
 
 #### Unit: 002-categories-ui
 
-- [ ] **001-dashboard-grouped-by-category** (categories-ui): Banner + skill path per category - Must - 📝 GENERATED
-- [ ] **002-new-category-end-to-end-verification** (categories-ui): New-category lessons work fully - Must - 📝 GENERATED
+- [x] **001-dashboard-grouped-by-category** (categories-ui): Banner + skill path per category - Must - ✅ COMPLETED (bolt 023-categories-ui)
+- [x] **002-new-category-end-to-end-verification** (categories-ui): New-category lessons work fully - Must - ✅ COMPLETED (bolt 023-categories-ui)
 
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 7
+- **Generated**: 4
 - **In Progress**: 0
-- **Completed**: 45
+- **Completed**: 52
 - **Retired**: 1

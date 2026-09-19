@@ -322,52 +322,80 @@ class _DashboardContent extends StatelessWidget {
             ),
           ),
         ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
+        for (final category in tree.categories)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.marginMobile,
+              vertical: AppSpacing.spaceSm,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: _CategorySection(
+                category: category,
+                nodes: tree.nodesIn(category),
+                onNodeTap: onNodeTap,
+                downloader: downloader,
+              ),
+            ),
           ),
-          sliver: SliverToBoxAdapter(child: _UnitBanner(tree: tree)),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-            vertical: AppSpacing.spaceLg,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              children: [
-                for (int i = 0; i < tree.nodes.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.spaceMd,
-                    ),
-                    child: Align(
-                      alignment: _lateralOffset(i),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          SkillPathNode(
-                            node: tree.nodes[i],
-                            onTap:
-                                tree.nodes[i].state == SkillNodeState.locked
-                                ? null
-                                : () => onNodeTap(tree.nodes[i]),
-                          ),
-                          if (tree.nodes[i].state != SkillNodeState.locked)
-                            Positioned(
-                              top: 0,
-                              right: 0,
-                              child: _DownloadAffordance(
-                                lessonId: tree.nodes[i].lessonId,
-                                downloader: downloader,
-                              ),
+      ],
+    );
+  }
+}
+
+/// One category: its banner followed by its own skill path. The zig-zag
+/// offset restarts at the top of every category.
+class _CategorySection extends StatelessWidget {
+  const _CategorySection({
+    required this.category,
+    required this.nodes,
+    required this.onNodeTap,
+    required this.downloader,
+  });
+
+  final SkillCategory category;
+  final List<SkillTreeNode> nodes;
+  final ValueChanged<SkillTreeNode> onNodeTap;
+  final LessonPackDownloader downloader;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _CategoryBanner(category: category, nodes: nodes),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceMd),
+          child: Column(
+            children: [
+              for (int i = 0; i < nodes.length; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.spaceMd,
+                  ),
+                  child: Align(
+                    alignment: _lateralOffset(i),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        SkillPathNode(
+                          node: nodes[i],
+                          onTap: nodes[i].state == SkillNodeState.locked
+                              ? null
+                              : () => onNodeTap(nodes[i]),
+                        ),
+                        if (nodes[i].state != SkillNodeState.locked)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: _DownloadAffordance(
+                              lessonId: nodes[i].lessonId,
+                              downloader: downloader,
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ],
@@ -384,10 +412,14 @@ class _DashboardContent extends StatelessWidget {
   };
 }
 
-class _UnitBanner extends StatelessWidget {
-  const _UnitBanner({required this.tree});
+class _CategoryBanner extends StatelessWidget {
+  const _CategoryBanner({required this.category, required this.nodes});
 
-  final SkillTreeResponse tree;
+  final SkillCategory category;
+  final List<SkillTreeNode> nodes;
+
+  int get _completed =>
+      nodes.where((n) => n.state == SkillNodeState.completed).length;
 
   @override
   Widget build(BuildContext context) {
@@ -413,13 +445,17 @@ class _UnitBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      tree.unitTitle,
+                      category.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTypography.headlineSm.copyWith(
                         color: AppColors.onSurface,
                       ),
                     ),
                     Text(
-                      tree.unitSubtitle,
+                      category.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTypography.bodySm.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
@@ -427,8 +463,10 @@ class _UnitBanner extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.spaceSm),
               Text(
-                '${tree.completedCount}/${tree.nodes.length} Completed',
+                '$_completed/${nodes.length} Completed',
+                maxLines: 1,
                 style: AppTypography.labelSm.copyWith(
                   color: AppColors.primaryContainer,
                 ),
@@ -439,9 +477,7 @@ class _UnitBanner extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadii.full),
             child: LinearProgressIndicator(
-              value: tree.nodes.isEmpty
-                  ? 0
-                  : tree.completedCount / tree.nodes.length,
+              value: nodes.isEmpty ? 0 : _completed / nodes.length,
               minHeight: 10,
               backgroundColor: AppColors.surfaceContainer,
               valueColor: const AlwaysStoppedAnimation(
@@ -558,7 +594,10 @@ class _DownloadAffordance extends StatelessWidget {
       listenable: downloader,
       builder: (context, _) {
         final status = downloader.statusFor(lessonId);
-        return _iconFor(status, onTap: () => downloader.downloadLesson(lessonId));
+        return _iconFor(
+          status,
+          onTap: () => downloader.downloadLesson(lessonId),
+        );
       },
     );
   }
@@ -597,7 +636,12 @@ class _DownloadAffordance extends StatelessWidget {
 }
 
 class _AffordanceBadge extends StatelessWidget {
-  const _AffordanceBadge({required this.icon, required this.color, this.onTap, this.child});
+  const _AffordanceBadge({
+    required this.icon,
+    required this.color,
+    this.onTap,
+    this.child,
+  });
 
   final IconData? icon;
   final Color color;
@@ -635,7 +679,11 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off, size: 40, color: AppColors.tertiaryBrand),
+            const Icon(
+              Icons.wifi_off,
+              size: 40,
+              color: AppColors.tertiaryBrand,
+            ),
             const SizedBox(height: AppSpacing.spaceSm),
             Text(
               "Couldn't load your skill tree",

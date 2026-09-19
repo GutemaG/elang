@@ -94,7 +94,7 @@ void main() {
 
       // Onboarding carousel content, not the dashboard.
       expect(find.text('Bite-Sized Amharic'), findsOneWidget);
-      expect(find.text('Unit 1: Foundations & Greetings'), findsNothing);
+      expect(find.text('Foundations & Greetings'), findsNothing);
     },
   );
 
@@ -121,7 +121,7 @@ void main() {
       await _finishSplashAnimation(tester);
 
       expect(find.text('Bite-Sized Amharic'), findsOneWidget);
-      expect(find.text('Unit 1: Foundations & Greetings'), findsNothing);
+      expect(find.text('Foundations & Greetings'), findsNothing);
     },
   );
 
@@ -146,7 +146,7 @@ void main() {
       );
       await _finishSplashAnimation(tester);
 
-      expect(find.text('Unit 1: Foundations & Greetings'), findsOneWidget);
+      expect(find.text('Foundations & Greetings'), findsOneWidget);
       expect(find.text('Bite-Sized Amharic'), findsNothing);
     },
   );

@@ -3,13 +3,13 @@ id: 022-category-content-seed
 unit: 001-categories-service
 intent: 009-course-categories
 type: simple-construction-bolt
-status: in-progress
+status: complete
 stories:
   - 004-seed-four-new-categories
 created: '2026-09-19T19:40:00Z'
 started: '2026-09-19T22:30:00Z'
-completed: null
-current_stage: test
+completed: '2026-09-19T20:27:36Z'
+current_stage: null
 stages_completed:
   - name: plan
     completed: '2026-09-19T22:55:00Z'
@@ -17,6 +17,9 @@ stages_completed:
   - name: implement
     completed: '2026-09-19T23:35:00Z'
     artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-20T01:15:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 021-categories-service
 enables_bolts:

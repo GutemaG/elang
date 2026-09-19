@@ -85,7 +85,9 @@ Widget _wrapped({
         queueStore: FakePendingSyncQueueStore(),
       ),
       sessionRepository: sessionRepository,
-      userPreferencesApi: HttpUserPreferencesApi(sessionRepository: sessionRepository),
+      userPreferencesApi: HttpUserPreferencesApi(
+        sessionRepository: sessionRepository,
+      ),
       soundPreferenceRepository: _settingsSoundPreferenceRepository(),
     ),
   );
@@ -97,8 +99,9 @@ void main() {
     (tester) async {
       final api = ControllableLessonApi()
         ..skillTree = const SkillTreeResponse(
-          unitTitle: 'Unit 1',
-          unitSubtitle: 'sub',
+          categories: [
+            SkillCategory(id: 'cat-a', title: 'Unit 1', subtitle: 'sub'),
+          ],
           nodes: [
             SkillTreeNode(
               id: 'skill-a',
@@ -106,6 +109,7 @@ void main() {
               title: 'Skill A',
               subtitle: 'a',
               state: SkillNodeState.active,
+              categoryId: 'cat-a',
             ),
           ],
           streakCount: 1,
@@ -113,7 +117,8 @@ void main() {
           beansMax: 5,
           totalXp: 0,
         )
-        ..beansStatus = _fixtureBeansStatus // amoleBalance: 500
+        ..beansStatus =
+            _fixtureBeansStatus // amoleBalance: 500
         ..dueCount = 0;
 
       await tester.pumpWidget(
@@ -126,52 +131,52 @@ void main() {
     },
   );
 
-  testWidgets(
-    'a zero Amole balance is shown as 0, not hidden',
-    (tester) async {
-      final api = ControllableLessonApi()
-        ..skillTree = const SkillTreeResponse(
-          unitTitle: 'Unit 1',
-          unitSubtitle: 'sub',
-          nodes: [
-            SkillTreeNode(
-              id: 'skill-a',
-              lessonId: 'lesson-a',
-              title: 'Skill A',
-              subtitle: 'a',
-              state: SkillNodeState.active,
-            ),
-          ],
-          streakCount: 1,
-          beans: 5,
-          beansMax: 5,
-          totalXp: 20,
-        )
-        ..beansStatus = const BeansStatus(
-          beans: 5,
-          beansMax: 5,
-          regenMinutesPerBean: 30,
-          amoleBalance: 0,
-          refillCostAmole: 350,
-        )
-        ..dueCount = 0;
+  testWidgets('a zero Amole balance is shown as 0, not hidden', (tester) async {
+    final api = ControllableLessonApi()
+      ..skillTree = const SkillTreeResponse(
+        categories: [
+          SkillCategory(id: 'cat-a', title: 'Unit 1', subtitle: 'sub'),
+        ],
+        nodes: [
+          SkillTreeNode(
+            id: 'skill-a',
+            lessonId: 'lesson-a',
+            title: 'Skill A',
+            subtitle: 'a',
+            state: SkillNodeState.active,
+            categoryId: 'cat-a',
+          ),
+        ],
+        streakCount: 1,
+        beans: 5,
+        beansMax: 5,
+        totalXp: 20,
+      )
+      ..beansStatus = const BeansStatus(
+        beans: 5,
+        beansMax: 5,
+        regenMinutesPerBean: 30,
+        amoleBalance: 0,
+        refillCostAmole: 350,
+      )
+      ..dueCount = 0;
 
-      await tester.pumpWidget(
-        _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
-      );
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      _wrapped(lessonApi: api, audioPlayer: FakeLessonAudioPlayer()),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.text('0'), findsOneWidget);
-    },
-  );
+    expect(find.text('0'), findsOneWidget);
+  });
 
   testWidgets(
     'the Amole balance reflects a change after the dashboard reloads',
     (tester) async {
       final api = ControllableLessonApi()
         ..skillTree = const SkillTreeResponse(
-          unitTitle: 'Unit 1',
-          unitSubtitle: 'sub',
+          categories: [
+            SkillCategory(id: 'cat-a', title: 'Unit 1', subtitle: 'sub'),
+          ],
           nodes: [
             SkillTreeNode(
               id: 'skill-a',
@@ -179,6 +184,7 @@ void main() {
               title: 'Skill A',
               subtitle: 'a',
               state: SkillNodeState.active,
+              categoryId: 'cat-a',
             ),
           ],
           streakCount: 1,
@@ -291,10 +297,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.text('Family & Introductions'),
-      warnIfMissed: false,
-    );
+    await tester.tap(find.text('Family & Introductions'), warnIfMissed: false);
     await tester.pumpAndSettle();
 
     // Still on the dashboard — no lesson screen was pushed.
@@ -342,8 +345,13 @@ void main() {
 
     api.skillTreeError = null;
     api.skillTree = const SkillTreeResponse(
-      unitTitle: 'Unit 1: Foundations & Greetings',
-      unitSubtitle: 'ሰላምታ',
+      categories: [
+        SkillCategory(
+          id: 'cat-a',
+          title: 'Unit 1: Foundations & Greetings',
+          subtitle: 'ሰላምታ',
+        ),
+      ],
       nodes: [
         SkillTreeNode(
           id: 'skill-a',
@@ -351,6 +359,7 @@ void main() {
           title: 'Skill A',
           subtitle: 'a',
           state: SkillNodeState.active,
+          categoryId: 'cat-a',
         ),
       ],
       streakCount: 1,
@@ -371,8 +380,9 @@ void main() {
     (tester) async {
       final api = ControllableLessonApi()
         ..skillTree = const SkillTreeResponse(
-          unitTitle: 'Unit 1',
-          unitSubtitle: 'sub',
+          categories: [
+            SkillCategory(id: 'cat-a', title: 'Unit 1', subtitle: 'sub'),
+          ],
           nodes: [
             SkillTreeNode(
               id: 'skill-a',
@@ -380,6 +390,7 @@ void main() {
               title: 'Skill A',
               subtitle: 'a',
               state: SkillNodeState.active,
+              categoryId: 'cat-a',
             ),
           ],
           streakCount: 1,
@@ -472,7 +483,10 @@ void main() {
             ],
           ),
         );
-      final downloader = LessonPackDownloader(lessonApi: api, packStore: packStore);
+      final downloader = LessonPackDownloader(
+        lessonApi: api,
+        packStore: packStore,
+      );
 
       final sessionRepository = _settingsSessionRepository();
       await tester.pumpWidget(
@@ -490,7 +504,9 @@ void main() {
               queueStore: FakePendingSyncQueueStore(),
             ),
             sessionRepository: sessionRepository,
-            userPreferencesApi: HttpUserPreferencesApi(sessionRepository: sessionRepository),
+            userPreferencesApi: HttpUserPreferencesApi(
+              sessionRepository: sessionRepository,
+            ),
             soundPreferenceRepository: _settingsSoundPreferenceRepository(),
           ),
         ),
@@ -508,7 +524,10 @@ void main() {
     (tester) async {
       final api = FakeLessonApi(latency: Duration.zero);
       final packStore = FakeLessonPackStore();
-      final downloader = LessonPackDownloader(lessonApi: api, packStore: packStore);
+      final downloader = LessonPackDownloader(
+        lessonApi: api,
+        packStore: packStore,
+      );
       final sessionRepository = _settingsSessionRepository();
 
       await tester.pumpWidget(
@@ -526,7 +545,9 @@ void main() {
               queueStore: FakePendingSyncQueueStore(),
             ),
             sessionRepository: sessionRepository,
-            userPreferencesApi: HttpUserPreferencesApi(sessionRepository: sessionRepository),
+            userPreferencesApi: HttpUserPreferencesApi(
+              sessionRepository: sessionRepository,
+            ),
             soundPreferenceRepository: _settingsSoundPreferenceRepository(),
           ),
         ),
@@ -549,8 +570,9 @@ void main() {
 
   group('Practice entry card (008-srs-and-practice, bolt 020)', () {
     final practiceTree = SkillTreeResponse(
-      unitTitle: 'Unit 1',
-      unitSubtitle: 'sub',
+      categories: [
+        SkillCategory(id: 'cat-a', title: 'Unit 1', subtitle: 'sub'),
+      ],
       nodes: const [
         SkillTreeNode(
           id: 'skill-a',
@@ -558,6 +580,7 @@ void main() {
           title: 'Skill A',
           subtitle: 'a',
           state: SkillNodeState.active,
+          categoryId: 'cat-a',
         ),
       ],
       streakCount: 1,
@@ -594,7 +617,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text("You're all caught up -- nothing due today"), findsOneWidget);
+      expect(
+        find.text("You're all caught up -- nothing due today"),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Practice'), warnIfMissed: false);
       await tester.pumpAndSettle();
@@ -604,31 +630,33 @@ void main() {
       expect(api.completePracticeSessionCalls, isEmpty);
     });
 
-    testWidgets(
-      'disabled (not hidden) when offline, even with due items',
-      (tester) async {
-        final api = ControllableLessonApi()
-          ..skillTree = practiceTree
-          ..beansStatus = _fixtureBeansStatus
-          ..dueCount = 3;
+    testWidgets('disabled (not hidden) when offline, even with due items', (
+      tester,
+    ) async {
+      final api = ControllableLessonApi()
+        ..skillTree = practiceTree
+        ..beansStatus = _fixtureBeansStatus
+        ..dueCount = 3;
 
-        await tester.pumpWidget(
-          _wrapped(
-            lessonApi: api,
-            audioPlayer: FakeLessonAudioPlayer(),
-            connectivityMonitor: FakeConnectivityMonitor(online: false),
-          ),
-        );
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _wrapped(
+          lessonApi: api,
+          audioPlayer: FakeLessonAudioPlayer(),
+          connectivityMonitor: FakeConnectivityMonitor(online: false),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('Offline -- Practice needs a connection'), findsOneWidget);
+      expect(
+        find.text('Offline -- Practice needs a connection'),
+        findsOneWidget,
+      );
 
-        await tester.tap(find.text('Practice'), warnIfMissed: false);
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Practice'), warnIfMissed: false);
+      await tester.pumpAndSettle();
 
-        expect(find.text('Skill A'), findsOneWidget);
-      },
-    );
+      expect(find.text('Skill A'), findsOneWidget);
+    });
 
     testWidgets(
       'tapping it with due items launches a practice session, and completing it refreshes the due count',
@@ -685,7 +713,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Skill A'), findsOneWidget);
-        expect(find.text("You're all caught up -- nothing due today"), findsOneWidget);
+        expect(
+          find.text("You're all caught up -- nothing due today"),
+          findsOneWidget,
+        );
       },
     );
   });

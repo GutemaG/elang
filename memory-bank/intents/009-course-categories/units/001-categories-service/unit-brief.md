@@ -2,7 +2,7 @@
 unit: 001-categories-service
 intent: 009-course-categories
 phase: inception
-status: draft
+status: complete
 created: '2026-09-19T19:30:00Z'
 updated: '2026-09-19T19:30:00Z'
 ---

@@ -2,11 +2,11 @@
 id: 004-seed-four-new-categories
 unit: 001-categories-service
 intent: 009-course-categories
-status: draft
+status: complete
 priority: must
 created: '2026-09-19T19:35:00Z'
 assigned_bolt: 022-category-content-seed
-implemented: false
+implemented: true
 ---
 
 # Story: 004-seed-four-new-categories

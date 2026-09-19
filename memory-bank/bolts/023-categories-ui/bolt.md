@@ -3,15 +3,21 @@ id: 023-categories-ui
 unit: 002-categories-ui
 intent: 009-course-categories
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-dashboard-grouped-by-category
   - 002-new-category-end-to-end-verification
 created: '2026-09-19T19:40:00Z'
-started: null
-completed: null
+started: '2026-09-19T23:55:00Z'
+completed: '2026-09-19T20:27:37Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-20T00:05:00Z'
+    artifact: implementation-plan.md
+  - name: test
+    completed: '2026-09-20T01:15:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 021-categories-service
   - 022-category-content-seed

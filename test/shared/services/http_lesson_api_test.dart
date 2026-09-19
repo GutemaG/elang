@@ -39,83 +39,212 @@ Future<SessionRepository> _signedInSessionRepository() async {
 
 void main() {
   group('getSkillTree', () {
-    test('parses the full response, including each skill\'s lesson_id', () async {
-      final client = MockClient((request) async {
-        expect(request.url.path, '/api/v1/skill-tree');
-        expect(request.headers['Authorization'], 'Bearer session-token-abc');
-        return http.Response(
-          jsonEncode({
-            'unit_title': 'Unit 1: Foundations & Greetings',
-            'unit_subtitle': 'ሰላምታ እና ፊደል መግቢያ',
-            'skills': [
-              {
-                'id': 'skill-a',
-                'title': 'Greetings',
-                'order_index': 1,
-                'state': 'active',
-                'crown_level': 0,
-                'lesson_id': 'lesson-a1',
-              },
-              {
-                'id': 'skill-b',
-                'title': 'Food',
-                'order_index': 2,
-                'state': 'locked',
-                'crown_level': 0,
-                'lesson_id': null,
-              },
-            ],
-            'streak_count': 5,
-            'beans': 4,
-            'beans_max': 5,
-            'total_xp': 120,
-          }),
-          200,
-          // `http.Response` derives its encoding from the content-type
-          // header, defaulting to latin1 when absent -- this body's
-          // Amharic text needs the utf8-implying `application/json` type
-          // explicitly, or the mock response itself throws while encoding.
-          headers: {'content-type': 'application/json'},
+    test(
+      'parses the full response, including each skill\'s lesson_id',
+      () async {
+        final client = MockClient((request) async {
+          expect(request.url.path, '/api/v1/skill-tree');
+          expect(request.headers['Authorization'], 'Bearer session-token-abc');
+          return http.Response(
+            jsonEncode({
+              'unit_title': 'Unit 1: Foundations & Greetings',
+              'unit_subtitle': 'ሰላምታ እና ፊደል መግቢያ',
+              'skills': [
+                {
+                  'id': 'skill-a',
+                  'title': 'Greetings',
+                  'order_index': 1,
+                  'state': 'active',
+                  'crown_level': 0,
+                  'lesson_id': 'lesson-a1',
+                },
+                {
+                  'id': 'skill-b',
+                  'title': 'Food',
+                  'order_index': 2,
+                  'state': 'locked',
+                  'crown_level': 0,
+                  'lesson_id': null,
+                },
+              ],
+              'streak_count': 5,
+              'beans': 4,
+              'beans_max': 5,
+              'total_xp': 120,
+            }),
+            200,
+            // `http.Response` derives its encoding from the content-type
+            // header, defaulting to latin1 when absent -- this body's
+            // Amharic text needs the utf8-implying `application/json` type
+            // explicitly, or the mock response itself throws while encoding.
+            headers: {'content-type': 'application/json'},
+          );
+        });
+        final api = HttpLessonApi(
+          client: client,
+          baseUrl: 'http://localhost:8000',
+          sessionRepository: await _signedInSessionRepository(),
         );
-      });
-      final api = HttpLessonApi(
+
+        final result = await api.getSkillTree();
+
+        // No `categories` in this (older) response: one category built
+        // from the deprecated unit fields holds every skill.
+        expect(result.categories, hasLength(1));
+        expect(
+          result.categories.single.title,
+          'Unit 1: Foundations & Greetings',
+        );
+        expect(result.nodesIn(result.categories.single), hasLength(2));
+        expect(result.streakCount, 5);
+        expect(result.beans, 4);
+        expect(result.totalXp, 120);
+        expect(result.nodes[0].lessonId, 'lesson-a1');
+        expect(result.nodes[0].state, SkillNodeState.active);
+        // Falls back to the skill's own id when the backend has no lesson
+        // for it (shouldn't happen with real content, but must not crash).
+        expect(result.nodes[1].lessonId, 'skill-b');
+        expect(result.nodes[1].state, SkillNodeState.locked);
+      },
+    );
+
+    Future<HttpLessonApi> apiReturning(Map<String, dynamic> body) async {
+      final client = MockClient(
+        (request) async => http.Response(
+          jsonEncode(body),
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
+      );
+      return HttpLessonApi(
         client: client,
         baseUrl: 'http://localhost:8000',
         sessionRepository: await _signedInSessionRepository(),
+      );
+    }
+
+    Map<String, dynamic> skill(String id, String? categoryId) => {
+      'id': id,
+      'title': id,
+      'order_index': 1,
+      'state': 'active',
+      'crown_level': 0,
+      'lesson_id': 'lesson-$id',
+      'category_id': categoryId,
+    };
+
+    Map<String, dynamic> tree({
+      required List<Map<String, dynamic>> categories,
+      required List<Map<String, dynamic>> skills,
+    }) => {
+      'unit_title': 'deprecated',
+      'unit_subtitle': 'deprecated',
+      'categories': categories,
+      'skills': skills,
+      'streak_count': 0,
+      'beans': 5,
+      'beans_max': 5,
+      'total_xp': 0,
+    };
+
+    test(
+      'parses categories in order and groups skills by category_id',
+      () async {
+        final api = await apiReturning(
+          tree(
+            categories: [
+              {
+                'id': 'c1',
+                'title': 'Foundations',
+                'subtitle': 'ሰላም',
+                'order_index': 1,
+              },
+              {
+                'id': 'c2',
+                'title': 'Family',
+                'subtitle': 'ቤተሰብ',
+                'order_index': 2,
+              },
+            ],
+            skills: [skill('a', 'c1'), skill('b', 'c2'), skill('c', 'c2')],
+          ),
+        );
+
+        final result = await api.getSkillTree();
+
+        expect(result.categories.map((c) => c.title), [
+          'Foundations',
+          'Family',
+        ]);
+        expect(result.categories[1].subtitle, 'ቤተሰብ');
+        expect(result.nodesIn(result.categories[0]).map((n) => n.id), ['a']);
+        expect(result.nodesIn(result.categories[1]).map((n) => n.id), [
+          'b',
+          'c',
+        ]);
+      },
+    );
+
+    test('a category with no skills parses to an empty group', () async {
+      final api = await apiReturning(
+        tree(
+          categories: [
+            {'id': 'c1', 'title': 'Empty', 'subtitle': '', 'order_index': 1},
+          ],
+          skills: [],
+        ),
       );
 
       final result = await api.getSkillTree();
 
-      expect(result.unitTitle, 'Unit 1: Foundations & Greetings');
-      expect(result.streakCount, 5);
-      expect(result.beans, 4);
-      expect(result.totalXp, 120);
-      expect(result.nodes[0].lessonId, 'lesson-a1');
-      expect(result.nodes[0].state, SkillNodeState.active);
-      // Falls back to the skill's own id when the backend has no lesson
-      // for it (shouldn't happen with real content, but must not crash).
-      expect(result.nodes[1].lessonId, 'skill-b');
-      expect(result.nodes[1].state, SkillNodeState.locked);
+      expect(result.nodesIn(result.categories.single), isEmpty);
     });
 
-    test('a 401 response throws LessonApiException with the error code', () async {
-      final client = MockClient(
-        (request) async => http.Response(
-          jsonEncode({'error_code': 'invalid_session', 'message': 'expired'}),
-          401,
+    test('a skill in no known category fails clearly', () async {
+      final api = await apiReturning(
+        tree(
+          categories: [
+            {
+              'id': 'c1',
+              'title': 'Foundations',
+              'subtitle': '',
+              'order_index': 1,
+            },
+          ],
+          skills: [skill('a', 'ghost')],
         ),
       );
-      final api = HttpLessonApi(
-        client: client,
-        baseUrl: 'http://localhost:8000',
-        sessionRepository: await _signedInSessionRepository(),
-      );
 
-      await expectLater(
-        api.getSkillTree(),
-        throwsA(isA<LessonApiException>().having((e) => e.errorCode, 'errorCode', 'invalid_session')),
-      );
+      await expectLater(api.getSkillTree(), throwsA(isA<LessonApiException>()));
     });
+
+    test(
+      'a 401 response throws LessonApiException with the error code',
+      () async {
+        final client = MockClient(
+          (request) async => http.Response(
+            jsonEncode({'error_code': 'invalid_session', 'message': 'expired'}),
+            401,
+          ),
+        );
+        final api = HttpLessonApi(
+          client: client,
+          baseUrl: 'http://localhost:8000',
+          sessionRepository: await _signedInSessionRepository(),
+        );
+
+        await expectLater(
+          api.getSkillTree(),
+          throwsA(
+            isA<LessonApiException>().having(
+              (e) => e.errorCode,
+              'errorCode',
+              'invalid_session',
+            ),
+          ),
+        );
+      },
+    );
 
     test('a network-level failure throws LessonApiException', () async {
       final client = MockClient((request) async {
@@ -139,7 +268,9 @@ void main() {
       final api = HttpLessonApi(
         client: client,
         baseUrl: 'http://localhost:8000',
-        sessionRepository: SessionRepository(storage: InMemorySecureStorageService()),
+        sessionRepository: SessionRepository(
+          storage: InMemorySecureStorageService(),
+        ),
       );
 
       await expectLater(api.getSkillTree(), throwsA(isA<LessonApiException>()));
@@ -148,199 +279,223 @@ void main() {
   });
 
   group('startLesson', () {
-    test('merges the lesson-content and beans responses into one LessonContent', () async {
-      final client = MockClient((request) async {
-        if (request.url.path == '/api/v1/lessons/lesson-a1') {
+    test(
+      'merges the lesson-content and beans responses into one LessonContent',
+      () async {
+        final client = MockClient((request) async {
+          if (request.url.path == '/api/v1/lessons/lesson-a1') {
+            return http.Response(
+              jsonEncode({
+                'lesson': {
+                  'id': 'lesson-a1',
+                  'skill_id': 'skill-a',
+                  'title': 'Hello',
+                  'order_index': 1,
+                },
+                'exercises': [
+                  {
+                    'id': 'ex-1',
+                    'order_index': 1,
+                    'type': 'multiple_choice',
+                    'prompt': "How do you say 'Hello'?",
+                    'choices': [
+                      {'id': 'a', 'text': 'ሰላም'},
+                      {'id': 'b', 'text': 'ደህና ሁን'},
+                    ],
+                    'correct_choice_id': 'a',
+                  },
+                  {
+                    'id': 'ex-2',
+                    'order_index': 2,
+                    'type': 'listening',
+                    'prompt': 'What does this word mean?',
+                    'audio_url': 'https://cdn.example.com/hello.mp3',
+                    'choices': [
+                      {'id': 'a', 'text': 'Hello'},
+                      {'id': 'b', 'text': 'Goodbye'},
+                    ],
+                    'correct_choice_id': 'a',
+                  },
+                  {
+                    'id': 'ex-3',
+                    'order_index': 3,
+                    'type': 'sentence_construction',
+                    'prompt': "Translate: 'I am fine'",
+                    'word_bank': [
+                      {'id': 'w1', 'text': 'ደህና'},
+                      {'id': 'w2', 'text': 'ነኝ'},
+                    ],
+                    'correct_sequence': ['w1', 'w2'],
+                  },
+                  {
+                    'id': 'ex-4',
+                    'order_index': 4,
+                    'type': 'match_pairs',
+                    'prompt': 'Match each word to its meaning',
+                    'left_tiles': [
+                      {'id': 'l1', 'text': 'ቡና'},
+                      {'id': 'l2', 'text': 'ሻይ'},
+                    ],
+                    'right_tiles': [
+                      {'id': 'r1', 'text': 'Coffee'},
+                      {'id': 'r2', 'text': 'Tea'},
+                    ],
+                    'correct_pairs': [
+                      ['l1', 'r1'],
+                      ['l2', 'r2'],
+                    ],
+                  },
+                ],
+              }),
+              200,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+          expect(request.url.path, '/api/v1/beans');
           return http.Response(
             jsonEncode({
-              'lesson': {
-                'id': 'lesson-a1',
-                'skill_id': 'skill-a',
-                'title': 'Hello',
-                'order_index': 1,
-              },
-              'exercises': [
-                {
-                  'id': 'ex-1',
-                  'order_index': 1,
-                  'type': 'multiple_choice',
-                  'prompt': "How do you say 'Hello'?",
-                  'choices': [
-                    {'id': 'a', 'text': 'ሰላም'},
-                    {'id': 'b', 'text': 'ደህና ሁን'},
-                  ],
-                  'correct_choice_id': 'a',
-                },
-                {
-                  'id': 'ex-2',
-                  'order_index': 2,
-                  'type': 'listening',
-                  'prompt': 'What does this word mean?',
-                  'audio_url': 'https://cdn.example.com/hello.mp3',
-                  'choices': [
-                    {'id': 'a', 'text': 'Hello'},
-                    {'id': 'b', 'text': 'Goodbye'},
-                  ],
-                  'correct_choice_id': 'a',
-                },
-                {
-                  'id': 'ex-3',
-                  'order_index': 3,
-                  'type': 'sentence_construction',
-                  'prompt': "Translate: 'I am fine'",
-                  'word_bank': [
-                    {'id': 'w1', 'text': 'ደህና'},
-                    {'id': 'w2', 'text': 'ነኝ'},
-                  ],
-                  'correct_sequence': ['w1', 'w2'],
-                },
-                {
-                  'id': 'ex-4',
-                  'order_index': 4,
-                  'type': 'match_pairs',
-                  'prompt': 'Match each word to its meaning',
-                  'left_tiles': [
-                    {'id': 'l1', 'text': 'ቡና'},
-                    {'id': 'l2', 'text': 'ሻይ'},
-                  ],
-                  'right_tiles': [
-                    {'id': 'r1', 'text': 'Coffee'},
-                    {'id': 'r2', 'text': 'Tea'},
-                  ],
-                  'correct_pairs': [
-                    ['l1', 'r1'],
-                    ['l2', 'r2'],
-                  ],
-                },
-              ],
+              'beans': 3,
+              'beans_max': 5,
+              'next_bean_at': null,
+              'regen_minutes_per_bean': 30,
+              'amole_balance': 500,
+              'refill_cost_amole': 350,
             }),
             200,
-            headers: {'content-type': 'application/json'},
           );
-        }
-        expect(request.url.path, '/api/v1/beans');
-        return http.Response(
-          jsonEncode({
-            'beans': 3,
-            'beans_max': 5,
-            'next_bean_at': null,
-            'regen_minutes_per_bean': 30,
-            'amole_balance': 500,
-            'refill_cost_amole': 350,
-          }),
-          200,
+        });
+        final api = HttpLessonApi(
+          client: client,
+          baseUrl: 'http://localhost:8000',
+          sessionRepository: await _signedInSessionRepository(),
         );
-      });
-      final api = HttpLessonApi(
-        client: client,
-        baseUrl: 'http://localhost:8000',
-        sessionRepository: await _signedInSessionRepository(),
-      );
 
-      final content = await api.startLesson('lesson-a1');
+        final content = await api.startLesson('lesson-a1');
 
-      expect(content.lessonId, 'lesson-a1');
-      expect(content.beansAtStart, 3);
-      expect(content.beansMax, 5);
-      expect(content.exercises, hasLength(4));
+        expect(content.lessonId, 'lesson-a1');
+        expect(content.beansAtStart, 3);
+        expect(content.beansMax, 5);
+        expect(content.exercises, hasLength(4));
 
-      final mc = content.exercises[0] as MultipleChoiceExercise;
-      expect(mc.prompt, "How do you say 'Hello'?");
-      expect(mc.options, ['ሰላም', 'ደህና ሁን']);
-      expect(mc.correctOptionIndex, 0);
+        final mc = content.exercises[0] as MultipleChoiceExercise;
+        expect(mc.prompt, "How do you say 'Hello'?");
+        expect(mc.options, ['ሰላም', 'ደህና ሁን']);
+        expect(mc.correctOptionIndex, 0);
 
-      final listening = content.exercises[1] as ListeningExercise;
-      expect(listening.audioUrl, 'https://cdn.example.com/hello.mp3');
-      expect(listening.options, ['Hello', 'Goodbye']);
-      expect(listening.correctOptionIndex, 0);
+        final listening = content.exercises[1] as ListeningExercise;
+        expect(listening.audioUrl, 'https://cdn.example.com/hello.mp3');
+        expect(listening.options, ['Hello', 'Goodbye']);
+        expect(listening.correctOptionIndex, 0);
 
-      final sentence = content.exercises[2] as SentenceConstructionExercise;
-      expect(sentence.wordBank, ['ደህና', 'ነኝ']);
-      expect(sentence.correctSentence, ['ደህና', 'ነኝ']);
+        final sentence = content.exercises[2] as SentenceConstructionExercise;
+        expect(sentence.wordBank, ['ደህና', 'ነኝ']);
+        expect(sentence.correctSentence, ['ደህና', 'ነኝ']);
 
-      final matchPairs = content.exercises[3] as MatchPairsExercise;
-      expect(matchPairs.leftTiles.map((t) => t.text), ['ቡና', 'ሻይ']);
-      expect(matchPairs.rightTiles.map((t) => t.text), ['Coffee', 'Tea']);
-      expect(matchPairs.correctPairs, {'l1': 'r1', 'l2': 'r2'});
-    });
+        final matchPairs = content.exercises[3] as MatchPairsExercise;
+        expect(matchPairs.leftTiles.map((t) => t.text), ['ቡና', 'ሻይ']);
+        expect(matchPairs.rightTiles.map((t) => t.text), ['Coffee', 'Tea']);
+        expect(matchPairs.correctPairs, {'l1': 'r1', 'l2': 'r2'});
+      },
+    );
 
-    test('a 404 response throws LessonApiException with lesson_not_found', () async {
-      final client = MockClient(
-        (request) async => http.Response(
-          jsonEncode({'error_code': 'lesson_not_found', 'message': 'no such lesson'}),
-          404,
-        ),
-      );
-      final api = HttpLessonApi(
-        client: client,
-        baseUrl: 'http://localhost:8000',
-        sessionRepository: await _signedInSessionRepository(),
-      );
+    test(
+      'a 404 response throws LessonApiException with lesson_not_found',
+      () async {
+        final client = MockClient(
+          (request) async => http.Response(
+            jsonEncode({
+              'error_code': 'lesson_not_found',
+              'message': 'no such lesson',
+            }),
+            404,
+          ),
+        );
+        final api = HttpLessonApi(
+          client: client,
+          baseUrl: 'http://localhost:8000',
+          sessionRepository: await _signedInSessionRepository(),
+        );
 
-      await expectLater(
-        api.startLesson('does-not-exist'),
-        throwsA(isA<LessonApiException>().having((e) => e.errorCode, 'errorCode', 'lesson_not_found')),
-      );
-    });
+        await expectLater(
+          api.startLesson('does-not-exist'),
+          throwsA(
+            isA<LessonApiException>().having(
+              (e) => e.errorCode,
+              'errorCode',
+              'lesson_not_found',
+            ),
+          ),
+        );
+      },
+    );
   });
 
   group('completeLesson', () {
-    test('posts the correct request body and parses the full response', () async {
-      final client = MockClient((request) async {
-        expect(request.url.path, '/api/v1/lessons/lesson-a1/complete');
-        final body = jsonDecode(request.body) as Map<String, dynamic>;
-        expect(body['attempt_id'], 'attempt-xyz');
-        expect(body['correct_count'], 4);
-        expect(body['total_count'], 4);
-        expect(body['time_spent_seconds'], 30.0);
-        // Bolt 008 made this required backend-side; sent as an ISO 8601
-        // string so it round-trips through `DateTime.parse` unambiguously.
-        expect(body['client_completed_at'], isA<String>());
-        expect(DateTime.tryParse(body['client_completed_at'] as String), isNotNull);
-        return http.Response(
-          jsonEncode({
-            'xp_earned': 20,
-            'daily_xp_total': 20,
-            'daily_xp_target': 40,
-            'streak_count': 3,
-            'streak_increased_today': true,
-            'accuracy_percent': 100,
-            'correct_count': 4,
-            'total_count': 4,
-            'time_spent_seconds': 30.0,
-            'skill_unlocked_title': 'Food & Drink',
-            'crown_level': 1,
-            'crown_leveled_up': false,
-            'streak_freeze_unlocked': false,
-          }),
-          200,
+    test(
+      'posts the correct request body and parses the full response',
+      () async {
+        final client = MockClient((request) async {
+          expect(request.url.path, '/api/v1/lessons/lesson-a1/complete');
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['attempt_id'], 'attempt-xyz');
+          expect(body['correct_count'], 4);
+          expect(body['total_count'], 4);
+          expect(body['time_spent_seconds'], 30.0);
+          // Bolt 008 made this required backend-side; sent as an ISO 8601
+          // string so it round-trips through `DateTime.parse` unambiguously.
+          expect(body['client_completed_at'], isA<String>());
+          expect(
+            DateTime.tryParse(body['client_completed_at'] as String),
+            isNotNull,
+          );
+          return http.Response(
+            jsonEncode({
+              'xp_earned': 20,
+              'daily_xp_total': 20,
+              'daily_xp_target': 40,
+              'streak_count': 3,
+              'streak_increased_today': true,
+              'accuracy_percent': 100,
+              'correct_count': 4,
+              'total_count': 4,
+              'time_spent_seconds': 30.0,
+              'skill_unlocked_title': 'Food & Drink',
+              'crown_level': 1,
+              'crown_leveled_up': false,
+              'streak_freeze_unlocked': false,
+            }),
+            200,
+          );
+        });
+        final api = HttpLessonApi(
+          client: client,
+          baseUrl: 'http://localhost:8000',
+          sessionRepository: await _signedInSessionRepository(),
         );
-      });
-      final api = HttpLessonApi(
-        client: client,
-        baseUrl: 'http://localhost:8000',
-        sessionRepository: await _signedInSessionRepository(),
-      );
 
-      final result = await api.completeLesson(
-        lessonId: 'lesson-a1',
-        attemptId: 'attempt-xyz',
-        correctCount: 4,
-        totalCount: 4,
-        timeSpent: const Duration(seconds: 30),
-        beansRemainingAtEnd: 5,
-        clientCompletedAt: DateTime.now().toUtc(),
-      );
+        final result = await api.completeLesson(
+          lessonId: 'lesson-a1',
+          attemptId: 'attempt-xyz',
+          correctCount: 4,
+          totalCount: 4,
+          timeSpent: const Duration(seconds: 30),
+          beansRemainingAtEnd: 5,
+          clientCompletedAt: DateTime.now().toUtc(),
+        );
 
-      expect(result.xpEarned, 20);
-      expect(result.skillUnlockedTitle, 'Food & Drink');
-      expect(result.crownLevel, 1);
-    });
+        expect(result.xpEarned, 20);
+        expect(result.skillUnlockedTitle, 'Food & Drink');
+        expect(result.crownLevel, 1);
+      },
+    );
 
     test('a 422 beans_exhausted response throws LessonApiException', () async {
       final client = MockClient(
         (request) async => http.Response(
-          jsonEncode({'error_code': 'beans_exhausted', 'message': 'not enough beans'}),
+          jsonEncode({
+            'error_code': 'beans_exhausted',
+            'message': 'not enough beans',
+          }),
           422,
         ),
       );
@@ -360,7 +515,13 @@ void main() {
           beansRemainingAtEnd: 0,
           clientCompletedAt: DateTime.now().toUtc(),
         ),
-        throwsA(isA<LessonApiException>().having((e) => e.errorCode, 'errorCode', 'beans_exhausted')),
+        throwsA(
+          isA<LessonApiException>().having(
+            (e) => e.errorCode,
+            'errorCode',
+            'beans_exhausted',
+          ),
+        ),
       );
     });
   });
@@ -396,10 +557,8 @@ void main() {
   group('refillBeansWithAmole', () {
     test('a 200 response parses into RefillSuccess', () async {
       final client = MockClient(
-        (request) async => http.Response(
-          jsonEncode({'beans': 5, 'amole_balance': 150}),
-          200,
-        ),
+        (request) async =>
+            http.Response(jsonEncode({'beans': 5, 'amole_balance': 150}), 200),
       );
       final api = HttpLessonApi(
         client: client,
@@ -417,7 +576,10 @@ void main() {
     test('a 422 insufficient_amole response maps to RefillFailure', () async {
       final client = MockClient(
         (request) async => http.Response(
-          jsonEncode({'error_code': 'insufficient_amole', 'message': 'not enough'}),
+          jsonEncode({
+            'error_code': 'insufficient_amole',
+            'message': 'not enough',
+          }),
           422,
         ),
       );
@@ -430,7 +592,10 @@ void main() {
       final result = await api.refillBeansWithAmole();
 
       expect(result, isA<RefillFailure>());
-      expect((result as RefillFailure).reason, RefillFailureReason.insufficientAmole);
+      expect(
+        (result as RefillFailure).reason,
+        RefillFailureReason.insufficientAmole,
+      );
     });
 
     test('an unexpected error status throws LessonApiException', () async {
@@ -443,7 +608,10 @@ void main() {
         sessionRepository: await _signedInSessionRepository(),
       );
 
-      await expectLater(api.refillBeansWithAmole(), throwsA(isA<LessonApiException>()));
+      await expectLater(
+        api.refillBeansWithAmole(),
+        throwsA(isA<LessonApiException>()),
+      );
     });
   });
 }

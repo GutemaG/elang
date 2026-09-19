@@ -45,6 +45,7 @@ class FakeLessonApi implements LessonApi {
   static final List<SkillTreeNode> _seedNodes = [
     const SkillTreeNode(
       id: 'skill-alphabet',
+      categoryId: 'cat-foundations',
       lessonId: 'lesson-alphabet',
       title: 'Alphabet & Fidel',
       subtitle: 'ፊደል መግቢያ',
@@ -53,6 +54,7 @@ class FakeLessonApi implements LessonApi {
     ),
     const SkillTreeNode(
       id: 'skill-greetings',
+      categoryId: 'cat-foundations',
       lessonId: 'lesson-greetings',
       title: 'Basic Greetings',
       subtitle: 'ሰላምታ',
@@ -61,6 +63,7 @@ class FakeLessonApi implements LessonApi {
     ),
     const SkillTreeNode(
       id: 'skill-coffee',
+      categoryId: 'cat-foundations',
       lessonId: 'lesson-coffee',
       title: 'Coffee & Hospitality',
       subtitle: 'ቡና እና እንግዳ ተቀባይነት',
@@ -68,10 +71,40 @@ class FakeLessonApi implements LessonApi {
     ),
     const SkillTreeNode(
       id: 'skill-family',
+      categoryId: 'cat-foundations',
       lessonId: 'lesson-family',
       title: 'Family & Introductions',
       subtitle: 'ቤተሰብ',
       state: SkillNodeState.locked,
+    ),
+    const SkillTreeNode(
+      id: 'skill-numbers',
+      lessonId: 'lesson-numbers',
+      title: 'Numbers',
+      subtitle: 'ቁጥሮች',
+      state: SkillNodeState.active,
+      categoryId: 'cat-numbers',
+    ),
+    const SkillTreeNode(
+      id: 'skill-time',
+      lessonId: 'lesson-time',
+      title: 'Time',
+      subtitle: 'ጊዜ',
+      state: SkillNodeState.locked,
+      categoryId: 'cat-numbers',
+    ),
+  ];
+
+  static const List<SkillCategory> _categories = [
+    SkillCategory(
+      id: 'cat-foundations',
+      title: 'Foundations & Greetings',
+      subtitle: 'ሰላምታ እና ፊደል መግቢያ',
+    ),
+    SkillCategory(
+      id: 'cat-numbers',
+      title: 'Numbers & Time',
+      subtitle: 'ቁጥሮች እና ጊዜ',
     ),
   ];
 
@@ -188,14 +221,45 @@ class FakeLessonApi implements LessonApi {
         ),
       ],
     ),
+    'lesson-numbers': LessonContent(
+      lessonId: 'lesson-numbers',
+      skillId: 'skill-numbers',
+      title: 'Numbers',
+      beansAtStart: _beansMax,
+      beansMax: _beansMax,
+      exercises: const [
+        MultipleChoiceExercise(
+          id: 'numbers-1',
+          prompt: 'አንድ',
+          promptTranslation: 'What does this word mean?',
+          options: ['One', 'Two', 'Three', 'Four'],
+          correctOptionIndex: 0,
+        ),
+      ],
+    ),
+    'lesson-time': LessonContent(
+      lessonId: 'lesson-time',
+      skillId: 'skill-time',
+      title: 'Time',
+      beansAtStart: _beansMax,
+      beansMax: _beansMax,
+      exercises: const [
+        MultipleChoiceExercise(
+          id: 'time-1',
+          prompt: 'ዛሬ',
+          promptTranslation: 'What does this word mean?',
+          options: ['Today', 'Tomorrow', 'Yesterday', 'Morning'],
+          correctOptionIndex: 0,
+        ),
+      ],
+    ),
   };
 
   @override
   Future<SkillTreeResponse> getSkillTree() async {
     await Future<void>.delayed(latency);
     return SkillTreeResponse(
-      unitTitle: 'Unit 1: Foundations & Greetings',
-      unitSubtitle: 'ሰላምታ እና ፊደል መግቢያ',
+      categories: _categories,
       nodes: List.unmodifiable(_nodes),
       streakCount: _streakCount,
       beans: _beans,
@@ -284,8 +348,12 @@ class FakeLessonApi implements LessonApi {
           crownLevel: 1,
         );
         crownLevel = 1;
+        // Progression is per category: only a later skill in the same
+        // category unlocks.
         final nextLockedIndex = _nodes.indexWhere(
-          (n) => n.state == SkillNodeState.locked,
+          (n) =>
+              n.categoryId == node.categoryId &&
+              n.state == SkillNodeState.locked,
         );
         if (nextLockedIndex != -1) {
           final nextNode = _nodes[nextLockedIndex];

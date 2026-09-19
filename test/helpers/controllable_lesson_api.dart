@@ -156,9 +156,14 @@ class ControllableLessonApi implements LessonApi {
     required Duration timeSpent,
   }) async {
     completePracticeSessionCalls.add(
-      CompletePracticeSessionCall(sessionId: sessionId, results: results, timeSpent: timeSpent),
+      CompletePracticeSessionCall(
+        sessionId: sessionId,
+        results: results,
+        timeSpent: timeSpent,
+      ),
     );
-    if (completePracticeSessionError != null) throw completePracticeSessionError!;
+    if (completePracticeSessionError != null)
+      throw completePracticeSessionError!;
     return practiceCompletionResult!;
   }
 }

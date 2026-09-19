@@ -25,6 +25,7 @@ class SkillTreeNode {
     required this.title,
     required this.subtitle,
     required this.state,
+    required this.categoryId,
     this.crownLevel = 0,
     this.contentVersion,
   });
@@ -34,6 +35,9 @@ class SkillTreeNode {
   final String title;
   final String subtitle;
   final SkillNodeState state;
+
+  /// The [SkillCategory] this skill belongs to (009-course-categories).
+  final String categoryId;
 
   /// 0 when never completed; 1-5 once completed (see FR-6's crown-level cap).
   final int crownLevel;
@@ -52,19 +56,33 @@ class SkillTreeNode {
       title: title,
       subtitle: subtitle,
       state: state ?? this.state,
+      categoryId: categoryId,
       crownLevel: crownLevel ?? this.crownLevel,
       contentVersion: contentVersion,
     );
   }
 }
 
-/// The full skill-tree dashboard payload: the current unit banner, its
-/// nodes in path order, and the HUD stats (streak/beans/XP) shown at the
-/// top of the dashboard.
+/// A course category (009-course-categories): a banner on the dashboard
+/// owning its own skill path.
+class SkillCategory {
+  const SkillCategory({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String id;
+  final String title;
+  final String subtitle;
+}
+
+/// The full skill-tree dashboard payload: the course categories in display
+/// order, every skill node (flat, in path order), and the HUD stats
+/// (streak/beans/XP) shown at the top of the dashboard.
 class SkillTreeResponse {
   const SkillTreeResponse({
-    required this.unitTitle,
-    required this.unitSubtitle,
+    required this.categories,
     required this.nodes,
     required this.streakCount,
     required this.beans,
@@ -72,8 +90,7 @@ class SkillTreeResponse {
     required this.totalXp,
   });
 
-  final String unitTitle;
-  final String unitSubtitle;
+  final List<SkillCategory> categories;
   final List<SkillTreeNode> nodes;
   final int streakCount;
   final int beans;
@@ -82,4 +99,8 @@ class SkillTreeResponse {
 
   int get completedCount =>
       nodes.where((n) => n.state == SkillNodeState.completed).length;
+
+  /// The nodes belonging to [category], in path order.
+  List<SkillTreeNode> nodesIn(SkillCategory category) =>
+      nodes.where((n) => n.categoryId == category.id).toList();
 }
