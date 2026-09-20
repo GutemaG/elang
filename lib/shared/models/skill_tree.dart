@@ -51,6 +51,30 @@ class SkillTreeNode {
   /// possible yet", never a crash.
   final DateTime? contentVersion;
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'lesson_id': lessonId,
+    'title': title,
+    'subtitle': subtitle,
+    'state': state.name,
+    'category_id': categoryId,
+    'crown_level': crownLevel,
+    'content_version': contentVersion?.toUtc().toIso8601String(),
+  };
+
+  static SkillTreeNode fromJson(Map<String, dynamic> json) => SkillTreeNode(
+    id: json['id'] as String,
+    lessonId: json['lesson_id'] as String,
+    title: json['title'] as String,
+    subtitle: json['subtitle'] as String,
+    state: SkillNodeState.values.byName(json['state'] as String),
+    categoryId: json['category_id'] as String,
+    crownLevel: json['crown_level'] as int,
+    contentVersion: json['content_version'] is String
+        ? DateTime.tryParse(json['content_version'] as String)
+        : null,
+  );
+
   SkillTreeNode copyWith({SkillNodeState? state, int? crownLevel}) {
     return SkillTreeNode(
       id: id,
@@ -77,6 +101,18 @@ class SkillCategory {
   final String id;
   final String title;
   final String subtitle;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'subtitle': subtitle,
+  };
+
+  static SkillCategory fromJson(Map<String, dynamic> json) => SkillCategory(
+    id: json['id'] as String,
+    title: json['title'] as String,
+    subtitle: json['subtitle'] as String,
+  );
 }
 
 /// The full skill-tree dashboard payload: the course categories in display
@@ -107,6 +143,46 @@ class SkillTreeResponse {
 
   int get completedCount =>
       nodes.where((n) => n.state == SkillNodeState.completed).length;
+
+  /// A local snapshot for the offline cache (010, story 003); read back by
+  /// [fromJson]. Not the backend's response shape.
+  Map<String, dynamic> toJson() => {
+    'course': course?.toJson(),
+    'categories': [for (final c in categories) c.toJson()],
+    'nodes': [for (final n in nodes) n.toJson()],
+    'streak_count': streakCount,
+    'beans': beans,
+    'beans_max': beansMax,
+    'total_xp': totalXp,
+  };
+
+  /// Reads what [toJson] wrote; `null` if it is malformed, so a damaged
+  /// cache is ignored rather than crashing the dashboard.
+  static SkillTreeResponse? fromJson(Object? raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    try {
+      final rawCourse = raw['course'];
+      return SkillTreeResponse(
+        course: rawCourse is Map<String, dynamic>
+            ? Course.fromJson(rawCourse)
+            : null,
+        categories: (raw['categories'] as List)
+            .cast<Map<String, dynamic>>()
+            .map(SkillCategory.fromJson)
+            .toList(),
+        nodes: (raw['nodes'] as List)
+            .cast<Map<String, dynamic>>()
+            .map(SkillTreeNode.fromJson)
+            .toList(),
+        streakCount: raw['streak_count'] as int,
+        beans: raw['beans'] as int,
+        beansMax: raw['beans_max'] as int,
+        totalXp: raw['total_xp'] as int,
+      );
+    } on Object {
+      return null;
+    }
+  }
 
   /// The nodes belonging to [category], in path order.
   List<SkillTreeNode> nodesIn(SkillCategory category) =>

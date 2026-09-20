@@ -176,6 +176,14 @@ class _PackRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
+                  pack.courseTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySm.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+                Text(
                   _formatSize(pack.approximateSizeBytes),
                   style: AppTypography.bodySm.copyWith(
                     color: AppColors.onSurfaceVariant,

@@ -29,4 +29,10 @@ abstract class CourseApi {
   /// [CourseApiException] (e.g. `course_not_available`,
   /// `course_not_found`); the active course is unchanged on failure.
   Future<Course> switchCourse(String courseId);
+
+  /// Sends a course choice made while offline to the server, if one is
+  /// waiting. Never throws; a no-op for implementations with no offline
+  /// cache. Called before the dashboard loads so the server and the device
+  /// agree on the active course.
+  Future<void> syncPendingSwitch();
 }

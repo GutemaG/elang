@@ -2,11 +2,11 @@
 id: 004-multi-course-end-to-end-verification
 unit: 002-courses-ui
 intent: 010-multi-language-courses
-status: draft
+status: complete
 priority: must
 created: '2026-09-20T13:10:00Z'
 assigned_bolt: 027-course-offline-and-verification
-implemented: false
+implemented: true
 ---
 
 # Story: 004-multi-course-end-to-end-verification

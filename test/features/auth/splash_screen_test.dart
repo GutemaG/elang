@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/auth/auth_dependencies.dart';
+import 'package:elang/shared/services/course_cache_store.dart';
 import 'package:elang/features/auth/auth_flow_controller.dart';
 import 'package:elang/features/auth/screens/splash_screen.dart';
 import 'package:elang/features/lesson/lesson_dependencies.dart';
@@ -102,7 +103,10 @@ void main() {
     'routes to the onboarding carousel when the stored session is expired',
     (tester) async {
       final storage = InMemorySecureStorageService();
-      final deps = AuthDependencies(storage: storage);
+      final deps = AuthDependencies(
+        storage: storage,
+        courseCache: InMemoryCourseCacheStore(),
+      );
       // Pre-populate an expired session — must be treated as "no session".
       await deps.sessionRepository.saveSession(
         SessionState(
@@ -129,7 +133,10 @@ void main() {
     'routes straight to home when a valid session exists, skipping onboarding',
     (tester) async {
       final storage = InMemorySecureStorageService();
-      final deps = AuthDependencies(storage: storage);
+      final deps = AuthDependencies(
+        storage: storage,
+        courseCache: InMemoryCourseCacheStore(),
+      );
       await deps.sessionRepository.saveSession(
         SessionState(
           token: 'valid-token',

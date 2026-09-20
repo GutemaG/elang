@@ -11,12 +11,14 @@ import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/connectivity_monitor.dart';
 import '../../../shared/services/course_api.dart';
 import '../../../shared/services/lesson_api.dart';
+import '../../../shared/services/lesson_api_exception.dart';
 import '../../../shared/services/lesson_audio_player.dart';
 import '../../../shared/services/lesson_pack_downloader.dart';
 import '../../../shared/services/lesson_pack_store.dart';
 import '../../../shared/services/session_api.dart';
 import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
+import '../../../shared/services/course_cache_store.dart';
 import '../../../shared/services/sync_engine.dart';
 import '../../../shared/services/user_preferences_api.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -53,9 +55,15 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     required this.sessionRepository,
     required this.userPreferencesApi,
     required this.soundPreferenceRepository,
+    this.courseCache,
   });
 
   final LessonApi lessonApi;
+
+  /// Per-course offline copy of the dashboard (010-multi-language-courses,
+  /// story 003). When set, every successful load is saved, and a failed load
+  /// falls back to the active course's saved copy. `null` disables caching.
+  final CourseCacheStore? courseCache;
 
   /// The course list and switching (010-multi-language-courses): opened from
   /// the course chip, and threaded down to Settings.
@@ -87,11 +95,15 @@ class _DashboardData {
     required this.tree,
     required this.beansStatus,
     required this.dueCount,
+    this.fromCache = false,
   });
 
   final SkillTreeResponse tree;
   final BeansStatus beansStatus;
   final int dueCount;
+
+  /// True when the network failed and this is the saved copy of the course.
+  final bool fromCache;
 }
 
 class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
@@ -111,16 +123,73 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   }
 
   Future<_DashboardData> _load() async {
-    final results = await Future.wait([
-      widget.lessonApi.getSkillTree(),
-      widget.lessonApi.getBeansStatus(),
-      widget.lessonApi.getDueCount(),
-    ]);
-    return _DashboardData(
-      tree: results[0] as SkillTreeResponse,
-      beansStatus: results[1] as BeansStatus,
-      dueCount: results[2] as int,
-    );
+    // An offline course choice is sent first, so the tree fetched below is
+    // the course the learner picked.
+    await widget.courseApi.syncPendingSwitch();
+    try {
+      final results = await Future.wait([
+        widget.lessonApi.getSkillTree(),
+        widget.lessonApi.getBeansStatus(),
+        widget.lessonApi.getDueCount(),
+      ]);
+      final data = _DashboardData(
+        tree: results[0] as SkillTreeResponse,
+        beansStatus: results[1] as BeansStatus,
+        dueCount: results[2] as int,
+      );
+      widget.lessonPackDownloader.currentCourse = data.tree.course;
+      unawaited(_saveToCache(data));
+      return data;
+    } on LessonApiException catch (e) {
+      // A backend answer (e.g. an expired session) is not "offline".
+      if (e.errorCode != null) rethrow;
+      final cached = await _loadFromCache();
+      if (cached == null) rethrow;
+      return cached;
+    }
+  }
+
+  Future<void> _saveToCache(_DashboardData data) async {
+    final cache = widget.courseCache;
+    final course = data.tree.course;
+    if (cache == null || course == null) return;
+    try {
+      await cache.saveDashboard(
+        course.id,
+        data.tree,
+        amoleBalance: data.beansStatus.amoleBalance,
+      );
+      await cache.setActiveCourseId(course.id);
+    } on Object {
+      // No offline copy is better than a broken dashboard.
+    }
+  }
+
+  Future<_DashboardData?> _loadFromCache() async {
+    final cache = widget.courseCache;
+    if (cache == null) return null;
+    try {
+      final courseId = await cache.activeCourseId();
+      if (courseId == null) return null;
+      final cached = await cache.loadDashboard(courseId);
+      if (cached == null) return null;
+      final tree = cached.tree;
+      widget.lessonPackDownloader.currentCourse = tree.course;
+      return _DashboardData(
+        tree: tree,
+        beansStatus: BeansStatus(
+          beans: tree.beans,
+          beansMax: tree.beansMax,
+          regenMinutesPerBean: 0,
+          amoleBalance: cached.amoleBalance,
+          refillCostAmole: 0,
+        ),
+        dueCount: 0,
+        fromCache: true,
+      );
+    } on Object {
+      return null;
+    }
   }
 
   void _openDownloadManagement() {
@@ -281,6 +350,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                         lessonPackStore: widget.lessonPackStore,
                         lessonPackDownloader: widget.lessonPackDownloader,
                       ),
+                      if (snapshot.data!.fromCache) const _OfflineNote(),
                     ],
                   ),
                 ),
@@ -757,6 +827,37 @@ class _AffordanceBadge extends StatelessWidget {
           padding: const EdgeInsets.all(4),
           child: child ?? Icon(icon, size: 16, color: color),
         ),
+      ),
+    );
+  }
+}
+
+/// Shown when the dashboard is the saved copy of the course because the
+/// network is unavailable.
+class _OfflineNote extends StatelessWidget {
+  const _OfflineNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.spaceSm),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_off_outlined,
+            size: 16,
+            color: AppColors.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppSpacing.spaceXs),
+          Expanded(
+            child: Text(
+              'Offline, showing saved progress',
+              style: AppTypography.bodySm.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

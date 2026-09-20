@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../shared/models/course.dart';
 import '../../shared/models/language_names.dart';
+import '../../shared/services/caching_course_api.dart';
 import '../../shared/services/course_api.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../shared/theme/app_spacing.dart';
@@ -27,11 +28,15 @@ Future<Course?> pickAndSwitchCourse(
   if (picked == null || picked.isActive) return null;
   try {
     return await courseApi.switchCourse(picked.id);
-  } on CourseApiException {
+  } on CourseApiException catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Couldn't switch course. Please try again."),
+        SnackBar(
+          content: Text(
+            e.errorCode == offlineNotCachedErrorCode
+                ? 'Connect to the internet to open this course for the first time.'
+                : "Couldn't switch course. Please try again.",
+          ),
         ),
       );
     }

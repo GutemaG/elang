@@ -1,5 +1,7 @@
 import '../../shared/services/auth_api.dart';
+import '../../shared/services/caching_course_api.dart';
 import '../../shared/services/course_api.dart';
+import '../../shared/services/course_cache_store.dart';
 import '../../shared/services/http_auth_api.dart';
 import '../../shared/services/http_course_api.dart';
 import '../../shared/services/onboarding_repository.dart';
@@ -22,14 +24,23 @@ class AuthDependencies {
     SecureStorageService? storage,
     AuthApi? authApi,
     CourseApi? courseApi,
-  }) : storage = storage ?? FlutterSecureStorageService(),
+    CourseCacheStore? courseCache,
+  }) : courseCache = courseCache ?? FileCourseCacheStore(),
+       storage = storage ?? FlutterSecureStorageService(),
        authApi = authApi ?? HttpAuthApi() {
     onboardingRepository = OnboardingRepository(storage: this.storage);
     sessionRepository = SessionRepository(storage: this.storage);
     // The course catalog is public (onboarding, before sign-in); the other
     // course calls read the session token fresh, so one instance serves the
     // whole app (010-multi-language-courses).
-    this.courseApi = courseApi ?? HttpCourseApi(sessionRepository: sessionRepository);
+    // Wrapped so the course list and an offline switch work without a
+    // network (010, story 003).
+    this.courseApi =
+        courseApi ??
+        CachingCourseApi(
+          inner: HttpCourseApi(sessionRepository: sessionRepository),
+          cache: this.courseCache,
+        );
     authFlowController = AuthFlowController(
       sessionRepository: sessionRepository,
     );
@@ -37,6 +48,7 @@ class AuthDependencies {
 
   final SecureStorageService storage;
   final AuthApi authApi;
+  final CourseCacheStore courseCache;
   late final CourseApi courseApi;
   late final OnboardingRepository onboardingRepository;
   late final SessionRepository sessionRepository;

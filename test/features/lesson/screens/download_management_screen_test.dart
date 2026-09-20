@@ -140,4 +140,42 @@ void main() {
       expect(find.text('Alphabet & Fidel'), findsOneWidget);
     },
   );
+
+  // 010-multi-language-courses (bolt 027, story 003): each pack shows its
+  // course, packs from two courses are both kept, and deleting one leaves the
+  // other.
+  testWidgets('shows each pack under its course, legacy packs as English to Amharic', (
+    tester,
+  ) async {
+    const packB = LessonContent(
+      lessonId: 'lesson-b',
+      skillId: 'skill-b',
+      title: 'Akkam',
+      beansAtStart: 5,
+      beansMax: 5,
+      exercises: [],
+    );
+    final packStore = FakeLessonPackStore();
+    await packStore.save(_packA); // downloaded before courses existed
+    await packStore.save(
+      packB,
+      courseId: 'c-am-om',
+      courseTitle: 'Amharic to Afaan Oromo',
+    );
+    await tester.pumpWidget(_wrapped(packStore: packStore, syncEngine: _engine()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('English to Amharic'), findsOneWidget);
+    expect(find.text('Amharic to Afaan Oromo'), findsOneWidget);
+    expect(find.text('Alphabet & Fidel'), findsOneWidget);
+    expect(find.text('Akkam'), findsOneWidget);
+
+    await tester.tap(find.text('Delete').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Delete').last);
+    await tester.pumpAndSettle();
+
+    // Exactly one pack remains, and it is the other course's.
+    expect(find.text('Delete'), findsOneWidget);
+  });
 }

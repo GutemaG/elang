@@ -10,6 +10,11 @@ import 'package:elang/shared/services/lesson_pack_store.dart';
 
 class FakeLessonPackStore implements LessonPackStore {
   final Map<String, LessonContent> _packs = {};
+  final Map<String, String> _courseTitles = {};
+  final Map<String, String> _courseIds = {};
+
+  /// The course a pack was saved under, or null if none was given.
+  String? courseIdOf(String lessonId) => _courseIds[lessonId];
 
   /// Fixed per-pack size for tests that need a size but don't care about
   /// the exact number -- override per-test by seeding [fakeSizeBytes].
@@ -19,8 +24,14 @@ class FakeLessonPackStore implements LessonPackStore {
   Future<bool> isDownloaded(String lessonId) async => _packs.containsKey(lessonId);
 
   @override
-  Future<void> save(LessonContent content) async {
+  Future<void> save(
+    LessonContent content, {
+    String? courseId,
+    String? courseTitle,
+  }) async {
     _packs[content.lessonId] = content;
+    if (courseId != null) _courseIds[content.lessonId] = courseId;
+    if (courseTitle != null) _courseTitles[content.lessonId] = courseTitle;
   }
 
   @override
@@ -42,6 +53,9 @@ class FakeLessonPackStore implements LessonPackStore {
             lessonId: content.lessonId,
             title: content.title,
             approximateSizeBytes: fakeSizeBytes,
+            courseTitle:
+                _courseTitles[content.lessonId] ??
+                DownloadedPackSummary.legacyPackCourseTitle,
           ),
         )
         .toList();

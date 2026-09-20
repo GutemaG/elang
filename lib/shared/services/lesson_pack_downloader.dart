@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+import '../models/course.dart';
 import '../models/exercise.dart';
 import '../models/lesson_content.dart';
 import 'lesson_api.dart';
@@ -32,6 +33,11 @@ class LessonPackDownloader extends ChangeNotifier {
 
   final Map<String, LessonDownloadStatus> _statusByLessonId = {};
 
+  /// The course new downloads are filed under (010-multi-language-courses).
+  /// The dashboard sets it whenever it shows a course, so the download
+  /// affordance deep in the tree needs no course plumbing.
+  Course? currentCourse;
+
   LessonDownloadStatus statusFor(String lessonId) =>
       _statusByLessonId[lessonId] ?? LessonDownloadStatus.notDownloaded;
 
@@ -56,7 +62,11 @@ class LessonPackDownloader extends ChangeNotifier {
     try {
       final content = await _lessonApi.startLesson(lessonId);
       final withLocalAudio = await _downloadAudioAndRewrite(content);
-      await _packStore.save(withLocalAudio);
+      await _packStore.save(
+        withLocalAudio,
+        courseId: currentCourse?.id,
+        courseTitle: currentCourse?.title,
+      );
       _statusByLessonId[lessonId] = LessonDownloadStatus.downloaded;
     } catch (e, stackTrace) {
       // A failed download leaves no partial pack behind -- `_packStore.save`

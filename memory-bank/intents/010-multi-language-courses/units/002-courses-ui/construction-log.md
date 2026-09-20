@@ -27,7 +27,7 @@ last_updated: '2026-09-20T21:00:00Z'
 | Bolt ID | Stories | Status | Changed |
 |---------|---------|--------|---------|
 | 026-course-picker-ui | 001-002 | ✅ complete | 2026-09-20 |
-| 027-course-offline-and-verification | 003-004 | [ ] planned | - |
+| 027-course-offline-and-verification | 003-004 | ✅ complete | 2026-09-21 |
 
 ## Execution History
 
@@ -37,6 +37,10 @@ last_updated: '2026-09-20T21:00:00Z'
 | 2026-09-20T21:40:00Z | 026-course-picker-ui | stage-complete | plan → implement |
 | 2026-09-20T23:10:00Z | 026-course-picker-ui | stage-complete | implement → test |
 | 2026-09-20T23:30:00Z | 026-course-picker-ui | bolt-complete | Stories 001, 002 complete |
+| 2026-09-21T00:00:00Z | 027-course-offline-and-verification | started | Stage 1: Plan |
+| 2026-09-21T00:20:00Z | 027-course-offline-and-verification | stage-complete | plan → implement |
+| 2026-09-21T01:00:00Z | 027-course-offline-and-verification | stage-complete | implement → test |
+| 2026-09-21T01:30:00Z | 027-course-offline-and-verification | bolt-complete | Stories 003, 004 complete; unit and intent complete |
 
 ## Notes
 

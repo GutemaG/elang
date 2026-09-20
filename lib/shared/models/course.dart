@@ -35,6 +35,19 @@ class Course {
 
   bool get isAvailable => status == CourseStatus.available;
 
+  /// The same shape [fromJson] reads, so a course round-trips through the
+  /// offline cache.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'learning_language': learningLanguage,
+    'from_language': fromLanguage,
+    'title': title,
+    'status': status == CourseStatus.comingSoon ? 'coming_soon' : 'available',
+    'is_active': isActive,
+    'completed_skills': completedSkills,
+    'total_skills': totalSkills,
+  };
+
   Course copyWith({bool? isActive}) => Course(
     id: id,
     learningLanguage: learningLanguage,
@@ -87,6 +100,34 @@ class CourseList {
 
   final String activeCourseId;
   final List<Course> courses;
+
+  /// The same list with [courseId] marked active (and only it).
+  CourseList withActive(String courseId) => CourseList(
+    activeCourseId: courseId,
+    courses: [
+      for (final c in courses) c.copyWith(isActive: c.id == courseId),
+    ],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'active_course_id': activeCourseId,
+    'courses': [for (final c in courses) c.toJson()],
+  };
+
+  /// Reads what [toJson] wrote; `null` if it is malformed.
+  static CourseList? fromJson(Object? raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final active = raw['active_course_id'];
+    final list = raw['courses'];
+    if (active is! String || list is! List) return null;
+    final courses = <Course>[];
+    for (final item in list) {
+      final course = item is Map<String, dynamic> ? Course.fromJson(item) : null;
+      if (course == null) return null;
+      courses.add(course);
+    }
+    return CourseList(activeCourseId: active, courses: courses);
+  }
 
   Course? get activeCourse {
     for (final course in courses) {

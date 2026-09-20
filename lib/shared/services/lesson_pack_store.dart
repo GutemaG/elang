@@ -23,7 +23,13 @@ import '../models/lesson_content.dart';
 abstract class LessonPackStore {
   Future<bool> isDownloaded(String lessonId);
 
-  Future<void> save(LessonContent content);
+  /// [courseId]/[courseTitle] record which course the pack belongs to
+  /// (010-multi-language-courses); omit them when unknown.
+  Future<void> save(
+    LessonContent content, {
+    String? courseId,
+    String? courseTitle,
+  });
 
   /// `null` if [lessonId] was never downloaded (or was deleted).
   Future<LessonContent?> load(String lessonId);
@@ -59,15 +65,25 @@ class SqfliteLessonPackStore implements LessonPackStore {
     final documentsDir = await getApplicationDocumentsDirectory();
     final db = await openDatabase(
       '${documentsDir.path}/$_dbFileName',
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE $_table ('
           'lesson_id TEXT PRIMARY KEY, '
           'content TEXT NOT NULL, '
-          'downloaded_at TEXT NOT NULL'
+          'downloaded_at TEXT NOT NULL, '
+          'course_id TEXT, '
+          'course_title TEXT'
           ')',
         );
+      },
+      // 010-multi-language-courses: a pack downloaded before this has no
+      // course; NULL is read back as English to Amharic, so nothing is lost.
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN course_id TEXT');
+          await db.execute('ALTER TABLE $_table ADD COLUMN course_title TEXT');
+        }
       },
     );
     _db = db;
@@ -88,12 +104,18 @@ class SqfliteLessonPackStore implements LessonPackStore {
   }
 
   @override
-  Future<void> save(LessonContent content) async {
+  Future<void> save(
+    LessonContent content, {
+    String? courseId,
+    String? courseTitle,
+  }) async {
     final db = await _database();
     await db.insert(_table, {
       'lesson_id': content.lessonId,
       'content': jsonEncode(_contentToJson(content)),
       'downloaded_at': DateTime.now().toUtc().toIso8601String(),
+      'course_id': courseId,
+      'course_title': courseTitle,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -140,7 +162,10 @@ class SqfliteLessonPackStore implements LessonPackStore {
   @override
   Future<List<DownloadedPackSummary>> listDownloadedPacks() async {
     final db = await _database();
-    final rows = await db.query(_table, columns: const ['lesson_id', 'content']);
+    final rows = await db.query(
+      _table,
+      columns: const ['lesson_id', 'content', 'course_title'],
+    );
     final summaries = <DownloadedPackSummary>[];
     for (final row in rows) {
       final contentJson = row['content'] as String;
@@ -158,6 +183,9 @@ class SqfliteLessonPackStore implements LessonPackStore {
           lessonId: row['lesson_id'] as String,
           title: content.title,
           approximateSizeBytes: sizeBytes,
+          courseTitle:
+              row['course_title'] as String? ??
+              DownloadedPackSummary.legacyPackCourseTitle,
         ),
       );
     }

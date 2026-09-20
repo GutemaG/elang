@@ -150,8 +150,8 @@
 
 - [x] **001-course-switcher-and-settings-picker** (courses-ui): Dashboard chip, picker, Settings picker - Must - ✅ COMPLETE (bolt 026-course-picker-ui)
 - [x] **002-onboarding-language-pair** (courses-ui): "I speak" and "I want to learn" in onboarding - Must - ✅ COMPLETE (bolt 026-course-picker-ui)
-- [ ] **003-offline-per-course** (courses-ui): Cache and packs keyed by course - Must - 📋 GENERATED (bolt 027-course-offline-and-verification)
-- [ ] **004-multi-course-end-to-end-verification** (courses-ui): End-to-end and regression proof - Must - 📋 GENERATED (bolt 027-course-offline-and-verification)
+- [x] **003-offline-per-course** (courses-ui): Cache and packs keyed by course - Must - ✅ COMPLETE (bolt 027-course-offline-and-verification)
+- [x] **004-multi-course-end-to-end-verification** (courses-ui): End-to-end and regression proof - Must - ✅ COMPLETE (bolt 027-course-offline-and-verification)
 
 ---
 

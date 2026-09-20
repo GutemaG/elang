@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-20T15:10:00Z
-total_decisions: 13
+last_updated: 2026-09-21T00:40:00Z
+total_decisions: 14
 ---
 
 # Decision Index
@@ -17,6 +17,14 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-14: Offline course switching: a per-course dashboard cache and a locally pending switch
+- **Status**: accepted
+- **Date**: 2026-09-21
+- **Bolt**: 027-course-offline-and-verification (002-courses-ui)
+- **Path**: `bolts/027-course-offline-and-verification/adr-14-offline-course-switching.md`
+- **Summary**: The client had no skill-tree cache and switching needs the server. Decided: cache one dashboard per course id; show the active course's copy offline with a note; allow an offline switch only to a cached course, recorded as pending and sent to the server before the next load; a failure carrying a backend `error_code` is never treated as offline. Lesson packs stay keyed by lesson id (completions are gated by the lesson's own course), with display-only course columns.
+- **Read when**: Touching the dashboard load, `CachingCourseApi`, `CourseCacheStore`, offline switching, the lesson-pack store schema, or clearing local data on log out.
 
 ### ADR-13: `User.selected_language` becomes a mirror of the active course, written only by `ActivateCourse` (amends ADR-7)
 - **Status**: accepted

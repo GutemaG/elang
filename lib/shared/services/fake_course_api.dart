@@ -121,6 +121,14 @@ class FakeCourseApi implements CourseApi {
     return course.copyWith(isActive: true);
   }
 
+  /// How many times a screen asked to send a pending offline switch.
+  int syncCalls = 0;
+
+  @override
+  Future<void> syncPendingSwitch() async {
+    syncCalls++;
+  }
+
   void _maybeFail() {
     final failure = failWith;
     if (failure != null) throw failure;

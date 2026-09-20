@@ -477,3 +477,79 @@ class TestStudyingEachNewCourseOverHttp:
             s["state"] for s in client.get("/api/v1/skill-tree", headers=headers).json()["skills"]
         ]
         assert states == ["completed", "active"]
+
+
+@pytest.mark.parametrize("slug", sorted(_PAIRS))
+class TestEachNewCourseEarnsAndPractisesOverHttp:
+    """Story 004 (bolt 027): studying a new course pays out XP, streak and Amole
+    like the original course, and its words show up in Practice only while it
+    is the active course.
+    """
+
+    def test_a_lesson_then_practice_pays_xp_streak_and_amole_and_scopes_the_words(
+        self, make_client: Any, seeded_real_content: None, slug: str, db_path: Path
+    ) -> None:
+        client, headers, user = _sign_up(make_client, slug)
+        tree = client.get("/api/v1/skill-tree", headers=headers).json()
+        lesson_id = tree["skills"][0]["lesson_id"]
+        done = client.post(
+            f"/api/v1/lessons/{lesson_id}/complete",
+            headers=headers,
+            json={
+                "attempt_id": f"earn-{slug}",
+                "correct_count": 4,
+                "total_count": 4,
+                "time_spent_seconds": 20.0,
+                "client_completed_at": datetime.now(UTC).isoformat(),
+            },
+        )
+        assert done.status_code == 200, done.text
+        assert done.json()["xp_earned"] > 0
+        assert done.json()["streak_count"] == 1
+        after = client.get("/api/v1/skill-tree", headers=headers).json()
+        assert after["total_xp"] == done.json()["xp_earned"]
+
+        # Make the words just learned due now.
+        with sqlite3.connect(db_path) as conn:
+            conn.execute(
+                "UPDATE user_vocab_progress SET next_review_at = ? WHERE user_id = ?",
+                ("2000-01-01 00:00:00", user["id"]),
+            )
+            conn.commit()
+
+        due = client.get("/api/v1/practice/due-count", headers=headers).json()["due_count"]
+        assert due > 0
+        items = client.get("/api/v1/practice/due-items", headers=headers).json()["items"]
+        assert len(items) == due
+
+        # Not visible from the original English to Amharic course.
+        switched = client.put(
+            "/api/v1/users/me/active-course",
+            headers=headers,
+            json={"course_id": _content_id("course:en-am")},
+        )
+        assert switched.status_code == 200, switched.text
+        assert client.get("/api/v1/practice/due-count", headers=headers).json()["due_count"] == 0
+        assert client.get("/api/v1/practice/due-items", headers=headers).json()["items"] == []
+
+        # Back on the new course they are due again, and practising them pays
+        # Amole.
+        back = client.put(
+            "/api/v1/users/me/active-course",
+            headers=headers,
+            json={"course_id": _content_id(slug)},
+        )
+        assert back.status_code == 200, back.text
+        assert client.get("/api/v1/practice/due-count", headers=headers).json()["due_count"] == due
+        practice = client.post(
+            "/api/v1/practice/complete",
+            headers=headers,
+            json={
+                "session_id": f"practice-{slug}",
+                "results": [{"vocab_item_id": i["vocab_item_id"], "correct": True} for i in items],
+                "time_spent_seconds": 15.0,
+            },
+        )
+        assert practice.status_code == 200, practice.text
+        assert practice.json()["amole_earned"] > 0
+        assert client.get("/api/v1/beans", headers=headers).json()["amole_balance"] > 0

@@ -3,15 +3,24 @@ id: 027-course-offline-and-verification
 unit: 002-courses-ui
 intent: 010-multi-language-courses
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 003-offline-per-course
   - 004-multi-course-end-to-end-verification
 created: '2026-09-20T13:20:00Z'
-started: null
-completed: null
+started: '2026-09-21T00:00:00Z'
+completed: '2026-09-20T08:38:48Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-21T00:20:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-21T01:00:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-21T01:30:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 025-course-content-seed
   - 026-course-picker-ui

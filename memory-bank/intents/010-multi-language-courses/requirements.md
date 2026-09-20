@@ -1,7 +1,7 @@
 ---
 intent: 010-multi-language-courses
 phase: inception
-status: inception-complete
+status: complete
 created: '2026-09-20T12:00:00Z'
 updated: '2026-09-20T13:40:00Z'
 ---

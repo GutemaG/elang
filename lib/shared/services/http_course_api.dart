@@ -85,6 +85,9 @@ class HttpCourseApi implements CourseApi {
     return course.copyWith(isActive: true);
   }
 
+  @override
+  Future<void> syncPendingSwitch() async {}
+
   Uri _uri(String suffix) => Uri.parse('$_baseUrl/api/v1/courses$suffix');
 
   Future<http.Response> _send(Future<http.Response> Function() request) async {
