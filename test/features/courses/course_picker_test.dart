@@ -1,8 +1,9 @@
-// Course picker tests (010-multi-language-courses, bolt 026): grouped by the
-// language to learn with the from-language on each row, the active course
-// marked, coming soon disabled, progress shown, a load failure with Retry, and
-// `pickAndSwitchCourse` switching only on a real change and keeping the
-// current course (with a message) when the switch fails.
+// Course catalog tests (010 bolt 026, rebuilt by 011 bolt 029): grouped by the
+// language the learner speaks, each row naming the language taught with its
+// course title, progress as a bar, the active course marked, coming soon
+// disabled, a load failure with Retry, and `pickAndSwitchCourse` switching only
+// on a real change and keeping the current course (with a message) when the
+// switch fails.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,7 +12,6 @@ import 'package:elang/features/courses/course_picker.dart';
 import 'package:elang/shared/models/course.dart';
 import 'package:elang/shared/services/course_api.dart';
 import 'package:elang/shared/services/fake_course_api.dart';
-import 'package:elang/shared/widgets/selectable_option_card.dart';
 
 /// A page with a button that runs `pickAndSwitchCourse` and stores its result.
 class _Harness extends StatefulWidget {
@@ -58,49 +58,45 @@ Future<void> _open(
   await tester.pumpAndSettle();
 }
 
-SelectableOptionCard _card(WidgetTester tester, String text) {
-  return tester.widget<SelectableOptionCard>(
-    find
-        .ancestor(
-          of: find.text(text),
-          matching: find.byType(SelectableOptionCard),
-        )
-        .first,
-  );
-}
-
 void main() {
-  testWidgets(
-    'groups courses by the language to learn, with the from-language',
-    (tester) async {
-      await _open(tester, FakeCourseApi());
+  testWidgets('groups courses by the language the learner speaks', (
+    tester,
+  ) async {
+    await _open(tester, FakeCourseApi());
 
-      expect(find.text('Choose a course'), findsOneWidget);
-      expect(find.text('Learn Amharic'), findsOneWidget);
-      expect(find.text('Learn Afaan Oromo'), findsOneWidget);
-      expect(find.text('From English'), findsNWidgets(2));
-      expect(find.text('From Amharic'), findsOneWidget);
-      expect(find.text('From Afaan Oromo'), findsOneWidget);
-    },
-  );
+    expect(find.text('Choose a course'), findsOneWidget);
+    expect(find.text('For English speakers'), findsOneWidget);
+    expect(find.text('For Amharic speakers'), findsOneWidget);
+    expect(find.text('For Afaan Oromo speakers'), findsOneWidget);
 
-  testWidgets(
-    'marks the active course, shows progress, and disables coming soon',
-    (tester) async {
-      await _open(tester, FakeCourseApi());
+    // Each row names the language taught; its course title says the pair.
+    expect(find.text('Amharic'), findsNWidgets(2)); // from English, from Oromo
+    expect(find.text('Afaan Oromo'), findsNWidgets(2));
+    expect(find.text('English to Amharic'), findsOneWidget);
+    expect(find.text('Amharic to Afaan Oromo'), findsOneWidget);
+  });
 
-      final active = _card(tester, 'English to Amharic · 3/10 skills');
-      expect(active.selected, isTrue);
-      expect(active.enabled, isTrue);
+  testWidgets('marks the active course, shows progress, and disables coming soon', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await _open(tester, FakeCourseApi());
 
-      final comingSoon = _card(tester, 'Coming soon');
-      expect(comingSoon.enabled, isFalse);
-      expect(comingSoon.selected, isFalse);
+    // The active course is the only one wearing the check.
+    expect(find.byIcon(Icons.check), findsOneWidget);
+    // Progress is a bar now, not a count in a sentence, but it still says so.
+    expect(find.bySemanticsLabel('3 of 10 skills'), findsOneWidget);
+    expect(find.bySemanticsLabel('0 of 2 skills'), findsNWidgets(2));
 
-      // A course with no skills yet shows just its title.
-      expect(find.text('English to Afaan Oromo · 0/2 skills'), findsOneWidget);
-    },
-  );
+    // Coming soon is named on the row and locked.
+    expect(
+      find.text('Afaan Oromo to Amharic · Coming soon'),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+
+    handle.dispose();
+  });
 
   testWidgets('a load failure shows a message and Retry, which recovers', (
     tester,
@@ -114,7 +110,7 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Learn Amharic'), findsOneWidget);
+    expect(find.text('For English speakers'), findsOneWidget);
   });
 
   testWidgets('choosing another course switches to it and returns it', (
@@ -162,7 +158,10 @@ void main() {
     final api = FakeCourseApi();
     await _open(tester, api);
 
-    await tester.tap(find.text('Coming soon'), warnIfMissed: false);
+    await tester.tap(
+      find.text('Afaan Oromo to Amharic · Coming soon'),
+      warnIfMissed: false,
+    );
     await tester.pumpAndSettle();
 
     expect(api.switchCalls, isEmpty);
@@ -191,6 +190,23 @@ void main() {
       find.text("Couldn't switch course. Please try again."),
       findsOneWidget,
     );
+  });
+
+  testWidgets('the close button dismisses without choosing', (tester) async {
+    final api = FakeCourseApi();
+    Course? result = const Course(
+      id: 'sentinel',
+      learningLanguage: 'am',
+      fromLanguage: 'en',
+      title: 'x',
+    );
+    await _open(tester, api, onResult: (c) => result = c);
+
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+
+    expect(result, isNull);
+    expect(api.switchCalls, isEmpty);
   });
 
   testWidgets('dismissing the sheet does nothing', (tester) async {

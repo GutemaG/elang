@@ -1,7 +1,8 @@
-// Dashboard course chip tests (010-multi-language-courses, bolt 026): the chip
-// shows the active course from the skill tree, opens the shared picker, a
-// switch reloads the dashboard with the new course's tree, a failed switch
-// keeps the current one, and nothing overflows at narrow widths.
+// Dashboard course badge tests (010 bolt 026, reworked by 011 bolt 029): the
+// badge shows the active course from the skill tree and opens the course
+// panel; "+ Course" reaches the catalog; a switch reloads the dashboard with
+// the new course's tree; a failed switch keeps the current one; and nothing
+// overflows at narrow widths.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -108,7 +109,7 @@ FakeCourseApi _courseApi() =>
     FakeCourseApi(courses: [_amharic, _oromo], activeCourseId: 'c-en-am');
 
 void main() {
-  testWidgets('the chip shows the language of the active course', (
+  testWidgets('the badge shows the language of the active course', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -123,7 +124,7 @@ void main() {
   });
 
   testWidgets(
-    'with no course in the tree (older backend) the chip reads Courses',
+    'with no course in the tree (older backend) the badge reads Courses',
     (tester) async {
       final tree = SkillTreeResponse(
         categories: const [SkillCategory(id: 'c', title: 'T', subtitle: 's')],
@@ -140,24 +141,45 @@ void main() {
     },
   );
 
-  testWidgets(
-    'tapping the chip opens the picker with the active course marked',
-    (tester) async {
-      await tester.pumpWidget(
-        _dashboard(
-          _lessonApi(_tree(_amharic, 'Foundations', 'Greetings')),
-          _courseApi(),
-        ),
-      );
-      await tester.pumpAndSettle();
+  testWidgets('tapping the badge opens the panel with the course rail', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _dashboard(
+        _lessonApi(_tree(_amharic, 'Foundations', 'Greetings')),
+        _courseApi(),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Amharic'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Amharic'));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Choose a course'), findsOneWidget);
-      expect(find.text('Learn Afaan Oromo'), findsOneWidget);
-    },
-  );
+    // Nothing is cached and nothing has progress, so the rail is the active
+    // course alone (ADR-15); everything else lives behind "+ Course".
+    expect(find.text('from English'), findsOneWidget);
+    expect(find.text('Course'), findsOneWidget);
+    expect(find.text('Course settings'), findsOneWidget);
+    expect(find.text('Manage downloads'), findsOneWidget);
+  });
+
+  testWidgets('"+ Course" opens the catalog', (tester) async {
+    await tester.pumpWidget(
+      _dashboard(
+        _lessonApi(_tree(_amharic, 'Foundations', 'Greetings')),
+        _courseApi(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Amharic'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Course'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose a course'), findsOneWidget);
+    expect(find.text('For English speakers'), findsOneWidget);
+  });
 
   testWidgets('switching course reloads the dashboard with the new tree', (
     tester,
@@ -172,12 +194,14 @@ void main() {
     lessonApi.skillTree = _tree(_oromo, 'Nagaa', 'Akkam');
     await tester.tap(find.text('Amharic'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Course'));
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('English to Afaan Oromo'));
     await tester.pumpAndSettle();
 
     expect(courseApi.switchCalls, ['c-en-om']);
     expect(find.text('Choose a course'), findsNothing);
-    expect(find.text('Afaan Oromo'), findsOneWidget); // the chip
+    expect(find.text('Afaan Oromo'), findsOneWidget); // the badge
     expect(find.text('Akkam'), findsOneWidget);
     expect(find.text('Greetings'), findsNothing);
   });
@@ -197,6 +221,8 @@ void main() {
 
     await tester.tap(find.text('Amharic'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Course'));
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('English to Afaan Oromo'));
     await tester.pumpAndSettle();
 
@@ -210,7 +236,7 @@ void main() {
 
   for (final width in [360.0, 320.0]) {
     testWidgets(
-      'the chip and top bar do not overflow at ${width}dp with large text',
+      'the badge and header do not overflow at ${width}dp with large text',
       (tester) async {
         tester.view.physicalSize = Size(width, 1600);
         tester.view.devicePixelRatio = 1;

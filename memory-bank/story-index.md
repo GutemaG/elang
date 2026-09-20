@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 66
 - **Generated**: 66
-- **Completed**: 60
+- **Completed**: 62
 - **Last updated**: 2026-09-21
 
 ---
@@ -159,15 +159,15 @@
 
 - [x] **001-pinned-header-with-stats** (dashboard-shell-ui): Stats move into a pinned header - Must - ✅ COMPLETE (bolt 028-dashboard-shell)
 - [x] **002-smooth-scroll-and-sticky-sections** (dashboard-shell-ui): One scroll surface, sticky category banners - Must - ✅ COMPLETE (bolt 028-dashboard-shell)
-- [ ] **003-course-rail-and-add-course** (dashboard-shell-ui): Header badge expands a course rail with + Course - Must - GENERATED (bolt 029-course-switcher-panel)
-- [ ] **004-course-settings-and-downloads-access** (dashboard-shell-ui): Settings and downloads move into the course panel - Must - GENERATED (bolt 029-course-switcher-panel)
+- [x] **003-course-rail-and-add-course** (dashboard-shell-ui): Header badge expands a course rail with + Course - Must - ✅ COMPLETE (bolt 029-course-switcher-panel)
+- [x] **004-course-settings-and-downloads-access** (dashboard-shell-ui): Settings and downloads move into the course panel - Must - ✅ COMPLETE (bolt 029-course-switcher-panel)
 
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 10
+- **Generated**: 8
 - **In Progress**: 0
-- **Completed**: 60
+- **Completed**: 62
 - **Retired**: 1

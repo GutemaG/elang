@@ -34,6 +34,13 @@ abstract class CourseCacheStore {
   /// `null` if [courseId] was never cached (or the cache is unreadable).
   Future<CachedDashboard?> loadDashboard(String courseId);
 
+  /// Every course with a saved dashboard.
+  ///
+  /// A dashboard is written after each successful load, so this is exactly
+  /// "the courses this learner has opened" -- which is what the dashboard's
+  /// course rail is built from (011-dashboard-ui-polish, ADR-15).
+  Future<List<String>> cachedCourseIds();
+
   Future<void> saveCourseList(CourseList list);
 
   Future<CourseList?> loadCourseList();
@@ -100,6 +107,10 @@ abstract class MapBackedCourseCacheStore implements CourseCacheStore {
     if (tree == null || amole is! int) return null;
     return CachedDashboard(tree: tree, amoleBalance: amole);
   }
+
+  @override
+  Future<List<String>> cachedCourseIds() async =>
+      _map((await _read())['dashboards']).keys.toList();
 
   @override
   Future<void> saveCourseList(CourseList list) =>

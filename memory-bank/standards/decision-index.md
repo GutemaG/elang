@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-21T00:40:00Z
-total_decisions: 14
+last_updated: 2026-09-21T06:10:00Z
+total_decisions: 15
 ---
 
 # Decision Index
@@ -17,6 +17,14 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-15: The course rail is the courses the learner has opened, derived from the offline cache
+- **Status**: accepted
+- **Date**: 2026-09-21
+- **Bolt**: 029-course-switcher-panel (001-dashboard-shell-ui)
+- **Path**: `bolts/029-course-switcher-panel/adr-15-course-rail-membership.md`
+- **Summary**: `GET /courses` returns the whole catalog and the backend has no enrolment, so the dashboard's course rail derives membership on the client: a course is on the rail if it has a cached dashboard (ADR-14 already writes one per course after every successful load, so this means "opened"), or is active, or reports progress. Coming-soon courses never appear. No backend change; one new read, `CourseCacheStore.cachedCourseIds`. The rail is per device, and anything that clears cached dashboards also empties it.
+- **Read when**: Touching the dashboard course rail, `CourseCacheStore`, clearing local data on log out (it now also empties the rail), or considering real per-user course enrolment on the backend.
 
 ### ADR-14: Offline course switching: a per-course dashboard cache and a locally pending switch
 - **Status**: accepted

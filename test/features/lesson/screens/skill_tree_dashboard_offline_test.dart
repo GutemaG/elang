@@ -242,9 +242,10 @@ void main() {
   ) async {
     final rig = await _offlineRig(tester);
 
+    // Both courses are cached, so both are on the rail: one tap switches.
     await tester.tap(find.text('Amharic'));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('English to Afaan Oromo'));
+    await tester.tap(find.text('Afaan Oromo'));
     await tester.pumpAndSettle();
 
     expect(find.text('Akkam'), findsOneWidget);
@@ -256,7 +257,11 @@ void main() {
   testWidgets('offline, a course never saved cannot be opened', (tester) async {
     final rig = await _offlineRig(tester, bothCached: false);
 
+    // A course never opened is not on the rail (ADR-15), so it is reached
+    // through "+ Course" -- which is exactly the case this refuses.
     await tester.tap(find.text('Amharic'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Course'));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('English to Afaan Oromo'));
     await tester.pumpAndSettle();

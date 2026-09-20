@@ -2,7 +2,7 @@
 unit: 001-dashboard-shell-ui
 intent: 011-dashboard-ui-polish
 phase: inception
-status: planned
+status: complete
 created: '2026-09-21T02:30:00Z'
 updated: '2026-09-21T02:30:00Z'
 ---

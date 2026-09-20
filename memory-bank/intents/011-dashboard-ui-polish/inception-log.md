@@ -25,8 +25,8 @@ selection, adding a course and course settings collapsed into one header control
 | Stories (4) | Generated |
 | Bolt Plan (2) | Generated: 028, 029 |
 
-Checkpoint 3 (artifacts review) approved 2026-09-21. Checkpoint 4 approved: ready for
-Construction. Bolts 028 and 029 created; bolt 028 started.
+Inception closed 2026-09-21. Construction complete: bolts 028 and 029 both delivered,
+unit and intent complete. Flutter suite 314 passing. Not yet pushed.
 
 ## Summary
 
@@ -38,7 +38,9 @@ Construction. Bolts 028 and 029 created; bolt 028 started.
 
 ## Next Steps
 
-`/specsmd-construction-agent --unit="001-dashboard-shell-ui" --bolt-id="028-dashboard-shell"`
+Intent complete. Outstanding with the user: the manual on-device pass for both bolts, and
+the deferred follow-ups (bottom navigation, clearing the course cache on log out — which
+now also empties the rail, per ADR-15).
 
 ## Decision Log
 

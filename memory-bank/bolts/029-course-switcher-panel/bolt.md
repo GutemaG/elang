@@ -3,15 +3,21 @@ id: 029-course-switcher-panel
 unit: 001-dashboard-shell-ui
 intent: 011-dashboard-ui-polish
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 003-course-rail-and-add-course
   - 004-course-settings-and-downloads-access
 created: '2026-09-21T03:00:00Z'
-started: null
-completed: null
+started: '2026-09-21T05:35:00Z'
+completed: '2026-09-20T11:40:49Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-21T05:50:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-21T06:30:00Z'
+    artifact: implementation-walkthrough.md
 requires_bolts:
   - 028-dashboard-shell
 enables_bolts: []

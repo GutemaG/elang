@@ -307,6 +307,8 @@ void main() {
     lessonApi.skillTree = _tallTree(course: _oromo, prefix: 'om-');
     await tester.tap(find.text('Amharic'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Course'));
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('English to Afaan Oromo'));
     await tester.pumpAndSettle();
 

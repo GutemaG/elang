@@ -25,7 +25,10 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
+import '../../courses/course_badge.dart';
+import '../../courses/course_panel.dart';
 import '../../courses/course_picker.dart';
+import '../../courses/course_rail_source.dart';
 import '../../settings/screens/settings_screen.dart';
 import '../widgets/category_banner.dart';
 import '../widgets/dashboard_header.dart';
@@ -124,6 +127,21 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   /// the tree on the way back from a lesson. `null` only before the first
   /// successful load, which is when a spinner is the right answer.
   _DashboardData? _lastData;
+
+  /// Whether the course panel is dropped from the badge
+  /// (011-dashboard-ui-polish, story 003).
+  bool _panelOpen = false;
+
+  /// Whether the panel is in the tree at all. It outlives [_panelOpen] by the
+  /// length of the closing animation and is then removed, so a closed panel
+  /// is not merely invisible -- it is gone, and a screen reader cannot reach
+  /// rows the learner cannot see.
+  bool _panelMounted = false;
+
+  /// The rail's courses, loaded the first time the panel opens and dropped
+  /// after a switch so the next open reflects the new active course. `null`
+  /// means "never loaded", which is why the panel is not built before then.
+  Future<List<Course>>? _railFuture;
 
   @override
   void initState() {
@@ -241,15 +259,54 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     );
   }
 
-  /// Opens the course picker; a successful switch reloads the dashboard so
-  /// it shows the new course's tree, Practice count and banners. A failed
-  /// switch keeps the current course (the picker helper shows the message).
+  void _togglePanel() {
+    setState(() {
+      _panelOpen = !_panelOpen;
+      if (_panelOpen) {
+        _panelMounted = true;
+        _railFuture ??= _loadRail();
+      }
+    });
+  }
+
+  void _closePanel() {
+    if (!_panelOpen) return;
+    setState(() => _panelOpen = false);
+  }
+
+  Future<List<Course>> _loadRail() async {
+    final list = await widget.courseApi.getCourses();
+    return railCoursesFor(list, cache: widget.courseCache);
+  }
+
+  /// Switching from the rail. The active course just closes the panel; a
+  /// successful switch reloads the dashboard onto the new course's tree, and
+  /// a failure leaves the current course alone with a message.
+  Future<void> _switchFromRail(Course course) async {
+    _closePanel();
+    if (course.isActive) return;
+    try {
+      await widget.courseApi.switchCourse(course.id);
+    } on CourseApiException catch (e) {
+      if (mounted) showCourseSwitchError(context, e);
+      return;
+    }
+    if (!mounted) return;
+    _railFuture = null;
+    _reload(scrollToTop: true);
+  }
+
+  /// Opens the course catalog from the panel's "+ Course" tile (and from
+  /// Settings, via the same helper). A failed switch keeps the current course
+  /// -- the helper shows the message.
   Future<void> _openCoursePicker() async {
+    _closePanel();
     final switched = await pickAndSwitchCourse(
       context,
       courseApi: widget.courseApi,
     );
     if (switched == null || !mounted) return;
+    _railFuture = null;
     _reload(scrollToTop: true);
   }
 
@@ -354,6 +411,93 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   /// own pinned banner followed by its own nodes. Nothing else is fixed, so
   /// the skill path is what fills the screen.
   Widget _dashboard(BuildContext context, _DashboardData data) {
+    // The panel floats over the path rather than pushing it down, so opening
+    // it never reflows the tree. It hangs from the header, whose height the
+    // header itself is the authority on.
+    return Stack(
+      children: [
+        _scrollView(context, data),
+        if (_panelMounted)
+          Positioned(
+            top: DashboardHeader.extentOf(context),
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              ignoring: !_panelOpen,
+              child: AnimatedOpacity(
+                opacity: _panelOpen ? 1 : 0,
+                duration: _panelDuration,
+                onEnd: () {
+                  if (!_panelOpen && mounted) {
+                    setState(() => _panelMounted = false);
+                  }
+                },
+                child: _panelOverlay(data),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// The panel plus the scrim that closes it. Built only once the panel has
+  /// been opened at least once, so a learner who never opens it never pays
+  /// for a course-list fetch.
+  Widget _panelOverlay(_DashboardData data) {
+    final railFuture = _railFuture;
+    if (railFuture == null) return const SizedBox.shrink();
+    // The scrim fills everything under the header and the panel sits on top
+    // of it, so a tap anywhere the panel is not dismisses it.
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            key: const ValueKey('course-panel-scrim'),
+            onTap: _closePanel,
+            behavior: HitTestBehavior.opaque,
+            child: ColoredBox(
+              color: AppColors.inverseSurface.withValues(alpha: 0.32),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: AnimatedSlide(
+            offset: _panelOpen ? Offset.zero : const Offset(0, -0.08),
+            duration: _panelDuration,
+            child: FutureBuilder<List<Course>>(
+              future: railFuture,
+              builder: (context, snapshot) => CoursePanel(
+                loading: snapshot.connectionState != ConnectionState.done,
+                courses: snapshot.data ?? const [],
+                activeCourseId: data.tree.course?.id,
+                onCourseSelected: _switchFromRail,
+                onAddCourse: _openCoursePicker,
+                onSettings: () {
+                  _closePanel();
+                  _openSettings();
+                },
+                onDownloads: () {
+                  _closePanel();
+                  _openDownloadManagement();
+                },
+                onRetry: snapshot.hasError
+                    ? () => setState(() => _railFuture = _loadRail())
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static const Duration _panelDuration = Duration(milliseconds: 180);
+
+  Widget _scrollView(BuildContext context, _DashboardData data) {
     final tree = data.tree;
     return CustomScrollView(
       controller: _scrollController,
@@ -366,11 +510,10 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
         pinnedHeader(
           extent: DashboardHeader.extentOf(context),
           child: DashboardHeader(
-            leading: _HeaderLeading(
+            leading: CourseBadge(
               course: tree.course,
-              onCourseTap: _openCoursePicker,
-              onDownloadsTap: _openDownloadManagement,
-              onSettingsTap: _openSettings,
+              expanded: _panelOpen,
+              onTap: _togglePanel,
             ),
             hud: LessonHud(
               streakCount: tree.streakCount,
@@ -440,114 +583,6 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
             ],
           ),
       ],
-    );
-  }
-}
-
-/// What sits at the start of the pinned header today: the course chip and the
-/// two screen entries that used to be the top bar's icon buttons.
-///
-/// 011's bolt 029 replaces this whole slot with the course badge, which is why
-/// it is one widget rather than three loose children of the header.
-class _HeaderLeading extends StatelessWidget {
-  const _HeaderLeading({
-    required this.course,
-    required this.onCourseTap,
-    required this.onDownloadsTap,
-    required this.onSettingsTap,
-  });
-
-  final Course? course;
-  final VoidCallback onCourseTap;
-  final VoidCallback onDownloadsTap;
-  final VoidCallback onSettingsTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(child: _CourseChip(course: course, onTap: onCourseTap)),
-        IconButton(
-          icon: const Icon(
-            Icons.folder_outlined,
-            color: AppColors.onSurfaceVariant,
-          ),
-          tooltip: 'Manage Downloads',
-          onPressed: onDownloadsTap,
-        ),
-        IconButton(
-          icon: const Icon(
-            Icons.settings_outlined,
-            color: AppColors.onSurfaceVariant,
-          ),
-          tooltip: 'Settings',
-          onPressed: onSettingsTap,
-        ),
-      ],
-    );
-  }
-}
-
-/// The active course as a chip at the start of the top bar; tapping it opens
-/// the course picker. Shows the language being learned (a course whose
-/// backend sent none reads "Courses").
-class _CourseChip extends StatelessWidget {
-  const _CourseChip({required this.course, required this.onTap});
-
-  final Course? course;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = course == null
-        ? 'Courses'
-        : languageName(course!.learningLanguage);
-    return Semantics(
-      button: true,
-      label: 'Course: $label',
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.full),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 180),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.spaceSm,
-            vertical: AppSpacing.spaceXs,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(AppRadii.full),
-            border: Border.all(color: AppColors.cardBorderDefault, width: 2),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.translate,
-                size: 18,
-                color: AppColors.primaryContainer,
-              ),
-              const SizedBox(width: AppSpacing.space2xs),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.labelLg.copyWith(
-                    color: AppColors.onSurface,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.expand_more,
-                size: 18,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -170,4 +170,20 @@ void main() {
 
     expect(await store.loadDashboard('a'), isNull);
   });
+
+  test('cachedCourseIds lists every course that has been opened', () async {
+    final store = InMemoryCourseCacheStore();
+    expect(await store.cachedCourseIds(), isEmpty);
+
+    await store.saveDashboard('a', _tree('a', 'Akkam'), amoleBalance: 1);
+    await store.saveDashboard('b', _tree('b', 'Hello'), amoleBalance: 2);
+
+    expect(await store.cachedCourseIds()..sort(), ['a', 'b']);
+  });
+
+  test('cachedCourseIds reads a corrupt cache as nothing opened', () async {
+    final store = InMemoryCourseCacheStore()..rawJson = 'not json at all';
+
+    expect(await store.cachedCourseIds(), isEmpty);
+  });
 }

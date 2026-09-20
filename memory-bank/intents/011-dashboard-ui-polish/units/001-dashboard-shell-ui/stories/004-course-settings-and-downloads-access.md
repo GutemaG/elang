@@ -2,11 +2,11 @@
 id: 004-course-settings-and-downloads-access
 unit: 001-dashboard-shell-ui
 intent: 011-dashboard-ui-polish
-status: generated
+status: complete
 priority: must
 created: '2026-09-21T02:50:00Z'
 assigned_bolt: 029-course-switcher-panel
-implemented: false
+implemented: true
 ---
 
 # Story: 004-course-settings-and-downloads-access

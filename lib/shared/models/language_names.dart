@@ -13,6 +13,15 @@ String languageName(String code) {
   }
 }
 
+/// A one-character stand-in for a language, used where a flag would go
+/// (011-dashboard-ui-polish): the first character of the language's own name,
+/// so Amharic reads as Fidel and Afaan Oromo as Latin. No artwork needed, and
+/// any future language gets a sensible letter for free.
+String languageGlyph(String code) {
+  final name = languageNativeName(code);
+  return name.isEmpty ? '?' : String.fromCharCode(name.runes.first);
+}
+
 /// The language's name in its own language.
 String languageNativeName(String code) {
   switch (code) {
