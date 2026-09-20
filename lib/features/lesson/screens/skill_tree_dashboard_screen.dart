@@ -563,7 +563,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           SliverMainAxisGroup(
             slivers: [
               pinnedHeader(
-                extent: CategoryBanner.extentOf(context),
+                extent: CategoryBanner.extentOf(context, tree.categories[i]),
                 child: CategoryBanner(
                   category: tree.categories[i],
                   // Consecutive sections take consecutive colours, so one is
