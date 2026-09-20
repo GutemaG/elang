@@ -304,4 +304,41 @@ void main() {
     expect(colours, hasLength(3));
   });
 
+  // The pinned banner reserves its height before it lays out, so an awkward
+  // text scale is where it breaks: 1.15x and 1.3x both produce line heights
+  // that the layout rounds up. This overflowed by a pixel on device.
+  for (final scale in [1.0, 1.15, 1.3, 1.5]) {
+    for (final width in [360.0, 320.0]) {
+      testWidgets(
+        'the pinned banner fits its reserved height at ${scale}x on ${width}dp',
+        (tester) async {
+          final api = _api(
+            _tree(
+              categories: [_foundations, _family, _numbers],
+              nodes: [
+                _node('a', 'c1', SkillNodeState.completed),
+                _node('b', 'c2', SkillNodeState.active),
+                _node('c', 'c3', SkillNodeState.locked),
+              ],
+            ),
+          );
+          _size(tester, Size(width, 2400));
+
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(
+                size: Size(width, 2400),
+                textScaler: TextScaler.linear(scale),
+              ),
+              child: _dashboard(api),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
 }
