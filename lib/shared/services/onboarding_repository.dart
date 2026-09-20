@@ -25,12 +25,18 @@ class OnboardingRepository {
   final SecureStorageService _storage;
 
   String? _inProgressLanguageCode;
+  String _inProgressFromLanguageCode =
+      PendingOnboardingSelection.defaultFromLanguageCode;
   int? _inProgressDailyGoalMinutes;
 
   /// Records the chosen course. Does not persist anything by itself unless
   /// a daily goal was already chosen first.
-  Future<void> selectLanguage(String languageCode) async {
+  Future<void> selectLanguage(
+    String languageCode, {
+    String fromLanguageCode = PendingOnboardingSelection.defaultFromLanguageCode,
+  }) async {
     _inProgressLanguageCode = languageCode;
+    _inProgressFromLanguageCode = fromLanguageCode;
     await _persistIfComplete();
   }
 
@@ -48,6 +54,7 @@ class OnboardingRepository {
 
     final selection = PendingOnboardingSelection(
       languageCode: languageCode,
+      fromLanguageCode: _inProgressFromLanguageCode,
       dailyGoalMinutes: minutes,
     );
     await _storage.write(_storageKey, jsonEncode(selection.toJson()));

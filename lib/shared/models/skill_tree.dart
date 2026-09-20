@@ -1,3 +1,5 @@
+import 'course.dart';
+
 /// A single skill node's progress state on the skill-tree dashboard.
 enum SkillNodeState {
   /// Not yet reachable — the prior skill hasn't been fully completed.
@@ -88,7 +90,13 @@ class SkillTreeResponse {
     required this.beans,
     required this.beansMax,
     required this.totalXp,
+    this.course,
   });
+
+  /// The course this tree belongs to -- the learner's active course
+  /// (010-multi-language-courses). `null` only for an older backend that
+  /// does not send one.
+  final Course? course;
 
   final List<SkillCategory> categories;
   final List<SkillTreeNode> nodes;

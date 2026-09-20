@@ -2,11 +2,11 @@
 id: 001-course-switcher-and-settings-picker
 unit: 002-courses-ui
 intent: 010-multi-language-courses
-status: draft
+status: complete
 priority: must
 created: '2026-09-20T13:10:00Z'
 assigned_bolt: 026-course-picker-ui
-implemented: false
+implemented: true
 ---
 
 # Story: 001-course-switcher-and-settings-picker

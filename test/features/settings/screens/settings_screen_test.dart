@@ -11,6 +11,8 @@ import 'package:http/testing.dart';
 import 'package:elang/features/auth/auth_routes.dart';
 import 'package:elang/features/settings/screens/settings_screen.dart';
 import 'package:elang/shared/models/session_state.dart';
+import 'package:elang/shared/services/course_api.dart';
+import 'package:elang/shared/services/fake_course_api.dart';
 import 'package:elang/shared/services/session_api.dart';
 import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
@@ -31,7 +33,10 @@ Future<SessionRepository> _signedInSessionRepository() async {
   return repo;
 }
 
-SessionApi _sessionApiReturning({int dailyXpTarget = 40, bool notificationEnabled = true}) {
+SessionApi _sessionApiReturning({
+  int dailyXpTarget = 40,
+  bool notificationEnabled = true,
+}) {
   return SessionApi(
     client: MockClient((request) async {
       return http.Response(
@@ -56,10 +61,12 @@ Widget _wrap({
   required SessionRepository sessionRepository,
   UserPreferencesApi? userPreferencesApi,
   SoundPreferenceRepository? soundPreferenceRepository,
+  CourseApi? courseApi,
 }) {
   return MaterialApp(
     home: SettingsScreen(
       sessionApi: sessionApi,
+      courseApi: courseApi ?? FakeCourseApi(),
       userPreferencesApi: userPreferencesApi ?? FakeUserPreferencesApi(),
       soundPreferenceRepository:
           soundPreferenceRepository ??
@@ -67,37 +74,45 @@ Widget _wrap({
       sessionRepository: sessionRepository,
     ),
     routes: {
-      AuthRoutes.signIn: (context) => const Scaffold(body: Text('Sign In Placeholder')),
+      AuthRoutes.signIn: (context) =>
+          const Scaffold(body: Text('Sign In Placeholder')),
     },
   );
 }
 
 void main() {
-  testWidgets('shows the provider label, daily goal, language, and both switches', (
+  testWidgets(
+    'shows the provider label, daily goal, course, and both switches',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          sessionApi: _sessionApiReturning(
+            dailyXpTarget: 60,
+            notificationEnabled: false,
+          ),
+          sessionRepository: await _signedInSessionRepository(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Signed in with Google'), findsOneWidget);
+      expect(find.text('Serious · 15 min/day'), findsOneWidget);
+      expect(find.text('Course'), findsOneWidget);
+      expect(find.text('English to Amharic'), findsOneWidget);
+      final notificationSwitch = tester.widget<SwitchListTile>(
+        find.widgetWithText(SwitchListTile, 'Notifications'),
+      );
+      expect(notificationSwitch.value, false);
+      final soundSwitch = tester.widget<SwitchListTile>(
+        find.widgetWithText(SwitchListTile, 'Sound'),
+      );
+      expect(soundSwitch.value, true);
+    },
+  );
+
+  testWidgets('toggling notification calls the API and updates the switch', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      _wrap(
-        sessionApi: _sessionApiReturning(dailyXpTarget: 60, notificationEnabled: false),
-        sessionRepository: await _signedInSessionRepository(),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Signed in with Google'), findsOneWidget);
-    expect(find.text('Serious · 15 min/day'), findsOneWidget);
-    expect(find.text('Amharic'), findsOneWidget);
-    final notificationSwitch = tester.widget<SwitchListTile>(
-      find.widgetWithText(SwitchListTile, 'Notifications'),
-    );
-    expect(notificationSwitch.value, false);
-    final soundSwitch = tester.widget<SwitchListTile>(
-      find.widgetWithText(SwitchListTile, 'Sound'),
-    );
-    expect(soundSwitch.value, true);
-  });
-
-  testWidgets('toggling notification calls the API and updates the switch', (tester) async {
     final userPreferencesApi = FakeUserPreferencesApi()
       ..nextResult = const UpdatedPreferences(
         selectedLanguage: 'am',
@@ -123,56 +138,69 @@ void main() {
     expect(notificationSwitch.value, false);
   });
 
-  testWidgets('toggling sound persists locally without calling the preferences API', (
+  testWidgets(
+    'toggling sound persists locally without calling the preferences API',
+    (tester) async {
+      final soundPreferenceRepository = SoundPreferenceRepository(
+        storage: InMemorySecureStorageService(),
+      );
+      final userPreferencesApi = FakeUserPreferencesApi();
+      await tester.pumpWidget(
+        _wrap(
+          sessionApi: _sessionApiReturning(),
+          sessionRepository: await _signedInSessionRepository(),
+          userPreferencesApi: userPreferencesApi,
+          soundPreferenceRepository: soundPreferenceRepository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(SwitchListTile, 'Sound'));
+      await tester.pumpAndSettle();
+
+      expect(await soundPreferenceRepository.getSoundEnabled(), false);
+      expect(userPreferencesApi.calls, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'logout clears the session and navigates to sign-in, unwinding the stack',
+    (tester) async {
+      final sessionRepository = await _signedInSessionRepository();
+      await tester.pumpWidget(
+        _wrap(
+          sessionApi: _sessionApiReturning(),
+          sessionRepository: sessionRepository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Log out'));
+      await tester.pumpAndSettle();
+      // Confirmation dialog.
+      expect(
+        find.text("You'll need to sign in again to continue learning."),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.widgetWithText(TextButton, 'Log out'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sign In Placeholder'), findsOneWidget);
+      final session = await sessionRepository.getSessionState();
+      expect(session.token, isNull);
+    },
+  );
+
+  testWidgets('cancelling the logout confirmation keeps the session', (
     tester,
   ) async {
-    final soundPreferenceRepository = SoundPreferenceRepository(
-      storage: InMemorySecureStorageService(),
-    );
-    final userPreferencesApi = FakeUserPreferencesApi();
+    final sessionRepository = await _signedInSessionRepository();
     await tester.pumpWidget(
       _wrap(
         sessionApi: _sessionApiReturning(),
-        sessionRepository: await _signedInSessionRepository(),
-        userPreferencesApi: userPreferencesApi,
-        soundPreferenceRepository: soundPreferenceRepository,
+        sessionRepository: sessionRepository,
       ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.widgetWithText(SwitchListTile, 'Sound'));
-    await tester.pumpAndSettle();
-
-    expect(await soundPreferenceRepository.getSoundEnabled(), false);
-    expect(userPreferencesApi.calls, isEmpty);
-  });
-
-  testWidgets('logout clears the session and navigates to sign-in, unwinding the stack', (
-    tester,
-  ) async {
-    final sessionRepository = await _signedInSessionRepository();
-    await tester.pumpWidget(
-      _wrap(sessionApi: _sessionApiReturning(), sessionRepository: sessionRepository),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Log out'));
-    await tester.pumpAndSettle();
-    // Confirmation dialog.
-    expect(find.text("You'll need to sign in again to continue learning."), findsOneWidget);
-
-    await tester.tap(find.widgetWithText(TextButton, 'Log out'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Sign In Placeholder'), findsOneWidget);
-    final session = await sessionRepository.getSessionState();
-    expect(session.token, isNull);
-  });
-
-  testWidgets('cancelling the logout confirmation keeps the session', (tester) async {
-    final sessionRepository = await _signedInSessionRepository();
-    await tester.pumpWidget(
-      _wrap(sessionApi: _sessionApiReturning(), sessionRepository: sessionRepository),
     );
     await tester.pumpAndSettle();
 
@@ -186,7 +214,9 @@ void main() {
     expect(session.token, isNotNull);
   });
 
-  testWidgets('a failed load shows an error state with a working retry', (tester) async {
+  testWidgets('a failed load shows an error state with a working retry', (
+    tester,
+  ) async {
     var callCount = 0;
     final sessionApi = SessionApi(
       client: MockClient((request) async {
@@ -209,7 +239,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _wrap(sessionApi: sessionApi, sessionRepository: await _signedInSessionRepository()),
+      _wrap(
+        sessionApi: sessionApi,
+        sessionRepository: await _signedInSessionRepository(),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -220,5 +253,86 @@ void main() {
 
     expect(find.text("Couldn't load your settings"), findsNothing);
     expect(find.text('Signed in with Google'), findsOneWidget);
+  });
+
+  // Course row (010-multi-language-courses, bolt 026): Settings uses the same
+  // picker as the dashboard chip, shows the active course, and keeps it on a
+  // failed switch.
+  testWidgets('the Course row opens the shared picker and saves a switch', (
+    tester,
+  ) async {
+    final courseApi = FakeCourseApi();
+    await tester.pumpWidget(
+      _wrap(
+        sessionApi: _sessionApiReturning(
+          dailyXpTarget: 40,
+          notificationEnabled: true,
+        ),
+        sessionRepository: await _signedInSessionRepository(),
+        courseApi: courseApi,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('English to Amharic'), findsOneWidget);
+
+    await tester.tap(find.text('Course'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a course'), findsOneWidget);
+    await tester.tap(find.textContaining('English to Afaan Oromo'));
+    await tester.pumpAndSettle();
+
+    expect(courseApi.switchCalls, ['c-en-om']);
+    expect(find.text('Choose a course'), findsNothing);
+    expect(find.text('English to Afaan Oromo'), findsOneWidget);
+  });
+
+  testWidgets(
+    'a failed course switch keeps the current course and shows a message',
+    (tester) async {
+      final courseApi = FakeCourseApi()
+        ..switchFailure = const CourseApiException('nope');
+      await tester.pumpWidget(
+        _wrap(
+          sessionApi: _sessionApiReturning(
+            dailyXpTarget: 40,
+            notificationEnabled: true,
+          ),
+          sessionRepository: await _signedInSessionRepository(),
+          courseApi: courseApi,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Course'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('English to Afaan Oromo'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text("Couldn't switch course. Please try again."),
+        findsOneWidget,
+      );
+      expect(find.text('English to Amharic'), findsOneWidget);
+    },
+  );
+
+  testWidgets('with no course list the row falls back to the language name', (
+    tester,
+  ) async {
+    final courseApi = FakeCourseApi()
+      ..failWith = const CourseApiException('offline');
+    await tester.pumpWidget(
+      _wrap(
+        sessionApi: _sessionApiReturning(
+          dailyXpTarget: 40,
+          notificationEnabled: true,
+        ),
+        sessionRepository: await _signedInSessionRepository(),
+        courseApi: courseApi,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Amharic'), findsOneWidget);
   });
 }

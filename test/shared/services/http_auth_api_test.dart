@@ -57,6 +57,7 @@ void main() {
         final decodedBody = jsonDecode(request.body) as Map<String, dynamic>;
         expect(decodedBody['pending_selection'], {
           'language': 'am',
+          'from_language': 'en',
           'daily_goal_minutes': 10,
         });
         return http.Response(

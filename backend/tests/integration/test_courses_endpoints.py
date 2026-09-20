@@ -608,3 +608,50 @@ class TestPerUserIsolationAndInput:
             client.get("/api/v1/courses", headers=headers).json()["active_course_id"]
             == EN_AM_COURSE_ID
         )
+
+
+class TestPublicCourseCatalog:
+    def test_it_needs_no_login_and_lists_every_course_in_order(
+        self, make_client: Any, seeded_courses: None
+    ) -> None:
+        client = make_client(FakeTokenVerifier(), FakeTokenVerifier())
+
+        response = client.get("/api/v1/courses/catalog")
+
+        assert response.status_code == 200
+        courses = response.json()["courses"]
+        assert [c["id"] for c in courses] == [EN_AM_COURSE_ID, COURSE_B, COURSE_C, COURSE_D]
+        assert courses[0] == {
+            "id": EN_AM_COURSE_ID,
+            "learning_language": "am",
+            "from_language": "en",
+            "title": "English to Amharic",
+            "status": "available",
+            "order_index": 1,
+        }
+
+    def test_coming_soon_courses_are_included_and_marked(
+        self, make_client: Any, seeded_courses: None
+    ) -> None:
+        client = make_client(FakeTokenVerifier(), FakeTokenVerifier())
+
+        courses = {c["id"]: c for c in client.get("/api/v1/courses/catalog").json()["courses"]}
+
+        assert courses[COURSE_C]["status"] == "coming_soon"
+        assert courses[COURSE_B]["status"] == "available"
+
+    def test_it_carries_no_per_user_fields(self, make_client: Any, seeded_courses: None) -> None:
+        client = make_client(FakeTokenVerifier(), FakeTokenVerifier())
+
+        body = client.get("/api/v1/courses/catalog").json()
+
+        assert "active_course_id" not in body
+        for course in body["courses"]:
+            assert not {"is_active", "completed_skills", "total_skills"} & set(course)
+
+    def test_the_signed_in_course_list_still_needs_a_login(
+        self, make_client: Any, seeded_courses: None
+    ) -> None:
+        client = make_client(FakeTokenVerifier(), FakeTokenVerifier())
+
+        assert client.get("/api/v1/courses").status_code == 401

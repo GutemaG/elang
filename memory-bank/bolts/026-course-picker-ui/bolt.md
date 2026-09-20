@@ -3,15 +3,24 @@ id: 026-course-picker-ui
 unit: 002-courses-ui
 intent: 010-multi-language-courses
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-course-switcher-and-settings-picker
   - 002-onboarding-language-pair
 created: '2026-09-20T13:20:00Z'
-started: null
-completed: null
+started: '2026-09-20T21:00:00Z'
+completed: '2026-09-20T08:18:23Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-20T21:40:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-20T23:10:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-20T23:30:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 024-courses-service
   - 025-course-content-seed

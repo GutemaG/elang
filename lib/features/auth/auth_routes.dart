@@ -41,6 +41,7 @@ abstract final class AuthRoutes {
       onboardingCarousel: (context) => const OnboardingCarouselScreen(),
       languageSelection: (context) => LanguageSelectionScreen(
         onboardingRepository: deps.onboardingRepository,
+        courseApi: deps.courseApi,
       ),
       dailyGoalSelection: (context) => DailyGoalSelectionScreen(
         onboardingRepository: deps.onboardingRepository,

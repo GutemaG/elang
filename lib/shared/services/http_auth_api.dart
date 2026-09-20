@@ -61,6 +61,7 @@ class HttpAuthApi implements AuthApi {
       if (pendingSelection != null)
         'pending_selection': {
           'language': pendingSelection.languageCode,
+          'from_language': pendingSelection.fromLanguageCode,
           'daily_goal_minutes': pendingSelection.dailyGoalMinutes,
         },
     };

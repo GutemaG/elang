@@ -30,6 +30,21 @@ class CourseResponse(BaseModel):
     total_skills: int
 
 
+class CatalogCourseResponse(BaseModel):
+    """A course as shown before sign-in (onboarding): no per-user fields."""
+
+    id: str
+    learning_language: str
+    from_language: str
+    title: str
+    status: Literal["available", "coming_soon"]
+    order_index: int
+
+
+class CatalogResponse(BaseModel):
+    courses: list[CatalogCourseResponse]
+
+
 class CourseListResponse(BaseModel):
     active_course_id: str
     courses: list[CourseResponse]

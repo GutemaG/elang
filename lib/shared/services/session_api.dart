@@ -25,9 +25,14 @@ class SessionUser {
     required this.selectedLanguage,
     required this.dailyXpTarget,
     required this.notificationEnabled,
+    this.activeCourseId,
   });
 
   final String id;
+
+  /// The user's active course (010-multi-language-courses); `null` for an
+  /// older backend that does not send one.
+  final String? activeCourseId;
   final String selectedLanguage;
   final int dailyXpTarget;
 
@@ -117,6 +122,9 @@ class SessionApi {
           selectedLanguage: selectedLanguage,
           dailyXpTarget: dailyXpTarget,
           notificationEnabled: notificationEnabled,
+          activeCourseId: user['active_course_id'] is String
+              ? user['active_course_id'] as String
+              : null,
         ),
       );
     } on FormatException {

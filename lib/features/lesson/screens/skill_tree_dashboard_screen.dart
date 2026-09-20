@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/beans_status.dart';
+import '../../../shared/models/course.dart';
+import '../../../shared/models/language_names.dart';
 import '../../../shared/models/lesson_content.dart';
 import '../../../shared/models/skill_tree.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/connectivity_monitor.dart';
+import '../../../shared/services/course_api.dart';
 import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
 import '../../../shared/services/lesson_pack_downloader.dart';
@@ -20,6 +23,7 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
+import '../../courses/course_picker.dart';
 import '../../settings/screens/settings_screen.dart';
 import '../widgets/lesson_hud.dart';
 import '../widgets/skill_path_node.dart';
@@ -45,12 +49,17 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     required this.lessonPackStore,
     required this.lessonPackDownloader,
     required this.syncEngine,
+    required this.courseApi,
     required this.sessionRepository,
     required this.userPreferencesApi,
     required this.soundPreferenceRepository,
   });
 
   final LessonApi lessonApi;
+
+  /// The course list and switching (010-multi-language-courses): opened from
+  /// the course chip, and threaded down to Settings.
+  final CourseApi courseApi;
   final LessonAudioPlayer audioPlayer;
   final AnswerFeedbackPlayer feedbackPlayer;
   final ConnectivityMonitor connectivityMonitor;
@@ -133,9 +142,22 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           userPreferencesApi: widget.userPreferencesApi,
           soundPreferenceRepository: widget.soundPreferenceRepository,
           sessionRepository: widget.sessionRepository,
+          courseApi: widget.courseApi,
         ),
       ),
     );
+  }
+
+  /// Opens the course picker; a successful switch reloads the dashboard so
+  /// it shows the new course's tree, Practice count and banners. A failed
+  /// switch keeps the current course (the picker helper shows the message).
+  Future<void> _openCoursePicker() async {
+    final switched = await pickAndSwitchCourse(
+      context,
+      courseApi: widget.courseApi,
+    );
+    if (switched == null || !mounted) return;
+    _reload();
   }
 
   void _reload() {
@@ -223,30 +245,41 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                     AppSpacing.marginMobile,
                     0,
                   ),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: SyncStatusBanner(
-                          syncEngine: widget.syncEngine,
-                          lessonPackStore: widget.lessonPackStore,
-                          lessonPackDownloader: widget.lessonPackDownloader,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: _CourseChip(
+                                course: tree.course,
+                                onTap: _openCoursePicker,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.folder_outlined,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                            tooltip: 'Manage Downloads',
+                            onPressed: _openDownloadManagement,
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.settings_outlined,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                            tooltip: 'Settings',
+                            onPressed: _openSettings,
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.folder_outlined,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                        tooltip: 'Manage Downloads',
-                        onPressed: _openDownloadManagement,
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.settings_outlined,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                        tooltip: 'Settings',
-                        onPressed: _openSettings,
+                      SyncStatusBanner(
+                        syncEngine: widget.syncEngine,
+                        lessonPackStore: widget.lessonPackStore,
+                        lessonPackDownloader: widget.lessonPackDownloader,
                       ),
                     ],
                   ),
@@ -265,6 +298,69 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// The active course as a chip at the start of the top bar; tapping it opens
+/// the course picker. Shows the language being learned (a course whose
+/// backend sent none reads "Courses").
+class _CourseChip extends StatelessWidget {
+  const _CourseChip({required this.course, required this.onTap});
+
+  final Course? course;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = course == null
+        ? 'Courses'
+        : languageName(course!.learningLanguage);
+    return Semantics(
+      button: true,
+      label: 'Course: $label',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.full),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 180),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.spaceSm,
+            vertical: AppSpacing.spaceXs,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(AppRadii.full),
+            border: Border.all(color: AppColors.cardBorderDefault, width: 2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.translate,
+                size: 18,
+                color: AppColors.primaryContainer,
+              ),
+              const SizedBox(width: AppSpacing.space2xs),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.labelLg.copyWith(
+                    color: AppColors.onSurface,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.expand_more,
+                size: 18,
+                color: AppColors.onSurfaceVariant,
+              ),
+            ],
+          ),
         ),
       ),
     );

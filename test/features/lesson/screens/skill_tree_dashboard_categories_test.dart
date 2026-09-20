@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:elang/features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/skill_tree.dart';
+import 'package:elang/shared/services/fake_course_api.dart';
 import 'package:elang/shared/services/http_user_preferences_api.dart';
 import 'package:elang/shared/services/lesson_pack_downloader.dart';
 import 'package:elang/shared/services/session_repository.dart';
@@ -76,6 +77,7 @@ Widget _dashboard(ControllableLessonApi api) {
         connectivityMonitor: connectivity,
         queueStore: FakePendingSyncQueueStore(),
       ),
+      courseApi: FakeCourseApi(),
       sessionRepository: session,
       userPreferencesApi: HttpUserPreferencesApi(sessionRepository: session),
       soundPreferenceRepository: SoundPreferenceRepository(

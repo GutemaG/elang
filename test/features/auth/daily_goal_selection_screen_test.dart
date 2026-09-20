@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:elang/features/auth/auth_routes.dart';
 import 'package:elang/features/auth/screens/daily_goal_selection_screen.dart';
 import 'package:elang/features/auth/screens/language_selection_screen.dart';
+import 'package:elang/shared/services/fake_course_api.dart';
 import 'package:elang/shared/services/onboarding_repository.dart';
 
 import '../../helpers/in_memory_secure_storage_service.dart';
@@ -104,7 +105,10 @@ void main() {
           initialRoute: AuthRoutes.languageSelection,
           routes: {
             AuthRoutes.languageSelection: (_) =>
-                LanguageSelectionScreen(onboardingRepository: repo),
+                LanguageSelectionScreen(
+                  onboardingRepository: repo,
+                  courseApi: FakeCourseApi(),
+                ),
             AuthRoutes.dailyGoalSelection: (_) =>
                 DailyGoalSelectionScreen(onboardingRepository: repo),
             AuthRoutes.signIn: (_) =>
@@ -113,6 +117,7 @@ void main() {
         ),
       );
 
+      await tester.pumpAndSettle(); // the course catalog loads first
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 

@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../shared/models/course.dart';
+import '../../../shared/services/course_api.dart';
 import '../../../shared/services/session_api.dart';
 import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
@@ -25,12 +27,14 @@ const Map<int, int> _minutesToXpTarget = {5: 20, 10: 40, 15: 60, 20: 80};
 class SettingsController extends ChangeNotifier {
   SettingsController({
     required this._sessionApi,
+    required this._courseApi,
     required this._userPreferencesApi,
     required this._soundPreferenceRepository,
     required this._sessionRepository,
   });
 
   final SessionApi _sessionApi;
+  final CourseApi _courseApi;
   final UserPreferencesApi _userPreferencesApi;
   final SoundPreferenceRepository _soundPreferenceRepository;
   final SessionRepository _sessionRepository;
@@ -39,6 +43,11 @@ class SettingsController extends ChangeNotifier {
   String? _errorMessage;
 
   String? _selectedLanguage;
+
+  /// The learner's active course (010-multi-language-courses), `null` if the
+  /// course list could not be loaded -- the screen then falls back to the
+  /// language name.
+  Course? _activeCourse;
   int? _dailyXpTarget;
   bool _notificationEnabled = true;
   bool _soundEnabled = true;
@@ -51,6 +60,7 @@ class SettingsController extends ChangeNotifier {
   SettingsLoadStatus get loadStatus => _loadStatus;
   String? get errorMessage => _errorMessage;
   String? get selectedLanguage => _selectedLanguage;
+  Course? get activeCourse => _activeCourse;
   bool get notificationEnabled => _notificationEnabled;
   bool get soundEnabled => _soundEnabled;
   String? get authProvider => _authProvider;
@@ -91,6 +101,11 @@ class SettingsController extends ChangeNotifier {
     }
 
     _selectedLanguage = user.selectedLanguage;
+    try {
+      _activeCourse = (await _courseApi.getCourses()).activeCourse;
+    } on CourseApiException {
+      _activeCourse = null;
+    }
     _dailyXpTarget = user.dailyXpTarget;
     _notificationEnabled = user.notificationEnabled;
     _soundEnabled = await _soundPreferenceRepository.getSoundEnabled();
@@ -98,15 +113,12 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateLanguage(String language) async {
-    final previous = _selectedLanguage;
-    _selectedLanguage = language;
-    _errorMessage = null;
+  /// Adopts a course the learner just switched to (the switch itself is done
+  /// by the shared course picker, which keeps the old course on failure).
+  void applySwitchedCourse(Course course) {
+    _activeCourse = course;
+    _selectedLanguage = course.learningLanguage;
     notifyListeners();
-    await _applyUpdate(
-      call: () => _userPreferencesApi.updatePreferences(language: language),
-      onRevert: () => _selectedLanguage = previous,
-    );
   }
 
   Future<void> updateDailyGoalMinutes(int minutes) async {

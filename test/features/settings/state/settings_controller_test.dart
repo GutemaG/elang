@@ -11,6 +11,8 @@ import 'package:http/testing.dart';
 
 import 'package:elang/features/settings/state/settings_controller.dart';
 import 'package:elang/shared/models/session_state.dart';
+import 'package:elang/shared/services/fake_course_api.dart';
+import 'package:elang/shared/services/course_api.dart';
 import 'package:elang/shared/services/session_api.dart';
 import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
@@ -73,6 +75,7 @@ void main() {
     test('populates all fields on success, reverse-mapping xp target to minutes', () async {
       final sessionRepository = await _signedInSessionRepository(authProvider: 'google');
       final controller = SettingsController(
+        courseApi: FakeCourseApi(),
         sessionApi: _sessionApiReturning(
           selectedLanguage: 'am',
           dailyXpTarget: 60,
@@ -97,6 +100,7 @@ void main() {
 
     test('an invalid session sets an error load status', () async {
       final controller = SettingsController(
+        courseApi: FakeCourseApi(),
         sessionApi: _invalidSessionApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
         soundPreferenceRepository: SoundPreferenceRepository(
@@ -113,6 +117,7 @@ void main() {
     test('no stored token sets an error load status without calling SessionApi', () async {
       var called = false;
       final controller = SettingsController(
+        courseApi: FakeCourseApi(),
         sessionApi: SessionApi(
           client: MockClient((request) async {
             called = true;
@@ -133,38 +138,57 @@ void main() {
     });
   });
 
-  group('updateLanguage', () {
-    test('adopts the backend-returned values on success', () async {
-      final userPreferencesApi = FakeUserPreferencesApi()
-        ..nextResult = const UpdatedPreferences(
+  group('active course', () {
+    test('load reads the active course from the course list', () async {
+      final controller = SettingsController(
+        courseApi: FakeCourseApi(activeCourseId: 'c-en-om'),
+        sessionApi: _sessionApiReturning(
+          selectedLanguage: 'om',
+          dailyXpTarget: 40,
+          notificationEnabled: true,
+        ),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        soundPreferenceRepository: SoundPreferenceRepository(
+          storage: InMemorySecureStorageService(),
+        ),
+        sessionRepository: await _signedInSessionRepository(),
+      );
+
+      await controller.load();
+
+      expect(controller.loadStatus, SettingsLoadStatus.loaded);
+      expect(controller.activeCourse?.id, 'c-en-om');
+    });
+
+    test('a course list that cannot be loaded still loads the settings', () async {
+      final controller = SettingsController(
+        courseApi: FakeCourseApi()..failWith = const CourseApiException('offline'),
+        sessionApi: _sessionApiReturning(
           selectedLanguage: 'am',
           dailyXpTarget: 40,
           notificationEnabled: true,
-        );
-      final controller = await _loadedController(userPreferencesApi: userPreferencesApi);
-
-      await controller.updateLanguage('am');
-
-      expect(controller.selectedLanguage, 'am');
-      expect(userPreferencesApi.calls.single.language, 'am');
-      expect(controller.errorMessage, isNull);
-    });
-
-    test('reverts to the previous value and sets an error message on failure', () async {
-      final userPreferencesApi = FakeUserPreferencesApi()
-        ..nextException = const UserPreferencesApiException(
-          'nope',
-          errorCode: 'invalid_preference_value',
-        );
-      final controller = await _loadedController(
-        userPreferencesApi: userPreferencesApi,
-        initialLanguage: 'am',
+        ),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        soundPreferenceRepository: SoundPreferenceRepository(
+          storage: InMemorySecureStorageService(),
+        ),
+        sessionRepository: await _signedInSessionRepository(),
       );
 
-      await controller.updateLanguage('am'); // resubmitting, but the call still fails here
+      await controller.load();
 
-      expect(controller.selectedLanguage, 'am'); // reverted back to what it was
-      expect(controller.errorMessage, isNotNull);
+      expect(controller.loadStatus, SettingsLoadStatus.loaded);
+      expect(controller.activeCourse, isNull);
+      expect(controller.selectedLanguage, 'am');
+    });
+
+    test('applySwitchedCourse adopts the new course and its language', () async {
+      final controller = await _loadedController();
+
+      controller.applySwitchedCourse(FakeCourseApi.defaultCourses[1]);
+
+      expect(controller.activeCourse?.id, 'c-en-om');
+      expect(controller.selectedLanguage, 'om');
     });
   });
 
@@ -250,6 +274,7 @@ void main() {
     test('clears the stored session', () async {
       final sessionRepository = await _signedInSessionRepository();
       final controller = SettingsController(
+        courseApi: FakeCourseApi(),
         sessionApi: _sessionApiReturning(
           selectedLanguage: 'am',
           dailyXpTarget: 40,
@@ -280,6 +305,7 @@ Future<SettingsController> _loadedController({
   bool initialNotificationEnabled = true,
 }) async {
   final controller = SettingsController(
+    courseApi: FakeCourseApi(),
     sessionApi: _sessionApiReturning(
       selectedLanguage: initialLanguage,
       dailyXpTarget: initialDailyXpTarget,

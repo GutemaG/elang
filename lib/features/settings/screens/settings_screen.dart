@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/models/language_names.dart';
+import '../../../shared/services/course_api.dart';
 import '../../../shared/services/session_api.dart';
 import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
@@ -10,13 +12,13 @@ import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/selectable_option_card.dart';
 import '../../../shared/widgets/tactile_button.dart';
 import '../../auth/auth_routes.dart';
+import '../../courses/course_picker.dart';
 import '../state/settings_controller.dart';
 
 /// A single daily-goal preset -- same 4 presets/labels as
 /// `DailyGoalSelectionScreen`'s `GoalOption`, duplicated here rather than
 /// shared/extracted, matching this codebase's existing convention of each
-/// screen keeping its own private option list (see also
-/// `LanguageSelectionScreen`'s `_courseOptions`).
+/// screen keeping its own private option list.
 class _GoalOption {
   const _GoalOption({required this.minutes, required this.title, required this.icon});
 
@@ -32,19 +34,6 @@ const List<_GoalOption> _goalOptions = [
   _GoalOption(minutes: 20, title: 'Intense', icon: Icons.local_fire_department),
 ];
 
-class _CourseOption {
-  const _CourseOption({required this.code, required this.displayName, required this.isAvailable});
-
-  final String code;
-  final String displayName;
-  final bool isAvailable;
-}
-
-const List<_CourseOption> _courseOptions = [
-  _CourseOption(code: 'am', displayName: 'Amharic', isAvailable: true),
-  _CourseOption(code: 'om', displayName: 'Afaan Oromo', isAvailable: false),
-];
-
 /// Story 001 (`005-profile-and-settings`): view/edit language, daily goal,
 /// and notification preference (real, via `013-user-preferences-service`),
 /// toggle sound (local, gates `AnswerFeedbackPlayer`), and log out.
@@ -52,12 +41,14 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     super.key,
     required this.sessionApi,
+    required this.courseApi,
     required this.userPreferencesApi,
     required this.soundPreferenceRepository,
     required this.sessionRepository,
   });
 
   final SessionApi sessionApi;
+  final CourseApi courseApi;
   final UserPreferencesApi userPreferencesApi;
   final SoundPreferenceRepository soundPreferenceRepository;
   final SessionRepository sessionRepository;
@@ -74,6 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _controller = SettingsController(
       sessionApi: widget.sessionApi,
+      courseApi: widget.courseApi,
       userPreferencesApi: widget.userPreferencesApi,
       soundPreferenceRepository: widget.soundPreferenceRepository,
       sessionRepository: widget.sessionRepository,
@@ -122,31 +114,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _pickLanguage() async {
-    final code = await showModalBottomSheet<String>(
-      context: context,
-      builder: (context) => _OptionSheet(
-        title: 'Language',
-        children: [
-          for (final option in _courseOptions)
-            SelectableOptionCard(
-              leading: Icon(
-                option.isAvailable ? Icons.flag : Icons.lock_outline,
-                color: AppColors.primaryContainer,
-              ),
-              title: option.displayName,
-              subtitle: option.isAvailable ? '' : 'Coming soon',
-              enabled: option.isAvailable,
-              selected: _controller.selectedLanguage == option.code,
-              onTap: option.isAvailable
-                  ? () => Navigator.of(context).pop(option.code)
-                  : null,
-            ),
-        ],
-      ),
+  Future<void> _pickCourse() async {
+    final switched = await pickAndSwitchCourse(
+      context,
+      courseApi: widget.courseApi,
     );
-    if (code != null) {
-      await _controller.updateLanguage(code);
+    if (switched != null) {
+      _controller.applySwitchedCourse(switched);
     }
   }
 
@@ -183,9 +157,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return option == null ? 'Unknown' : '${option.title} · ${option.minutes} min/day';
   }
 
-  String _languageLabel(String? code) {
-    final option = _courseOptions.where((o) => o.code == code).firstOrNull;
-    return option?.displayName ?? 'Unknown';
+  String _courseLabel() {
+    final course = _controller.activeCourse;
+    if (course != null) return course.title;
+    final language = _controller.selectedLanguage;
+    return language == null ? 'Unknown' : languageName(language);
   }
 
   String _providerLabel(String? provider) {
@@ -247,10 +223,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Language'),
-              subtitle: Text(_languageLabel(_controller.selectedLanguage)),
+              title: const Text('Course'),
+              subtitle: Text(_courseLabel()),
               trailing: const Icon(Icons.chevron_right),
-              onTap: _pickLanguage,
+              onTap: _pickCourse,
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,

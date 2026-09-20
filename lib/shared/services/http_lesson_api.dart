@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/auth_config.dart';
 import '../models/beans_status.dart';
+import '../models/course.dart';
 import '../models/due_item.dart';
 import '../models/exercise.dart';
 import '../models/lesson_completion_result.dart';
@@ -155,7 +156,9 @@ class HttpLessonApi implements LessonApi {
       return _toSkillTreeNode(skill, categoryId);
     }).toList();
 
+    final rawCourse = json['course'];
     return SkillTreeResponse(
+      course: rawCourse is Map<String, dynamic> ? Course.fromJson(rawCourse) : null,
       categories: categories,
       nodes: nodes,
       streakCount: json['streak_count'] as int,

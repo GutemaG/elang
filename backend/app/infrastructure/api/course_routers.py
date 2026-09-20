@@ -14,6 +14,8 @@ from app.domain.repositories import UserRepository
 from app.infrastructure.api.course_schemas import (
     ActivateCourseRequest,
     ActivateCourseResponse,
+    CatalogCourseResponse,
+    CatalogResponse,
     CourseInfoResponse,
     CourseListResponse,
     CourseResponse,
@@ -22,6 +24,30 @@ from app.infrastructure.api.dependencies import get_current_user, get_user_repos
 from app.infrastructure.api.lesson_dependencies import get_course_repository
 
 router = APIRouter(prefix="/api/v1", tags=["courses"])
+
+
+@router.get("/courses/catalog", response_model=CatalogResponse)
+async def course_catalog_endpoint(
+    course_repo: CourseRepository = Depends(get_course_repository),
+) -> CatalogResponse:
+    """Every course (available and coming soon), with no login and no user
+    data, so the onboarding screen can offer the language pair before the
+    learner has an account. Read-only.
+    """
+    courses = await course_repo.list_all()
+    return CatalogResponse(
+        courses=[
+            CatalogCourseResponse(
+                id=c.id,
+                learning_language=c.learning_language,
+                from_language=c.from_language,
+                title=c.title,
+                status=c.status.value,
+                order_index=c.order_index,
+            )
+            for c in courses
+        ]
+    )
 
 
 @router.get("/courses", response_model=CourseListResponse)

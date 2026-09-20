@@ -19,6 +19,7 @@ import 'package:elang/shared/models/lesson_content.dart';
 import 'package:elang/shared/models/practice_completion_result.dart';
 import 'package:elang/shared/models/skill_tree.dart';
 import 'package:elang/shared/services/answer_feedback_player.dart';
+import 'package:elang/shared/services/fake_course_api.dart';
 import 'package:elang/shared/services/fake_lesson_api.dart';
 import 'package:elang/shared/services/lesson_api.dart';
 import 'package:elang/shared/services/lesson_audio_player.dart';
@@ -84,6 +85,7 @@ Widget _wrapped({
         connectivityMonitor: connectivity,
         queueStore: FakePendingSyncQueueStore(),
       ),
+      courseApi: FakeCourseApi(),
       sessionRepository: sessionRepository,
       userPreferencesApi: HttpUserPreferencesApi(
         sessionRepository: sessionRepository,
@@ -503,6 +505,7 @@ void main() {
               connectivityMonitor: FakeConnectivityMonitor(),
               queueStore: FakePendingSyncQueueStore(),
             ),
+            courseApi: FakeCourseApi(),
             sessionRepository: sessionRepository,
             userPreferencesApi: HttpUserPreferencesApi(
               sessionRepository: sessionRepository,
@@ -544,6 +547,7 @@ void main() {
               connectivityMonitor: FakeConnectivityMonitor(),
               queueStore: FakePendingSyncQueueStore(),
             ),
+            courseApi: FakeCourseApi(),
             sessionRepository: sessionRepository,
             userPreferencesApi: HttpUserPreferencesApi(
               sessionRepository: sessionRepository,

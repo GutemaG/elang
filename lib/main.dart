@@ -64,6 +64,7 @@ class BunaApp extends StatelessWidget {
           lessonPackStore: lessonDependencies.lessonPackStore,
           lessonPackDownloader: lessonDependencies.lessonPackDownloader,
           syncEngine: lessonDependencies.syncEngine,
+          courseApi: authDependencies.courseApi,
           sessionRepository: settingsDependencies.sessionRepository,
           userPreferencesApi: settingsDependencies.userPreferencesApi,
           soundPreferenceRepository: settingsDependencies.soundPreferenceRepository,
