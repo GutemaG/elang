@@ -14,6 +14,8 @@ memory-bank/         specsmd planning artifacts (intents, units, stories, bolts,
                      the design decisions and "why" behind everything below
 stich-screens/       Exported Stitch "Highland Pulse" design reference (screenshots + HTML)
 database-schema.md   Current DB schema (grows per intent)
+docs/authoring-      How to write seed content for each of the six exercise types
+  exercises.md       (shapes, worked examples, generators, pitfalls)
 ```
 
 ## Prerequisites
