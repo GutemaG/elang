@@ -1,10 +1,10 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 62
-- **Generated**: 62
-- **Completed**: 58
-- **Last updated**: 2026-09-20
+- **Total stories**: 66
+- **Generated**: 66
+- **Completed**: 60
+- **Last updated**: 2026-09-21
 
 ---
 
@@ -153,12 +153,21 @@
 - [x] **003-offline-per-course** (courses-ui): Cache and packs keyed by course - Must - ✅ COMPLETE (bolt 027-course-offline-and-verification)
 - [x] **004-multi-course-end-to-end-verification** (courses-ui): End-to-end and regression proof - Must - ✅ COMPLETE (bolt 027-course-offline-and-verification)
 
+### 011-dashboard-ui-polish
+
+#### Unit: 001-dashboard-shell-ui
+
+- [x] **001-pinned-header-with-stats** (dashboard-shell-ui): Stats move into a pinned header - Must - ✅ COMPLETE (bolt 028-dashboard-shell)
+- [x] **002-smooth-scroll-and-sticky-sections** (dashboard-shell-ui): One scroll surface, sticky category banners - Must - ✅ COMPLETE (bolt 028-dashboard-shell)
+- [ ] **003-course-rail-and-add-course** (dashboard-shell-ui): Header badge expands a course rail with + Course - Must - GENERATED (bolt 029-course-switcher-panel)
+- [ ] **004-course-settings-and-downloads-access** (dashboard-shell-ui): Settings and downloads move into the course panel - Must - GENERATED (bolt 029-course-switcher-panel)
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 8
+- **Generated**: 10
 - **In Progress**: 0
-- **Completed**: 58
+- **Completed**: 60
 - **Retired**: 1

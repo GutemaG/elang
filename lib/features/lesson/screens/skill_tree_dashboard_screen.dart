@@ -27,7 +27,10 @@ import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
 import '../../courses/course_picker.dart';
 import '../../settings/screens/settings_screen.dart';
+import '../widgets/category_banner.dart';
+import '../widgets/dashboard_header.dart';
 import '../widgets/lesson_hud.dart';
+import '../widgets/pinned_header_sliver.dart';
 import '../widgets/skill_path_node.dart';
 import '../widgets/sync_status_banner.dart';
 import 'download_management_screen.dart';
@@ -109,6 +112,19 @@ class _DashboardData {
 class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   late Future<_DashboardData> _future;
 
+  /// Owned here so a course change can animate back to the top rather than
+  /// leaving the learner mid-tree in a course they just left
+  /// (011-dashboard-ui-polish, story 002).
+  final ScrollController _scrollController = ScrollController();
+
+  /// The last dashboard that loaded, shown while a *re*load is in flight.
+  ///
+  /// Without it every reload swaps the scroll view for a spinner, which
+  /// detaches the scroll position and drops the learner back at the top of
+  /// the tree on the way back from a lesson. `null` only before the first
+  /// successful load, which is when a spinner is the right answer.
+  _DashboardData? _lastData;
+
   @override
   void initState() {
     super.initState();
@@ -120,6 +136,12 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     // app restart" durability requirement (010-offline-caching-and-
     // sync-ui, story 003).
     unawaited(widget.syncEngine.refresh());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<_DashboardData> _load() async {
@@ -139,12 +161,14 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
       );
       widget.lessonPackDownloader.currentCourse = data.tree.course;
       unawaited(_saveToCache(data));
+      _lastData = data;
       return data;
     } on LessonApiException catch (e) {
       // A backend answer (e.g. an expired session) is not "offline".
       if (e.errorCode != null) rethrow;
       final cached = await _loadFromCache();
       if (cached == null) rethrow;
+      _lastData = cached;
       return cached;
     }
   }
@@ -226,13 +250,23 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
       courseApi: widget.courseApi,
     );
     if (switched == null || !mounted) return;
-    _reload();
+    _reload(scrollToTop: true);
   }
 
-  void _reload() {
+  /// [scrollToTop] belongs to a course change: the new course's tree has
+  /// nothing to do with where the learner was. A reload after a lesson keeps
+  /// its position, so the learner comes back to the node they just finished.
+  void _reload({bool scrollToTop = false}) {
     setState(() {
       _future = _load();
     });
+    if (scrollToTop && _scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   Future<void> _onNodeTap(SkillTreeNode node) async {
@@ -297,79 +331,160 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
+              // A reload keeps the tree on screen: swapping in a spinner
+              // would tear down the scroll view and lose the learner's place.
+              final previous = _lastData;
+              if (previous == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return _dashboard(context, previous);
             }
             if (snapshot.hasError) {
               return _ErrorState(onRetry: _reload);
             }
-            final tree = snapshot.data!.tree;
-            final beansStatus = snapshot.data!.beansStatus;
-            final dueCount = snapshot.data!.dueCount;
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.marginMobile,
-                    AppSpacing.spaceSm,
-                    AppSpacing.marginMobile,
-                    0,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: _CourseChip(
-                                course: tree.course,
-                                onTap: _openCoursePicker,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.folder_outlined,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                            tooltip: 'Manage Downloads',
-                            onPressed: _openDownloadManagement,
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.settings_outlined,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                            tooltip: 'Settings',
-                            onPressed: _openSettings,
-                          ),
-                        ],
-                      ),
-                      SyncStatusBanner(
-                        syncEngine: widget.syncEngine,
-                        lessonPackStore: widget.lessonPackStore,
-                        lessonPackDownloader: widget.lessonPackDownloader,
-                      ),
-                      if (snapshot.data!.fromCache) const _OfflineNote(),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: _DashboardContent(
-                    tree: tree,
-                    amoleBalance: beansStatus.amoleBalance,
-                    dueCount: dueCount,
-                    syncEngine: widget.syncEngine,
-                    onNodeTap: _onNodeTap,
-                    onPracticeTap: _openPractice,
-                    downloader: widget.lessonPackDownloader,
-                  ),
-                ),
-              ],
-            );
+            return _dashboard(context, snapshot.data!);
           },
         ),
       ),
+    );
+  }
+
+  /// One scroll surface (011-dashboard-ui-polish, story 002): the header is
+  /// pinned, then the banners, the Practice card, and for each category its
+  /// own pinned banner followed by its own nodes. Nothing else is fixed, so
+  /// the skill path is what fills the screen.
+  Widget _dashboard(BuildContext context, _DashboardData data) {
+    final tree = data.tree;
+    return CustomScrollView(
+      controller: _scrollController,
+      // Always scrollable so a course shorter than the viewport still drags
+      // and settles instead of refusing to move.
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      slivers: [
+        pinnedHeader(
+          extent: DashboardHeader.extentOf(context),
+          child: DashboardHeader(
+            leading: _HeaderLeading(
+              course: tree.course,
+              onCourseTap: _openCoursePicker,
+              onDownloadsTap: _openDownloadManagement,
+              onSettingsTap: _openSettings,
+            ),
+            hud: LessonHud(
+              streakCount: tree.streakCount,
+              beans: tree.beans,
+              beansMax: tree.beansMax,
+              totalXp: tree.totalXp,
+              amoleBalance: data.beansStatus.amoleBalance,
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.marginMobile,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              children: [
+                SyncStatusBanner(
+                  syncEngine: widget.syncEngine,
+                  lessonPackStore: widget.lessonPackStore,
+                  lessonPackDownloader: widget.lessonPackDownloader,
+                ),
+                if (data.fromCache) const _OfflineNote(),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.marginMobile,
+            vertical: AppSpacing.spaceSm,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: _PracticeEntryCard(
+              dueCount: data.dueCount,
+              syncEngine: widget.syncEngine,
+              onTap: _openPractice,
+            ),
+          ),
+        ),
+        for (final category in tree.categories)
+          // The group is what makes the banner a *section* header: pinned
+          // slivers otherwise accumulate at the top, each one stopping below
+          // the last, so every category the learner scrolled past would still
+          // be sitting there. Grouped, a banner is pinned only while its own
+          // nodes are on screen and is pushed off by the next category's.
+          SliverMainAxisGroup(
+            slivers: [
+              pinnedHeader(
+                extent: CategoryBanner.extentOf(context),
+                child: CategoryBanner(
+                  category: category,
+                  completed: tree
+                      .nodesIn(category)
+                      .where((n) => n.state == SkillNodeState.completed)
+                      .length,
+                  total: tree.nodesIn(category).length,
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _CategoryNodes(
+                  nodes: tree.nodesIn(category),
+                  onNodeTap: _onNodeTap,
+                  downloader: widget.lessonPackDownloader,
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+/// What sits at the start of the pinned header today: the course chip and the
+/// two screen entries that used to be the top bar's icon buttons.
+///
+/// 011's bolt 029 replaces this whole slot with the course badge, which is why
+/// it is one widget rather than three loose children of the header.
+class _HeaderLeading extends StatelessWidget {
+  const _HeaderLeading({
+    required this.course,
+    required this.onCourseTap,
+    required this.onDownloadsTap,
+    required this.onSettingsTap,
+  });
+
+  final Course? course;
+  final VoidCallback onCourseTap;
+  final VoidCallback onDownloadsTap;
+  final VoidCallback onSettingsTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: _CourseChip(course: course, onTap: onCourseTap)),
+        IconButton(
+          icon: const Icon(
+            Icons.folder_outlined,
+            color: AppColors.onSurfaceVariant,
+          ),
+          tooltip: 'Manage Downloads',
+          onPressed: onDownloadsTap,
+        ),
+        IconButton(
+          icon: const Icon(
+            Icons.settings_outlined,
+            color: AppColors.onSurfaceVariant,
+          ),
+          tooltip: 'Settings',
+          onPressed: onSettingsTap,
+        ),
+      ],
     );
   }
 }
@@ -437,134 +552,60 @@ class _CourseChip extends StatelessWidget {
   }
 }
 
-class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({
-    required this.tree,
-    required this.amoleBalance,
-    required this.dueCount,
-    required this.syncEngine,
-    required this.onNodeTap,
-    required this.onPracticeTap,
-    required this.downloader,
-  });
-
-  final SkillTreeResponse tree;
-  final int amoleBalance;
-  final int dueCount;
-  final SyncEngine syncEngine;
-  final ValueChanged<SkillTreeNode> onNodeTap;
-  final VoidCallback onPracticeTap;
-  final LessonPackDownloader downloader;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-            vertical: AppSpacing.spaceSm,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: LessonHud(
-              streakCount: tree.streakCount,
-              beans: tree.beans,
-              beansMax: tree.beansMax,
-              totalXp: tree.totalXp,
-              amoleBalance: amoleBalance,
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-            vertical: AppSpacing.spaceSm,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: _PracticeEntryCard(
-              dueCount: dueCount,
-              syncEngine: syncEngine,
-              onTap: onPracticeTap,
-            ),
-          ),
-        ),
-        for (final category in tree.categories)
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.marginMobile,
-              vertical: AppSpacing.spaceSm,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: _CategorySection(
-                category: category,
-                nodes: tree.nodesIn(category),
-                onNodeTap: onNodeTap,
-                downloader: downloader,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// One category: its banner followed by its own skill path. The zig-zag
-/// offset restarts at the top of every category.
-class _CategorySection extends StatelessWidget {
-  const _CategorySection({
-    required this.category,
+/// One category's skill path. The zig-zag offset restarts at the top of every
+/// category; the category's banner is a pinned sliver above this, not part of
+/// it (011-dashboard-ui-polish, story 002).
+class _CategoryNodes extends StatelessWidget {
+  const _CategoryNodes({
     required this.nodes,
     required this.onNodeTap,
     required this.downloader,
   });
 
-  final SkillCategory category;
   final List<SkillTreeNode> nodes;
   final ValueChanged<SkillTreeNode> onNodeTap;
   final LessonPackDownloader downloader;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _CategoryBanner(category: category, nodes: nodes),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceMd),
-          child: Column(
-            children: [
-              for (int i = 0; i < nodes.length; i++)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.spaceMd,
-                  ),
-                  child: Align(
-                    alignment: _lateralOffset(i),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        SkillPathNode(
-                          node: nodes[i],
-                          onTap: nodes[i].state == SkillNodeState.locked
-                              ? null
-                              : () => onNodeTap(nodes[i]),
-                        ),
-                        if (nodes[i].state != SkillNodeState.locked)
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: _DownloadAffordance(
-                              lessonId: nodes[i].lessonId,
-                              downloader: downloader,
-                            ),
-                          ),
-                      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.marginMobile,
+        vertical: AppSpacing.spaceMd,
+      ),
+      child: Column(
+        children: [
+          for (int i = 0; i < nodes.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppSpacing.spaceMd,
+              ),
+              child: Align(
+                alignment: _lateralOffset(i),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SkillPathNode(
+                      node: nodes[i],
+                      onTap: nodes[i].state == SkillNodeState.locked
+                          ? null
+                          : () => onNodeTap(nodes[i]),
                     ),
-                  ),
+                    if (nodes[i].state != SkillNodeState.locked)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: _DownloadAffordance(
+                          lessonId: nodes[i].lessonId,
+                          downloader: downloader,
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-        ),
-      ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -576,85 +617,6 @@ class _CategorySection extends StatelessWidget {
     1 => Alignment.centerRight,
     _ => Alignment.centerLeft,
   };
-}
-
-class _CategoryBanner extends StatelessWidget {
-  const _CategoryBanner({required this.category, required this.nodes});
-
-  final SkillCategory category;
-  final List<SkillTreeNode> nodes;
-
-  int get _completed =>
-      nodes.where((n) => n.state == SkillNodeState.completed).length;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.spaceMd),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadii.base),
-        border: Border.all(color: AppColors.outlineVariant),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardBevelDefault, offset: Offset(0, 6)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      category.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.headlineSm.copyWith(
-                        color: AppColors.onSurface,
-                      ),
-                    ),
-                    Text(
-                      category.subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodySm.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.spaceSm),
-              Text(
-                '$_completed/${nodes.length} Completed',
-                maxLines: 1,
-                style: AppTypography.labelSm.copyWith(
-                  color: AppColors.primaryContainer,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.spaceSm),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadii.full),
-            child: LinearProgressIndicator(
-              value: nodes.isEmpty ? 0 : _completed / nodes.length,
-              minHeight: 10,
-              backgroundColor: AppColors.surfaceContainer,
-              valueColor: const AlwaysStoppedAnimation(
-                AppColors.primaryContainer,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// Dashboard entry point into a Practice session (008-srs-and-practice,

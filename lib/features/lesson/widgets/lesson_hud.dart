@@ -5,8 +5,13 @@ import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 
 /// The "Stat Badges & Floating HUD" component (`DESIGN.md` component 3):
-/// streak, beans, XP, and (bolt 018-amole-ui) Amole pills shown at the top
-/// of the dashboard.
+/// streak, beans, XP, and (bolt 018-amole-ui) Amole pills.
+///
+/// 011-dashboard-ui-polish, story 001: these live in the dashboard's pinned
+/// header now, sharing one row with the course control, so every pill is an
+/// icon and a value. The streak's spelled-out "N Day Streak" would not fit
+/// four pills and a course name at 320dp; it survives as the pill's semantic
+/// label, so a screen reader still reads what it read before.
 class LessonHud extends StatelessWidget {
   const LessonHud({
     super.key,
@@ -25,61 +30,49 @@ class LessonHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Scales the whole row down on narrow screens instead of overflowing.
-    return LayoutBuilder(
-      builder: (context, constraints) => FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerLeft,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: constraints.maxWidth),
-          child: _row(),
-        ),
+    // Scales the whole row down rather than overflowing when the header is
+    // narrow or the text is large.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _HudPill(
+            icon: Icons.local_fire_department,
+            iconColor: AppColors.secondaryContainer,
+            label: '$streakCount',
+            textColor: AppColors.secondary,
+            semanticLabel: '$streakCount day streak',
+          ),
+          const SizedBox(width: AppSpacing.spaceXs),
+          _HudPill(
+            icon: Icons.favorite,
+            iconColor: AppColors.tertiaryBrand,
+            label: '$beans',
+            textColor: AppColors.tertiaryBrand,
+            semanticLabel: '$beans of $beansMax beans remaining',
+          ),
+          const SizedBox(width: AppSpacing.spaceXs),
+          _HudPill(
+            icon: Icons.bolt,
+            iconColor: AppColors.secondary,
+            label: '$totalXp',
+            textColor: AppColors.secondary,
+            semanticLabel: '$totalXp total XP',
+          ),
+          const SizedBox(width: AppSpacing.spaceXs),
+          _HudPill(
+            // Distinct from XP's `Icons.bolt`, to avoid the two pills
+            // reading as the same currency at a glance.
+            icon: Icons.paid,
+            iconColor: AppColors.primaryContainer,
+            label: '$amoleBalance',
+            textColor: AppColors.primaryContainer,
+            semanticLabel: '$amoleBalance Amole',
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _row() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _HudPill(
-          icon: Icons.local_fire_department,
-          iconColor: AppColors.secondaryContainer,
-          label: '$streakCount Day Streak',
-          textColor: AppColors.secondary,
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _HudPill(
-              icon: Icons.favorite,
-              iconColor: AppColors.tertiaryBrand,
-              label: '$beans',
-              textColor: AppColors.tertiaryBrand,
-              semanticLabel: '$beans of $beansMax beans remaining',
-            ),
-            const SizedBox(width: AppSpacing.spaceXs),
-            _HudPill(
-              icon: Icons.bolt,
-              iconColor: AppColors.secondary,
-              label: '$totalXp',
-              textColor: AppColors.secondary,
-              semanticLabel: '$totalXp total XP',
-            ),
-            const SizedBox(width: AppSpacing.spaceXs),
-            _HudPill(
-              // Distinct from XP's `Icons.bolt`, to avoid the two pills
-              // reading as the same currency at a glance.
-              icon: Icons.paid,
-              iconColor: AppColors.primaryContainer,
-              label: '$amoleBalance',
-              textColor: AppColors.primaryContainer,
-              semanticLabel: '$amoleBalance Amole',
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
@@ -90,31 +83,32 @@ class _HudPill extends StatelessWidget {
     required this.iconColor,
     required this.label,
     required this.textColor,
-    this.semanticLabel,
+    required this.semanticLabel,
   });
 
   final IconData icon;
   final Color iconColor;
   final String label;
   final Color textColor;
-  final String? semanticLabel;
+  final String semanticLabel;
 
   @override
   Widget build(BuildContext context) {
+    // One node per pill: the icon and the bare number mean nothing apart, so
+    // the pill reads as its full label ("100 day streak") and nothing else.
     return Semantics(
       label: semanticLabel,
+      container: true,
+      excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.spaceSm,
+          horizontal: AppSpacing.spaceXs,
           vertical: AppSpacing.space2xs,
         ),
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadii.full),
           border: Border.all(color: AppColors.outlineVariant),
-          boxShadow: const [
-            BoxShadow(color: AppColors.cardBorderDefault, offset: Offset(0, 3)),
-          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
