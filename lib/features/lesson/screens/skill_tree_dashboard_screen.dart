@@ -554,7 +554,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
             ),
           ),
         ),
-        for (final category in tree.categories)
+        for (int i = 0; i < tree.categories.length; i++)
           // The group is what makes the banner a *section* header: pinned
           // slivers otherwise accumulate at the top, each one stopping below
           // the last, so every category the learner scrolled past would still
@@ -565,17 +565,20 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
               pinnedHeader(
                 extent: CategoryBanner.extentOf(context),
                 child: CategoryBanner(
-                  category: category,
+                  category: tree.categories[i],
+                  // Consecutive sections take consecutive colours, so one is
+                  // never mistaken for the next while scrolling.
+                  colorIndex: i,
                   completed: tree
-                      .nodesIn(category)
+                      .nodesIn(tree.categories[i])
                       .where((n) => n.state == SkillNodeState.completed)
                       .length,
-                  total: tree.nodesIn(category).length,
+                  total: tree.nodesIn(tree.categories[i]).length,
                 ),
               ),
               SliverToBoxAdapter(
                 child: _CategoryNodes(
-                  nodes: tree.nodesIn(category),
+                  nodes: tree.nodesIn(tree.categories[i]),
                   onNodeTap: _onNodeTap,
                   downloader: widget.lessonPackDownloader,
                 ),

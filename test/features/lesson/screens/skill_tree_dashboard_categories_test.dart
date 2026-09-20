@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/lesson/screens/skill_tree_dashboard_screen.dart';
+import 'package:elang/features/lesson/widgets/category_banner.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/skill_tree.dart';
 import 'package:elang/shared/services/fake_course_api.dart';
@@ -262,4 +263,45 @@ void main() {
       },
     );
   }
+  testWidgets('consecutive categories take different banner colours', (
+    tester,
+  ) async {
+    final api = _api(
+      _tree(
+        categories: [_foundations, _family, _numbers],
+        nodes: [
+          _node('a', 'c1', SkillNodeState.active),
+          _node('b', 'c2', SkillNodeState.active),
+          _node('c', 'c3', SkillNodeState.active),
+        ],
+      ),
+    );
+    _size(tester, const Size(400, 4000));
+
+    await tester.pumpWidget(_dashboard(api));
+    await tester.pumpAndSettle();
+
+    Color background(String title) {
+      final container = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.ancestor(
+                of: find.text(title),
+                matching: find.byType(CategoryBanner),
+              ),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      return ((container.decoration! as BoxDecoration).color)!;
+    }
+
+    final colours = {
+      background('Foundations & Greetings'),
+      background('Family & People'),
+      background('Numbers & Time'),
+    };
+    expect(colours, hasLength(3));
+  });
+
 }

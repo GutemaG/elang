@@ -6,28 +6,83 @@ import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import 'pinned_header_sliver.dart';
 
+/// The colours a section banner can take. Each category gets the next one, so
+/// consecutive sections are always told apart at a glance.
+///
+/// All three backgrounds are the deep end of a Highland Pulse brand ramp, so
+/// white title text clears contrast on every one of them; [accent] is the
+/// light tone of the same hue, used for the count and the progress fill.
+class _BannerPalette {
+  const _BannerPalette({
+    required this.background,
+    required this.bevel,
+    required this.accent,
+  });
+
+  final Color background;
+  final Color bevel;
+  final Color accent;
+}
+
+const List<_BannerPalette> _palettes = [
+  _BannerPalette(
+    background: AppColors.primaryContainer,
+    bevel: AppColors.primaryBevel,
+    accent: AppColors.primaryFixedDim,
+  ),
+  _BannerPalette(
+    background: AppColors.secondary,
+    bevel: AppColors.onSecondaryContainer,
+    accent: AppColors.secondaryFixedDim,
+  ),
+  _BannerPalette(
+    background: AppColors.tertiaryContainer,
+    bevel: AppColors.tertiary,
+    accent: AppColors.tertiaryFixedDim,
+  ),
+];
+
 /// One category's banner, pinned beneath the dashboard header while that
 /// category's own nodes scroll past (011-dashboard-ui-polish, story 002).
 ///
 /// Carries exactly what the scrolling card carried before -- title, subtitle,
-/// completed count and progress -- in a compact bar. The line count is fixed
-/// (one each for title and subtitle, ellipsised) so [extentOf] is exact at any
-/// text scale; a variable-height banner could not be pinned, because a pinned
-/// sliver must declare its extent before it lays out.
+/// completed count and progress -- as a raised, coloured card. The line count
+/// is fixed (one each for title and subtitle, ellipsised) so [extentOf] is
+/// exact at any text scale; a variable-height banner could not be pinned,
+/// because a pinned sliver must declare its extent before it lays out.
 class CategoryBanner extends StatelessWidget {
   const CategoryBanner({
     super.key,
     required this.category,
     required this.completed,
     required this.total,
+    this.colorIndex = 0,
   });
 
   final SkillCategory category;
   final int completed;
   final int total;
 
+  /// The category's position in the course; picks its colour.
+  final int colorIndex;
+
   static const double _progressHeight = 8;
-  static const double _borderWidth = 1;
+
+  /// Depth of the card's bevel, drawn below it and so part of the space the
+  /// pinned sliver has to reserve.
+  static const double _bevel = 5;
+
+  /// Breathing room above and below the card, inside the pinned area.
+  static const double _gap = AppSpacing.spaceXs;
+
+  /// The card's own padding.
+  static const double _padV = AppSpacing.spaceSm;
+  static const double _padH = AppSpacing.spaceMd;
+
+  /// Kept narrower than the screen margin so the banner reads as a wide card
+  /// rather than a full-bleed bar, while still being wider than the content
+  /// column it sits above.
+  static const double _margin = AppSpacing.spaceSm;
 
   /// What the pinned sliver must reserve for this banner.
   static double extentOf(BuildContext context) {
@@ -35,29 +90,28 @@ class CategoryBanner extends StatelessWidget {
         scaledLineHeight(context, AppTypography.labelLg) +
         scaledLineHeight(context, AppTypography.bodySm);
     final count = scaledLineHeight(context, AppTypography.labelSm);
-    return AppSpacing.spaceXs * 2 +
+    final content =
         (titleBlock > count ? titleBlock : count) +
         AppSpacing.space2xs +
-        _progressHeight +
-        _borderWidth;
+        _progressHeight;
+    return _gap * 2 + _padV * 2 + content + _bevel;
   }
+
+  _BannerPalette get _palette => _palettes[colorIndex % _palettes.length];
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.cardBorderDefault,
-            width: _borderWidth,
-          ),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.marginMobile,
-          vertical: AppSpacing.spaceXs,
+    final palette = _palette;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(_margin, _gap, _margin, _gap + _bevel),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: _padH, vertical: _padV),
+        decoration: BoxDecoration(
+          color: palette.background,
+          borderRadius: BorderRadius.circular(AppRadii.base),
+          boxShadow: [
+            BoxShadow(color: palette.bevel, offset: const Offset(0, _bevel)),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +127,7 @@ class CategoryBanner extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.labelLg.copyWith(
-                          color: AppColors.onSurface,
+                          color: AppColors.onPrimary,
                         ),
                       ),
                       Text(
@@ -81,7 +135,7 @@ class CategoryBanner extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.bodySm.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: AppColors.onPrimary.withValues(alpha: 0.85),
                         ),
                       ),
                     ],
@@ -91,9 +145,7 @@ class CategoryBanner extends StatelessWidget {
                 Text(
                   '$completed/$total Completed',
                   maxLines: 1,
-                  style: AppTypography.labelSm.copyWith(
-                    color: AppColors.primaryContainer,
-                  ),
+                  style: AppTypography.labelSm.copyWith(color: palette.accent),
                 ),
               ],
             ),
@@ -103,10 +155,8 @@ class CategoryBanner extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: total == 0 ? 0 : completed / total,
                 minHeight: _progressHeight,
-                backgroundColor: AppColors.surfaceContainer,
-                valueColor: const AlwaysStoppedAnimation(
-                  AppColors.primaryContainer,
-                ),
+                backgroundColor: AppColors.onPrimary.withValues(alpha: 0.24),
+                valueColor: AlwaysStoppedAnimation(palette.accent),
               ),
             ),
           ],
