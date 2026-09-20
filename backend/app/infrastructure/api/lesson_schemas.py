@@ -122,12 +122,35 @@ class GapFillExerciseResponse(BaseModel):
     correct_choice_id: str
 
 
+class SpellTilesExerciseResponse(BaseModel):
+    """`spell_tiles` (bolt 032): the character tiles a word is spelled
+    from, shuffled and including distractors, plus the order that spells
+    it. `correct_sequence` is the same field `sentence_construction`
+    carries -- this type shares its answer key rather than introducing
+    another.
+
+    Two things differ from every other tile-bearing response here. Tiles
+    may repeat their `text` (`Maaloo` needs two `a` tiles), so a client
+    must key them by `id`. And `correct_sequence` names *a* correct
+    ordering rather than the only one, for the same reason -- a client
+    grades by comparing the spelled text, not the id list.
+    """
+
+    id: str
+    order_index: int
+    type: Literal["spell_tiles"] = "spell_tiles"
+    prompt: str
+    tiles: list[ChoiceResponse]
+    correct_sequence: list[str]
+
+
 ExerciseResponse = Annotated[
     MultipleChoiceExerciseResponse
     | ListeningExerciseResponse
     | SentenceConstructionExerciseResponse
     | MatchPairsExerciseResponse
-    | GapFillExerciseResponse,
+    | GapFillExerciseResponse
+    | SpellTilesExerciseResponse,
     Field(discriminator="type"),
 ]
 

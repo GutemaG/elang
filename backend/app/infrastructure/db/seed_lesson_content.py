@@ -124,7 +124,9 @@ VOCABULARY: list[dict[str, str]] = [
 # intent's "at least 1 seeded match_pairs exercise" requirement. Every lesson
 # then gained a gap_fill from 015-gap-fill-exercise-type (bolt 030), appended
 # last so no existing exercise's order_index moved -- always slug `:6`, at
-# order_index 5, or 6 where a match_pairs already holds 5. Real,
+# order_index 5, or 6 where a match_pairs already holds 5. 016-spell-from-
+# tiles-exercise-type (bolt 032) added a spell_tiles the same way -- always
+# slug `:7`, one order_index above that lesson's gap_fill. Real,
 # hand-authored English -> Amharic vocabulary (Fidel script, UTF-8) -- a
 # small proof-of-loop set, not a complete Phase 1 course, per
 # requirements.md's Business Constraints.
@@ -247,6 +249,33 @@ CURRICULUM: list[dict[str, Any]] = [
                         },
                         "answer_key": {"correct_choice_id": "a"},
                     },
+                    {
+                        # 016-spell-from-tiles-exercise-type (bolt 032): the
+                        # 6th exercise type. `content` holds the word's
+                        # characters scattered with two distractors; only
+                        # `answer_key` knows the order that spells it.
+                        #
+                        # ሰላም rather than this lesson's other word: ደህና ሁን is
+                        # two tokens, and a multi-word phrase is not something
+                        # to spell from character tiles.
+                        #
+                        # No `vocab_slug`, for the same reason the gap-fill
+                        # above has none.
+                        "slug": "exercise:hello-and-goodbye:7",
+                        "order_index": 6,
+                        "type": "spell_tiles",
+                        "prompt": "Spell 'Hello'",
+                        "content": {
+                            "tiles": [
+                                _choice("t1", "ላ"),
+                                _choice("t2", "ደ"),
+                                _choice("t3", "ም"),
+                                _choice("t4", "ሰ"),
+                                _choice("t5", "ና"),
+                            ]
+                        },
+                        "answer_key": {"correct_sequence": ["t4", "t1", "t3"]},
+                    },
                 ],
             },
             {
@@ -337,6 +366,31 @@ CURRICULUM: list[dict[str, Any]] = [
                             ],
                         },
                         "answer_key": {"correct_choice_id": "b"},
+                    },
+                    {
+                        # The longest spelled word in this course at seven
+                        # characters, plus two distractors -- nine tiles, well
+                        # inside the twelve the client lays out for.
+                        "slug": "exercise:please-and-thank-you:7",
+                        "order_index": 6,
+                        "type": "spell_tiles",
+                        "prompt": "Spell 'Thank you'",
+                        "content": {
+                            "tiles": [
+                                _choice("t1", "ግ"),
+                                _choice("t2", "አ"),
+                                _choice("t3", "ለ"),
+                                _choice("t4", "ሰ"),
+                                _choice("t5", "እ"),
+                                _choice("t6", "መ"),
+                                _choice("t7", "ሁ"),
+                                _choice("t8", "ክ"),
+                                _choice("t9", "ና"),
+                            ]
+                        },
+                        "answer_key": {
+                            "correct_sequence": ["t2", "t6", "t4", "t1", "t9", "t3", "t7"]
+                        },
                     },
                 ],
             },
@@ -470,6 +524,27 @@ CURRICULUM: list[dict[str, Any]] = [
                         },
                         "answer_key": {"correct_choice_id": "c"},
                     },
+                    {
+                        # This lesson has a match-pairs at 5 and the gap-fill
+                        # at 6, so spell-tiles takes 7. The slug is `:7` in
+                        # every lesson regardless, same convention as `:6`.
+                        #
+                        # ሻይ rather than ቡና: the gap-fill above already
+                        # answers ቡና, and the sentence exercise builds it too.
+                        "slug": "exercise:coffee-and-tea:7",
+                        "order_index": 7,
+                        "type": "spell_tiles",
+                        "prompt": "Spell 'Tea'",
+                        "content": {
+                            "tiles": [
+                                _choice("t1", "ና"),
+                                _choice("t2", "ይ"),
+                                _choice("t3", "ቡ"),
+                                _choice("t4", "ሻ"),
+                            ]
+                        },
+                        "answer_key": {"correct_sequence": ["t4", "t2"]},
+                    },
                 ],
             },
             {
@@ -555,6 +630,24 @@ CURRICULUM: list[dict[str, Any]] = [
                             ],
                         },
                         "answer_key": {"correct_choice_id": "a"},
+                    },
+                    {
+                        # ምግብ rather than ዳቦ: the gap-fill above answers ዳቦ
+                        # and the sentence exercise builds it.
+                        "slug": "exercise:im-hungry:7",
+                        "order_index": 6,
+                        "type": "spell_tiles",
+                        "prompt": "Spell 'Food'",
+                        "content": {
+                            "tiles": [
+                                _choice("t1", "ብ"),
+                                _choice("t2", "ዳ"),
+                                _choice("t3", "ም"),
+                                _choice("t4", "ቦ"),
+                                _choice("t5", "ግ"),
+                            ]
+                        },
+                        "answer_key": {"correct_sequence": ["t3", "t5", "t1"]},
                     },
                 ],
             },

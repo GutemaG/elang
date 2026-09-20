@@ -149,10 +149,12 @@ class ExerciseModel(Base):
 
     `ck_exercises_type` was widened from 3 to 4 values by
     `011-match-pairs-service` (migration `c726efa81972`) to add
-    `match_pairs`, and from 4 to 5 by `030-gap-fill-service` (migration
-    `d1b7e4f2a903`) to add `gap_fill` -- see either migration for why a
-    batch-mode `ALTER` is required (SQLite cannot modify a `CHECK`
-    constraint in place).
+    `match_pairs`, from 4 to 5 by `030-gap-fill-service` (migration
+    `d1b7e4f2a903`) to add `gap_fill`, and from 5 to 6 by
+    `032-spell-tiles-service` (migration `f4c2a81e7b56`) to add
+    `spell_tiles` -- see any of those migrations for why a batch-mode
+    `ALTER` is required (SQLite cannot modify a `CHECK` constraint in
+    place).
 
     Note the constraint is declared twice: here, and in the migration.
     Widening one without the other leaves the ORM and the database
@@ -164,7 +166,7 @@ class ExerciseModel(Base):
         UniqueConstraint("lesson_id", "order_index", name="uq_exercises_lesson_order"),
         CheckConstraint(
             "type IN ('multiple_choice', 'listening', 'sentence_construction', "
-            "'match_pairs', 'gap_fill')",
+            "'match_pairs', 'gap_fill', 'spell_tiles')",
             name="ck_exercises_type",
         ),
         Index("ix_exercises_lesson_id", "lesson_id"),

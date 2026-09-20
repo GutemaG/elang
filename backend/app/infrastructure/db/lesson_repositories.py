@@ -46,6 +46,7 @@ from app.domain.lesson.value_objects import (
     PairAnswerKey,
     SentenceConstructionContent,
     SequenceAnswerKey,
+    SpellTilesContent,
 )
 from app.domain.lesson.value_objects import Choice as ChoiceVO
 from app.infrastructure.db.lesson_models import (
@@ -104,11 +105,13 @@ def _content_from_json(exercise_type: ExerciseType, content: dict[str, Any]) -> 
             sentence_after=content["sentence_after"],
             choices=_choices_from_json(content["choices"]),
         )
+    if exercise_type is ExerciseType.SPELL_TILES:
+        return SpellTilesContent(tiles=_choices_from_json(content["tiles"]))
     raise ValueError(f"No content mapping for exercise type {exercise_type}")
 
 
 def _answer_key_from_json(exercise_type: ExerciseType, answer_key: dict[str, Any]) -> AnswerKey:
-    if exercise_type is ExerciseType.SENTENCE_CONSTRUCTION:
+    if exercise_type in (ExerciseType.SENTENCE_CONSTRUCTION, ExerciseType.SPELL_TILES):
         return SequenceAnswerKey(correct_sequence=tuple(answer_key["correct_sequence"]))
     if exercise_type is ExerciseType.MATCH_PAIRS:
         return PairAnswerKey(
@@ -116,9 +119,16 @@ def _answer_key_from_json(exercise_type: ExerciseType, answer_key: dict[str, Any
         )
     # `multiple_choice`, `listening` and `gap_fill` all answer the same
     # question -- which one of these is right -- so they share
-    # `ChoiceAnswerKey`. This fall-through is the reason bolt 030 needed no
-    # edit here at all; keep the shared list above in mind before assuming
-    # it covers a future type too.
+    # `ChoiceAnswerKey`.
+    #
+    # Note this is a fall-through, not an explicit list, which makes it the
+    # one place in this module where a new type is absorbed rather than
+    # rejected. Bolt 030 needed no edit here because `gap_fill` genuinely
+    # does answer with a choice id. Bolt 032 did: `spell_tiles` answers
+    # with a sequence, and without being named above it would have fallen
+    # through to here and died on a missing `correct_choice_id` -- the
+    # exact trap the previous wording warned about. Any future type must
+    # be checked against this, not assumed into it.
     return ChoiceAnswerKey(correct_choice_id=answer_key["correct_choice_id"])
 
 

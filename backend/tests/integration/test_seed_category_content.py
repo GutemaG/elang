@@ -191,7 +191,9 @@ class TestSeedingTheNewContent:
             (CategoryModel, 8),
             (SkillModel, 16),
             (LessonModel, 32),
-            (ExerciseModel, 159),
+            # 143 before bolt 030's gap_fill, 159 before bolt 032's
+            # spell_tiles (one per lesson, in all four courses).
+            (ExerciseModel, 175),
             (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()
@@ -222,7 +224,9 @@ class TestSeedingTheNewContent:
             (CategoryModel, 8),
             (SkillModel, 16),
             (LessonModel, 32),
-            (ExerciseModel, 159),
+            # 143 before bolt 030's gap_fill, 159 before bolt 032's
+            # spell_tiles (one per lesson, in all four courses).
+            (ExerciseModel, 175),
             (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()

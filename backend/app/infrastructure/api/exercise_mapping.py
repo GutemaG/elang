@@ -18,6 +18,7 @@ from app.domain.lesson.value_objects import (
     PairAnswerKey,
     SentenceConstructionContent,
     SequenceAnswerKey,
+    SpellTilesContent,
 )
 from app.infrastructure.api.lesson_schemas import (
     ChoiceResponse,
@@ -27,6 +28,7 @@ from app.infrastructure.api.lesson_schemas import (
     MatchPairsExerciseResponse,
     MultipleChoiceExerciseResponse,
     SentenceConstructionExerciseResponse,
+    SpellTilesExerciseResponse,
 )
 
 
@@ -78,18 +80,33 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             ],
             correct_pairs=list(exercise.answer_key.correct_pairs),
         )
-    # Match-pairs used to be the unguarded final branch here. It is tested
-    # explicitly now, because a `gap_fill` exercise falling into it would
-    # have failed on an `isinstance` assertion naming the wrong type --
-    # the same trap `_content_from_json` carried (bolt 030).
-    assert isinstance(exercise.content, GapFillContent)
-    assert isinstance(exercise.answer_key, ChoiceAnswerKey)
-    return GapFillExerciseResponse(
-        id=exercise.id,
-        order_index=exercise.order_index,
-        prompt=exercise.prompt,
-        sentence_before=exercise.content.sentence_before,
-        sentence_after=exercise.content.sentence_after,
-        choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
-        correct_choice_id=exercise.answer_key.correct_choice_id,
-    )
+    # Match-pairs used to be the unguarded final branch here; bolt 030 made
+    # it explicit but left `gap_fill` holding the same position, so the trap
+    # had moved rather than closed -- a `spell_tiles` exercise would have
+    # fallen in and failed on an `isinstance` assertion naming `GapFillContent`.
+    # Bolt 032 names every type and ends in a `raise`, matching
+    # `_content_from_json`. Keep it that way: the next type should fail
+    # here loudly, not be absorbed quietly.
+    if exercise.type is ExerciseType.GAP_FILL:
+        assert isinstance(exercise.content, GapFillContent)
+        assert isinstance(exercise.answer_key, ChoiceAnswerKey)
+        return GapFillExerciseResponse(
+            id=exercise.id,
+            order_index=exercise.order_index,
+            prompt=exercise.prompt,
+            sentence_before=exercise.content.sentence_before,
+            sentence_after=exercise.content.sentence_after,
+            choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
+            correct_choice_id=exercise.answer_key.correct_choice_id,
+        )
+    if exercise.type is ExerciseType.SPELL_TILES:
+        assert isinstance(exercise.content, SpellTilesContent)
+        assert isinstance(exercise.answer_key, SequenceAnswerKey)
+        return SpellTilesExerciseResponse(
+            id=exercise.id,
+            order_index=exercise.order_index,
+            prompt=exercise.prompt,
+            tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.tiles],
+            correct_sequence=list(exercise.answer_key.correct_sequence),
+        )
+    raise ValueError(f"No response mapping for exercise type {exercise.type}")

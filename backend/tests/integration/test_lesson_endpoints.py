@@ -405,3 +405,89 @@ class TestGapFillExercise:
         # shares their answer key rather than introducing another.
         assert exercise["correct_choice_id"] == "a"
         assert "answer_key" not in response.text
+
+
+@pytest.fixture
+def seeded_spell_tiles_content(db_path: Path) -> dict[str, str]:
+    """Own skill/lesson, same reason as `seeded_gap_fill_content`.
+
+    The word is `Maaloo`, chosen because it repeats two characters: a
+    fixture spelling a word with all-distinct characters would pass even
+    if tile identity collapsed to text, which is the failure this type is
+    most exposed to.
+    """
+    engine = create_engine(f"sqlite:///{db_path}")
+    with SyncSession(engine) as session:
+        session.add(
+            SkillModel(category_id="cat-1", id="skill-st", title="Greetings", order_index=1)
+        )
+        session.add(LessonModel(id="lesson-st", skill_id="skill-st", title="Please", order_index=1))
+        session.add(
+            ExerciseModel(
+                id="ex-st",
+                lesson_id="lesson-st",
+                order_index=1,
+                type="spell_tiles",
+                prompt="Spell 'please'",
+                content={
+                    "tiles": [
+                        {"id": "t1", "text": "l"},
+                        {"id": "t2", "text": "a"},
+                        {"id": "t3", "text": "o"},
+                        {"id": "t4", "text": "M"},
+                        {"id": "t5", "text": "a"},
+                        {"id": "t6", "text": "o"},
+                        {"id": "t7", "text": "k"},
+                        {"id": "t8", "text": "n"},
+                    ]
+                },
+                answer_key={"correct_sequence": ["t4", "t2", "t5", "t1", "t3", "t6"]},
+            )
+        )
+        session.commit()
+    engine.dispose()
+    return {"lesson_st": "lesson-st"}
+
+
+class TestSpellTilesExercise:
+    def test_lesson_content_includes_the_tiles_and_the_order_that_spells_the_word(
+        self, make_client: Any, seeded_spell_tiles_content: dict[str, str]
+    ) -> None:
+        # 016-spell-from-tiles-exercise-type (bolt 032).
+        client, token = _sign_in(make_client)
+
+        response = client.get(
+            f"/api/v1/lessons/{seeded_spell_tiles_content['lesson_st']}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        exercise = response.json()["exercises"][0]
+        assert exercise["type"] == "spell_tiles"
+        # The same field `sentence_construction` carries -- this type shares
+        # its answer key rather than introducing another.
+        assert exercise["correct_sequence"] == ["t4", "t2", "t5", "t1", "t3", "t6"]
+        assert "answer_key" not in response.text
+
+    def test_duplicate_characters_survive_the_round_trip_as_separate_tiles(
+        self, make_client: Any, seeded_spell_tiles_content: dict[str, str]
+    ) -> None:
+        # Storage -> domain -> response, end to end over HTTP. If any layer
+        # keyed a tile by its text, `Maaloo` would come back with six tiles
+        # instead of eight and would no longer be spellable.
+        client, token = _sign_in(make_client)
+
+        response = client.get(
+            f"/api/v1/lessons/{seeded_spell_tiles_content['lesson_st']}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        tiles = response.json()["exercises"][0]["tiles"]
+        assert len(tiles) == 8
+        assert [t["text"] for t in tiles].count("a") == 2
+        assert [t["text"] for t in tiles].count("o") == 2
+        assert len({t["id"] for t in tiles}) == 8
+
+        text_by_id = {t["id"]: t["text"] for t in tiles}
+        sequence = response.json()["exercises"][0]["correct_sequence"]
+        assert "".join(text_by_id[i] for i in sequence) == "Maaloo"

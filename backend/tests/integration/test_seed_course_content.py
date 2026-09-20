@@ -64,6 +64,34 @@ def _exercises(course_slug: str) -> list[dict]:
     return [e for s in _skills(course_slug) for lesson in s["lessons"] for e in lesson["exercises"]]
 
 
+def _spell_tiles(lesson: dict) -> dict:
+    return next(e for e in lesson["exercises"] if e["type"] == "spell_tiles")
+
+
+def _spelled(exercise: dict) -> str:
+    """The word a `spell_tiles` exercise's answer key spells.
+
+    Resolves ids to text rather than the other way round -- the reverse
+    lookup would be ambiguous for a word with a repeated character, which
+    is the whole reason this type is keyed by id.
+    """
+    text_by_id = {t["id"]: t["text"] for t in exercise["content"]["tiles"]}
+    return "".join(text_by_id[i] for i in exercise["answer_key"]["correct_sequence"])
+
+
+def _lesson_words(lesson: dict, learning: str) -> set[str]:
+    """Every learning-language word this lesson puts in front of the learner,
+    gathered from its choice-bearing exercises.
+    """
+    words: set[str] = set()
+    for exercise in lesson["exercises"]:
+        for key in ("choices", "left_tiles", "word_bank"):
+            for tile in exercise["content"].get(key, []):
+                words.add(tile["text"])
+    del learning  # the tiles are already in the right language per exercise
+    return words
+
+
 def _correct_text(exercise: dict) -> str:
     return next(
         c["text"]
@@ -252,6 +280,118 @@ class TestCourseContentIntegrity:
                 if e["type"] == "gap_fill":
                     assert "vocab_slug" not in e, e["slug"]
 
+    # --- spell_tiles (016-spell-from-tiles-exercise-type, bolt 032) -------
+
+    def test_every_lesson_has_exactly_one_spell_tiles(self) -> None:
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    spells = [e for e in lesson["exercises"] if e["type"] == "spell_tiles"]
+                    assert len(spells) == 1, (course_slug, lesson["title"])
+
+    def test_the_correct_sequence_spells_one_of_the_lessons_own_words(self) -> None:
+        for course_slug, (learning, _) in _PAIRS.items():
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    exercise = _spell_tiles(lesson)
+                    assert _spelled(exercise) in _lesson_words(lesson, learning), exercise["slug"]
+
+    def test_a_repeated_character_keeps_one_tile_per_occurrence(self) -> None:
+        # The load-bearing test of this type. `Maaloo` needs two `a` tiles
+        # and two `o` tiles; anything that keys a tile by its text collapses
+        # them, and the exercise becomes unspellable. Asserted against real
+        # seed output rather than a fixture -- every Afaan Oromo word this
+        # seed spells repeats a character, so the risk is live, not
+        # hypothetical.
+        seen_a_repeat = False
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    exercise = _spell_tiles(lesson)
+                    word = _spelled(exercise)
+                    tiles = exercise["content"]["tiles"]
+                    sequence = exercise["answer_key"]["correct_sequence"]
+
+                    assert len(sequence) == len(word), exercise["slug"]
+                    assert len(set(sequence)) == len(sequence), exercise["slug"]
+                    for character in set(word):
+                        used = [t for t in tiles if t["id"] in sequence and t["text"] == character]
+                        assert len(used) == word.count(character), (exercise["slug"], character)
+                    if len(word) > len(set(word)):
+                        seen_a_repeat = True
+
+        assert seen_a_repeat, "no seeded word repeats a character -- this test proves nothing"
+
+    def test_every_tile_id_is_distinct_even_where_the_text_is_not(self) -> None:
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    tiles = _spell_tiles(lesson)["content"]["tiles"]
+                    ids = [t["id"] for t in tiles]
+                    assert len(set(ids)) == len(ids), lesson["title"]
+
+    def test_the_tiles_do_not_reveal_the_word(self) -> None:
+        # Tiles in `t1..tN` order would spell the answer straight off the
+        # screen, making `correct_sequence` decorative.
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    exercise = _spell_tiles(lesson)
+                    tiles = exercise["content"]["tiles"]
+                    in_order = [t["id"] for t in tiles][
+                        : len(exercise["answer_key"]["correct_sequence"])
+                    ]
+                    assert exercise["answer_key"]["correct_sequence"] != in_order, exercise["slug"]
+
+    def test_there_are_exactly_two_distractor_tiles(self) -> None:
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    exercise = _spell_tiles(lesson)
+                    tiles = exercise["content"]["tiles"]
+                    sequence = exercise["answer_key"]["correct_sequence"]
+                    assert len(tiles) - len(sequence) == 2, exercise["slug"]
+
+    def test_no_exercise_exceeds_the_twelve_tiles_the_client_lays_out_for(self) -> None:
+        # FR-2's budget. `Hanqaaquu` is the worst case at nine characters.
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    tiles = _spell_tiles(lesson)["content"]["tiles"]
+                    assert len(tiles) <= 12, (lesson["title"], len(tiles))
+
+    def test_no_spelled_word_is_more_than_one_token(self) -> None:
+        # `goodbye` is `ደህና ሁን` in Amharic. Spelling a two-word phrase from
+        # character tiles is not this exercise, so the seed must never pick
+        # one -- `indexes[3]` is chosen partly because it never can.
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    word = _spelled(_spell_tiles(lesson))
+                    assert " " not in word, (lesson["title"], word)
+
+    def test_no_distractor_is_an_uppercase_giveaway(self) -> None:
+        # Afaan Oromo words are capitalised, so only tile position one is
+        # ever uppercase. An uppercase distractor would announce itself.
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    exercise = _spell_tiles(lesson)
+                    sequence = exercise["answer_key"]["correct_sequence"]
+                    distractors = [
+                        t for t in exercise["content"]["tiles"] if t["id"] not in sequence
+                    ]
+                    for tile in distractors:
+                        assert not tile["text"].isupper(), (exercise["slug"], tile["text"])
+
+    def test_no_spell_tiles_is_vocab_linked(self) -> None:
+        # Same reason as the gap-fill above: a vocab item maps to exactly
+        # one exercise, so a second one sharing a word adds no SRS coverage.
+        for course_slug in _PAIRS:
+            for e in _exercises(course_slug):
+                if e["type"] == "spell_tiles":
+                    assert "vocab_slug" not in e, e["slug"]
+
     def test_the_blank_position_is_authored_per_language_not_shared(self) -> None:
         # The reason `blank` is keyed by language: the same sentence has
         # different token counts per language, so one shared index would
@@ -385,8 +525,10 @@ class TestSeedingTheCourses:
                 "skills": 2,
                 "lessons": 4,
                 # 18 before bolt 030 added one gap_fill to each of the 4
-                # lessons (015-gap-fill-exercise-type).
-                "exercises": 22,
+                # lessons (015-gap-fill-exercise-type), then 22 before bolt
+                # 032 added one spell_tiles to each
+                # (016-spell-from-tiles-exercise-type).
+                "exercises": 26,
                 "vocab": 8,
             }, slug
 
@@ -423,7 +565,9 @@ class TestSeedingTheCourses:
             (CategoryModel, 8),
             (SkillModel, 16),
             (LessonModel, 32),
-            (ExerciseModel, 159),
+            # 143 before bolt 030's gap_fill, 159 before bolt 032's
+            # spell_tiles (one per lesson, in all four courses).
+            (ExerciseModel, 175),
             (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()
@@ -503,16 +647,17 @@ class TestStudyingEachNewCourseOverHttp:
         tree = client.get("/api/v1/skill-tree", headers=headers).json()
         lesson_id = tree["skills"][0]["lesson_id"]
         lesson = client.get(f"/api/v1/lessons/{lesson_id}", headers=headers).json()
-        # 4 before bolt 030 appended a gap_fill to every lesson.
-        assert len(lesson["exercises"]) == 5
+        # 4 before bolt 030 appended a gap_fill to every lesson, 5 before
+        # bolt 032 appended a spell_tiles.
+        assert len(lesson["exercises"]) == 6
 
         response = client.post(
             f"/api/v1/lessons/{lesson_id}/complete",
             headers=headers,
             json={
                 "attempt_id": f"attempt-{slug}",
-                "correct_count": 5,
-                "total_count": 5,
+                "correct_count": 6,
+                "total_count": 6,
                 "time_spent_seconds": 20.0,
                 "client_completed_at": datetime.now(UTC).isoformat(),
             },
@@ -576,10 +721,11 @@ class TestEachNewCourseEarnsAndPractisesOverHttp:
             headers=headers,
             json={
                 "attempt_id": f"earn-{slug}",
-                # Every seeded lesson has 5 exercises since bolt 030; the
-                # completion endpoint rejects a total that disagrees.
-                "correct_count": 5,
-                "total_count": 5,
+                # Every seeded lesson has 6 exercises since bolt 032 (5
+                # since bolt 030); the completion endpoint rejects a total
+                # that disagrees.
+                "correct_count": 6,
+                "total_count": 6,
                 "time_spent_seconds": 20.0,
                 "client_completed_at": datetime.now(UTC).isoformat(),
             },

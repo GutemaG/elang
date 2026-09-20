@@ -15,6 +15,7 @@ from app.domain.lesson.value_objects import (
     PairAnswerKey,
     SentenceConstructionContent,
     SequenceAnswerKey,
+    SpellTilesContent,
 )
 
 
@@ -157,6 +158,52 @@ class TestGapFillContent:
         )
 
         assert "ቡና" not in content.sentence_before + content.sentence_after
+
+
+class TestSpellTilesContent:
+    """016-spell-from-tiles-exercise-type (bolt 032). The only content type
+    where two tiles may carry the same text -- `Maaloo` needs two `a` tiles
+    and two `o` tiles -- so tiles are identified by id alone.
+    """
+
+    def test_requires_at_least_two_tiles(self) -> None:
+        with pytest.raises(ValueError, match="at least 2 tiles"):
+            SpellTilesContent(tiles=(ChoiceVO(id="t1", text="ሰ"),))
+
+    def test_accepts_repeated_tile_text_with_distinct_ids(self) -> None:
+        content = SpellTilesContent(
+            tiles=(
+                ChoiceVO(id="t1", text="a"),
+                ChoiceVO(id="t2", text="M"),
+                ChoiceVO(id="t3", text="a"),
+            )
+        )
+
+        assert [t.text for t in content.tiles].count("a") == 2
+        assert len({t.id for t in content.tiles}) == 3
+
+    def test_the_word_is_not_stored_in_the_content(self) -> None:
+        # Only the scattered characters are here; the order that spells the
+        # word lives in the sibling `SequenceAnswerKey`.
+        content = SpellTilesContent(
+            tiles=(
+                ChoiceVO(id="t1", text="ላ"),
+                ChoiceVO(id="t2", text="ደ"),
+                ChoiceVO(id="t3", text="ም"),
+                ChoiceVO(id="t4", text="ሰ"),
+            )
+        )
+
+        assert "ሰላም" not in "".join(t.text for t in content.tiles)
+
+    def test_a_single_fidel_character_is_one_tile(self) -> None:
+        # Decomposing ሰ into consonant and vowel is a different exercise
+        # type; this one splits on characters.
+        content = SpellTilesContent(
+            tiles=tuple(ChoiceVO(id=f"t{i + 1}", text=c) for i, c in enumerate("ሰላም"))
+        )
+
+        assert len(content.tiles) == 3
 
 
 class TestAnswerKeys:

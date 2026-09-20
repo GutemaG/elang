@@ -18,8 +18,8 @@ word list below); only the language of the prompts and answers differs, so the
 three directions cannot drift apart. Each lesson is expanded into the
 standard exercise shapes: two vocab-linked multiple-choice exercises, one
 listening, one sentence-building, (second lesson of each skill) a
-match-pairs, and a gap-fill. Ids are deterministic slugs that include the
-course.
+match-pairs, a gap-fill, and a spell-tiles. Ids are deterministic slugs that
+include the course.
 """
 
 from __future__ import annotations
@@ -129,6 +129,7 @@ _TEXT: dict[str, dict[str, str]] = {
         "translate": "Translate: '{s}'",
         "match": "Match each word to its meaning",
         "gap": "Complete the sentence: '{s}'",
+        "spell": "Spell '{w}'",
     },
     "am": {
         "mean": "'{w}' ምን ማለት ነው?",
@@ -136,6 +137,7 @@ _TEXT: dict[str, dict[str, str]] = {
         "translate": "ተርጉም፦ '{s}'",
         "match": "እያንዳንዱን ቃል ከትርጉሙ ጋር አዛምድ",
         "gap": "ዓረፍተ ነገሩን ሙላ፦ '{s}'",
+        "spell": "'{w}'ን ፊደል በፊደል ጻፍ",
     },
     "om": {
         "mean": "'{w}' maal jechuudha?",
@@ -143,6 +145,7 @@ _TEXT: dict[str, dict[str, str]] = {
         "translate": "Hiiki: '{s}'",
         "match": "Jechoota hiikaa isaanii waliin wal simsiisi",
         "gap": "Hima kana guuti: '{s}'",
+        "spell": "'{w}' qubeedhaan barreessi",
     },
 }
 
@@ -173,6 +176,54 @@ def _gap_choices(
     index = position % (len(texts) + 1)
     texts.insert(index, correct)
     return [_choice(_CHOICE_IDS[i], text) for i, text in enumerate(texts)], _CHOICE_IDS[index]
+
+
+def _scatter(items: list[Any], seed: int) -> list[Any]:
+    """Deterministically reorder `items`. No `random`: the seed loop must
+    be idempotent, so tile order has to be a pure function of its inputs.
+    """
+    out: list[Any] = []
+    pool = list(items)
+    index = seed
+    while pool:
+        index = (index + seed + 3) % len(pool)
+        out.append(pool.pop(index))
+    return out
+
+
+def _spell_tiles(
+    word: str, other_words: list[str], position: int
+) -> tuple[list[dict[str, str]], list[str]]:
+    """Character tiles for a spell-tiles exercise: every character of
+    `word` plus two distractors, scattered. Returns the tiles and the ids
+    that spell `word` in order.
+
+    Deliberately neither `_choices` nor `_gap_choices`. Both identify a
+    tile by its text, which is safe for words in a sentence and wrong
+    here: `Maaloo` needs two `a` tiles and two `o` tiles that stay
+    distinguishable. The id -> position mapping below is keyed by the
+    character's index in the word, never by the character itself, so
+    duplicates keep distinct ids by construction.
+
+    Distractors skip each other word's first character: Afaan Oromo words
+    are capitalised, so an uppercase tile anywhere but position one would
+    announce itself as a distractor.
+    """
+    chars = list(word)
+    pool = sorted({c for other in other_words for c in other[1:]} - set(chars))
+    start = position % len(pool)
+    distractors = [pool[(start + offset) % len(pool)] for offset in range(2)]
+
+    # `None` marks a distractor; an int is the character's index in `word`.
+    entries: list[tuple[int | None, str]] = [(i, c) for i, c in enumerate(chars)]
+    entries += [(None, d) for d in distractors]
+    scattered = _scatter(entries, position)
+
+    tiles = [_choice(f"t{n + 1}", text) for n, (_, text) in enumerate(scattered)]
+    id_by_word_index = {
+        origin: f"t{n + 1}" for n, (origin, _) in enumerate(scattered) if origin is not None
+    }
+    return tiles, [id_by_word_index[i] for i in range(len(chars))]
 
 
 def _lesson(
@@ -336,6 +387,31 @@ def _lesson(
                 "choices": gap_choices,
             },
             "answer_key": {"correct_choice_id": gap_correct_id},
+        }
+    )
+
+    # 7. Spell tiles (016-spell-from-tiles-exercise-type, bolt 032): the
+    # lesson's fourth word, spelled from character tiles. `indexes[3]` is
+    # chosen because it is the one word the lesson never drills directly --
+    # exercises 1, 2 and 3 answer with `indexes[0..2]` and this word appears
+    # only as a distractor. It also side-steps the only unspellable entry in
+    # `_WORDS`: `goodbye` is two tokens in Amharic (`ደህና ሁን`), and it sits
+    # at `indexes[1]`, which this rule never selects.
+    #
+    # Not vocab-linked, for the same reason the gap-fill above is not.
+    fourth = indexes[3]
+    spell_word = _word(fourth, learning)
+    spell_tiles, spell_sequence = _spell_tiles(
+        spell_word, [_word(i, learning) for i in indexes if i != fourth], order
+    )
+    exercises.append(
+        {
+            "slug": slug(7),
+            "order_index": 7 if with_match else 6,
+            "type": "spell_tiles",
+            "prompt": text["spell"].format(w=_word(fourth, from_language)),
+            "content": {"tiles": spell_tiles},
+            "answer_key": {"correct_sequence": spell_sequence},
         }
     )
 

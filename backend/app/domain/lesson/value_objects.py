@@ -98,7 +98,9 @@ class ExerciseType(StrEnum):
     `GAP_FILL` was added by `015-gap-fill-exercise-type` (bolt
     030-gap-fill-service) and is the first type beyond that original
     scope -- chosen because it needs no audio, no keyboard and no new
-    answer key, reusing `ChoiceAnswerKey` as-is.
+    answer key, reusing `ChoiceAnswerKey` as-is. `SPELL_TILES` was added
+    by `016-spell-from-tiles-exercise-type` (bolt 032-spell-tiles-service)
+    on the same principle, reusing `SequenceAnswerKey`.
 
     Adding a value here is only ever half the change: `exercises.type`
     carries a `CHECK` constraint declared both in a migration and in
@@ -110,6 +112,7 @@ class ExerciseType(StrEnum):
     SENTENCE_CONSTRUCTION = "sentence_construction"
     MATCH_PAIRS = "match_pairs"
     GAP_FILL = "gap_fill"
+    SPELL_TILES = "spell_tiles"
 
 
 class SkillState(StrEnum):
@@ -238,12 +241,37 @@ class GapFillContent:
             raise ValueError("GapFillContent requires at least 2 choices")
 
 
+@dataclass(frozen=True)
+class SpellTilesContent:
+    """Renderable content for a `spell_tiles` exercise: the character tiles
+    a word is spelled from, shuffled, including distractors.
+
+    Unlike every other tile-bearing type in this module, **duplicate
+    `text` across tiles is normal and must be preserved** -- `Maaloo` needs
+    two `a` tiles and two `o` tiles. Tiles are therefore only ever
+    identified by `Choice.id`. Any code that keys a tile by its text (the
+    seed's `id_by_token` idiom, for instance) silently collapses a word
+    like that and is wrong for this type.
+
+    The word itself never appears here, only its scattered characters, so
+    `content` does not reveal its own answer -- the ordering lives in the
+    sibling `SequenceAnswerKey`.
+    """
+
+    tiles: tuple[Choice, ...]
+
+    def __post_init__(self) -> None:
+        if len(self.tiles) < 2:
+            raise ValueError("SpellTilesContent requires at least 2 tiles")
+
+
 ExerciseContent = (
     MultipleChoiceContent
     | ListeningContent
     | SentenceConstructionContent
     | MatchPairsContent
     | GapFillContent
+    | SpellTilesContent
 )
 
 
@@ -266,10 +294,17 @@ class ChoiceAnswerKey:
 
 @dataclass(frozen=True)
 class SequenceAnswerKey:
-    """Correct-answer data for `sentence_construction` exercises.
+    """Correct-answer data for `sentence_construction` and `spell_tiles`
+    exercises.
 
-    `correct_sequence` may be a strict subset of `content.word_bank` --
-    distractor tiles are never part of the correct sequence.
+    `correct_sequence` may be a strict subset of the sibling content's
+    tiles -- distractor tiles are never part of the correct sequence.
+
+    For `spell_tiles` it names **a** correct ordering, not the only one.
+    A word with a repeated character has two interchangeable tiles for it,
+    so several id sequences spell the same word; the client therefore
+    grades by comparing the spelled *text*, not the id list. See bolt
+    `032-spell-tiles-service`'s `implementation-plan.md`, decision D3.
     """
 
     correct_sequence: tuple[str, ...]
@@ -296,11 +331,15 @@ class PairAnswerKey:
             raise ValueError("PairAnswerKey requires at least 2 pairs")
 
 
-# Deliberately three members for five exercise types: `gap_fill` reuses
+# Deliberately three members for six exercise types. `gap_fill` reuses
 # `ChoiceAnswerKey` exactly as `multiple_choice`/`listening` do, since
-# "which one of these is right" is the same question however it is asked.
-# Keeping it that way was a stated goal of `015-gap-fill-exercise-type`,
-# not an accident -- see that intent's `requirements.md`.
+# "which one of these is right" is the same question however it is asked;
+# `spell_tiles` reuses `SequenceAnswerKey` exactly as
+# `sentence_construction` does, since "put these tiles in order" is the
+# same question whether the tiles are words or characters. Keeping it
+# that way was a stated goal of both `015-gap-fill-exercise-type` and
+# `016-spell-from-tiles-exercise-type`, not an accident -- see those
+# intents' `requirements.md`.
 AnswerKey = ChoiceAnswerKey | SequenceAnswerKey | PairAnswerKey
 
 

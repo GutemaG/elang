@@ -1,9 +1,9 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 69
-- **Generated**: 69
-- **Completed**: 65
+- **Total stories**: 72
+- **Generated**: 72
+- **Completed**: 66
 - **Last updated**: 2026-09-20
 
 ---
@@ -173,12 +173,23 @@
 - [x] **001-gap-fill-exercise-screen** (gap-fill-ui): Fill the gap by tapping a word - Must - ✅ COMPLETE (bolt 031-gap-fill-ui)
 - [x] **002-offline-gap-fill-verification** (gap-fill-ui): Gap-fill works inside a downloaded pack - Must - ✅ COMPLETE (bolt 031-gap-fill-ui)
 
+### 016-spell-from-tiles-exercise-type
+
+#### Unit: 001-spell-tiles-service
+
+- [x] **001-serve-spell-tiles-exercise-content** (spell-tiles-service): Serve spell-tiles exercise content (incl. seed data) - Must - ✅ COMPLETE (bolt 032-spell-tiles-service)
+
+#### Unit: 002-spell-tiles-ui
+
+- [x] **001-spell-tiles-exercise-screen** (spell-tiles-ui): Spell a word by tapping character tiles - Must - ✅ GENERATED
+- [x] **002-offline-spell-tiles-verification** (spell-tiles-ui): Spell-tiles works inside a downloaded pack - Must - ✅ GENERATED
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 8
+- **Generated**: 6
 - **In Progress**: 0
-- **Completed**: 65
+- **Completed**: 66
 - **Retired**: 1

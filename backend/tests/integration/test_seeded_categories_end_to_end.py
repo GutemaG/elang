@@ -60,7 +60,8 @@ class TestEverySeededLessonServes:
                 response = to_exercise_response(exercise)
                 assert response.id == exercise.id
                 exercise_total += 1
-        assert exercise_total == 159
+        # 143 before bolt 030's gap_fill, 159 before bolt 032's spell_tiles.
+        assert exercise_total == 175
 
     async def test_every_lesson_belongs_to_a_skill_in_a_seeded_category(
         self, db_session: AsyncSession
