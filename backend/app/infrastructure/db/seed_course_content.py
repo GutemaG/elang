@@ -17,8 +17,9 @@ All three courses teach the same 16 words in the same 4 lessons (one shared
 word list below); only the language of the prompts and answers differs, so the
 three directions cannot drift apart. Each lesson is expanded into the
 standard exercise shapes: two vocab-linked multiple-choice exercises, one
-listening, one sentence-building, and (second lesson of each skill) a
-match-pairs. Ids are deterministic slugs that include the course.
+listening, one sentence-building, (second lesson of each skill) a
+match-pairs, and a gap-fill. Ids are deterministic slugs that include the
+course.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.infrastructure.db.seed_category_content import (
+    _CHOICE_IDS,
     PLACEHOLDER_AUDIO_URL,
     _choice,
     _choices,
@@ -73,6 +75,15 @@ _SKILLS: list[tuple[str, str, list[tuple[str, str]]]] = [
 # One sentence per lesson (index = lesson number - 1). `prompt` is the
 # sentence in each from-language; `answer`/`distractors` are the tiles in each
 # learning language (Afaan Oromo, Amharic), split on whitespace.
+#
+# `blank` is the index into `answer` that the gap-fill exercise removes
+# (015-gap-fill-exercise-type). It is authored per language and never
+# computed: the same sentence has different token counts in different
+# languages -- "I want bread" is three tokens in Afaan Oromo
+# (`Daabboo nan barbaada`) and two in Amharic (`ዳቦ እፈልጋለሁ`) -- so one
+# shared index would blank the wrong word in one of them. Where possible
+# the blanked token is one of the lesson's two tracked vocabulary words,
+# so the exercise can carry a `vocab_item_id` and feed SRS/Practice.
 _SENTENCES: list[dict[str, Any]] = [
     {
         "prompt": {
@@ -82,21 +93,25 @@ _SENTENCES: list[dict[str, Any]] = [
         },
         "answer": {"om": ["Galatoomi", "nagaatti"], "am": ["አመሰግናለሁ", "ደህና", "ሁን"]},
         "distractors": {"om": ["Akkam", "Maaloo"], "am": ["ሰላም", "እባክዎ"]},
+        "blank": {"om": 1, "am": 0},
     },
     {
         "prompt": {"en": "Hello, friend", "am": "ሰላም ጓደኛ", "om": "Akkam hiriyaa"},
         "answer": {"om": ["Akkam", "hiriyaa"], "am": ["ሰላም", "ጓደኛ"]},
         "distractors": {"om": ["Eeyyee", "Lakki"], "am": ["አዎ", "አይ"]},
+        "blank": {"om": 1, "am": 1},
     },
     {
         "prompt": {"en": "Coffee, please", "am": "ቡና እባክዎ", "om": "Buna maaloo"},
         "answer": {"om": ["Buna", "maaloo"], "am": ["ቡና", "እባክዎ"]},
         "distractors": {"om": ["Shaayii", "Bishaan"], "am": ["ሻይ", "ውሃ"]},
+        "blank": {"om": 0, "am": 0},
     },
     {
         "prompt": {"en": "I want bread", "am": "ዳቦ እፈልጋለሁ", "om": "Daabboo nan barbaada"},
         "answer": {"om": ["Daabboo", "nan", "barbaada"], "am": ["ዳቦ", "እፈልጋለሁ"]},
         "distractors": {"om": ["Nyaata", "Foon"], "am": ["ምግብ", "ስጋ"]},
+        "blank": {"om": 0, "am": 0},
     },
 ]
 
@@ -113,18 +128,21 @@ _TEXT: dict[str, dict[str, str]] = {
         "listen": "What does this word mean?",
         "translate": "Translate: '{s}'",
         "match": "Match each word to its meaning",
+        "gap": "Complete the sentence: '{s}'",
     },
     "am": {
         "mean": "'{w}' ምን ማለት ነው?",
         "listen": "ይህ ቃል ምን ማለት ነው?",
         "translate": "ተርጉም፦ '{s}'",
         "match": "እያንዳንዱን ቃል ከትርጉሙ ጋር አዛምድ",
+        "gap": "ዓረፍተ ነገሩን ሙላ፦ '{s}'",
     },
     "om": {
         "mean": "'{w}' maal jechuudha?",
         "listen": "Jechi kun maal jechuudha?",
         "translate": "Hiiki: '{s}'",
         "match": "Jechoota hiikaa isaanii waliin wal simsiisi",
+        "gap": "Hima kana guuti: '{s}'",
     },
 }
 
@@ -138,6 +156,23 @@ _COURSES: list[tuple[str, str, str, str, int, str]] = [
 
 def _word(index: int, language: str) -> str:
     return _WORDS[index][_LANG_COLUMN[language]]
+
+
+def _gap_choices(
+    correct: str, distractors: list[str], position: int
+) -> tuple[list[dict[str, str]], str]:
+    """Three choices for a gap-fill -- the missing word plus two
+    distractors -- with the correct one at `position` so it is not always
+    first. Returns the choices and the correct choice's id.
+
+    Deliberately not `_choices`: that helper assumes four options and
+    derives the correct id from `position % 4`, which with only two
+    distractors would name a tile that does not exist.
+    """
+    texts = list(distractors[:2])
+    index = position % (len(texts) + 1)
+    texts.insert(index, correct)
+    return [_choice(_CHOICE_IDS[i], text) for i, text in enumerate(texts)], _CHOICE_IDS[index]
 
 
 def _lesson(
@@ -272,6 +307,37 @@ def _lesson(
                 },
             }
         )
+
+    # 6. Gap fill (015-gap-fill-exercise-type, bolt 030): the same sentence
+    # as exercise 4 with one word taken out. Appended last so no existing
+    # exercise's `order_index` moves; the slug is always `:6` so it stays
+    # stable whether or not this lesson has a match-pairs at 5.
+    blank_index: int = sentence["blank"][learning]
+    missing = answer[blank_index]
+    gap_choices, gap_correct_id = _gap_choices(missing, distractors, order)
+    # Deliberately NOT vocab-linked, though it does test one word. A vocab
+    # item maps to exactly one exercise: `list_exercises_by_vocab_item_ids`
+    # keeps the first row per `vocab_item_id`, so a second exercise sharing
+    # a word would either never be served in Practice or would displace the
+    # multiple-choice one, decided by a UUID comparison. The intent asked
+    # for a link; reading the code showed it would add no SRS coverage.
+    # See bolt 030's `implementation-walkthrough.md`.
+    exercises.append(
+        {
+            "slug": slug(6),
+            "order_index": 6 if with_match else 5,
+            "type": "gap_fill",
+            "prompt": text["gap"].format(s=sentence["prompt"][from_language]),
+            "content": {
+                # Stored trimmed, either side of the gap. An empty string
+                # means the gap is at that end of the sentence.
+                "sentence_before": " ".join(answer[:blank_index]),
+                "sentence_after": " ".join(answer[blank_index + 1 :]),
+                "choices": gap_choices,
+            },
+            "answer_key": {"correct_choice_id": gap_correct_id},
+        }
+    )
 
     lesson = {
         "slug": f"lesson:{course_key}:{skill_slug}:{lesson_slug}",

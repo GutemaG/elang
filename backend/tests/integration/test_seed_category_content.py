@@ -191,7 +191,7 @@ class TestSeedingTheNewContent:
             (CategoryModel, 8),
             (SkillModel, 16),
             (LessonModel, 32),
-            (ExerciseModel, 143),
+            (ExerciseModel, 159),
             (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()
@@ -222,7 +222,7 @@ class TestSeedingTheNewContent:
             (CategoryModel, 8),
             (SkillModel, 16),
             (LessonModel, 32),
-            (ExerciseModel, 143),
+            (ExerciseModel, 159),
             (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()

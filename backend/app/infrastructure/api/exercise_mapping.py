@@ -11,6 +11,7 @@ from app.domain.lesson.entities import Exercise
 from app.domain.lesson.value_objects import (
     ChoiceAnswerKey,
     ExerciseType,
+    GapFillContent,
     ListeningContent,
     MatchPairsContent,
     MultipleChoiceContent,
@@ -21,6 +22,7 @@ from app.domain.lesson.value_objects import (
 from app.infrastructure.api.lesson_schemas import (
     ChoiceResponse,
     ExerciseResponse,
+    GapFillExerciseResponse,
     ListeningExerciseResponse,
     MatchPairsExerciseResponse,
     MultipleChoiceExerciseResponse,
@@ -63,13 +65,31 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             word_bank=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.word_bank],
             correct_sequence=list(exercise.answer_key.correct_sequence),
         )
-    assert isinstance(exercise.content, MatchPairsContent)
-    assert isinstance(exercise.answer_key, PairAnswerKey)
-    return MatchPairsExerciseResponse(
+    if exercise.type is ExerciseType.MATCH_PAIRS:
+        assert isinstance(exercise.content, MatchPairsContent)
+        assert isinstance(exercise.answer_key, PairAnswerKey)
+        return MatchPairsExerciseResponse(
+            id=exercise.id,
+            order_index=exercise.order_index,
+            prompt=exercise.prompt,
+            left_tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.left_tiles],
+            right_tiles=[
+                ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.right_tiles
+            ],
+            correct_pairs=list(exercise.answer_key.correct_pairs),
+        )
+    # Match-pairs used to be the unguarded final branch here. It is tested
+    # explicitly now, because a `gap_fill` exercise falling into it would
+    # have failed on an `isinstance` assertion naming the wrong type --
+    # the same trap `_content_from_json` carried (bolt 030).
+    assert isinstance(exercise.content, GapFillContent)
+    assert isinstance(exercise.answer_key, ChoiceAnswerKey)
+    return GapFillExerciseResponse(
         id=exercise.id,
         order_index=exercise.order_index,
         prompt=exercise.prompt,
-        left_tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.left_tiles],
-        right_tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.right_tiles],
-        correct_pairs=list(exercise.answer_key.correct_pairs),
+        sentence_before=exercise.content.sentence_before,
+        sentence_after=exercise.content.sentence_after,
+        choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
+        correct_choice_id=exercise.answer_key.correct_choice_id,
     )

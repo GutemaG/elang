@@ -105,11 +105,29 @@ class MatchPairsExerciseResponse(BaseModel):
     correct_pairs: list[tuple[str, str]]
 
 
+class GapFillExerciseResponse(BaseModel):
+    """`gap_fill` (bolt 030): the sentence either side of the gap, the
+    words to choose between, and which one is right. `correct_choice_id`
+    is the same field `multiple_choice`/`listening` carry -- this type
+    shares their answer key rather than introducing another.
+    """
+
+    id: str
+    order_index: int
+    type: Literal["gap_fill"] = "gap_fill"
+    prompt: str
+    sentence_before: str
+    sentence_after: str
+    choices: list[ChoiceResponse]
+    correct_choice_id: str
+
+
 ExerciseResponse = Annotated[
     MultipleChoiceExerciseResponse
     | ListeningExerciseResponse
     | SentenceConstructionExerciseResponse
-    | MatchPairsExerciseResponse,
+    | MatchPairsExerciseResponse
+    | GapFillExerciseResponse,
     Field(discriminator="type"),
 ]
 

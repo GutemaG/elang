@@ -341,3 +341,67 @@ class TestMatchPairsExercise:
         # Raw JSON column name never leaked, same guarantee as the other
         # 3 exercise types (ADR-5's own boundary).
         assert "answer_key" not in response.text
+
+
+@pytest.fixture
+def seeded_gap_fill_content(db_path: Path) -> dict[str, str]:
+    """Own skill/lesson, for the same reason `seeded_match_pairs_content`
+    has one: `seeded_content`'s exercise list is asserted exactly
+    elsewhere in this file.
+    """
+    engine = create_engine(f"sqlite:///{db_path}")
+    with SyncSession(engine) as session:
+        session.add(
+            SkillModel(category_id="cat-1", id="skill-gf", title="Food & Drink", order_index=1)
+        )
+        session.add(
+            LessonModel(id="lesson-gf", skill_id="skill-gf", title="I'm Hungry", order_index=1)
+        )
+        session.add(
+            ExerciseModel(
+                id="ex-gf",
+                lesson_id="lesson-gf",
+                order_index=1,
+                type="gap_fill",
+                prompt="Complete the sentence: 'I want bread'",
+                content={
+                    "sentence_before": "",
+                    "sentence_after": "እፈልጋለሁ",
+                    "choices": [
+                        {"id": "a", "text": "ዳቦ"},
+                        {"id": "b", "text": "ምግብ"},
+                        {"id": "c", "text": "ውሃ"},
+                    ],
+                },
+                answer_key={"correct_choice_id": "a"},
+            )
+        )
+        session.commit()
+    engine.dispose()
+    return {"lesson_gf": "lesson-gf"}
+
+
+class TestGapFillExercise:
+    def test_lesson_content_includes_both_sides_of_the_gap_and_the_choices(
+        self, make_client: Any, seeded_gap_fill_content: dict[str, str]
+    ) -> None:
+        # 015-gap-fill-exercise-type (bolt 030). The sentence arrives as the
+        # text either side of the gap, so the client never parses a marker
+        # out of a string, and the missing word is only in the answer key.
+        client, token = _sign_in(make_client)
+
+        response = client.get(
+            f"/api/v1/lessons/{seeded_gap_fill_content['lesson_gf']}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        exercise = response.json()["exercises"][0]
+        assert exercise["type"] == "gap_fill"
+        assert exercise["sentence_before"] == ""
+        assert exercise["sentence_after"] == "እፈልጋለሁ"
+        assert [c["text"] for c in exercise["choices"]] == ["ዳቦ", "ምግብ", "ውሃ"]
+        # The same field `multiple_choice`/`listening` carry -- this type
+        # shares their answer key rather than introducing another.
+        assert exercise["correct_choice_id"] == "a"
+        assert "answer_key" not in response.text

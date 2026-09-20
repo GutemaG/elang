@@ -121,7 +121,10 @@ VOCABULARY: list[dict[str, str]] = [
 # 1 listening, 1 sentence_construction -- a mix of all 3 types per lesson,
 # per story 005's acceptance criteria); "Coffee & Tea" has a 5th, match_pairs,
 # exercise added by 004-match-pairs-exercise-type (bolt 011) to satisfy that
-# intent's "at least 1 seeded match_pairs exercise" requirement. Real,
+# intent's "at least 1 seeded match_pairs exercise" requirement. Every lesson
+# then gained a gap_fill from 015-gap-fill-exercise-type (bolt 030), appended
+# last so no existing exercise's order_index moved -- always slug `:6`, at
+# order_index 5, or 6 where a match_pairs already holds 5. Real,
 # hand-authored English -> Amharic vocabulary (Fidel script, UTF-8) -- a
 # small proof-of-loop set, not a complete Phase 1 course, per
 # requirements.md's Business Constraints.
@@ -213,6 +216,37 @@ CURRICULUM: list[dict[str, Any]] = [
                         },
                         "answer_key": {"correct_sequence": ["w1", "w2"]},
                     },
+                    {
+                        # 015-gap-fill-exercise-type (bolt 030): the 5th
+                        # exercise type. `content` holds the sentence either
+                        # side of the gap; the missing word appears only in
+                        # `answer_key`. The gap is at the start here, so
+                        # `sentence_before` is empty -- that is the normal
+                        # representation, not a special case.
+                        #
+                        # No `vocab_slug`, here or on any gap_fill. A vocab
+                        # item maps to exactly one exercise --
+                        # `list_exercises_by_vocab_item_ids` keeps the first
+                        # row per `vocab_item_id` -- so linking a second
+                        # exercise to a word it already tracks adds no SRS
+                        # coverage and makes which one Practice serves depend
+                        # on a UUID comparison. A null `vocab_item_id` means
+                        # "no SRS tracking", not "not yet linked" (bolt 019).
+                        "slug": "exercise:hello-and-goodbye:6",
+                        "order_index": 5,
+                        "type": "gap_fill",
+                        "prompt": "Complete the sentence: 'I am fine'",
+                        "content": {
+                            "sentence_before": "",
+                            "sentence_after": "ነኝ",
+                            "choices": [
+                                _choice("a", "ደህና"),
+                                _choice("b", "ጥሩ"),
+                                _choice("c", "እንደምን"),
+                            ],
+                        },
+                        "answer_key": {"correct_choice_id": "a"},
+                    },
                 ],
             },
             {
@@ -282,6 +316,27 @@ CURRICULUM: list[dict[str, Any]] = [
                             ]
                         },
                         "answer_key": {"correct_sequence": ["w1", "w2"]},
+                    },
+                    {
+                        # Gap at the end of the sentence, so `sentence_after`
+                        # is empty. እባክዎ is a tracked word, but this is still
+                        # not vocab-linked -- see the note on the first
+                        # gap_fill above for why sharing one would add no SRS
+                        # coverage.
+                        "slug": "exercise:please-and-thank-you:6",
+                        "order_index": 5,
+                        "type": "gap_fill",
+                        "prompt": "Complete the sentence: 'Yes, please'",
+                        "content": {
+                            "sentence_before": "አዎ",
+                            "sentence_after": "",
+                            "choices": [
+                                _choice("a", "አይ"),
+                                _choice("b", "እባክዎ"),
+                                _choice("c", "ደህና"),
+                            ],
+                        },
+                        "answer_key": {"correct_choice_id": "b"},
                     },
                 ],
             },
@@ -395,6 +450,26 @@ CURRICULUM: list[dict[str, Any]] = [
                             ]
                         },
                     },
+                    {
+                        # This lesson already has a match-pairs at 5, so the
+                        # gap-fill takes 6. The slug is `:6` in every lesson
+                        # regardless, so it does not shift about depending on
+                        # what else the lesson happens to contain.
+                        "slug": "exercise:coffee-and-tea:6",
+                        "order_index": 6,
+                        "type": "gap_fill",
+                        "prompt": "Complete the sentence: 'I want coffee'",
+                        "content": {
+                            "sentence_before": "",
+                            "sentence_after": "እፈልጋለሁ",
+                            "choices": [
+                                _choice("a", "ሻይ"),
+                                _choice("b", "ውሃ"),
+                                _choice("c", "ቡና"),
+                            ],
+                        },
+                        "answer_key": {"correct_choice_id": "c"},
+                    },
                 ],
             },
             {
@@ -464,6 +539,22 @@ CURRICULUM: list[dict[str, Any]] = [
                             ]
                         },
                         "answer_key": {"correct_sequence": ["w2", "w1"]},
+                    },
+                    {
+                        "slug": "exercise:im-hungry:6",
+                        "order_index": 5,
+                        "type": "gap_fill",
+                        "prompt": "Complete the sentence: 'I want bread'",
+                        "content": {
+                            "sentence_before": "",
+                            "sentence_after": "እፈልጋለሁ",
+                            "choices": [
+                                _choice("a", "ዳቦ"),
+                                _choice("b", "ምግብ"),
+                                _choice("c", "ውሃ"),
+                            ],
+                        },
+                        "answer_key": {"correct_choice_id": "a"},
                     },
                 ],
             },

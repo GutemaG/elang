@@ -95,12 +95,21 @@ class ExerciseType(StrEnum):
     types fixed by `002-core-lesson-loop`'s `requirements.md` FR-2;
     `MATCH_PAIRS` was added by `004-match-pairs-exercise-type` (bolt
     011-match-pairs-service) as the 4th of the 5 originally-planned types.
+    `GAP_FILL` was added by `015-gap-fill-exercise-type` (bolt
+    030-gap-fill-service) and is the first type beyond that original
+    scope -- chosen because it needs no audio, no keyboard and no new
+    answer key, reusing `ChoiceAnswerKey` as-is.
+
+    Adding a value here is only ever half the change: `exercises.type`
+    carries a `CHECK` constraint declared both in a migration and in
+    `ExerciseModel.__table_args__`, and neither widens on its own.
     """
 
     MULTIPLE_CHOICE = "multiple_choice"
     LISTENING = "listening"
     SENTENCE_CONSTRUCTION = "sentence_construction"
     MATCH_PAIRS = "match_pairs"
+    GAP_FILL = "gap_fill"
 
 
 class SkillState(StrEnum):
@@ -198,8 +207,43 @@ class MatchPairsContent:
             )
 
 
+@dataclass(frozen=True)
+class GapFillContent:
+    """Renderable content for a `gap_fill` exercise: a sentence in the
+    learning language with one word taken out, plus the words to choose
+    between.
+
+    The sentence is stored as the text on either side of the gap. Two
+    alternatives were rejected (bolt `030-gap-fill-service`'s
+    `implementation-plan.md`): a marker such as `___` inside the string,
+    which the client would have to parse and which could collide with real
+    text; and a token list plus a `blank_index`, which is an off-by-one
+    waiting to happen and would leave the missing word sitting in
+    `content` as well as in the answer key. Here the missing word appears
+    only in the sibling `ChoiceAnswerKey`, and a gap at the very start or
+    end of the sentence is just an empty string on that side.
+
+    Both sides are stored already trimmed: the space around the gap
+    belongs to the client's layout, not to the data.
+    """
+
+    sentence_before: str
+    sentence_after: str
+    choices: tuple[Choice, ...]
+
+    def __post_init__(self) -> None:
+        if not self.sentence_before and not self.sentence_after:
+            raise ValueError("GapFillContent requires text on at least one side of the gap")
+        if len(self.choices) < 2:
+            raise ValueError("GapFillContent requires at least 2 choices")
+
+
 ExerciseContent = (
-    MultipleChoiceContent | ListeningContent | SentenceConstructionContent | MatchPairsContent
+    MultipleChoiceContent
+    | ListeningContent
+    | SentenceConstructionContent
+    | MatchPairsContent
+    | GapFillContent
 )
 
 
@@ -252,6 +296,11 @@ class PairAnswerKey:
             raise ValueError("PairAnswerKey requires at least 2 pairs")
 
 
+# Deliberately three members for five exercise types: `gap_fill` reuses
+# `ChoiceAnswerKey` exactly as `multiple_choice`/`listening` do, since
+# "which one of these is right" is the same question however it is asked.
+# Keeping it that way was a stated goal of `015-gap-fill-exercise-type`,
+# not an accident -- see that intent's `requirements.md`.
 AnswerKey = ChoiceAnswerKey | SequenceAnswerKey | PairAnswerKey
 
 

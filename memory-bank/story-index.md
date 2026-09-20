@@ -1,10 +1,10 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 66
-- **Generated**: 66
-- **Completed**: 62
-- **Last updated**: 2026-09-21
+- **Total stories**: 69
+- **Generated**: 69
+- **Completed**: 63
+- **Last updated**: 2026-09-20
 
 ---
 
@@ -162,12 +162,23 @@
 - [x] **003-course-rail-and-add-course** (dashboard-shell-ui): Header badge expands a course rail with + Course - Must - ✅ COMPLETE (bolt 029-course-switcher-panel)
 - [x] **004-course-settings-and-downloads-access** (dashboard-shell-ui): Settings and downloads move into the course panel - Must - ✅ COMPLETE (bolt 029-course-switcher-panel)
 
+### 015-gap-fill-exercise-type
+
+#### Unit: 001-gap-fill-service
+
+- [x] **001-serve-gap-fill-exercise-content** (gap-fill-service): Serve gap-fill exercise content (incl. seed data) - Must - ✅ COMPLETE (bolt 030-gap-fill-service)
+
+#### Unit: 002-gap-fill-ui
+
+- [ ] **001-gap-fill-exercise-screen** (gap-fill-ui): Fill the gap by tapping a word - Must - GENERATED (bolt 031-gap-fill-ui)
+- [ ] **002-offline-gap-fill-verification** (gap-fill-ui): Gap-fill works inside a downloaded pack - Must - GENERATED (bolt 031-gap-fill-ui)
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 8
+- **Generated**: 10
 - **In Progress**: 0
-- **Completed**: 62
+- **Completed**: 63
 - **Retired**: 1

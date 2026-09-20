@@ -38,6 +38,7 @@ from app.domain.lesson.value_objects import (
     ChoiceAnswerKey,
     ExerciseContent,
     ExerciseType,
+    GapFillContent,
     LessonCompletionOutcome,
     ListeningContent,
     MatchPairsContent,
@@ -88,10 +89,22 @@ def _content_from_json(exercise_type: ExerciseType, content: dict[str, Any]) -> 
         )
     if exercise_type is ExerciseType.SENTENCE_CONSTRUCTION:
         return SentenceConstructionContent(word_bank=_choices_from_json(content["word_bank"]))
-    return MatchPairsContent(
-        left_tiles=_choices_from_json(content["left_tiles"]),
-        right_tiles=_choices_from_json(content["right_tiles"]),
-    )
+    if exercise_type is ExerciseType.MATCH_PAIRS:
+        return MatchPairsContent(
+            left_tiles=_choices_from_json(content["left_tiles"]),
+            right_tiles=_choices_from_json(content["right_tiles"]),
+        )
+    # Every type is now tested explicitly. Until bolt 030 the match-pairs
+    # branch was the unguarded fall-through, which meant any type added
+    # later was silently read as match-pairs and died on a missing
+    # `left_tiles` key -- a confusing failure a long way from its cause.
+    if exercise_type is ExerciseType.GAP_FILL:
+        return GapFillContent(
+            sentence_before=content["sentence_before"],
+            sentence_after=content["sentence_after"],
+            choices=_choices_from_json(content["choices"]),
+        )
+    raise ValueError(f"No content mapping for exercise type {exercise_type}")
 
 
 def _answer_key_from_json(exercise_type: ExerciseType, answer_key: dict[str, Any]) -> AnswerKey:
@@ -101,6 +114,11 @@ def _answer_key_from_json(exercise_type: ExerciseType, answer_key: dict[str, Any
         return PairAnswerKey(
             correct_pairs=tuple(tuple(pair) for pair in answer_key["correct_pairs"])
         )
+    # `multiple_choice`, `listening` and `gap_fill` all answer the same
+    # question -- which one of these is right -- so they share
+    # `ChoiceAnswerKey`. This fall-through is the reason bolt 030 needed no
+    # edit here at all; keep the shared list above in mind before assuming
+    # it covers a future type too.
     return ChoiceAnswerKey(correct_choice_id=answer_key["correct_choice_id"])
 
 

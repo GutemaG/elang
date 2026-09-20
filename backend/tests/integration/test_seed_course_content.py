@@ -191,6 +191,82 @@ class TestCourseContentIntegrity:
             for e in _exercises(course_slug):
                 assert bool(e.get("vocab_slug")) == (e["type"] == "multiple_choice"), e["slug"]
 
+    def test_every_lesson_has_exactly_one_gap_fill(self) -> None:
+        for course_slug in _PAIRS:
+            for skill in _skills(course_slug):
+                for lesson in skill["lessons"]:
+                    gaps = [e for e in lesson["exercises"] if e["type"] == "gap_fill"]
+                    assert len(gaps) == 1, (course_slug, lesson["title"])
+
+    def test_the_missing_word_is_a_real_choice_and_is_not_left_in_the_sentence(self) -> None:
+        # The whole point of the two-strings shape: the answer lives only in
+        # the answer key, never in `content`.
+        for course_slug in _PAIRS:
+            for e in _exercises(course_slug):
+                if e["type"] != "gap_fill":
+                    continue
+                missing = _correct_text(e)
+                sentence = e["content"]["sentence_before"] + e["content"]["sentence_after"]
+                assert missing, e["slug"]
+                assert missing not in sentence, e["slug"]
+
+    def test_gap_fill_sentences_have_text_on_at_least_one_side(self) -> None:
+        for course_slug in _PAIRS:
+            for e in _exercises(course_slug):
+                if e["type"] != "gap_fill":
+                    continue
+                before = e["content"]["sentence_before"]
+                after = e["content"]["sentence_after"]
+                assert before or after, e["slug"]
+                assert before == before.strip() and after == after.strip(), e["slug"]
+
+    def test_gap_fill_choices_are_distinct_and_name_a_real_correct_id(self) -> None:
+        for course_slug in _PAIRS:
+            for e in _exercises(course_slug):
+                if e["type"] != "gap_fill":
+                    continue
+                choices = e["content"]["choices"]
+                ids = [c["id"] for c in choices]
+                texts = [c["text"] for c in choices]
+                assert len(ids) == len(set(ids)) >= 2, e["slug"]
+                assert len(set(texts)) == len(texts), f"duplicate choice: {e['slug']}"
+                assert e["answer_key"]["correct_choice_id"] in ids, e["slug"]
+
+    def test_the_gap_fill_answer_is_not_always_in_the_same_position(self) -> None:
+        for course_slug in _PAIRS:
+            positions = {
+                e["answer_key"]["correct_choice_id"]
+                for e in _exercises(course_slug)
+                if e["type"] == "gap_fill"
+            }
+            assert len(positions) > 1, course_slug
+
+    def test_no_gap_fill_is_vocab_linked(self) -> None:
+        # Deliberate (bolt 030): a vocab item maps to exactly one exercise --
+        # `list_exercises_by_vocab_item_ids` keeps the first row per
+        # `vocab_item_id` -- so a gap-fill sharing a word with the
+        # multiple-choice exercise that teaches it would add no SRS
+        # coverage and would make which one Practice serves arbitrary.
+        for course_slug in _PAIRS:
+            for e in _exercises(course_slug):
+                if e["type"] == "gap_fill":
+                    assert "vocab_slug" not in e, e["slug"]
+
+    def test_the_blank_position_is_authored_per_language_not_shared(self) -> None:
+        # The reason `blank` is keyed by language: the same sentence has
+        # different token counts per language, so one shared index would
+        # blank the wrong word. "I want bread" is 3 tokens in Afaan Oromo
+        # and 2 in Amharic -- if this ever becomes a single int, this fails.
+        from app.infrastructure.db.seed_course_content import _SENTENCES
+
+        for sentence in _SENTENCES:
+            assert set(sentence["blank"]) == set(sentence["answer"]), sentence["prompt"]["en"]
+            for language, index in sentence["blank"].items():
+                assert 0 <= index < len(sentence["answer"][language]), language
+
+        bread = _SENTENCES[3]
+        assert len(bread["answer"]["om"]) != len(bread["answer"]["am"])
+
     def test_listening_exercises_use_the_documented_placeholder_audio(self) -> None:
         for course_slug in _PAIRS:
             for e in _exercises(course_slug):
@@ -308,7 +384,9 @@ class TestSeedingTheCourses:
                 "categories": 1,
                 "skills": 2,
                 "lessons": 4,
-                "exercises": 18,
+                # 18 before bolt 030 added one gap_fill to each of the 4
+                # lessons (015-gap-fill-exercise-type).
+                "exercises": 22,
                 "vocab": 8,
             }, slug
 
@@ -345,7 +423,7 @@ class TestSeedingTheCourses:
             (CategoryModel, 8),
             (SkillModel, 16),
             (LessonModel, 32),
-            (ExerciseModel, 143),
+            (ExerciseModel, 159),
             (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()
@@ -425,15 +503,16 @@ class TestStudyingEachNewCourseOverHttp:
         tree = client.get("/api/v1/skill-tree", headers=headers).json()
         lesson_id = tree["skills"][0]["lesson_id"]
         lesson = client.get(f"/api/v1/lessons/{lesson_id}", headers=headers).json()
-        assert len(lesson["exercises"]) == 4
+        # 4 before bolt 030 appended a gap_fill to every lesson.
+        assert len(lesson["exercises"]) == 5
 
         response = client.post(
             f"/api/v1/lessons/{lesson_id}/complete",
             headers=headers,
             json={
                 "attempt_id": f"attempt-{slug}",
-                "correct_count": 4,
-                "total_count": 4,
+                "correct_count": 5,
+                "total_count": 5,
                 "time_spent_seconds": 20.0,
                 "client_completed_at": datetime.now(UTC).isoformat(),
             },
@@ -497,8 +576,10 @@ class TestEachNewCourseEarnsAndPractisesOverHttp:
             headers=headers,
             json={
                 "attempt_id": f"earn-{slug}",
-                "correct_count": 4,
-                "total_count": 4,
+                # Every seeded lesson has 5 exercises since bolt 030; the
+                # completion endpoint rejects a total that disagrees.
+                "correct_count": 5,
+                "total_count": 5,
                 "time_spent_seconds": 20.0,
                 "client_completed_at": datetime.now(UTC).isoformat(),
             },

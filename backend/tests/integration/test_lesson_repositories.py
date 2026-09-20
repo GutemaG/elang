@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.domain.lesson.value_objects import (
     ChoiceAnswerKey,
     ExerciseType,
+    GapFillContent,
     ListeningContent,
     MatchPairsContent,
     MultipleChoiceContent,
@@ -205,6 +206,55 @@ class TestSqlAlchemyLessonRepository:
         assert [t.text for t in match_pairs.content.right_tiles] == ["Coffee", "Tea"]
         assert isinstance(match_pairs.answer_key, PairAnswerKey)
         assert match_pairs.answer_key.correct_pairs == (("l1", "r1"), ("l2", "r2"))
+
+    async def test_get_by_id_round_trips_a_gap_fill_exercise(
+        self, db_session: AsyncSession
+    ) -> None:
+        # 015-gap-fill-exercise-type (bolt 030). Before this bolt, anything
+        # that was not one of the first three types fell through to
+        # match-pairs, so this row would have died on a missing
+        # `left_tiles` key rather than loading.
+        db_session.add(
+            SkillModel(category_id="cat-1", id="s-gf", title="Food & Drink", order_index=1)
+        )
+        db_session.add(LessonModel(id="l-gf", skill_id="s-gf", title="I'm Hungry", order_index=1))
+        db_session.add(
+            ExerciseModel(
+                id="e-gf",
+                lesson_id="l-gf",
+                order_index=1,
+                type="gap_fill",
+                prompt="Complete the sentence: 'I want bread'",
+                content={
+                    "sentence_before": "",
+                    "sentence_after": "እፈልጋለሁ",
+                    "choices": [
+                        {"id": "a", "text": "ዳቦ"},
+                        {"id": "b", "text": "ምግብ"},
+                        {"id": "c", "text": "ውሃ"},
+                    ],
+                },
+                answer_key={"correct_choice_id": "a"},
+            )
+        )
+        await db_session.commit()
+
+        repo = SqlAlchemyLessonRepository(db_session)
+        lesson = await repo.get_by_id("l-gf")
+
+        assert lesson is not None
+        gap_fill = lesson.exercises[0]
+        assert gap_fill.type is ExerciseType.GAP_FILL
+        assert isinstance(gap_fill.content, GapFillContent)
+        assert gap_fill.content.sentence_before == ""
+        assert gap_fill.content.sentence_after == "እፈልጋለሁ"
+        assert [c.text for c in gap_fill.content.choices] == ["ዳቦ", "ምግብ", "ውሃ"]
+        # Shares `multiple_choice`'s answer key rather than adding one.
+        assert isinstance(gap_fill.answer_key, ChoiceAnswerKey)
+        assert gap_fill.answer_key.correct_choice_id == "a"
+        # Not vocab-linked: a vocab item maps to exactly one exercise, and
+        # the multiple-choice exercise that teaches ዳቦ already owns it.
+        assert gap_fill.vocab_item_id is None
 
 
 class TestSqlAlchemyUserSkillProgressRepository:

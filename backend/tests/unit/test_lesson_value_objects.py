@@ -8,6 +8,7 @@ from app.domain.lesson.value_objects import Choice as ChoiceVO
 from app.domain.lesson.value_objects import (
     ChoiceAnswerKey,
     CrownLevel,
+    GapFillContent,
     ListeningContent,
     MatchPairsContent,
     MultipleChoiceContent,
@@ -92,6 +93,70 @@ class TestMatchPairsContent:
             right_tiles=(ChoiceVO(id="r1", text="Coffee"), ChoiceVO(id="r2", text="Tea")),
         )
         assert len(content.left_tiles) == len(content.right_tiles) == 2
+
+
+class TestGapFillContent:
+    """015-gap-fill-exercise-type (bolt 030). The sentence is stored as the
+    text either side of the gap, so a gap at the very start or end is an
+    empty string rather than a special case -- three of the four
+    hand-written English to Amharic gap-fills are exactly that.
+    """
+
+    def test_rejects_a_sentence_that_is_empty_on_both_sides(self) -> None:
+        with pytest.raises(ValueError, match="at least one side"):
+            GapFillContent(
+                sentence_before="",
+                sentence_after="",
+                choices=(ChoiceVO(id="a", text="ቡና"), ChoiceVO(id="b", text="ሻይ")),
+            )
+
+    def test_requires_at_least_two_choices(self) -> None:
+        with pytest.raises(ValueError, match="at least 2 choices"):
+            GapFillContent(
+                sentence_before="ቡና",
+                sentence_after="",
+                choices=(ChoiceVO(id="a", text="እፈልጋለሁ"),),
+            )
+
+    def test_accepts_a_gap_at_the_start_of_the_sentence(self) -> None:
+        content = GapFillContent(
+            sentence_before="",
+            sentence_after="እፈልጋለሁ",
+            choices=(ChoiceVO(id="a", text="ቡና"), ChoiceVO(id="b", text="ሻይ")),
+        )
+
+        assert content.sentence_before == ""
+        assert content.sentence_after == "እፈልጋለሁ"
+
+    def test_accepts_a_gap_at_the_end_of_the_sentence(self) -> None:
+        content = GapFillContent(
+            sentence_before="አዎ",
+            sentence_after="",
+            choices=(ChoiceVO(id="a", text="እባክዎ"), ChoiceVO(id="b", text="አይ")),
+        )
+
+        assert content.sentence_before == "አዎ"
+        assert content.sentence_after == ""
+
+    def test_accepts_a_gap_in_the_middle_of_the_sentence(self) -> None:
+        content = GapFillContent(
+            sentence_before="Daabboo",
+            sentence_after="barbaada",
+            choices=(ChoiceVO(id="a", text="nan"), ChoiceVO(id="b", text="Nyaata")),
+        )
+
+        assert (content.sentence_before, content.sentence_after) == ("Daabboo", "barbaada")
+
+    def test_the_missing_word_is_not_stored_in_the_content(self) -> None:
+        # It lives only in the sibling `ChoiceAnswerKey`. A token-list-plus-
+        # index shape would have leaked it into `content` as well.
+        content = GapFillContent(
+            sentence_before="",
+            sentence_after="እፈልጋለሁ",
+            choices=(ChoiceVO(id="a", text="ቡና"), ChoiceVO(id="b", text="ሻይ")),
+        )
+
+        assert "ቡና" not in content.sentence_before + content.sentence_after
 
 
 class TestAnswerKeys:
