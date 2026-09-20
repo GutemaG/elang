@@ -221,10 +221,16 @@ class HttpLessonApi implements LessonApi {
     final beansJson = _decodeOrThrow(results[1]);
 
     final lesson = lessonJson['lesson'] as Map<String, dynamic>;
-    final exercises = (lessonJson['exercises'] as List)
-        .cast<Map<String, dynamic>>()
-        .map(_toExercise)
-        .toList();
+    final served = (lessonJson['exercises'] as List)
+        .cast<Map<String, dynamic>>();
+    // Skip, rather than throw, on a type this build does not know — see
+    // `LessonContent.unrenderableCount`. One unknown exercise used to take
+    // the entire lesson down.
+    final exercises = <Exercise>[];
+    for (final json in served) {
+      final exercise = _toExerciseOrNull(json);
+      if (exercise != null) exercises.add(exercise);
+    }
 
     return LessonContent(
       lessonId: lesson['id'] as String,
@@ -234,7 +240,27 @@ class HttpLessonApi implements LessonApi {
       beansAtStart: beansJson['beans'] as int,
       beansMax: beansJson['beans_max'] as int,
       contentVersion: _parseContentVersion(lessonJson['content_version']),
+      unrenderableCount: served.length - exercises.length,
     );
+  }
+
+  /// `null` when this build has no case for the exercise's type.
+  ///
+  /// Deliberately not a thrown exception: an unknown type is expected
+  /// during the window between a backend adding a type and the client
+  /// catching up, and it is not a reason to make the lesson unplayable.
+  /// A malformed exercise of a *known* type still throws, since that is a
+  /// genuine contract violation rather than a version skew.
+  Exercise? _toExerciseOrNull(Map<String, dynamic> json) {
+    const known = {
+      'multiple_choice',
+      'listening',
+      'sentence_construction',
+      'match_pairs',
+      'gap_fill',
+    };
+    if (!known.contains(json['type'] as String)) return null;
+    return _toExercise(json);
   }
 
   Exercise _toExercise(Map<String, dynamic> json) {

@@ -449,6 +449,77 @@ void main() {
         );
       },
     );
+
+    test(
+      'an exercise type this build does not know is skipped, not fatal',
+      () async {
+        // Forward compatibility. A `spell_tiles` exercise seeded by bolt
+        // 032, with client support still pending in bolt 033, previously
+        // threw here and made every lesson in every course unloadable --
+        // observed on a real device, not in a test.
+        final client = MockClient((request) async {
+          if (request.url.path == '/api/v1/lessons/lesson-a1') {
+            return http.Response(
+              jsonEncode({
+                'lesson': {
+                  'id': 'lesson-a1',
+                  'skill_id': 'skill-a',
+                  'title': 'Hello & Goodbye',
+                },
+                'exercises': [
+                  {
+                    'id': 'ex-1',
+                    'order_index': 1,
+                    'type': 'multiple_choice',
+                    'prompt': "How do you say 'Hello'?",
+                    'choices': [
+                      {'id': 'a', 'text': 'ሰላም'},
+                      {'id': 'b', 'text': 'ደህና ሁን'},
+                    ],
+                    'correct_choice_id': 'a',
+                  },
+                  {
+                    'id': 'ex-2',
+                    'order_index': 2,
+                    'type': 'a_type_invented_after_this_build_shipped',
+                    'prompt': 'something new',
+                    'whatever': ['unparseable', 'by', 'design'],
+                  },
+                ],
+              }),
+              200,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+          return http.Response(
+            jsonEncode({
+              'beans': 3,
+              'beans_max': 5,
+              'next_bean_at': null,
+              'regen_minutes_per_bean': 30,
+              'amole_balance': 500,
+              'refill_cost_amole': 350,
+            }),
+            200,
+          );
+        });
+        final api = HttpLessonApi(
+          client: client,
+          baseUrl: 'http://localhost:8000',
+          sessionRepository: await _signedInSessionRepository(),
+        );
+
+        final content = await api.startLesson('lesson-a1');
+
+        expect(content.exercises, hasLength(1));
+        expect(content.exercises.single, isA<MultipleChoiceExercise>());
+        // The dropped one is still counted, because `complete_lesson`
+        // rejects a `total_count` that disagrees with its own count. Losing
+        // it here would turn an unloadable lesson into one that plays to
+        // the end and then 422s, which is worse.
+        expect(content.unrenderableCount, 1);
+      },
+    );
   });
 
   group('completeLesson', () {

@@ -192,8 +192,10 @@ class TestSeedingTheNewContent:
             (SkillModel, 16),
             (LessonModel, 32),
             # 143 before bolt 030's gap_fill, 159 before bolt 032's
-            # spell_tiles (one per lesson, in all four courses).
-            (ExerciseModel, 175),
+            # spell_tiles (one per lesson, in all four courses), 175 before
+            # the two match-pairs added to en->am "Greetings & Basics" so
+            # that skill carries all six types.
+            (ExerciseModel, 177),
             (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()
@@ -225,8 +227,10 @@ class TestSeedingTheNewContent:
             (SkillModel, 16),
             (LessonModel, 32),
             # 143 before bolt 030's gap_fill, 159 before bolt 032's
-            # spell_tiles (one per lesson, in all four courses).
-            (ExerciseModel, 175),
+            # spell_tiles (one per lesson, in all four courses), 175 before
+            # the two match-pairs added to en->am "Greetings & Basics" so
+            # that skill carries all six types.
+            (ExerciseModel, 177),
             (VocabItemModel, 64),
         ):
             got = (await db_session.execute(select(func.count()).select_from(model))).scalar_one()

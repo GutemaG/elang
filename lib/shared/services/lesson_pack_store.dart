@@ -211,6 +211,10 @@ Map<String, dynamic> packContentToJson(LessonContent content) => {
   'beansAtStart': content.beansAtStart,
   'beansMax': content.beansMax,
   'contentVersion': content.contentVersion?.toIso8601String(),
+  // Must round-trip: a pack only ever stores the exercises this build could
+  // render, so without this an offline completion would report a
+  // `total_count` lower than the server's and be rejected on sync.
+  'unrenderableCount': content.unrenderableCount,
   'exercises': content.exercises.map(packExerciseToJson).toList(),
 };
 
@@ -223,6 +227,9 @@ LessonContent packContentFromJson(Map<String, dynamic> json) {
     beansAtStart: json['beansAtStart'] as int,
     beansMax: json['beansMax'] as int,
     contentVersion: rawVersion == null ? null : DateTime.tryParse(rawVersion),
+    // Absent in packs written before this field existed; those packs were
+    // downloaded by a build that dropped nothing, so zero is correct.
+    unrenderableCount: (json['unrenderableCount'] as int?) ?? 0,
     exercises: (json['exercises'] as List)
         .cast<Map<String, dynamic>>()
         .map(packExerciseFromJson)

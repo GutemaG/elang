@@ -42,6 +42,19 @@ class LessonController extends ChangeNotifier {
   final SyncEngine _syncEngine;
   final LessonContent _content;
 
+  /// The exercise count the *server* believes this lesson has, which is
+  /// not `exercises.length` when this build could not render one of them
+  /// (see `LessonContent.unrenderableCount`). `complete_lesson` rejects a
+  /// `total_count` that disagrees with its own count, so reporting the
+  /// played-through count would 422 at the very end of a lesson.
+  int get _servedCount => exercises.length + _content.unrenderableCount;
+
+  /// Skipped exercises count as correct. They were never put in front of
+  /// the learner, so charging them for one would be wrong, and it would
+  /// also make a perfect lesson unreachable in any lesson containing a
+  /// type this build does not know.
+  int get _reportedCorrect => _correctCount + _content.unrenderableCount;
+
   /// Bolt 020 (008-srs-and-practice): true for a Practice session, built
   /// via `LessonScreen.practice`. Skips Beans consumption/interruption
   /// entirely (Practice isn't gated by mistake tolerance) and completes
@@ -333,26 +346,26 @@ class LessonController extends ChangeNotifier {
         PendingSyncEntry(
           attemptId: _attemptId,
           lessonId: _content.lessonId,
-          correctCount: _correctCount,
-          totalCount: exercises.length,
+          correctCount: _reportedCorrect,
+          totalCount: _servedCount,
           timeSpent: _stopwatch.elapsed,
           beansRemainingAtEnd: _beansRemaining,
           clientCompletedAt: clientCompletedAt,
           missedExerciseIds: _missedExerciseIds.toList(),
         ),
       );
-      final accuracyPercent = exercises.isEmpty
+      final accuracyPercent = _servedCount == 0
           ? 0
-          : ((_correctCount / exercises.length) * 100).round();
+          : ((_reportedCorrect / _servedCount) * 100).round();
       _completionResult = LessonCompletionResult(
-        xpEarned: _correctCount * kXpPerCorrectAnswer,
+        xpEarned: _reportedCorrect * kXpPerCorrectAnswer,
         dailyXpTotal: 0,
         dailyXpTarget: 0,
         streakCount: 0,
         streakIncreasedToday: false,
         accuracyPercent: accuracyPercent,
-        correctCount: _correctCount,
-        totalCount: exercises.length,
+        correctCount: _reportedCorrect,
+        totalCount: _servedCount,
         timeSpent: _stopwatch.elapsed,
         pendingSync: true,
       );
@@ -366,8 +379,8 @@ class LessonController extends ChangeNotifier {
       final result = await _lessonApi.completeLesson(
         lessonId: _content.lessonId,
         attemptId: _attemptId,
-        correctCount: _correctCount,
-        totalCount: exercises.length,
+        correctCount: _reportedCorrect,
+        totalCount: _servedCount,
         timeSpent: _stopwatch.elapsed,
         beansRemainingAtEnd: _beansRemaining,
         // Captured right now, whether this call succeeds immediately or is

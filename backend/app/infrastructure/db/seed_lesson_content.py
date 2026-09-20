@@ -276,6 +276,44 @@ CURRICULUM: list[dict[str, Any]] = [
                         },
                         "answer_key": {"correct_sequence": ["t4", "t1", "t3"]},
                     },
+                    {
+                        # Appended at 7, not inserted at 5, so no existing
+                        # `order_index` moves -- the same rule the gap-fill
+                        # and spell-tiles above follow. Moving them would
+                        # mean updating two rows through
+                        # `uq_exercises_lesson_order`, which can collide
+                        # transiently during a flush.
+                        #
+                        # Added so "Greetings & Basics" carries all six
+                        # exercise types; before this only the Food & Drink
+                        # skill had a match-pairs in this course.
+                        "slug": "exercise:hello-and-goodbye:8",
+                        "order_index": 7,
+                        "type": "match_pairs",
+                        "prompt": "Match each word to its meaning",
+                        "content": {
+                            "left_tiles": [
+                                _choice("l1", "ሰላም"),
+                                _choice("l2", "ደህና ሁን"),
+                                _choice("l3", "አመሰግናለሁ"),
+                                _choice("l4", "እባክዎ"),
+                            ],
+                            "right_tiles": [
+                                _choice("r1", "Thank you"),
+                                _choice("r2", "Hello"),
+                                _choice("r3", "Please"),
+                                _choice("r4", "Goodbye"),
+                            ],
+                        },
+                        "answer_key": {
+                            "correct_pairs": [
+                                ["l1", "r2"],
+                                ["l2", "r4"],
+                                ["l3", "r1"],
+                                ["l4", "r3"],
+                            ]
+                        },
+                    },
                 ],
             },
             {
@@ -390,6 +428,37 @@ CURRICULUM: list[dict[str, Any]] = [
                         },
                         "answer_key": {
                             "correct_sequence": ["t2", "t6", "t4", "t1", "t9", "t3", "t7"]
+                        },
+                    },
+                    {
+                        # Appended at 7, same reasoning as the match-pairs in
+                        # "Hello & Goodbye". Uses this lesson's own four
+                        # words rather than repeating that lesson's set.
+                        "slug": "exercise:please-and-thank-you:8",
+                        "order_index": 7,
+                        "type": "match_pairs",
+                        "prompt": "Match each word to its meaning",
+                        "content": {
+                            "left_tiles": [
+                                _choice("l1", "አዎ"),
+                                _choice("l2", "አይ"),
+                                _choice("l3", "እባክዎ"),
+                                _choice("l4", "ደህና"),
+                            ],
+                            "right_tiles": [
+                                _choice("r1", "Please"),
+                                _choice("r2", "No"),
+                                _choice("r3", "Fine"),
+                                _choice("r4", "Yes"),
+                            ],
+                        },
+                        "answer_key": {
+                            "correct_pairs": [
+                                ["l1", "r4"],
+                                ["l2", "r2"],
+                                ["l3", "r1"],
+                                ["l4", "r3"],
+                            ]
                         },
                     },
                 ],
