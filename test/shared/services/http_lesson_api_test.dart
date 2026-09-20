@@ -345,6 +345,19 @@ void main() {
                       ['l2', 'r2'],
                     ],
                   },
+                  {
+                    'id': 'ex-5',
+                    'order_index': 5,
+                    'type': 'gap_fill',
+                    'prompt': "Complete the sentence: 'I want bread'",
+                    'sentence_before': '',
+                    'sentence_after': 'እፈልጋለሁ',
+                    'choices': [
+                      {'id': 'a', 'text': 'ምግብ'},
+                      {'id': 'b', 'text': 'ዳቦ'},
+                    ],
+                    'correct_choice_id': 'b',
+                  },
                 ],
               }),
               200,
@@ -375,7 +388,7 @@ void main() {
         expect(content.lessonId, 'lesson-a1');
         expect(content.beansAtStart, 3);
         expect(content.beansMax, 5);
-        expect(content.exercises, hasLength(4));
+        expect(content.exercises, hasLength(5));
 
         final mc = content.exercises[0] as MultipleChoiceExercise;
         expect(mc.prompt, "How do you say 'Hello'?");
@@ -395,6 +408,14 @@ void main() {
         expect(matchPairs.leftTiles.map((t) => t.text), ['ቡና', 'ሻይ']);
         expect(matchPairs.rightTiles.map((t) => t.text), ['Coffee', 'Tea']);
         expect(matchPairs.correctPairs, {'l1': 'r1', 'l2': 'r2'});
+
+        final gapFill = content.exercises[4] as GapFillExercise;
+        expect(gapFill.sentenceBefore, '');
+        expect(gapFill.sentenceAfter, 'እፈልጋለሁ');
+        expect(gapFill.options, ['ምግብ', 'ዳቦ']);
+        // The API answers by choice id; the client model is index-based,
+        // like the other choice-based types. 'b' is the second choice.
+        expect(gapFill.correctOptionIndex, 1);
       },
     );
 

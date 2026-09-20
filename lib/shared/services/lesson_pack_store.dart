@@ -112,7 +112,7 @@ class SqfliteLessonPackStore implements LessonPackStore {
     final db = await _database();
     await db.insert(_table, {
       'lesson_id': content.lessonId,
-      'content': jsonEncode(_contentToJson(content)),
+      'content': jsonEncode(packContentToJson(content)),
       'downloaded_at': DateTime.now().toUtc().toIso8601String(),
       'course_id': courseId,
       'course_title': courseTitle,
@@ -131,7 +131,7 @@ class SqfliteLessonPackStore implements LessonPackStore {
     );
     if (rows.isEmpty) return null;
     final json = jsonDecode(rows.first['content'] as String) as Map<String, dynamic>;
-    return _contentFromJson(json);
+    return packContentFromJson(json);
   }
 
   @override
@@ -170,7 +170,7 @@ class SqfliteLessonPackStore implements LessonPackStore {
     for (final row in rows) {
       final contentJson = row['content'] as String;
       final decoded = jsonDecode(contentJson) as Map<String, dynamic>;
-      final content = _contentFromJson(decoded);
+      final content = packContentFromJson(decoded);
       var sizeBytes = contentJson.length;
       for (final exercise in content.exercises) {
         if (exercise is ListeningExercise) {
@@ -191,108 +191,142 @@ class SqfliteLessonPackStore implements LessonPackStore {
     }
     return summaries;
   }
+}
 
-  Map<String, dynamic> _contentToJson(LessonContent content) => {
-    'lessonId': content.lessonId,
-    'skillId': content.skillId,
-    'title': content.title,
-    'beansAtStart': content.beansAtStart,
-    'beansMax': content.beansMax,
-    'contentVersion': content.contentVersion?.toIso8601String(),
-    'exercises': content.exercises.map(_exerciseToJson).toList(),
-  };
+/// The pack's JSON mapping, deliberately at the top level rather than
+/// private to [SqfliteLessonPackStore].
+///
+/// These are pure functions with no database in them, but while they were
+/// private methods the only way to reach them was through `sqflite`, which
+/// a `flutter test` cannot open — so the round trip every downloaded pack
+/// depends on had no test at all, for any exercise type. That matters most
+/// here of anywhere: [packExerciseToJson] is a switch over a sealed class
+/// and will not compile if a type is missed, but [packExerciseFromJson] is
+/// a switch over a *string* and fails only at runtime, inside a downloaded
+/// pack, offline (bolt 031).
+Map<String, dynamic> packContentToJson(LessonContent content) => {
+  'lessonId': content.lessonId,
+  'skillId': content.skillId,
+  'title': content.title,
+  'beansAtStart': content.beansAtStart,
+  'beansMax': content.beansMax,
+  'contentVersion': content.contentVersion?.toIso8601String(),
+  'exercises': content.exercises.map(packExerciseToJson).toList(),
+};
 
-  LessonContent _contentFromJson(Map<String, dynamic> json) {
-    final rawVersion = json['contentVersion'] as String?;
-    return LessonContent(
-      lessonId: json['lessonId'] as String,
-      skillId: json['skillId'] as String,
-      title: json['title'] as String,
-      beansAtStart: json['beansAtStart'] as int,
-      beansMax: json['beansMax'] as int,
-      contentVersion: rawVersion == null ? null : DateTime.tryParse(rawVersion),
-      exercises: (json['exercises'] as List)
-          .cast<Map<String, dynamic>>()
-          .map(_exerciseFromJson)
-          .toList(),
-    );
-  }
+LessonContent packContentFromJson(Map<String, dynamic> json) {
+  final rawVersion = json['contentVersion'] as String?;
+  return LessonContent(
+    lessonId: json['lessonId'] as String,
+    skillId: json['skillId'] as String,
+    title: json['title'] as String,
+    beansAtStart: json['beansAtStart'] as int,
+    beansMax: json['beansMax'] as int,
+    contentVersion: rawVersion == null ? null : DateTime.tryParse(rawVersion),
+    exercises: (json['exercises'] as List)
+        .cast<Map<String, dynamic>>()
+        .map(packExerciseFromJson)
+        .toList(),
+  );
+}
 
-  Map<String, dynamic> _exerciseToJson(Exercise exercise) => switch (exercise) {
-    MultipleChoiceExercise e => {
-      'type': 'multiple_choice',
-      'id': e.id,
-      'prompt': e.prompt,
-      'promptTranslation': e.promptTranslation,
-      'options': e.options,
-      'correctOptionIndex': e.correctOptionIndex,
-    },
-    ListeningExercise e => {
-      'type': 'listening',
-      'id': e.id,
-      'audioUrl': e.audioUrl,
-      'instruction': e.instruction,
-      'options': e.options,
-      'correctOptionIndex': e.correctOptionIndex,
-    },
-    SentenceConstructionExercise e => {
-      'type': 'sentence_construction',
-      'id': e.id,
-      'promptTranslation': e.promptTranslation,
-      'wordBank': e.wordBank,
-      'correctSentence': e.correctSentence,
-    },
-    MatchPairsExercise e => {
-      'type': 'match_pairs',
-      'id': e.id,
-      'prompt': e.prompt,
-      'leftTiles': e.leftTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
-      'rightTiles': e.rightTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
-      'correctPairs': e.correctPairs,
-    },
-  };
+Map<String, dynamic> packExerciseToJson(Exercise exercise) => switch (exercise) {
+  MultipleChoiceExercise e => {
+    'type': 'multiple_choice',
+    'id': e.id,
+    'prompt': e.prompt,
+    'promptTranslation': e.promptTranslation,
+    'options': e.options,
+    'correctOptionIndex': e.correctOptionIndex,
+  },
+  ListeningExercise e => {
+    'type': 'listening',
+    'id': e.id,
+    'audioUrl': e.audioUrl,
+    'instruction': e.instruction,
+    'options': e.options,
+    'correctOptionIndex': e.correctOptionIndex,
+  },
+  SentenceConstructionExercise e => {
+    'type': 'sentence_construction',
+    'id': e.id,
+    'promptTranslation': e.promptTranslation,
+    'wordBank': e.wordBank,
+    'correctSentence': e.correctSentence,
+  },
+  MatchPairsExercise e => {
+    'type': 'match_pairs',
+    'id': e.id,
+    'prompt': e.prompt,
+    'leftTiles': e.leftTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
+    'rightTiles': e.rightTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
+    'correctPairs': e.correctPairs,
+  },
+  // Unlike every other seam a new exercise type touches, this map and its
+  // matching `case` below are NOT checked by the compiler in both
+  // directions: the switch above is exhaustive over the sealed class, but
+  // `packExerciseFromJson` is a string switch that would simply throw at
+  // runtime, inside a downloaded pack, offline. Change the two together.
+  GapFillExercise e => {
+    'type': 'gap_fill',
+    'id': e.id,
+    'prompt': e.prompt,
+    'sentenceBefore': e.sentenceBefore,
+    'sentenceAfter': e.sentenceAfter,
+    'options': e.options,
+    'correctOptionIndex': e.correctOptionIndex,
+  },
+};
 
-  Exercise _exerciseFromJson(Map<String, dynamic> json) {
-    switch (json['type'] as String) {
-      case 'multiple_choice':
-        return MultipleChoiceExercise(
-          id: json['id'] as String,
-          prompt: json['prompt'] as String,
-          promptTranslation: json['promptTranslation'] as String,
-          options: (json['options'] as List).cast<String>(),
-          correctOptionIndex: json['correctOptionIndex'] as int,
-        );
-      case 'listening':
-        return ListeningExercise(
-          id: json['id'] as String,
-          audioUrl: json['audioUrl'] as String,
-          instruction: json['instruction'] as String,
-          options: (json['options'] as List).cast<String>(),
-          correctOptionIndex: json['correctOptionIndex'] as int,
-        );
-      case 'sentence_construction':
-        return SentenceConstructionExercise(
-          id: json['id'] as String,
-          promptTranslation: json['promptTranslation'] as String,
-          wordBank: (json['wordBank'] as List).cast<String>(),
-          correctSentence: (json['correctSentence'] as List).cast<String>(),
-        );
-      case 'match_pairs':
-        final leftTiles = (json['leftTiles'] as List).cast<Map<String, dynamic>>();
-        final rightTiles = (json['rightTiles'] as List).cast<Map<String, dynamic>>();
-        return MatchPairsExercise(
-          id: json['id'] as String,
-          prompt: json['prompt'] as String,
-          leftTiles: leftTiles
-              .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
-              .toList(),
-          rightTiles: rightTiles
-              .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
-              .toList(),
-          correctPairs: (json['correctPairs'] as Map).cast<String, String>(),
-        );
-      default:
-        throw StateError('Unknown exercise type in cached pack: ${json['type']}');
-    }
+Exercise packExerciseFromJson(Map<String, dynamic> json) {
+  switch (json['type'] as String) {
+    case 'multiple_choice':
+      return MultipleChoiceExercise(
+        id: json['id'] as String,
+        prompt: json['prompt'] as String,
+        promptTranslation: json['promptTranslation'] as String,
+        options: (json['options'] as List).cast<String>(),
+        correctOptionIndex: json['correctOptionIndex'] as int,
+      );
+    case 'listening':
+      return ListeningExercise(
+        id: json['id'] as String,
+        audioUrl: json['audioUrl'] as String,
+        instruction: json['instruction'] as String,
+        options: (json['options'] as List).cast<String>(),
+        correctOptionIndex: json['correctOptionIndex'] as int,
+      );
+    case 'sentence_construction':
+      return SentenceConstructionExercise(
+        id: json['id'] as String,
+        promptTranslation: json['promptTranslation'] as String,
+        wordBank: (json['wordBank'] as List).cast<String>(),
+        correctSentence: (json['correctSentence'] as List).cast<String>(),
+      );
+    case 'match_pairs':
+      final leftTiles = (json['leftTiles'] as List).cast<Map<String, dynamic>>();
+      final rightTiles = (json['rightTiles'] as List).cast<Map<String, dynamic>>();
+      return MatchPairsExercise(
+        id: json['id'] as String,
+        prompt: json['prompt'] as String,
+        leftTiles: leftTiles
+            .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+            .toList(),
+        rightTiles: rightTiles
+            .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+            .toList(),
+        correctPairs: (json['correctPairs'] as Map).cast<String, String>(),
+      );
+    case 'gap_fill':
+      return GapFillExercise(
+        id: json['id'] as String,
+        prompt: json['prompt'] as String,
+        sentenceBefore: json['sentenceBefore'] as String,
+        sentenceAfter: json['sentenceAfter'] as String,
+        options: (json['options'] as List).cast<String>(),
+        correctOptionIndex: json['correctOptionIndex'] as int,
+      );
+    default:
+      throw StateError('Unknown exercise type in cached pack: ${json['type']}');
   }
 }

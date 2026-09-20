@@ -15,6 +15,7 @@ import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
 import '../state/lesson_controller.dart';
 import '../widgets/choice_tile.dart';
+import '../widgets/gap_sentence.dart';
 import '../widgets/match_pairs_builder.dart';
 import '../widgets/out_of_beans_sheet.dart';
 import '../widgets/word_bank_builder.dart';
@@ -555,7 +556,56 @@ class _ExercisePrompt extends StatelessWidget {
         controller: controller,
       ),
       MatchPairsExercise e => _MatchPairsBody(exercise: e, controller: controller),
+      GapFillExercise e => _GapFillBody(exercise: e, controller: controller),
     };
+  }
+}
+
+class _GapFillBody extends StatelessWidget {
+  const _GapFillBody({required this.exercise, required this.controller});
+
+  final GapFillExercise exercise;
+  final LessonController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = controller.selectedAnswer as int?;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          exercise.prompt,
+          style: AppTypography.bodyMd.copyWith(
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.spaceSm),
+        GapSentence(
+          before: exercise.sentenceBefore,
+          after: exercise.sentenceAfter,
+          options: exercise.options,
+          filled: selected == null ? null : exercise.options[selected],
+        ),
+        const SizedBox(height: AppSpacing.spaceLg),
+        for (int i = 0; i < exercise.options.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
+            child: ChoiceTile(
+              label: exercise.options[i],
+              selected: selected == i,
+              feedback: controller.isChecked
+                  ? controller.feedback
+                  : TileFeedback.none,
+              // `selectOption` is reused unchanged, and is idempotent: tapping
+              // the chosen word again keeps it chosen rather than emptying the
+              // gap, which would leave Check disabled for no visible reason.
+              onTap: controller.isChecked
+                  ? null
+                  : () => controller.selectOption(i),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -754,7 +804,11 @@ class _ActionBar extends StatelessWidget {
           hasAnswer &&
               (controller.selectedAnswer as Map<String, String>).length ==
                   e.leftTiles.length,
-        MultipleChoiceExercise _ || ListeningExercise _ => hasAnswer,
+        // Gap fill joins the "any answer will do" arm: one chosen index is
+        // a complete answer, exactly as for the other choice-based types.
+        MultipleChoiceExercise _ ||
+        ListeningExercise _ ||
+        GapFillExercise _ => hasAnswer,
       };
       return TactileButton(
         label: 'Check',

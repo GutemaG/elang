@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/models/beans_status.dart';
 import '../../../shared/models/course.dart';
-import '../../../shared/models/language_names.dart';
 import '../../../shared/models/lesson_content.dart';
 import '../../../shared/models/skill_tree.dart';
 import '../../../shared/services/answer_feedback_player.dart';

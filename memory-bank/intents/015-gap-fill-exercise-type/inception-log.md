@@ -56,7 +56,11 @@ status: complete
 
 ## Scope Changes
 
-None yet.
+| Date | Change | Reason | Impact |
+|------|--------|--------|--------|
+| 2026-09-20 | FR-1's `vocab_item_id` acceptance criterion retracted: gap-fill is **not** vocab-linked | Discovered at bolt `030`'s Implement stage, by an existing test rather than by reading: `list_exercises_by_vocab_item_ids` keeps the first row per `vocab_item_id`, so a vocab item maps to exactly one exercise. Sharing one adds no SRS coverage and makes which exercise Practice serves depend on a UUID comparison | No story or bolt change; the criterion is inverted and asserted by a test. Widening SRS coverage properly needs vocab items for the untracked words — separate scope |
+| 2026-09-20 | `seed_category_content.py`'s sixteen further English-to-Amharic lessons got no gap-fill | The acceptance criterion is at least one per course, met by the four hand-written ones. Sixteen more means sixteen authored Amharic blank positions — content work, not mechanism | Follow-up; additive, no model change |
+| 2026-09-20 | Bolt `031` lifted `lesson_pack_store.dart`'s four JSON mapping functions to the top level | An acceptance criterion required proving the pack round trip, but the mapping was private to a sqflite-backed store `flutter test` cannot open — so it had never been tested, for **any** exercise type | Visibility change only, no behaviour change; retires a long-standing blind spot |
 
 ## Risks Carried Into Construction
 

@@ -323,6 +323,20 @@ class HttpLessonApi implements LessonApi {
               pair[0] as String: pair[1] as String,
           },
         );
+      case 'gap_fill':
+        final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
+        final correctChoiceId = json['correct_choice_id'] as String;
+        return GapFillExercise(
+          id: id,
+          prompt: json['prompt'] as String,
+          sentenceBefore: json['sentence_before'] as String,
+          sentenceAfter: json['sentence_after'] as String,
+          options: choices.map((c) => c['text'] as String).toList(),
+          // Same id-to-index conversion the choice-based types use.
+          correctOptionIndex: choices.indexWhere(
+            (c) => c['id'] == correctChoiceId,
+          ),
+        );
       default:
         throw LessonApiException('Unknown exercise type: $type');
     }

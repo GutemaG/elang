@@ -3,15 +3,24 @@ id: 031-gap-fill-ui
 unit: 002-gap-fill-ui
 intent: 015-gap-fill-exercise-type
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-gap-fill-exercise-screen
   - 002-offline-gap-fill-verification
 created: '2026-09-20T12:45:00Z'
-started: null
-completed: null
+started: '2026-09-20T15:40:00Z'
+completed: '2026-09-20T14:08:34Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-20T15:50:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-20T16:25:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-20T17:10:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 030-gap-fill-service
 enables_bolts: []

@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 69
 - **Generated**: 69
-- **Completed**: 63
+- **Completed**: 65
 - **Last updated**: 2026-09-20
 
 ---
@@ -170,15 +170,15 @@
 
 #### Unit: 002-gap-fill-ui
 
-- [ ] **001-gap-fill-exercise-screen** (gap-fill-ui): Fill the gap by tapping a word - Must - GENERATED (bolt 031-gap-fill-ui)
-- [ ] **002-offline-gap-fill-verification** (gap-fill-ui): Gap-fill works inside a downloaded pack - Must - GENERATED (bolt 031-gap-fill-ui)
+- [x] **001-gap-fill-exercise-screen** (gap-fill-ui): Fill the gap by tapping a word - Must - ✅ COMPLETE (bolt 031-gap-fill-ui)
+- [x] **002-offline-gap-fill-verification** (gap-fill-ui): Gap-fill works inside a downloaded pack - Must - ✅ COMPLETE (bolt 031-gap-fill-ui)
 
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 10
+- **Generated**: 8
 - **In Progress**: 0
-- **Completed**: 63
+- **Completed**: 65
 - **Retired**: 1

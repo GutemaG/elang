@@ -2,7 +2,7 @@
 unit: 002-gap-fill-ui
 intent: 015-gap-fill-exercise-type
 phase: inception
-status: stories-defined
+status: complete
 created: '2026-09-20T12:45:00Z'
 updated: '2026-09-20T12:45:00Z'
 ---

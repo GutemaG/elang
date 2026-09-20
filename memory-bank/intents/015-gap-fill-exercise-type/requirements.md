@@ -1,7 +1,7 @@
 ---
 intent: 015-gap-fill-exercise-type
 phase: inception
-status: units-defined
+status: complete
 created: '2026-09-20T12:30:00Z'
 updated: '2026-09-20T15:20:00Z'
 ---
@@ -42,7 +42,7 @@ This is the **first exercise type beyond the original five-type product scope**.
   - The blanked position is **authored per language, not computed**, because token counts differ between languages for the same sentence (verified: "I want bread" is three tokens in Afaan Oromo, `Daabboo nan barbaada`, and two in Amharic, `ዳቦ እፈልጋለሁ`)
   - Distractor choices come from the same lesson's vocabulary, so a wrong answer is plausible rather than absurd
   - At least one `gap_fill` exercise is seeded per course, in all four courses
-  - The exercise sets `exercises.vocab_item_id` to the word being tested, so it participates in SRS/Practice like the other vocabulary-linked types (the column is nullable and already exists — bolt 019)
+  - ~~The exercise sets `exercises.vocab_item_id` to the word being tested, so it participates in SRS/Practice like the other vocabulary-linked types~~ — **retracted during Construction (2026-09-20, bolt 030)**. An existing test, `test_vocab_is_linked_only_from_multiple_choice_and_none_is_shared`, caught this as soon as it was implemented: `list_exercises_by_vocab_item_ids` keeps the **first row per `vocab_item_id`**, so a vocab item maps to exactly one exercise. A gap-fill sharing a word with the multiple-choice exercise that already teaches it would either never be served in Practice or would displace that exercise, decided by a UUID comparison — no added SRS coverage, and arbitrary behaviour. Gap-fill therefore sets **no** `vocab_item_id`, and a test asserts that. Genuinely widening SRS coverage means seeding vocab items for the words that currently have none, which is separate scope.
   - Re-running the seed is idempotent, as for every existing exercise type
 - **Priority**: Must
 

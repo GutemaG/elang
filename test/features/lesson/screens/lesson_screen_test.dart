@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/lesson/screens/lesson_screen.dart';
+import 'package:elang/features/lesson/widgets/choice_tile.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
@@ -140,6 +141,32 @@ const _matchPairsLesson = LessonContent(
       leftTiles: [MatchPairsTile(id: 'l1', text: 'ቡና'), MatchPairsTile(id: 'l2', text: 'ሻይ')],
       rightTiles: [MatchPairsTile(id: 'r1', text: 'Coffee'), MatchPairsTile(id: 'r2', text: 'Tea')],
       correctPairs: {'l1': 'r1', 'l2': 'r2'},
+    ),
+  ],
+);
+
+/// The word tile labelled [label], as distinct from the same word sitting
+/// in the sentence's gap. Once a word is chosen it is on screen twice, so a
+/// bare `find.text` is ambiguous and `tap` refuses it.
+Finder _gapTile(String label) => find.descendant(
+  of: find.byType(ChoiceTile),
+  matching: find.text(label),
+);
+
+const _gapFillLesson = LessonContent(
+  lessonId: 'lesson-gf',
+  skillId: 'skill-gf',
+  title: 'Gap Fill Lesson',
+  beansAtStart: 5,
+  beansMax: 5,
+  exercises: [
+    GapFillExercise(
+      id: 'gf-1',
+      prompt: "Complete the sentence: 'I want coffee'",
+      sentenceBefore: 'እኔ',
+      sentenceAfter: 'እፈልጋለሁ',
+      options: ['ቡና', 'ሻይ', 'ውሃ'],
+      correctOptionIndex: 0,
     ),
   ],
 );
@@ -681,6 +708,166 @@ void main() {
 
       expect(api.completeLessonCalls, hasLength(1));
       expect(api.completeLessonCalls.single.correctCount, 1);
+    },
+  );
+
+  testWidgets(
+    'a gap-fill exercise fills its gap on tap, and Check stays disabled until a word is chosen',
+    (tester) async {
+      final api = _apiFor(_gapFillLesson);
+      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-gf'));
+      await tester.pumpAndSettle();
+
+      // Nothing chosen: the gap is empty and Check does nothing.
+      expect(find.text('ቡና'), findsOneWidget); // the tile only
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      expect(find.text('Continue'), findsNothing);
+
+      // Choosing a word puts it in the gap -- the word is now on screen
+      // twice, once in the sentence and once on its tile.
+      await tester.tap(_gapTile('ቡና'));
+      await tester.pump();
+      expect(find.text('ቡና'), findsNWidgets(2));
+
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      expect(find.text('Continue'), findsOneWidget);
+
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(api.completeLessonCalls.single.correctCount, 1);
+    },
+  );
+
+  testWidgets(
+    'tapping another word moves the gap-fill selection, and tapping the chosen word again keeps it',
+    (tester) async {
+      final api = _apiFor(_gapFillLesson);
+      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-gf'));
+      await tester.pumpAndSettle();
+
+      // Choose the wrong word first, then change to another.
+      await tester.tap(_gapTile('ሻይ'));
+      await tester.pump();
+      expect(find.text('ሻይ'), findsNWidgets(2));
+
+      await tester.tap(_gapTile('ቡና'));
+      await tester.pump();
+      // The old word left the gap; the new one took its place.
+      expect(find.text('ሻይ'), findsOneWidget);
+      expect(find.text('ቡና'), findsNWidgets(2));
+
+      // Tapping the chosen word again KEEPS it (the decision recorded in
+      // this bolt's plan) -- clearing it would disable Check with no
+      // visible cause.
+      await tester.tap(_gapTile('ቡና'));
+      await tester.pump();
+      expect(find.text('ቡና'), findsNWidgets(2));
+
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      expect(find.text('Continue'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'an incorrect gap-fill submission requeues the exercise, same as the other types',
+    (tester) async {
+      final api = _apiFor(_gapFillLesson);
+      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-gf'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(_gapTile('ውሃ'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      expect(find.text("Let's review your mistakes"), findsOneWidget);
+      expect(api.completeLessonCalls, isEmpty);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      await tester.tap(_gapTile('ቡና'));
+      await tester.pump();
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(api.completeLessonCalls, hasLength(1));
+      expect(api.completeLessonCalls.single.correctCount, 1);
+    },
+  );
+
+  testWidgets(
+    'a gap-fill exercise downloads and then plays fully offline, queuing completion for sync',
+    (tester) async {
+      // Story 002. The pack path is exercise-type-agnostic by construction,
+      // but `lesson_pack_store`'s JSON mapping is not compiler-checked in
+      // the read direction, so this proves it end to end rather than
+      // assuming it.
+      final downloadApi = ControllableLessonApi()
+        ..lessonContent = _gapFillLesson;
+      final packStore = FakeLessonPackStore();
+      final downloader = LessonPackDownloader(
+        lessonApi: downloadApi,
+        packStore: packStore,
+      );
+      await downloader.downloadLesson('lesson-gf');
+      expect(downloader.statusFor('lesson-gf'), LessonDownloadStatus.downloaded);
+
+      // A fresh api with no `lessonContent` set -- proves the offline
+      // screen never falls through to the network (that would null-assert).
+      final offlineApi = ControllableLessonApi()
+        ..completionResult = const LessonCompletionResult(
+          xpEarned: 10,
+          dailyXpTotal: 10,
+          dailyXpTarget: 30,
+          streakCount: 1,
+          streakIncreasedToday: true,
+          accuracyPercent: 100,
+          correctCount: 1,
+          totalCount: 1,
+          timeSpent: Duration(seconds: 5),
+        );
+      final connectivity = FakeConnectivityMonitor(online: false);
+      final queueStore = FakePendingSyncQueueStore();
+      final engine = SyncEngine(
+        lessonApi: offlineApi,
+        connectivityMonitor: connectivity,
+        queueStore: queueStore,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            lessonId: 'lesson-gf',
+            lessonApi: offlineApi,
+            audioPlayer: FakeLessonAudioPlayer(),
+            feedbackPlayer: FakeAnswerFeedbackPlayer(),
+            connectivityMonitor: connectivity,
+            lessonPackStore: packStore,
+            syncEngine: engine,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // It came back out of the pack intact, and still plays.
+      await tester.tap(_gapTile('ቡና'));
+      await tester.pump();
+      expect(find.text('ቡና'), findsNWidgets(2));
+      await tester.tap(find.text('Check'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      // Completion queued for sync, not sent -- the device is offline.
+      expect(offlineApi.completeLessonCalls, isEmpty);
+      expect(await queueStore.count(), 1);
+      expect(find.text('Lesson Complete!'), findsOneWidget);
     },
   );
 

@@ -197,6 +197,17 @@ class FakeLessonApi implements LessonApi {
           ],
           correctPairs: {'l1': 'r1', 'l2': 'r2', 'l3': 'r3'},
         ),
+        // A gap in the middle, which the seeded content never produces --
+        // the fake is where the shapes the real curriculum happens not to
+        // use still get exercised.
+        GapFillExercise(
+          id: 'coffee-5',
+          prompt: "Complete the sentence: 'I want coffee'",
+          sentenceBefore: 'እኔ',
+          sentenceAfter: 'እፈልጋለሁ',
+          options: ['ቡና', 'ሻይ', 'ውሃ'],
+          correctOptionIndex: 0,
+        ),
       ],
     ),
     'lesson-family': LessonContent(
