@@ -14,6 +14,9 @@ import '../widgets/level_up_sheet.dart';
 /// `level_up_streak_freeze_modal`-style overlay is shown before
 /// "Continue" pops back to the dashboard (which reloads on return, per
 /// `SkillTreeDashboardScreen`).
+///
+/// A review (a skill already completed, replayed) earns nothing, so it
+/// shows how it went instead of XP, streak and the daily goal.
 class LessonCompleteScreen extends StatelessWidget {
   const LessonCompleteScreen({super.key, required this.result});
 
@@ -74,102 +77,106 @@ class LessonCompleteScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.spaceMd),
               Text(
-                'Lesson Complete!',
+                result.isReview ? 'Review Complete!' : 'Lesson Complete!',
                 style: AppTypography.displayLgMobile.copyWith(
                   color: AppColors.primaryContainer,
                 ),
               ),
               const SizedBox(height: AppSpacing.spaceLg),
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.star,
-                      color: AppColors.secondaryContainer,
-                      value: '+${result.xpEarned}',
-                      label: 'XP EARNED',
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.spaceXs),
-                  Expanded(
-                    child: result.pendingSync
-                        ? const _StatCard(
-                            icon: Icons.local_fire_department,
-                            color: AppColors.tertiaryBrand,
-                            value: '--',
-                            label: 'SYNCS WHEN ONLINE',
-                          )
-                        : _StatCard(
-                            icon: Icons.local_fire_department,
-                            color: AppColors.tertiaryBrand,
-                            value: '${result.streakCount} Days',
-                            label: 'STREAK',
-                            badge: result.streakIncreasedToday
-                                ? '+1 Today'
-                                : null,
-                          ),
-                  ),
-                  const SizedBox(width: AppSpacing.spaceXs),
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.verified,
-                      color: AppColors.primaryContainer,
-                      value: '${result.accuracyPercent}%',
-                      label: 'ACCURACY',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.spaceMd),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.spaceMd),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerLowest,
-                  borderRadius: BorderRadius.circular(AppRadii.base),
-                  border: Border.all(color: AppColors.outlineVariant),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              if (result.isReview)
+                _ReviewSummary(result: result)
+              else ...[
+                Row(
                   children: [
-                    Text(
-                      'Daily Goal Progress',
-                      style: AppTypography.labelLg.copyWith(
-                        color: AppColors.onSurface,
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.star,
+                        color: AppColors.secondaryContainer,
+                        value: '+${result.xpEarned}',
+                        label: 'XP EARNED',
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.spaceXs),
-                    if (result.pendingSync)
-                      Text(
-                        "You're offline -- this lesson's XP will sync and "
-                        'count toward today\'s goal once you\'re back online.',
-                        style: AppTypography.bodySm.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      )
-                    else ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadii.full),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 12,
-                          backgroundColor: AppColors.surfaceContainer,
-                          valueColor: const AlwaysStoppedAnimation(
-                            AppColors.primaryContainer,
-                          ),
-                        ),
+                    const SizedBox(width: AppSpacing.spaceXs),
+                    Expanded(
+                      child: result.pendingSync
+                          ? const _StatCard(
+                              icon: Icons.local_fire_department,
+                              color: AppColors.tertiaryBrand,
+                              value: '--',
+                              label: 'SYNCS WHEN ONLINE',
+                            )
+                          : _StatCard(
+                              icon: Icons.local_fire_department,
+                              color: AppColors.tertiaryBrand,
+                              value: '${result.streakCount} Days',
+                              label: 'STREAK',
+                              badge: result.streakIncreasedToday
+                                  ? '+1 Today'
+                                  : null,
+                            ),
+                    ),
+                    const SizedBox(width: AppSpacing.spaceXs),
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.verified,
+                        color: AppColors.primaryContainer,
+                        value: '${result.accuracyPercent}%',
+                        label: 'ACCURACY',
                       ),
-                      const SizedBox(height: AppSpacing.space2xs),
-                      Text(
-                        '${result.dailyXpTotal} / ${result.dailyXpTarget} XP today',
-                        style: AppTypography.bodySm.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: AppSpacing.spaceMd),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.spaceMd),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(AppRadii.base),
+                    border: Border.all(color: AppColors.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Daily Goal Progress',
+                        style: AppTypography.labelLg.copyWith(
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.spaceXs),
+                      if (result.pendingSync)
+                        Text(
+                          "You're offline -- this lesson's XP will sync and "
+                          'count toward today\'s goal once you\'re back online.',
+                          style: AppTypography.bodySm.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        )
+                      else ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadii.full),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 12,
+                            backgroundColor: AppColors.surfaceContainer,
+                            valueColor: const AlwaysStoppedAnimation(
+                              AppColors.primaryContainer,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.space2xs),
+                        Text(
+                          '${result.dailyXpTotal} / ${result.dailyXpTarget} XP today',
+                          style: AppTypography.bodySm.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
               const Spacer(),
               TactileButton(
                 label: 'Continue',
@@ -185,6 +192,58 @@ class LessonCompleteScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ReviewSummary extends StatelessWidget {
+  const _ReviewSummary({required this.result});
+
+  final LessonCompletionResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                icon: Icons.check_circle,
+                color: AppColors.primaryContainer,
+                value: '${result.correctCount}/${result.totalCount}',
+                label: 'CORRECT',
+              ),
+            ),
+            const SizedBox(width: AppSpacing.spaceXs),
+            Expanded(
+              child: _StatCard(
+                icon: Icons.verified,
+                color: AppColors.primaryContainer,
+                value: '${result.accuracyPercent}%',
+                label: 'ACCURACY',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.spaceMd),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.spaceMd),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(AppRadii.base),
+            border: Border.all(color: AppColors.outlineVariant),
+          ),
+          child: Text(
+            "Reviews don't earn XP or use beans. They keep what you've "
+            'already learned fresh.',
+            style: AppTypography.bodySm.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -240,7 +299,9 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+            style: AppTypography.headlineSm.copyWith(
+              color: AppColors.onSurface,
+            ),
           ),
           Text(
             label,

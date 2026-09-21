@@ -366,6 +366,9 @@ class LessonCompletionOutcome:
     crown_level: int | None = None
     crown_leveled_up: bool = False
     streak_freeze_unlocked: bool = False
+    # True when the lesson's skill was already completed before this
+    # attempt: a review, which awards nothing (see `complete_lesson`).
+    is_review: bool = False
 
 
 @dataclass(frozen=True)

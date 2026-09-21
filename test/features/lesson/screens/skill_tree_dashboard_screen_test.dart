@@ -252,8 +252,6 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('ha'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Continue'));
@@ -327,7 +325,6 @@ void main() {
 
     // The active node's lesson content's first exercise is now showing.
     expect(find.text('ቡና'), findsOneWidget);
-    expect(find.text('Check'), findsOneWidget);
   });
 
   testWidgets('a fetch failure shows inline error + retry, then recovers', (
@@ -440,8 +437,6 @@ void main() {
 
       // Answer correctly and finish the (single-exercise) lesson.
       await tester.tap(find.text('ha'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
@@ -693,8 +688,6 @@ void main() {
         expect(find.text('ቡና'), findsOneWidget);
 
         await tester.tap(find.text('coffee'));
-        await tester.pump();
-        await tester.tap(find.text('Check'));
         await tester.pump();
 
         // Simulate the backend no longer considering this item due --

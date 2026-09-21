@@ -578,8 +578,52 @@ void main() {
         expect(result.xpEarned, 20);
         expect(result.skillUnlockedTitle, 'Food & Drink');
         expect(result.crownLevel, 1);
+        // No `is_review` in the body, as from a backend older than reviews.
+        expect(result.isReview, isFalse);
       },
     );
+
+    test('reads is_review from a review completion', () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          jsonEncode({
+            'xp_earned': 0,
+            'daily_xp_total': 20,
+            'daily_xp_target': 40,
+            'streak_count': 3,
+            'streak_increased_today': false,
+            'accuracy_percent': 100,
+            'correct_count': 4,
+            'total_count': 4,
+            'time_spent_seconds': 30.0,
+            'skill_unlocked_title': null,
+            'crown_level': 1,
+            'crown_leveled_up': false,
+            'streak_freeze_unlocked': false,
+            'is_review': true,
+          }),
+          200,
+        ),
+      );
+      final api = HttpLessonApi(
+        client: client,
+        baseUrl: 'http://localhost:8000',
+        sessionRepository: await _signedInSessionRepository(),
+      );
+
+      final result = await api.completeLesson(
+        lessonId: 'lesson-a1',
+        attemptId: 'attempt-review',
+        correctCount: 4,
+        totalCount: 4,
+        timeSpent: const Duration(seconds: 30),
+        beansRemainingAtEnd: 5,
+        clientCompletedAt: DateTime.now().toUtc(),
+      );
+
+      expect(result.isReview, isTrue);
+      expect(result.xpEarned, 0);
+    });
 
     test('a 422 beans_exhausted response throws LessonApiException', () async {
       final client = MockClient(

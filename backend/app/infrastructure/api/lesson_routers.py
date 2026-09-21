@@ -264,4 +264,5 @@ async def complete_lesson_endpoint(
         crown_level=outcome.crown_level,
         crown_leveled_up=outcome.crown_leveled_up,
         streak_freeze_unlocked=outcome.streak_freeze_unlocked,
+        is_review=outcome.is_review,
     )

@@ -4,98 +4,96 @@ import '../../../shared/models/exercise.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
-import '../state/lesson_controller.dart';
 
 /// Match-pairs' "tap-to-link" interaction (FR-2/FR-3 of
 /// 004-match-pairs-exercise-type): two independently-shuffled tile
-/// columns; tapping a left tile arms it, tapping a right tile completes
-/// the pair. Mirrors [WordBankBuilder]'s "build first, one atomic Check"
-/// model rather than live per-pair feedback — see
-/// `memory-bank/bolts/012-match-pairs-ui/implementation-plan.md`'s
-/// Technical Approach for why.
+/// columns; tap a tile in either column, then its partner in the other.
+///
+/// Each pair is graded as soon as it is made: a right pair turns green and
+/// stays locked, a wrong one flashes red and both tiles can be tapped again.
+/// That replaced the original "link everything, then one atomic Check"
+/// model, which made the learner find out about every mistake at once at
+/// the end. All state lives in `LessonController`; this only draws it.
 class MatchPairsBuilder extends StatelessWidget {
   const MatchPairsBuilder({
     super.key,
     required this.leftTiles,
     required this.rightTiles,
-    required this.pairs,
-    required this.armedLeftTileId,
-    required this.feedback,
+    required this.matchedPairs,
+    required this.armedTileId,
+    required this.armedIsLeft,
+    required this.wrongPair,
     required this.onTileTap,
   });
 
   final List<MatchPairsTile> leftTiles;
   final List<MatchPairsTile> rightTiles;
 
-  /// Current tentative (or, once [feedback] is non-`none`, final) answer:
-  /// `leftTileId -> rightTileId`.
-  final Map<String, String> pairs;
-  final String? armedLeftTileId;
-  final TileFeedback feedback;
-  final void Function(String tileId, {required bool isLeft}) onTileTap;
+  /// Pairs already graded right: `leftTileId -> rightTileId`.
+  final Map<String, String> matchedPairs;
 
-  bool get _locked => feedback != TileFeedback.none;
+  /// The tile tapped first, waiting for its partner; [armedIsLeft] says
+  /// which column it is in.
+  final String? armedTileId;
+  final bool armedIsLeft;
+
+  /// The pair just graded wrong, as `(left, right)`, while it flashes.
+  final (String, String)? wrongPair;
+  final void Function(String tileId, {required bool isLeft}) onTileTap;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final tile in leftTiles)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
-                  child: _MatchPairsTileChip(
-                    label: tile.text,
-                    state: _stateFor(tile.id, isLeft: true),
-                    onTap: _locked ? null : () => onTileTap(tile.id, isLeft: true),
-                  ),
-                ),
-            ],
-          ),
-        ),
+        Expanded(child: _column(leftTiles, isLeft: true)),
         const SizedBox(width: AppSpacing.spaceSm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final tile in rightTiles)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
-                  child: _MatchPairsTileChip(
-                    label: tile.text,
-                    state: _stateFor(tile.id, isLeft: false),
-                    onTap: _locked ? null : () => onTileTap(tile.id, isLeft: false),
-                  ),
-                ),
-            ],
+        Expanded(child: _column(rightTiles, isLeft: false)),
+      ],
+    );
+  }
+
+  Widget _column(List<MatchPairsTile> tiles, {required bool isLeft}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final tile in tiles)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
+            child: Builder(
+              builder: (context) {
+                final state = _stateFor(tile.id, isLeft: isLeft);
+                return _MatchPairsTileChip(
+                  label: tile.text,
+                  state: state,
+                  onTap: state == _MatchPairsTileState.correct
+                      ? null
+                      : () => onTileTap(tile.id, isLeft: isLeft),
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
 
   _MatchPairsTileState _stateFor(String tileId, {required bool isLeft}) {
-    final isLinked = isLeft ? pairs.containsKey(tileId) : pairs.containsValue(tileId);
-    if (_locked) {
-      // Once checked, every linked tile shares the exercise's single
-      // correct/incorrect verdict — matching every other exercise type's
-      // "one atomic result", not a per-pair breakdown.
-      if (!isLinked) return _MatchPairsTileState.unselected;
-      return feedback == TileFeedback.correct
-          ? _MatchPairsTileState.correct
-          : _MatchPairsTileState.incorrect;
+    final matched = isLeft
+        ? matchedPairs.containsKey(tileId)
+        : matchedPairs.containsValue(tileId);
+    if (matched) return _MatchPairsTileState.correct;
+    final wrong = wrongPair;
+    if (wrong != null && tileId == (isLeft ? wrong.$1 : wrong.$2)) {
+      return _MatchPairsTileState.incorrect;
     }
-    if (isLeft && tileId == armedLeftTileId) return _MatchPairsTileState.armed;
-    if (isLinked) return _MatchPairsTileState.linked;
+    if (tileId == armedTileId && isLeft == armedIsLeft) {
+      return _MatchPairsTileState.armed;
+    }
     return _MatchPairsTileState.unselected;
   }
 }
 
-enum _MatchPairsTileState { unselected, armed, linked, correct, incorrect }
+enum _MatchPairsTileState { unselected, armed, correct, incorrect }
 
 class _MatchPairsTileChip extends StatelessWidget {
   const _MatchPairsTileChip({
@@ -115,11 +113,6 @@ class _MatchPairsTileChip extends StatelessWidget {
       textColor: AppColors.onSurface,
     ),
     _MatchPairsTileState.armed => const _ChipStyle(
-      background: Color(0xFFFFF7ED),
-      border: AppColors.secondaryContainer,
-      textColor: AppColors.onSurface,
-    ),
-    _MatchPairsTileState.linked => const _ChipStyle(
       background: Color(0xFFFFF7ED),
       border: AppColors.secondaryContainer,
       textColor: AppColors.onSurface,

@@ -258,8 +258,6 @@ void main() {
 
       await tester.tap(find.text('ha'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
 
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
 
@@ -282,8 +280,6 @@ void main() {
 
       await tester.tap(find.text('le')); // wrong for exercise 1
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
 
       expect(find.byIcon(Icons.cancel), findsOneWidget);
       expect(find.text('4'), findsOneWidget); // beans decremented
@@ -305,8 +301,6 @@ void main() {
       // Exercise 1 (mc-1): wrong answer.
       await tester.tap(find.text('le'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
 
       expect(feedbackPlayer.cues, [FeedbackCue.incorrect]);
 
@@ -315,8 +309,6 @@ void main() {
 
       // Exercise 2 (mc-2): correct answer.
       await tester.tap(find.text('le'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
 
       expect(feedbackPlayer.cues, [FeedbackCue.incorrect, FeedbackCue.correct]);
@@ -333,8 +325,6 @@ void main() {
       // Exercise 1 (mc-1, prompt 'ሀ'): answer wrong.
       await tester.tap(find.text('le'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
@@ -344,8 +334,6 @@ void main() {
 
       // Answer exercise 2 correctly.
       await tester.tap(find.text('le'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
@@ -364,8 +352,6 @@ void main() {
 
       // Answer it correctly this time; the lesson now finishes.
       await tester.tap(find.text('ha'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
@@ -389,8 +375,6 @@ void main() {
       // Exercise 1 (mc-1, prompt 'ሀ'): answer wrong.
       await tester.tap(find.text('le'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
       expect(find.text("Let's review your mistakes"), findsNothing);
@@ -398,8 +382,6 @@ void main() {
 
       // Exercise 2 (mc-2, prompt 'ለ'): answer wrong too.
       await tester.tap(find.text('ha'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
@@ -410,8 +392,6 @@ void main() {
       // fresh exercise -- the retry section starts next, so the
       // interstitial should show exactly here.
       await tester.tap(find.text('me'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
@@ -431,8 +411,6 @@ void main() {
       expect(find.text('ሀ'), findsOneWidget);
       await tester.tap(find.text('ha'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
@@ -442,8 +420,6 @@ void main() {
       expect(find.text('ለ'), findsOneWidget);
 
       await tester.tap(find.text('le'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
@@ -464,14 +440,10 @@ void main() {
       // Answer both exercises correctly.
       await tester.tap(find.text('ha'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
       await tester.tap(find.text('le'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue')); // fails
       await tester.pump();
@@ -519,8 +491,6 @@ void main() {
     // Advance past the first (multiple-choice) exercise.
     await tester.tap(find.text('ha'));
     await tester.pump();
-    await tester.tap(find.text('Check'));
-    await tester.pump();
     await tester.tap(find.text('Continue'));
     await tester.pump();
 
@@ -547,15 +517,11 @@ void main() {
       // Skip exercise 1 (multiple-choice).
       await tester.tap(find.text('ha'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
       // Skip exercise 2 (listening).
       await tester.tap(find.text('ሰላም'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
@@ -585,30 +551,32 @@ void main() {
   );
 
   testWidgets(
-    'a match-pairs exercise requires every tile linked before Check grades it correctly',
+    'match pairs grades each pair as it is made, and shows Continue (never Check) once all are matched',
     (tester) async {
       final api = _apiFor(_matchPairsLesson);
-      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-mp'));
+      final feedbackPlayer = FakeAnswerFeedbackPlayer();
+      await tester.pumpWidget(
+        _wrapped(api, lessonId: 'lesson-mp', feedbackPlayer: feedbackPlayer),
+      );
       await tester.pumpAndSettle();
 
-      // Link only 1 of 2 pairs, then try to Check -- nothing happens yet
-      // (the button is disabled while incomplete).
+      expect(find.text('Check'), findsNothing);
+
+      // First pair: graded the moment its second tile is tapped.
       await tester.tap(find.text('ቡና'));
       await tester.pump();
       await tester.tap(find.text('Coffee'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
-      expect(find.text('Continue'), findsNothing);
+      expect(feedbackPlayer.cues, [FeedbackCue.correct]);
+      expect(find.text('Continue'), findsNothing); // one pair still to go
 
-      // Link the second pair too -- now Check is enabled and grades the
-      // whole exercise atomically.
-      await tester.tap(find.text('ሻይ'));
-      await tester.pump();
+      // Pairs can be started from the right column too.
       await tester.tap(find.text('Tea'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
+      await tester.tap(find.text('ሻይ'));
       await tester.pump();
+      expect(feedbackPlayer.cues, [FeedbackCue.correct, FeedbackCue.correct]);
+      expect(find.text('Check'), findsNothing);
       expect(find.text('Continue'), findsOneWidget);
 
       await tester.tap(find.text('Continue'));
@@ -616,39 +584,38 @@ void main() {
 
       expect(api.completeLessonCalls, hasLength(1));
       expect(api.completeLessonCalls.single.correctCount, 1);
+      expect(api.completeLessonCalls.single.missedExerciseIds, isEmpty);
     },
   );
 
   testWidgets(
-    'an incorrect match-pairs submission requeues the exercise, same as the other types',
+    'a wrong pair is flagged at once, costs one bean, and is fixed on the spot rather than requeued',
     (tester) async {
       final api = _apiFor(_matchPairsLesson);
-      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-mp'));
+      final feedbackPlayer = FakeAnswerFeedbackPlayer();
+      await tester.pumpWidget(
+        _wrapped(api, lessonId: 'lesson-mp', feedbackPlayer: feedbackPlayer),
+      );
       await tester.pumpAndSettle();
+      expect(find.text('5'), findsOneWidget);
 
-      // Link both pairs, but swapped (wrong).
+      // Wrong pair: flagged immediately, one bean gone.
       await tester.tap(find.text('ቡና'));
       await tester.pump();
       await tester.tap(find.text('Tea'));
       await tester.pump();
+      expect(feedbackPlayer.cues, [FeedbackCue.incorrect]);
+      expect(find.text('4'), findsOneWidget);
+
+      // A second wrong pair in the same exercise costs nothing more.
       await tester.tap(find.text('ሻይ'));
       await tester.pump();
       await tester.tap(find.text('Coffee'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
-      await tester.tap(find.text('Continue'));
-      await tester.pump();
+      expect(find.text('4'), findsOneWidget);
 
-      // Only exercise in the lesson -- the retry interstitial shows
-      // immediately (mirrors the multiple-choice "missed exercise loops
-      // back" behavior).
-      expect(find.text("Let's review your mistakes"), findsOneWidget);
-      expect(api.completeLessonCalls, isEmpty);
-      await tester.tap(find.text('Continue'));
-      await tester.pump();
-
-      // Retry: link correctly this time.
+      // The flash clears by itself, and both tiles can be used again.
+      await tester.pump(const Duration(seconds: 1));
       await tester.tap(find.text('ቡና'));
       await tester.pump();
       await tester.tap(find.text('Coffee'));
@@ -657,122 +624,84 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('Tea'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
+
+      // Finished in place: Continue goes straight to the end, with no
+      // "review your mistakes" loop for an exercise already fixed.
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
+      expect(find.text("Let's review your mistakes"), findsNothing);
       expect(api.completeLessonCalls, hasLength(1));
       expect(api.completeLessonCalls.single.correctCount, 1);
+      // Still reported, so its words come back in Practice.
+      expect(api.completeLessonCalls.single.missedExerciseIds, ['mp-1']);
     },
   );
 
   testWidgets(
-    'tapping a linked left tile again unlinks it, and re-linking a used right tile moves it (stays one-to-one)',
+    'a matched pair is locked in, and tapping the first tile again cancels it',
     (tester) async {
       final api = _apiFor(_matchPairsLesson);
       await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-mp'));
       await tester.pumpAndSettle();
 
-      // Link l1 -> Coffee, then unlink it by tapping it again.
       await tester.tap(find.text('ቡና'));
       await tester.pump();
       await tester.tap(find.text('Coffee'));
       await tester.pump();
-      await tester.tap(find.text('ቡና'));
-      await tester.pump();
 
-      // Only 1 tile (l2) can still be linked -- Check must stay disabled
-      // since l1 is unlinked again.
+      // Tapping a locked tile does nothing: ሻይ -> Coffee is never graded.
+      await tester.tap(find.text('ሻይ'));
+      await tester.pump();
+      await tester.tap(find.text('Coffee'));
+      await tester.pump();
+      expect(find.text('5'), findsOneWidget);
+
+      // ሻይ is still armed; tapping it again cancels, so Tea alone arms and
+      // the pair is made the other way round.
       await tester.tap(find.text('ሻይ'));
       await tester.pump();
       await tester.tap(find.text('Tea'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       expect(find.text('Continue'), findsNothing);
-
-      // Re-link l1 to the *other* right tile now that l2 has claimed
-      // Tea -- proves the mapping stays 1:1 rather than allowing a right
-      // tile to serve two left tiles.
-      await tester.tap(find.text('ቡና'));
-      await tester.pump();
-      await tester.tap(find.text('Coffee'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
+      await tester.tap(find.text('ሻይ'));
       await tester.pump();
 
       expect(find.text('Continue'), findsOneWidget);
-      await tester.tap(find.text('Continue'));
-      await tester.pumpAndSettle();
-
-      expect(api.completeLessonCalls, hasLength(1));
-      expect(api.completeLessonCalls.single.correctCount, 1);
+      expect(find.text('5'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'a gap-fill exercise fills its gap on tap, and Check stays disabled until a word is chosen',
+    'a gap-fill exercise is graded the moment a word is tapped, with no Check',
     (tester) async {
       final api = _apiFor(_gapFillLesson);
       await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-gf'));
       await tester.pumpAndSettle();
 
-      // Nothing chosen: the gap is empty and Check does nothing.
-      expect(find.text('ቡና'), findsOneWidget); // the tile only
-      await tester.tap(find.text('Check'));
-      await tester.pump();
+      expect(find.text('Check'), findsNothing);
       expect(find.text('Continue'), findsNothing);
+      expect(find.text('ቡና'), findsOneWidget); // the tile only
 
-      // Choosing a word puts it in the gap -- the word is now on screen
-      // twice, once in the sentence and once on its tile.
+      // The word drops into the gap and is graded in the same tap.
       await tester.tap(_gapTile('ቡና'));
       await tester.pump();
       expect(find.text('ቡና'), findsNWidgets(2));
-
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       expect(find.text('Continue'), findsOneWidget);
 
-      await tester.tap(find.text('Continue'));
-      await tester.pumpAndSettle();
-      expect(api.completeLessonCalls.single.correctCount, 1);
-    },
-  );
-
-  testWidgets(
-    'tapping another word moves the gap-fill selection, and tapping the chosen word again keeps it',
-    (tester) async {
-      final api = _apiFor(_gapFillLesson);
-      await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-gf'));
-      await tester.pumpAndSettle();
-
-      // Choose the wrong word first, then change to another.
+      // Graded answers are final: another word cannot replace it.
       await tester.tap(_gapTile('ሻይ'));
       await tester.pump();
-      expect(find.text('ሻይ'), findsNWidgets(2));
-
-      await tester.tap(_gapTile('ቡና'));
-      await tester.pump();
-      // The old word left the gap; the new one took its place.
       expect(find.text('ሻይ'), findsOneWidget);
-      expect(find.text('ቡና'), findsNWidgets(2));
 
-      // Tapping the chosen word again KEEPS it (the decision recorded in
-      // this bolt's plan) -- clearing it would disable Check with no
-      // visible cause.
-      await tester.tap(_gapTile('ቡና'));
-      await tester.pump();
-      expect(find.text('ቡና'), findsNWidgets(2));
-
-      await tester.tap(find.text('Check'));
-      await tester.pump();
-      expect(find.text('Continue'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(api.completeLessonCalls.single.correctCount, 1);
     },
   );
 
   testWidgets(
-    'an incorrect gap-fill submission requeues the exercise, same as the other types',
+    'an incorrect gap-fill tap requeues the exercise, same as the other types',
     (tester) async {
       final api = _apiFor(_gapFillLesson);
       await tester.pumpWidget(_wrapped(api, lessonId: 'lesson-gf'));
@@ -780,8 +709,7 @@ void main() {
 
       await tester.tap(_gapTile('ውሃ'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
+      expect(find.text('4'), findsOneWidget);
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
@@ -791,8 +719,6 @@ void main() {
       await tester.pump();
 
       await tester.tap(_gapTile('ቡና'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
@@ -859,8 +785,6 @@ void main() {
       await tester.tap(_gapTile('ቡና'));
       await tester.pump();
       expect(find.text('ቡና'), findsNWidgets(2));
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
@@ -926,8 +850,6 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('Tea'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
@@ -946,8 +868,6 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('le')); // wrong answer, drops beans to 0
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pumpAndSettle();
 
       expect(find.text('Out of Beans!'), findsOneWidget);
@@ -964,8 +884,6 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('le'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pumpAndSettle();
 
       expect(find.text('Out of Beans!'), findsOneWidget);
@@ -1016,8 +934,6 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('le'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pumpAndSettle();
 
       expect(find.text('Out of Beans!'), findsOneWidget);
@@ -1049,8 +965,6 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('le'));
-    await tester.pump();
-    await tester.tap(find.text('Check'));
     await tester.pumpAndSettle();
 
     expect(find.text('Not enough Amole'), findsOneWidget);
@@ -1083,7 +997,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('ሀ'), findsOneWidget);
-      expect(find.text('Check'), findsOneWidget);
+      expect(find.text('ha'), findsOneWidget);
     },
   );
 
@@ -1165,14 +1079,10 @@ void main() {
       // Answer both exercises correctly and finish.
       await tester.tap(find.text('ha'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
       await tester.tap(find.text('le'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
@@ -1222,14 +1132,10 @@ void main() {
 
       await tester.tap(find.text('ha'));
       await tester.pump();
-      await tester.tap(find.text('Check'));
-      await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pump();
 
       await tester.tap(find.text('le'));
-      await tester.pump();
-      await tester.tap(find.text('Check'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
@@ -1285,9 +1191,7 @@ void main() {
         // in practice mode it should just show feedback and let the user
         // continue.
         await tester.tap(find.text('le'));
-        await tester.pump();
-        await tester.tap(find.text('Check'));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.byIcon(Icons.cancel), findsOneWidget);
         expect(find.text('Refill Beans'), findsNothing);
@@ -1323,15 +1227,11 @@ void main() {
         // requeued to the end, same retry mechanics as a regular lesson.
         await tester.tap(find.text('le'));
         await tester.pump();
-        await tester.tap(find.text('Check'));
-        await tester.pump();
         await tester.tap(find.text('Continue'));
         await tester.pump();
 
         // mc-2 (prompt 'ለ') answered correctly.
         await tester.tap(find.text('le'));
-        await tester.pump();
-        await tester.tap(find.text('Check'));
         await tester.pump();
         await tester.tap(find.text('Continue'));
         await tester.pump();
@@ -1342,8 +1242,6 @@ void main() {
         await tester.tap(find.text('Continue'));
         await tester.pump();
         await tester.tap(find.text('ha'));
-        await tester.pump();
-        await tester.tap(find.text('Check'));
         await tester.pump();
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();

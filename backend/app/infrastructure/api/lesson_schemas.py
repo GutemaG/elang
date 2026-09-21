@@ -216,6 +216,9 @@ class CompleteLessonResponse(BaseModel):
     crown_level: int | None
     crown_leveled_up: bool
     streak_freeze_unlocked: bool
+    # The skill was already completed, so this attempt was a review and
+    # awarded nothing: no XP, Amole, crown, streak or beans change.
+    is_review: bool = False
 
 
 class DueItemResponse(BaseModel):

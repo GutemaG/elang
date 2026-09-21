@@ -20,6 +20,7 @@ from app.infrastructure.db.lesson_models import (
     ExerciseModel,
     LessonModel,
     SkillModel,
+    UserBeansModel,
 )
 from app.infrastructure.db.models import UserModel
 from tests.fakes import EN_AM_COURSE_ID, FakeTokenVerifier
@@ -279,33 +280,100 @@ class TestCompleteLesson:
         assert response.status_code == 422
         assert response.json()["error_code"] == "invalid_completion"
 
-    def test_implausible_wrong_count_returns_422_beans_exhausted(
+    def test_replaying_a_completed_skill_is_a_review_that_awards_nothing(
         self, make_client: Any, seeded_content: dict[str, str]
     ) -> None:
         client, token = _sign_in(make_client)
-        # Drain beans to 1 via 4 separate failed lessons' worth of wrong
-        # answers isn't directly possible without a completion call, so
-        # instead: complete once with only 1 correct (3 wrong, well within
-        # the starting 5 beans), then attempt a second lesson claiming 0
-        # correct out of 4 (4 more wrong) -- beans remaining after the
-        # first call (5 - 3 = 2) can't cover 4 more.
+        lesson = seeded_content["lesson_a1"]
+
+        def complete(attempt_id: str) -> dict[str, Any]:
+            response = client.post(
+                f"/api/v1/lessons/{lesson}/complete",
+                headers=_auth(token),
+                json={
+                    "attempt_id": attempt_id,
+                    "correct_count": 4,
+                    "total_count": 4,
+                    "time_spent_seconds": 30.0,
+                    "client_completed_at": _now_iso(),
+                },
+            )
+            assert response.status_code == 200
+            return response.json()
+
+        first = complete("attempt-1")
+        assert first["is_review"] is False
+        tree_before = client.get("/api/v1/skill-tree", headers=_auth(token)).json()
+        beans_before = client.get("/api/v1/beans", headers=_auth(token)).json()
+
+        review = complete("attempt-2")
+
+        assert review["is_review"] is True
+        assert review["xp_earned"] == 0
+        assert review["crown_leveled_up"] is False
+        assert review["crown_level"] == 1
+        assert review["streak_increased_today"] is False
+        assert review["streak_count"] == first["streak_count"]
+        assert review["accuracy_percent"] == 100
+        tree_after = client.get("/api/v1/skill-tree", headers=_auth(token)).json()
+        beans_after = client.get("/api/v1/beans", headers=_auth(token)).json()
+        assert tree_after["total_xp"] == tree_before["total_xp"]
+        by_id = {s["id"]: s for s in tree_after["skills"]}
+        assert by_id[seeded_content["skill_a"]]["crown_level"] == 1
+        # No Amole for the completion or the perfect-lesson bonus.
+        assert beans_after["amole_balance"] == beans_before["amole_balance"]
+        assert beans_after["beans"] == beans_before["beans"]
+
+    def test_a_review_with_mistakes_consumes_no_beans(
+        self, make_client: Any, seeded_content: dict[str, str]
+    ) -> None:
+        client, token = _sign_in(make_client)
+        payload = {
+            "total_count": 4,
+            "time_spent_seconds": 30.0,
+            "client_completed_at": _now_iso(),
+        }
         client.post(
             f"/api/v1/lessons/{seeded_content['lesson_a1']}/complete",
             headers=_auth(token),
-            json={
-                "attempt_id": "attempt-1",
-                "correct_count": 1,
-                "total_count": 4,
-                "time_spent_seconds": 30.0,
-                "client_completed_at": _now_iso(),
-            },
+            json={"attempt_id": "attempt-1", "correct_count": 4, **payload},
         )
+        beans_before = client.get("/api/v1/beans", headers=_auth(token)).json()["beans"]
+
+        response = client.post(
+            f"/api/v1/lessons/{seeded_content['lesson_a1']}/complete",
+            headers=_auth(token),
+            json={"attempt_id": "attempt-2", "correct_count": 1, **payload},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["is_review"] is True
+        assert client.get("/api/v1/beans", headers=_auth(token)).json()["beans"] == beans_before
+
+    def test_implausible_wrong_count_returns_422_beans_exhausted(
+        self, make_client: Any, seeded_content: dict[str, str], db_path: Path
+    ) -> None:
+        client, token = _sign_in(make_client)
+        # Seeded straight into the table rather than drained through earlier
+        # completions: finishing a skill makes every later attempt at it a
+        # review, which consumes no beans, so a replay can no longer run the
+        # balance down. 2 beans cannot cover the 4 wrong answers claimed.
+        engine = create_engine(f"sqlite:///{db_path}")
+        with SyncSession(engine) as session:
+            user = session.execute(
+                select(UserModel).where(UserModel.provider_user_id == "google-user-1")
+            ).scalar_one()
+            session.add(
+                UserBeansModel(user_id=user.id, current_count=2, last_regen_at=datetime.now(UTC))
+            )
+            session.commit()
+        engine.dispose()
 
         response = client.post(
             f"/api/v1/lessons/{seeded_content['lesson_a1']}/complete",
             headers=_auth(token),
             json={
-                "attempt_id": "attempt-2",
+                "attempt_id": "attempt-1",
                 "correct_count": 0,
                 "total_count": 4,
                 "time_spent_seconds": 30.0,

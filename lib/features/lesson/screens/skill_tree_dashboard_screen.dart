@@ -33,6 +33,7 @@ import '../widgets/category_banner.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/lesson_hud.dart';
 import '../widgets/pinned_header_sliver.dart';
+import '../widgets/review_skill_sheet.dart';
 import '../widgets/skill_path_node.dart';
 import '../widgets/sync_status_banner.dart';
 import 'download_management_screen.dart';
@@ -432,7 +433,22 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     }
   }
 
+  /// An active skill starts its lesson. A completed one asks first, because
+  /// replaying it is a review -- nothing earned, nothing spent -- and the
+  /// learner should know that before starting, not find out at the end.
   Future<void> _onNodeTap(SkillTreeNode node) async {
+    final isReview = node.state == SkillNodeState.completed;
+    if (isReview) {
+      final review = await showModalBottomSheet<bool>(
+        context: context,
+        backgroundColor: AppColors.background,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.lg)),
+        ),
+        builder: (_) => ReviewSkillSheet(skillTitle: node.title),
+      );
+      if (review != true || !mounted) return;
+    }
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => LessonScreen(
@@ -446,6 +462,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           lessonCache: widget.courseCache,
           skillVersion: node.contentVersion,
           beansNow: _lastData?.beansStatus.beans,
+          isReview: isReview,
         ),
       ),
     );

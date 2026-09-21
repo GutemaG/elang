@@ -51,6 +51,7 @@ class LessonScreen extends StatefulWidget {
     this.lessonCache,
     this.skillVersion,
     this.beansNow,
+    this.isReview = false,
   }) : practiceContent = null,
        practiceVocabItemIdByExerciseId = null;
 
@@ -75,7 +76,8 @@ class LessonScreen extends StatefulWidget {
        lessonPackStore = null,
        lessonCache = null,
        skillVersion = null,
-       beansNow = null;
+       beansNow = null,
+       isReview = false;
 
   final String lessonId;
   final LessonApi lessonApi;
@@ -101,6 +103,9 @@ class LessonScreen extends StatefulWidget {
   /// The server recomputes beans on completion either way; this only drives
   /// the local out-of-beans prompt.
   final int? beansNow;
+
+  /// Replaying a skill already completed: see `LessonController.isReview`.
+  final bool isReview;
 
   bool get isPractice => practiceContent != null;
 
@@ -130,6 +135,7 @@ class _LessonScreenState extends State<LessonScreen> {
         content: content,
         startedOffline: _startedOffline,
         isPractice: widget.isPractice,
+        isReview: widget.isReview,
         vocabItemIdByExerciseId: widget.practiceVocabItemIdByExerciseId,
       );
       controller.addListener(_onControllerChanged);
@@ -581,7 +587,7 @@ class _ProgressHeader extends StatelessWidget {
             ),
           ),
         ),
-        if (!controller.isPractice) ...[
+        if (controller.usesBeans) ...[
           const SizedBox(width: AppSpacing.spaceSm),
           Semantics(
             label: '${controller.beansRemaining} beans remaining',
@@ -672,12 +678,11 @@ class _GapFillBody extends StatelessWidget {
               feedback: controller.isChecked
                   ? controller.feedback
                   : TileFeedback.none,
-              // `selectOption` is reused unchanged, and is idempotent: tapping
-              // the chosen word again keeps it chosen rather than emptying the
-              // gap, which would leave Check disabled for no visible reason.
+              // Graded on the tap, like the other choice types: the chosen
+              // word drops into the gap and the tile shows right or wrong.
               onTap: controller.isChecked
                   ? null
-                  : () => controller.selectOption(i),
+                  : () => controller.chooseOption(i),
             ),
           ),
       ],
@@ -722,7 +727,7 @@ class _MultipleChoiceBody extends StatelessWidget {
                   : TileFeedback.none,
               onTap: controller.isChecked
                   ? null
-                  : () => controller.selectOption(i),
+                  : () => controller.chooseOption(i),
             ),
           ),
       ],
@@ -792,7 +797,7 @@ class _ListeningBody extends StatelessWidget {
                   : TileFeedback.none,
               onTap: controller.isChecked
                   ? null
-                  : () => controller.selectOption(i),
+                  : () => controller.chooseOption(i),
             ),
           ),
       ],
@@ -841,7 +846,6 @@ class _MatchPairsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pairs = (controller.selectedAnswer as Map<String, String>?) ?? const {};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -853,9 +857,10 @@ class _MatchPairsBody extends StatelessWidget {
         MatchPairsBuilder(
           leftTiles: exercise.leftTiles,
           rightTiles: exercise.rightTiles,
-          pairs: pairs,
-          armedLeftTileId: controller.armedLeftTileId,
-          feedback: controller.isChecked ? controller.feedback : TileFeedback.none,
+          matchedPairs: controller.matchedPairs,
+          armedTileId: controller.armedTileId,
+          armedIsLeft: controller.armedIsLeft,
+          wrongPair: controller.wrongPair,
           onTileTap: controller.selectMatchPairsTile,
         ),
       ],
@@ -871,24 +876,25 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!controller.isChecked) {
-      final hasAnswer = controller.selectedAnswer != null;
-      final currentExercise = controller.currentExercise;
-      final ready = switch (currentExercise) {
-        SentenceConstructionExercise _ =>
-          hasAnswer && (controller.selectedAnswer as List<String>).isNotEmpty,
-        MatchPairsExercise e =>
-          hasAnswer &&
-              (controller.selectedAnswer as Map<String, String>).length ==
-                  e.leftTiles.length,
-        // Gap fill joins the "any answer will do" arm: one chosen index is
-        // a complete answer, exactly as for the other choice-based types.
-        MultipleChoiceExercise _ ||
-        ListeningExercise _ ||
-        GapFillExercise _ => hasAnswer,
-      };
-      return TactileButton(
-        label: 'Check',
-        onPressed: ready ? controller.check : null,
+      // Only a built sentence needs Check: it has no single tap that means
+      // "done". Every other type grades itself as it is answered -- a
+      // choice on its tap, a match pair on its second tile.
+      if (controller.currentExercise is SentenceConstructionExercise) {
+        final built = controller.selectedAnswer as List<String>?;
+        return TactileButton(
+          label: 'Check',
+          onPressed: built != null && built.isNotEmpty ? controller.check : null,
+        );
+      }
+      // Holds the button's place so the exercise does not jump when
+      // Continue appears.
+      return const ExcludeSemantics(
+        child: IgnorePointer(
+          child: Opacity(
+            opacity: 0,
+            child: TactileButton(label: '', onPressed: null),
+          ),
+        ),
       );
     }
     final correct = controller.feedback == TileFeedback.correct;

@@ -118,7 +118,7 @@ class MatchPairsExercise extends Exercise {
 ///
 /// Answered by index, like [MultipleChoiceExercise]: the API speaks in
 /// choice ids, and `_toExercise` converts. Keeping gap-fill index-based
-/// lets it reuse `LessonController.selectOption` with no new state.
+/// lets it reuse `LessonController.chooseOption` with no new state.
 class GapFillExercise extends Exercise {
   const GapFillExercise({
     required super.id,

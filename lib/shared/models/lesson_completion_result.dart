@@ -26,6 +26,7 @@ class LessonCompletionResult {
     this.crownLeveledUp = false,
     this.streakFreezeUnlocked = false,
     this.pendingSync = false,
+    this.isReview = false,
   });
 
   final int xpEarned;
@@ -66,6 +67,10 @@ class LessonCompletionResult {
   /// and hold safe defaults -- `LessonCompleteScreen` shows a "syncs when
   /// back online" placeholder for those instead of a guessed number.
   final bool pendingSync;
+
+  /// The skill was already completed, so this attempt was a review: no XP,
+  /// Amole, crown, streak or beans change.
+  final bool isReview;
 
   bool get hasLevelUpFlourish => crownLeveledUp || streakFreezeUnlocked;
 }

@@ -408,6 +408,8 @@ class HttpLessonApi implements LessonApi {
       crownLevel: json['crown_level'] as int?,
       crownLeveledUp: json['crown_leveled_up'] as bool,
       streakFreezeUnlocked: json['streak_freeze_unlocked'] as bool,
+      // Absent from a backend older than reviews.
+      isReview: json['is_review'] as bool? ?? false,
     );
   }
 

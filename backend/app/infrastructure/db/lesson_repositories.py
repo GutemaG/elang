@@ -705,6 +705,7 @@ class SqlAlchemyLessonAttemptRepository:
             "crown_level": attempt.outcome.crown_level,
             "crown_leveled_up": attempt.outcome.crown_leveled_up,
             "streak_freeze_unlocked": attempt.outcome.streak_freeze_unlocked,
+            "is_review": attempt.outcome.is_review,
         }
         self._session.add(
             LessonAttemptModel(

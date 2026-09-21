@@ -455,6 +455,15 @@ async def complete_lesson(
     eventually being answered correctly, per the client's retry-until-correct
     design) to decide which. Sits inside this same idempotency boundary, so
     a replayed offline-sync completion never double-updates vocab progress.
+
+    Review: once a skill has been completed, replaying any of its lessons
+    is a review. It awards nothing -- no XP, no Amole, no crown level, no
+    streak change, no Beans consumed -- and only updates vocab progress,
+    which is the point of reviewing. Decided here, from the stored progress,
+    rather than trusted from the client, so a completed lesson cannot be
+    replayed to farm XP or Amole. An offline completion queued before the
+    skill was finished is judged at sync time, in queue order, so the
+    attempt that finished it still counts in full.
     """
     existing = await attempt_repo.get(attempt_id)
     if existing is not None:
@@ -485,14 +494,31 @@ async def complete_lesson(
     )
     LessonAccessPolicy().ensure_accessible(skill_state)
 
-    beans = await beans_repo.get(user_id) or _default_beans(user_id, now)
-    wrong_count = total_count - correct_count
-    new_beans = BeanLedger().consume(beans, wrong_count, now)
-
     progress = await progress_repo.get(user_id, lesson.skill_id) or _default_progress(
         user_id, lesson.skill_id
     )
     streak = await streak_repo.get(user_id) or _default_streak(user_id)
+
+    if progress.completed_at is not None:
+        return await _complete_review(
+            user_id=user_id,
+            lesson=lesson,
+            attempt_id=attempt_id,
+            correct_count=correct_count,
+            total_count=total_count,
+            time_spent_seconds=time_spent_seconds,
+            daily_xp_target=daily_xp_target,
+            client_completed_at=client_completed_at,
+            progress=progress,
+            streak=streak,
+            missed_exercise_ids=missed_exercise_ids,
+            attempt_repo=attempt_repo,
+            vocab_progress_repo=vocab_progress_repo,
+        )
+
+    beans = await beans_repo.get(user_id) or _default_beans(user_id, now)
+    wrong_count = total_count - correct_count
+    new_beans = BeanLedger().consume(beans, wrong_count, now)
     skill_lesson_ids = frozenset(await lesson_repo.list_lesson_ids_by_skill(lesson.skill_id))
 
     completion_date = client_completed_at.date()
@@ -563,6 +589,75 @@ async def complete_lesson(
     )
 
     return completion.outcome
+
+
+async def _complete_review(
+    *,
+    user_id: str,
+    lesson: Lesson,
+    attempt_id: str,
+    correct_count: int,
+    total_count: int,
+    time_spent_seconds: float,
+    daily_xp_target: int,
+    client_completed_at: datetime,
+    progress: UserSkillProgress,
+    streak: UserStreak,
+    missed_exercise_ids: frozenset[str],
+    attempt_repo: LessonAttemptRepository,
+    vocab_progress_repo: UserVocabProgressRepository,
+) -> LessonCompletionOutcome:
+    """`complete_lesson` for a skill already completed: see its docstring.
+
+    The attempt is still recorded, with zero XP, so a retried request
+    replays this same outcome instead of being judged again.
+    """
+    if total_count <= 0 or correct_count < 0 or correct_count > total_count:
+        raise InvalidCompletionError(
+            f"Invalid completion counts: correct_count={correct_count}, total_count={total_count}"
+        )
+
+    for exercise in lesson.exercises:
+        if exercise.vocab_item_id is None:
+            continue
+        await _apply_vocab_progress_update(
+            user_id=user_id,
+            vocab_item_id=exercise.vocab_item_id,
+            was_correct=exercise.id not in missed_exercise_ids,
+            now=client_completed_at,
+            vocab_progress_repo=vocab_progress_repo,
+        )
+
+    completion_date = client_completed_at.date()
+    daily_xp_total = await attempt_repo.sum_xp_by_user_between(
+        user_id, completion_date, completion_date + timedelta(days=1)
+    )
+    outcome = LessonCompletionOutcome(
+        xp_awarded=0,
+        daily_xp_total=daily_xp_total,
+        daily_xp_target=daily_xp_target,
+        streak_count=streak.current_streak,
+        streak_increased_today=False,
+        accuracy_percent=round((correct_count / total_count) * 100),
+        correct_count=correct_count,
+        total_count=total_count,
+        time_spent_seconds=time_spent_seconds,
+        crown_level=progress.crown_level or None,
+        is_review=True,
+    )
+    await attempt_repo.add(
+        LessonAttempt(
+            id=attempt_id,
+            user_id=user_id,
+            lesson_id=lesson.id,
+            correct_count=correct_count,
+            total_count=total_count,
+            xp_awarded=0,
+            completed_at=client_completed_at,
+            outcome=outcome,
+        )
+    )
+    return outcome
 
 
 @dataclass(frozen=True)

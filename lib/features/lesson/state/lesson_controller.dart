@@ -30,6 +30,7 @@ class LessonController extends ChangeNotifier {
     required LessonContent content,
     this.startedOffline = false,
     this.isPractice = false,
+    this.isReview = false,
     Map<String, String>? vocabItemIdByExerciseId,
   }) : _content = content,
        _beansRemaining = content.beansAtStart,
@@ -63,6 +64,18 @@ class LessonController extends ChangeNotifier {
   /// and must work even for a locked skill's item, which `completeLesson`
   /// structurally cannot support.
   final bool isPractice;
+
+  /// True when replaying a skill already completed. A review awards nothing
+  /// and costs nothing: the server records it with no XP, Amole, crown or
+  /// streak change, and a wrong answer here spends no beans, so it can never
+  /// end in the out-of-beans prompt. Completion still goes through
+  /// `completeLesson` -- the server decides it is a review from the skill's
+  /// progress, and still updates vocab review progress.
+  final bool isReview;
+
+  /// Whether a wrong answer spends a bean. Neither Practice nor a review is
+  /// gated by mistakes.
+  bool get usesBeans => !isPractice && !isReview;
 
   /// Practice-only: resolves each of [content.exercises]' ids to the vocab
   /// item it tests, so `_finishLesson` can report per-item correctness by
@@ -113,11 +126,20 @@ class LessonController extends ChangeNotifier {
   TileFeedback _feedback = TileFeedback.none;
   Object? _selectedAnswer;
 
-  /// The left tile currently awaiting a right-tile tap to complete a pair
-  /// (match-pairs only) — transient UI selection state, not part of the
-  /// graded answer itself, so it lives here rather than in
-  /// [selectedAnswer].
-  String? _armedLeftTileId;
+  /// Match-pairs only: the tile tapped first, awaiting a tap in the other
+  /// column to complete a pair -- transient selection state, not part of
+  /// the graded answer, so it lives here rather than in [selectedAnswer].
+  String? _armedTileId;
+  bool _armedIsLeft = true;
+
+  /// Match-pairs only: pairs already graded right (`left -> right`). They
+  /// stay locked in; [selectedAnswer] is set once every pair is here.
+  final Map<String, String> _matchedPairs = {};
+
+  /// Match-pairs only: the pair just graded wrong, shown red until
+  /// [_wrongPairTimer] clears it or the next tap does.
+  (String, String)? _wrongPair;
+  Timer? _wrongPairTimer;
   bool _lessonInterrupted = false;
   bool _lessonFinished = false;
   bool _awaitingRetryIntro = false;
@@ -137,7 +159,10 @@ class LessonController extends ChangeNotifier {
 
   TileFeedback get feedback => _feedback;
   Object? get selectedAnswer => _selectedAnswer;
-  String? get armedLeftTileId => _armedLeftTileId;
+  String? get armedTileId => _armedTileId;
+  bool get armedIsLeft => _armedIsLeft;
+  Map<String, String> get matchedPairs => Map.unmodifiable(_matchedPairs);
+  (String left, String right)? get wrongPair => _wrongPair;
 
   /// True once a wrong answer has dropped beans to 0 — the lesson stops
   /// accepting further answers and the out-of-beans modal takes over.
@@ -165,12 +190,13 @@ class LessonController extends ChangeNotifier {
 
   bool get isChecked => _feedback != TileFeedback.none;
 
-  /// Records the learner's in-progress selection (an `int` option index
-  /// for multiple-choice/listening) before [check] grades it.
-  void selectOption(int index) {
+  /// Answers a choice-based exercise (multiple choice, listening, gap fill)
+  /// and grades it on the spot. One tap is the whole answer for these, so a
+  /// separate Check tap only added a step.
+  void chooseOption(int index) {
     if (isChecked || _lessonInterrupted) return;
     _selectedAnswer = index;
-    notifyListeners();
+    check();
   }
 
   /// Toggles a sentence-construction word-bank token in or out of the
@@ -189,33 +215,74 @@ class LessonController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Handles a tap on a match-pairs tile. Tapping a left tile arms it
-  /// (awaiting the right-tile tap that completes a pair) or, if it's
-  /// already linked, unlinks it. Tapping a right tile while a left tile
-  /// is armed completes that pair — replacing any prior pair either tile
-  /// held, so the mapping stays one-to-one. A right-tile tap with nothing
-  /// armed is a no-op.
+  /// Handles a tap on a match-pairs tile. Each pair is graded the moment
+  /// its second tile is tapped, instead of the whole board on one Check.
+  ///
+  /// The first tap (either column) arms a tile; tapping it again disarms
+  /// it, and tapping another tile in the same column moves the arm. A tap
+  /// in the other column completes the pair: a right one locks in, a wrong
+  /// one flashes briefly and both tiles go back to being tappable. Once
+  /// every pair is locked the exercise is finished and Continue shows.
+  ///
+  /// A wrong pair costs one bean, but only the first in an exercise: the
+  /// learner fixes it on the spot, so the exercise is not requeued, and one
+  /// bean per exercise is what a wrong Check costs everywhere else. It is
+  /// still reported as missed, so its vocab gets reviewed.
   void selectMatchPairsTile(String tileId, {required bool isLeft}) {
     if (isChecked || _lessonInterrupted) return;
-    final current = Map<String, String>.of(
-      (_selectedAnswer as Map<String, String>?) ?? const {},
-    );
-    if (isLeft) {
-      if (current.containsKey(tileId)) {
-        current.remove(tileId);
-        _armedLeftTileId = null;
-      } else {
-        _armedLeftTileId = tileId;
+    final exercise = currentExercise;
+    if (exercise is! MatchPairsExercise) return;
+    final alreadyMatched = isLeft
+        ? _matchedPairs.containsKey(tileId)
+        : _matchedPairs.containsValue(tileId);
+    if (alreadyMatched) return;
+    _clearWrongPair();
+
+    final armed = _armedTileId;
+    if (armed == null || _armedIsLeft == isLeft) {
+      _armedTileId = armed == tileId ? null : tileId;
+      _armedIsLeft = isLeft;
+      notifyListeners();
+      return;
+    }
+
+    final leftId = isLeft ? tileId : armed;
+    final rightId = isLeft ? armed : tileId;
+    _armedTileId = null;
+    if (exercise.correctPairs[leftId] == rightId) {
+      _matchedPairs[leftId] = rightId;
+      unawaited(_feedbackPlayer.playCorrect());
+      if (_matchedPairs.length == exercise.correctPairs.length) {
+        _selectedAnswer = Map<String, String>.of(_matchedPairs);
+        _correctCount++;
+        _feedback = TileFeedback.correct;
       }
     } else {
-      final armedLeftId = _armedLeftTileId;
-      if (armedLeftId == null) return;
-      current.removeWhere((_, rightId) => rightId == tileId);
-      current[armedLeftId] = tileId;
-      _armedLeftTileId = null;
+      _wrongPair = (leftId, rightId);
+      _wrongPairTimer = Timer(_wrongPairFlash, () {
+        _wrongPair = null;
+        notifyListeners();
+      });
+      unawaited(_feedbackPlayer.playIncorrect());
+      _chargeMatchPairsMistake(exercise);
     }
-    _selectedAnswer = current;
     notifyListeners();
+  }
+
+  static const _wrongPairFlash = Duration(milliseconds: 700);
+
+  void _chargeMatchPairsMistake(MatchPairsExercise exercise) {
+    if (_missedExerciseIds.contains(exercise.id)) return;
+    _missedExerciseIds.add(exercise.id);
+    if (!usesBeans) return;
+    _beansRemaining = (_beansRemaining - 1).clamp(0, _content.beansMax);
+    if (_beansRemaining <= 0) _lessonInterrupted = true;
+  }
+
+  void _clearWrongPair() {
+    _wrongPairTimer?.cancel();
+    _wrongPairTimer = null;
+    _wrongPair = null;
   }
 
   /// Grades [selectedAnswer]/[toggleWordBankToken]'s current answer. A wrong
@@ -233,7 +300,7 @@ class LessonController extends ChangeNotifier {
     } else {
       _wrongCount++;
       _missedExerciseIds.add(currentExercise.id);
-      if (!isPractice) {
+      if (usesBeans) {
         _beansRemaining = (_beansRemaining - 1).clamp(0, _content.beansMax);
         if (_beansRemaining <= 0) {
           _lessonInterrupted = true;
@@ -259,7 +326,9 @@ class LessonController extends ChangeNotifier {
     }
     _queuePosition++;
     _selectedAnswer = null;
-    _armedLeftTileId = null;
+    _armedTileId = null;
+    _matchedPairs.clear();
+    _clearWrongPair();
     _feedback = TileFeedback.none;
     // Positions 0..exercises.length-1 always hold the original exercises
     // in their original order (the queue only ever appends); reaching a
@@ -358,7 +427,7 @@ class LessonController extends ChangeNotifier {
           ? 0
           : ((_reportedCorrect / _servedCount) * 100).round();
       _completionResult = LessonCompletionResult(
-        xpEarned: _reportedCorrect * kXpPerCorrectAnswer,
+        xpEarned: isReview ? 0 : _reportedCorrect * kXpPerCorrectAnswer,
         dailyXpTotal: 0,
         dailyXpTarget: 0,
         streakCount: 0,
@@ -368,6 +437,7 @@ class LessonController extends ChangeNotifier {
         totalCount: _servedCount,
         timeSpent: _stopwatch.elapsed,
         pendingSync: true,
+        isReview: isReview,
       );
       _lessonFinished = true;
       _completionError = null;
@@ -405,6 +475,7 @@ class LessonController extends ChangeNotifier {
   @override
   void dispose() {
     _stopwatch.stop();
+    _wrongPairTimer?.cancel();
     super.dispose();
   }
 }
