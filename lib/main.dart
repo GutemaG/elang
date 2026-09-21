@@ -9,6 +9,10 @@ import 'shared/services/sound_preference_repository.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() {
+  // The dependencies below reach platform plugins as soon as they are
+  // built (the sync engine asks connectivity_plus whether it is online), so
+  // the binding has to exist before `runApp` would create it.
+  WidgetsFlutterBinding.ensureInitialized();
   final authDependencies = AuthDependencies();
   // Shared with both LessonDependencies (gates AnswerFeedbackPlayer) and
   // SettingsDependencies (the toggle UI) -- same instance, so a flip is
@@ -68,7 +72,8 @@ class BunaApp extends StatelessWidget {
           courseCache: authDependencies.courseCache,
           sessionRepository: settingsDependencies.sessionRepository,
           userPreferencesApi: settingsDependencies.userPreferencesApi,
-          soundPreferenceRepository: settingsDependencies.soundPreferenceRepository,
+          soundPreferenceRepository:
+              settingsDependencies.soundPreferenceRepository,
         ),
       ),
     );
