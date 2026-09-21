@@ -11,6 +11,7 @@ Dart/Flutter gives one codebase for both mobile platforms with strong typing and
 
 ## Framework
 - **Flutter** — mobile client (iOS/Android)
+- **React (Vite + TypeScript)** — content admin web site in `admin/`, its own Vercel project (added by `017-content-admin-web`)
 - **FastAPI** — backend API service
 
 FastAPI's async support matters for this project because several MVP flows are read/write-heavy under concurrency (XP ledger writes, Bean deductions, SRS due-item queries) and benefit from non-blocking I/O against Postgres/Redis.
@@ -19,7 +20,7 @@ FastAPI's async support matters for this project because several MVP flows are r
 - **Google OAuth** — primary sign-in
 - **Sign in with Apple** — required alongside Google per App Store guidelines (any app offering third-party login must offer Apple's)
 
-No email/password flow for MVP — auth-only, student-only user model (no teacher/admin/content-manager role in the app).
+No email/password flow for MVP — auth-only, student-only user model (no teacher/admin/content-manager role in the app). **Amended 2026-09-22 (`017-content-admin-web`)**: the backend has one admin role for content management, granted to the verified Google emails in `ADMIN_EMAILS`. It is used only by the admin web site; the mobile app still has no admin features.
 
 ## Infrastructure & Deployment
 - **Mobile CI/CD**: Codemagic — cloud macOS build runners; publishes to Google Play Console (internal testing) and App Store Connect/TestFlight
