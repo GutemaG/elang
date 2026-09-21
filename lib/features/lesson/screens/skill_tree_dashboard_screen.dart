@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/beans_status.dart';
 import '../../../shared/models/course.dart';
 import '../../../shared/models/lesson_content.dart';
+import '../../../shared/models/skill_lesson_progress.dart';
 import '../../../shared/models/skill_tree.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/connectivity_monitor.dart';
@@ -24,6 +25,7 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
+import '../../auth/auth_routes.dart';
 import '../../courses/course_badge.dart';
 import '../../courses/course_panel.dart';
 import '../../courses/course_picker.dart';
@@ -85,8 +87,8 @@ class SkillTreeDashboardScreen extends StatefulWidget {
   final LessonPackDownloader lessonPackDownloader;
   final SyncEngine syncEngine;
 
-  /// Threaded down purely to build [SettingsScreen] on tap -- the
-  /// dashboard itself has no other use for these.
+  /// Threaded down to build [SettingsScreen] on tap, and cleared when the
+  /// server says the session is no longer valid (see [_SignedOutState]).
   final SessionRepository sessionRepository;
   final UserPreferencesApi userPreferencesApi;
   final SoundPreferenceRepository soundPreferenceRepository;
@@ -417,6 +419,16 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     _reload(scrollToTop: true);
   }
 
+  /// Forgets the session the server refused and starts sign-in afresh, the
+  /// same way logging out from Settings does. Queued offline lessons stay
+  /// queued and are sent once the learner is signed in again.
+  Future<void> _signInAgain() async {
+    await widget.sessionRepository.clearSession();
+    if (!mounted) return;
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AuthRoutes.signIn, (route) => false);
+  }
+
   /// [scrollToTop] belongs to a course change: the new course's tree has
   /// nothing to do with where the learner was. A reload after a lesson keeps
   /// its position, so the learner comes back to the node they just finished.
@@ -443,7 +455,9 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
         context: context,
         backgroundColor: AppColors.background,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.lg)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadii.lg),
+          ),
         ),
         builder: (_) => ReviewSkillSheet(skillTitle: node.title),
       );
@@ -463,6 +477,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           skillVersion: node.contentVersion,
           beansNow: _lastData?.beansStatus.beans,
           isReview: isReview,
+          skillProgress: SkillLessonProgress.forNode(node),
         ),
       ),
     );
@@ -523,6 +538,9 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
               return _dashboard(context, previous);
             }
             if (snapshot.hasError) {
+              if (_isSignedOut(snapshot.error)) {
+                return _SignedOutState(onSignIn: _signInAgain);
+              }
               return _ErrorState(onRetry: _reload);
             }
             return _dashboard(context, snapshot.data!);
@@ -745,9 +763,7 @@ class _CategoryNodes extends StatelessWidget {
         children: [
           for (int i = 0; i < nodes.length; i++)
             Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: AppSpacing.spaceMd,
-              ),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceMd),
               child: Align(
                 alignment: _lateralOffset(i),
                 child: Stack(
@@ -988,6 +1004,60 @@ class _OfflineNote extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The server's answer when the saved session is unknown or expired: it was
+/// signed out elsewhere, it expired, or it was issued by a different
+/// server/database than the one the app is now talking to.
+bool _isSignedOut(Object? error) =>
+    error is LessonApiException &&
+    (error.errorCode == 'invalid_session' ||
+        error.errorCode == 'missing_credentials');
+
+/// Shown instead of [_ErrorState] when the session is no longer valid.
+/// Retrying can never help there, and "check your connection" would be
+/// wrong, so this says what happened and leads back to sign-in.
+class _SignedOutState extends StatelessWidget {
+  const _SignedOutState({required this.onSignIn});
+
+  final VoidCallback onSignIn;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.spaceLg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.lock_clock,
+              size: 40,
+              color: AppColors.tertiaryBrand,
+            ),
+            const SizedBox(height: AppSpacing.spaceSm),
+            Text(
+              'Please sign in again',
+              style: AppTypography.headlineSm.copyWith(
+                color: AppColors.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.space2xs),
+            Text(
+              'Your session has ended. Your progress is saved to your '
+              'account and will be back once you sign in.',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySm.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.spaceMd),
+            TactileButton(label: 'Sign in', onPressed: onSignIn),
+          ],
+        ),
       ),
     );
   }

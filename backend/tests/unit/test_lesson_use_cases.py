@@ -165,6 +165,9 @@ class TestGetSkillTree:
         )
 
         assert summary.lesson_id_by_skill["s1"] == "lesson-a2"
+        # One of two lessons done: the skill is still unfinished, and the
+        # summary says how far through it the learner is.
+        assert summary.lesson_progress_by_skill["s1"] == (1, 2)
 
 
 class TestGetLessonContent:

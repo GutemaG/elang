@@ -57,6 +57,8 @@ void main() {
                   'state': 'active',
                   'crown_level': 0,
                   'lesson_id': 'lesson-a1',
+                  'lessons_done': 1,
+                  'lesson_count': 2,
                 },
                 {
                   'id': 'skill-b',
@@ -105,6 +107,11 @@ void main() {
         // for it (shouldn't happen with real content, but must not crash).
         expect(result.nodes[1].lessonId, 'skill-b');
         expect(result.nodes[1].state, SkillNodeState.locked);
+        // How far through its lessons each skill is; absent means 0.
+        expect(result.nodes[0].lessonsDone, 1);
+        expect(result.nodes[0].lessonCount, 2);
+        expect(result.nodes[0].isPartlyDone, isTrue);
+        expect(result.nodes[1].lessonCount, 0);
       },
     );
 

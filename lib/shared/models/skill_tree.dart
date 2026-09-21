@@ -30,6 +30,8 @@ class SkillTreeNode {
     required this.categoryId,
     this.crownLevel = 0,
     this.contentVersion,
+    this.lessonsDone = 0,
+    this.lessonCount = 0,
   });
 
   final String id;
@@ -51,6 +53,21 @@ class SkillTreeNode {
   /// possible yet", never a crash.
   final DateTime? contentVersion;
 
+  /// How many of this skill's [lessonCount] lessons are done in the current
+  /// pass. A skill only becomes [SkillNodeState.completed] once all of them
+  /// are, so an unfinished node shows this to make a finished lesson count.
+  /// Both are 0 for an older backend that does not send them.
+  final int lessonsDone;
+  final int lessonCount;
+
+  /// True when the skill is part-way through: at least one lesson done,
+  /// but not yet all of them.
+  bool get isPartlyDone =>
+      state == SkillNodeState.active &&
+      lessonCount > 1 &&
+      lessonsDone > 0 &&
+      lessonsDone < lessonCount;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'lesson_id': lessonId,
@@ -60,6 +77,8 @@ class SkillTreeNode {
     'category_id': categoryId,
     'crown_level': crownLevel,
     'content_version': contentVersion?.toUtc().toIso8601String(),
+    'lessons_done': lessonsDone,
+    'lesson_count': lessonCount,
   };
 
   static SkillTreeNode fromJson(Map<String, dynamic> json) => SkillTreeNode(
@@ -73,9 +92,15 @@ class SkillTreeNode {
     contentVersion: json['content_version'] is String
         ? DateTime.tryParse(json['content_version'] as String)
         : null,
+    lessonsDone: json['lessons_done'] as int? ?? 0,
+    lessonCount: json['lesson_count'] as int? ?? 0,
   );
 
-  SkillTreeNode copyWith({SkillNodeState? state, int? crownLevel}) {
+  SkillTreeNode copyWith({
+    SkillNodeState? state,
+    int? crownLevel,
+    int? lessonsDone,
+  }) {
     return SkillTreeNode(
       id: id,
       lessonId: lessonId,
@@ -85,6 +110,8 @@ class SkillTreeNode {
       categoryId: categoryId,
       crownLevel: crownLevel ?? this.crownLevel,
       contentVersion: contentVersion,
+      lessonsDone: lessonsDone ?? this.lessonsDone,
+      lessonCount: lessonCount,
     );
   }
 }

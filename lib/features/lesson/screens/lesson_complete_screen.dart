@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/lesson_completion_result.dart';
+import '../../../shared/models/skill_lesson_progress.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
@@ -17,10 +18,18 @@ import '../widgets/level_up_sheet.dart';
 ///
 /// A review (a skill already completed, replayed) earns nothing, so it
 /// shows how it went instead of XP, streak and the daily goal.
+///
+/// With [skillProgress], it also says where this lesson left its skill:
+/// how many lessons are still to go, or that the skill is now finished.
 class LessonCompleteScreen extends StatelessWidget {
-  const LessonCompleteScreen({super.key, required this.result});
+  const LessonCompleteScreen({
+    super.key,
+    required this.result,
+    this.skillProgress,
+  });
 
   final LessonCompletionResult result;
+  final SkillLessonProgress? skillProgress;
 
   Future<void> _onContinue(BuildContext context) async {
     // A pending-sync result's crown/streak-freeze fields are always at
@@ -59,138 +68,233 @@ class LessonCompleteScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.marginMobile,
           ),
-          child: Column(
-            children: [
-              const SizedBox(height: AppSpacing.spaceLg),
-              Container(
-                width: 120,
-                height: 120,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.surfaceContainerLow,
-                ),
-                child: const Icon(
-                  Icons.local_cafe,
-                  size: 56,
-                  color: AppColors.secondaryContainer,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.spaceMd),
-              Text(
-                result.isReview ? 'Review Complete!' : 'Lesson Complete!',
-                style: AppTypography.displayLgMobile.copyWith(
-                  color: AppColors.primaryContainer,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.spaceLg),
-              if (result.isReview)
-                _ReviewSummary(result: result)
-              else ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.star,
-                        color: AppColors.secondaryContainer,
-                        value: '+${result.xpEarned}',
-                        label: 'XP EARNED',
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.spaceXs),
-                    Expanded(
-                      child: result.pendingSync
-                          ? const _StatCard(
-                              icon: Icons.local_fire_department,
-                              color: AppColors.tertiaryBrand,
-                              value: '--',
-                              label: 'SYNCS WHEN ONLINE',
-                            )
-                          : _StatCard(
-                              icon: Icons.local_fire_department,
-                              color: AppColors.tertiaryBrand,
-                              value: '${result.streakCount} Days',
-                              label: 'STREAK',
-                              badge: result.streakIncreasedToday
-                                  ? '+1 Today'
-                                  : null,
-                            ),
-                    ),
-                    const SizedBox(width: AppSpacing.spaceXs),
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.verified,
-                        color: AppColors.primaryContainer,
-                        value: '${result.accuracyPercent}%',
-                        label: 'ACCURACY',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.spaceMd),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.spaceMd),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(AppRadii.base),
-                    border: Border.all(color: AppColors.outlineVariant),
-                  ),
+          // Scrolls only when the summary is taller than the screen (a
+          // short phone, large text); otherwise it fills the screen and the
+          // Spacer keeps Continue at the bottom.
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Daily Goal Progress',
-                        style: AppTypography.labelLg.copyWith(
-                          color: AppColors.onSurface,
+                      const SizedBox(height: AppSpacing.spaceLg),
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.surfaceContainerLow,
+                        ),
+                        child: const Icon(
+                          Icons.local_cafe,
+                          size: 56,
+                          color: AppColors.secondaryContainer,
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.spaceXs),
-                      if (result.pendingSync)
-                        Text(
-                          "You're offline -- this lesson's XP will sync and "
-                          'count toward today\'s goal once you\'re back online.',
-                          style: AppTypography.bodySm.copyWith(
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                        )
-                      else ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadii.full),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 12,
-                            backgroundColor: AppColors.surfaceContainer,
-                            valueColor: const AlwaysStoppedAnimation(
-                              AppColors.primaryContainer,
-                            ),
-                          ),
+                      const SizedBox(height: AppSpacing.spaceMd),
+                      Text(
+                        result.isReview
+                            ? 'Review Complete!'
+                            : 'Lesson Complete!',
+                        style: AppTypography.displayLgMobile.copyWith(
+                          color: AppColors.primaryContainer,
                         ),
-                        const SizedBox(height: AppSpacing.space2xs),
-                        Text(
-                          '${result.dailyXpTotal} / ${result.dailyXpTarget} XP today',
-                          style: AppTypography.bodySm.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: AppSpacing.spaceLg),
+                      if (skillProgress != null && !result.isReview) ...[
+                        _SkillProgressCard(
+                          progress: skillProgress!,
+                          unlockedTitle: result.skillUnlockedTitle,
+                        ),
+                        const SizedBox(height: AppSpacing.spaceMd),
+                      ],
+                      if (result.isReview)
+                        _ReviewSummary(result: result)
+                      else ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _StatCard(
+                                icon: Icons.star,
+                                color: AppColors.secondaryContainer,
+                                value: '+${result.xpEarned}',
+                                label: 'XP EARNED',
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.spaceXs),
+                            Expanded(
+                              child: result.pendingSync
+                                  ? const _StatCard(
+                                      icon: Icons.local_fire_department,
+                                      color: AppColors.tertiaryBrand,
+                                      value: '--',
+                                      label: 'SYNCS WHEN ONLINE',
+                                    )
+                                  : _StatCard(
+                                      icon: Icons.local_fire_department,
+                                      color: AppColors.tertiaryBrand,
+                                      value: '${result.streakCount} Days',
+                                      label: 'STREAK',
+                                      badge: result.streakIncreasedToday
+                                          ? '+1 Today'
+                                          : null,
+                                    ),
+                            ),
+                            const SizedBox(width: AppSpacing.spaceXs),
+                            Expanded(
+                              child: _StatCard(
+                                icon: Icons.verified,
+                                color: AppColors.primaryContainer,
+                                value: '${result.accuracyPercent}%',
+                                label: 'ACCURACY',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.spaceMd),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppSpacing.spaceMd),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(AppRadii.base),
+                            border: Border.all(color: AppColors.outlineVariant),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Daily Goal Progress',
+                                style: AppTypography.labelLg.copyWith(
+                                  color: AppColors.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.spaceXs),
+                              if (result.pendingSync)
+                                Text(
+                                  "You're offline -- this lesson's XP will sync and "
+                                  'count toward today\'s goal once you\'re back online.',
+                                  style: AppTypography.bodySm.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                )
+                              else ...[
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.full,
+                                  ),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    minHeight: 12,
+                                    backgroundColor: AppColors.surfaceContainer,
+                                    valueColor: const AlwaysStoppedAnimation(
+                                      AppColors.primaryContainer,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.space2xs),
+                                Text(
+                                  '${result.dailyXpTotal} / ${result.dailyXpTarget} XP today',
+                                  style: AppTypography.bodySm.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
+                      const Spacer(),
+                      TactileButton(
+                        label: 'Continue',
+                        onPressed: () => _onContinue(context),
+                        trailing: const Icon(
+                          Icons.arrow_forward,
+                          color: AppColors.onPrimary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.spaceLg),
                     ],
                   ),
                 ),
-              ],
-              const Spacer(),
-              TactileButton(
-                label: 'Continue',
-                onPressed: () => _onContinue(context),
-                trailing: const Icon(
-                  Icons.arrow_forward,
-                  color: AppColors.onPrimary,
-                  size: 20,
-                ),
               ),
-              const SizedBox(height: AppSpacing.spaceLg),
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "Lesson 1 of 2 done. 1 more lesson to finish Numbers." -- or, on the
+/// skill's last lesson, that the skill is finished and what it unlocked.
+class _SkillProgressCard extends StatelessWidget {
+  const _SkillProgressCard({required this.progress, this.unlockedTitle});
+
+  final SkillLessonProgress progress;
+  final String? unlockedTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final left = progress.lessonsLeftAfter;
+    final String headline;
+    final String detail;
+    if (progress.finishesSkill) {
+      headline = 'You finished ${progress.skillTitle}!';
+      detail = unlockedTitle != null
+          ? '$unlockedTitle is now unlocked.'
+          : 'All ${progress.lessonCount} lessons done.';
+    } else {
+      headline =
+          'Lesson ${progress.lessonNumber} of ${progress.lessonCount} done';
+      detail =
+          '$left more ${left == 1 ? 'lesson' : 'lessons'} to finish '
+          '${progress.skillTitle}.';
+    }
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.spaceMd),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadii.base),
+        border: Border.all(color: AppColors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            headline,
+            style: AppTypography.labelLg.copyWith(color: AppColors.onSurface),
+          ),
+          const SizedBox(height: AppSpacing.spaceXs),
+          Row(
+            children: [
+              for (var i = 0; i < progress.lessonCount; i++) ...[
+                if (i > 0) const SizedBox(width: AppSpacing.space2xs),
+                Expanded(
+                  child: Container(
+                    height: 10,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadii.full),
+                      color: i < progress.lessonNumber
+                          ? AppColors.primaryContainer
+                          : AppColors.surfaceContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppSpacing.space2xs),
+          Text(
+            detail,
+            style: AppTypography.bodySm.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

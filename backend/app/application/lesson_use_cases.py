@@ -161,6 +161,11 @@ class SkillTreeSummary:
     entries: list[SkillTreeEntry]
     lesson_id_by_skill: dict[str, str | None]
     content_version_by_skill: dict[str, datetime]
+    # How far through its lessons each skill's current pass is:
+    # (lessons done this cycle, lessons in the skill). A skill turns green
+    # only when every one of its lessons is done, so the dashboard shows
+    # this to make a finished lesson visibly count.
+    lesson_progress_by_skill: dict[str, tuple[int, int]]
     categories: list[Category]
     # Bolt 024 (ADR-12): the course this tree belongs to; `None` only when the
     # tree was read unscoped (unit tests), never from the HTTP router.
@@ -234,13 +239,19 @@ async def get_skill_tree(
     # same small constant query count as the rest of get_skill_tree.
     lessons_by_skill = await lesson_repo.list_lesson_ids_by_skills([s.id for s in skills])
     lesson_id_by_skill: dict[str, str | None] = {}
+    lesson_progress_by_skill: dict[str, tuple[int, int]] = {}
     for skill in skills:
         lesson_ids = lessons_by_skill.get(skill.id, ())
         if not lesson_ids:
             lesson_id_by_skill[skill.id] = None
+            lesson_progress_by_skill[skill.id] = (0, 0)
             continue
         progress = progress_by_skill.get(skill.id)
         done_this_cycle = progress.completed_lesson_ids_this_cycle if progress else frozenset()
+        lesson_progress_by_skill[skill.id] = (
+            sum(1 for lid in lesson_ids if lid in done_this_cycle),
+            len(lesson_ids),
+        )
         lesson_id_by_skill[skill.id] = next(
             (lid for lid in lesson_ids if lid not in done_this_cycle), lesson_ids[0]
         )
@@ -257,6 +268,7 @@ async def get_skill_tree(
         entries=entries,
         lesson_id_by_skill=lesson_id_by_skill,
         content_version_by_skill=content_version_by_skill,
+        lesson_progress_by_skill=lesson_progress_by_skill,
         categories=categories,
         course=course,
         unit_title=categories[0].title if categories else "",

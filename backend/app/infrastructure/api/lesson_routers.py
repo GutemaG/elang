@@ -93,6 +93,8 @@ def _to_skill_tree_response(summary: SkillTreeSummary) -> SkillTreeResponse:
                 crown_level=entry.crown_level,
                 lesson_id=summary.lesson_id_by_skill.get(entry.skill.id),
                 content_version=summary.content_version_by_skill[entry.skill.id],
+                lessons_done=summary.lesson_progress_by_skill.get(entry.skill.id, (0, 0))[0],
+                lesson_count=summary.lesson_progress_by_skill.get(entry.skill.id, (0, 0))[1],
             )
             for entry in summary.entries
         ],

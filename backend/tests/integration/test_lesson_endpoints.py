@@ -189,6 +189,9 @@ class TestSkillTreeEndpoint:
         # 003-offline-caching-and-sync) on every skill entry.
         assert by_id[seeded_content["skill_a"]]["content_version"]
         assert by_id[seeded_content["skill_b"]]["content_version"]
+        # How far through its lessons each skill is, for a brand-new user.
+        assert by_id[seeded_content["skill_a"]]["lessons_done"] == 0
+        assert by_id[seeded_content["skill_a"]]["lesson_count"] >= 1
 
 
 class TestLessonContentEndpoint:

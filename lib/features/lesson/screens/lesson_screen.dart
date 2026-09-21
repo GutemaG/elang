@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/beans_status.dart';
 import '../../../shared/models/exercise.dart';
 import '../../../shared/models/lesson_content.dart';
+import '../../../shared/models/skill_lesson_progress.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/connectivity_monitor.dart';
 import '../../../shared/services/course_cache_store.dart';
@@ -19,6 +20,7 @@ import '../../../shared/widgets/tactile_button.dart';
 import '../state/lesson_controller.dart';
 import '../widgets/choice_tile.dart';
 import '../widgets/exercise_prompt_header.dart';
+import '../widgets/exit_lesson_sheet.dart';
 import '../widgets/gap_sentence.dart';
 import '../widgets/match_pairs_builder.dart';
 import '../widgets/out_of_beans_sheet.dart';
@@ -53,6 +55,7 @@ class LessonScreen extends StatefulWidget {
     this.skillVersion,
     this.beansNow,
     this.isReview = false,
+    this.skillProgress,
   }) : practiceContent = null,
        practiceVocabItemIdByExerciseId = null;
 
@@ -78,7 +81,8 @@ class LessonScreen extends StatefulWidget {
        lessonCache = null,
        skillVersion = null,
        beansNow = null,
-       isReview = false;
+       isReview = false,
+       skillProgress = null;
 
   final String lessonId;
   final LessonApi lessonApi;
@@ -107,6 +111,11 @@ class LessonScreen extends StatefulWidget {
 
   /// Replaying a skill already completed: see `LessonController.isReview`.
   final bool isReview;
+
+  /// Which lesson of its skill this is, passed on to the summary so it can
+  /// say how many lessons are left; `null` shows nothing there (see
+  /// [SkillLessonProgress.forNode]).
+  final SkillLessonProgress? skillProgress;
 
   bool get isPractice => practiceContent != null;
 
@@ -281,8 +290,10 @@ class _LessonScreenState extends State<LessonScreen> {
     if (controller == null || controller.completionResult == null) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) =>
-            LessonCompleteScreen(result: controller.completionResult!),
+        builder: (_) => LessonCompleteScreen(
+          result: controller.completionResult!,
+          skillProgress: widget.skillProgress,
+        ),
       ),
     );
   }
@@ -292,6 +303,32 @@ class _LessonScreenState extends State<LessonScreen> {
     _controller?.removeListener(_onControllerChanged);
     _controller?.dispose();
     super.dispose();
+  }
+
+  /// Part-way through: exercises on screen, not yet finished, and not
+  /// stopped by the out-of-beans prompt (which has its own way out).
+  bool get _midLesson {
+    final controller = _controller;
+    return controller != null &&
+        !controller.lessonFinished &&
+        !controller.lessonInterrupted;
+  }
+
+  /// Back gesture, back button or the close button, part-way through:
+  /// asks first, because nothing is saved until the lesson is finished.
+  Future<void> _confirmExit() async {
+    final leave = await showModalBottomSheet<bool>(
+      context: context,
+      // Sized to its content, not capped at the default 9/16 of the screen,
+      // so it fits on a short phone.
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.lg)),
+      ),
+      builder: (_) => ExitLessonSheet(isPractice: widget.isPractice),
+    );
+    if (leave == true && mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -320,9 +357,17 @@ class _LessonScreenState extends State<LessonScreen> {
             }
             return AnimatedBuilder(
               animation: _controller!,
-              builder: (context, _) => _ExerciseBody(
-                controller: _controller!,
-                audioPlayer: widget.audioPlayer,
+              // Inside the builder so `canPop` follows the controller: once
+              // the lesson is finished or out of beans, back just goes back.
+              builder: (context, _) => PopScope(
+                canPop: !_midLesson,
+                onPopInvokedWithResult: (didPop, _) {
+                  if (!didPop) _confirmExit();
+                },
+                child: _ExerciseBody(
+                  controller: _controller!,
+                  audioPlayer: widget.audioPlayer,
+                ),
               ),
             );
           },
@@ -423,7 +468,9 @@ class _ExerciseBody extends StatelessWidget {
             Text(
               "Couldn't save your progress. Tap Continue to try again.",
               textAlign: TextAlign.center,
-              style: AppTypography.bodySm.copyWith(color: AppColors.tertiaryBrand),
+              style: AppTypography.bodySm.copyWith(
+                color: AppColors.tertiaryBrand,
+              ),
             ),
             const SizedBox(height: AppSpacing.spaceSm),
           ],
@@ -521,7 +568,10 @@ class _MistakeBadge extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.tertiaryBrand, AppColors.tertiaryContainer],
+                  colors: [
+                    AppColors.tertiaryBrand,
+                    AppColors.tertiaryContainer,
+                  ],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -575,6 +625,15 @@ class _ProgressHeader extends StatelessWidget {
     final total = controller.exercises.length;
     return Row(
       children: [
+        // Goes through the lesson's PopScope, so part-way through it asks
+        // before leaving, the same as the back gesture.
+        IconButton(
+          onPressed: () => Navigator.of(context).maybePop(),
+          icon: const Icon(Icons.close, color: AppColors.onSurfaceVariant),
+          tooltip: 'Exit lesson',
+          visualDensity: VisualDensity.compact,
+        ),
+        const SizedBox(width: AppSpacing.space2xs),
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadii.full),
@@ -594,7 +653,11 @@ class _ProgressHeader extends StatelessWidget {
             label: '${controller.beansRemaining} beans remaining',
             child: Row(
               children: [
-                const Icon(Icons.favorite, color: AppColors.tertiaryBrand, size: 18),
+                const Icon(
+                  Icons.favorite,
+                  color: AppColors.tertiaryBrand,
+                  size: 18,
+                ),
                 const SizedBox(width: 2),
                 Text(
                   '${controller.beansRemaining}',
@@ -638,7 +701,10 @@ class _ExercisePrompt extends StatelessWidget {
         exercise: e,
         controller: controller,
       ),
-      MatchPairsExercise e => _MatchPairsBody(exercise: e, controller: controller),
+      MatchPairsExercise e => _MatchPairsBody(
+        exercise: e,
+        controller: controller,
+      ),
       GapFillExercise e => _GapFillBody(exercise: e, controller: controller),
     };
   }
@@ -819,7 +885,9 @@ class _SentenceConstructionBody extends StatelessWidget {
         // The prompt already names the task ("Translate: 'I am fine'"); one
         // that does not gets a generic one, rather than a second
         // "Translate:" stacked in front of the prompt's own.
-        ExercisePromptHeader(parts: _translatePrompt(exercise.promptTranslation)),
+        ExercisePromptHeader(
+          parts: _translatePrompt(exercise.promptTranslation),
+        ),
         const SizedBox(height: AppSpacing.spaceLg),
         WordBankBuilder(
           wordBank: exercise.wordBank,
@@ -885,7 +953,9 @@ class _ActionBar extends StatelessWidget {
         final built = controller.selectedAnswer as List<String>?;
         return TactileButton(
           label: 'Check',
-          onPressed: built != null && built.isNotEmpty ? controller.check : null,
+          onPressed: built != null && built.isNotEmpty
+              ? controller.check
+              : null,
         );
       }
       // Holds the button's place so the exercise does not jump when

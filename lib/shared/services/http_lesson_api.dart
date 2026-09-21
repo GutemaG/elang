@@ -74,11 +74,13 @@ class HttpLessonApi implements LessonApi {
   Future<http.Response> _post(String path, {Map<String, dynamic>? body}) async {
     final headers = await _authHeaders();
     try {
-      return await _client.post(
-        Uri.parse('$_baseUrl$path'),
-        headers: headers,
-        body: body == null ? null : jsonEncode(body),
-      ).timeout(AuthConfig.requestTimeout);
+      return await _client
+          .post(
+            Uri.parse('$_baseUrl$path'),
+            headers: headers,
+            body: body == null ? null : jsonEncode(body),
+          )
+          .timeout(AuthConfig.requestTimeout);
     } on Object {
       throw const LessonApiException('Network request failed');
     }
@@ -160,7 +162,9 @@ class HttpLessonApi implements LessonApi {
 
     final rawCourse = json['course'];
     return SkillTreeResponse(
-      course: rawCourse is Map<String, dynamic> ? Course.fromJson(rawCourse) : null,
+      course: rawCourse is Map<String, dynamic>
+          ? Course.fromJson(rawCourse)
+          : null,
       categories: categories,
       nodes: nodes,
       streakCount: json['streak_count'] as int,
@@ -191,6 +195,8 @@ class HttpLessonApi implements LessonApi {
       categoryId: categoryId,
       crownLevel: json['crown_level'] as int,
       contentVersion: _parseContentVersion(json['content_version']),
+      lessonsDone: json['lessons_done'] as int? ?? 0,
+      lessonCount: json['lesson_count'] as int? ?? 0,
     );
   }
 

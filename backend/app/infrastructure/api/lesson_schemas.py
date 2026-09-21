@@ -49,6 +49,11 @@ class SkillTreeEntryResponse(BaseModel):
     # 003-offline-caching-and-sync) -- the client compares this against its
     # cached copy's version to decide whether a re-download is needed.
     content_version: datetime
+    # How far through the skill's lessons the current pass is. A skill is
+    # `completed` only once all `lesson_count` lessons are done, so a client
+    # shows `lessons_done`/`lesson_count` on an unfinished node.
+    lessons_done: int
+    lesson_count: int
 
 
 class SkillTreeResponse(BaseModel):
