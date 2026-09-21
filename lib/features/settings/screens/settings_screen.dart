@@ -209,9 +209,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return ListView(
           padding: const EdgeInsets.all(AppSpacing.marginMobile),
           children: [
-            Text(
-              _providerLabel(_controller.authProvider),
-              style: AppTypography.bodySm.copyWith(color: AppColors.onSurfaceVariant),
+            _ProfileHeader(
+              name: _controller.displayName,
+              email: _controller.email,
+              photoUrl: _controller.photoUrl,
+              providerLabel: _providerLabel(_controller.authProvider),
             ),
             const SizedBox(height: AppSpacing.spaceLg),
             ListTile(
@@ -270,6 +272,78 @@ class _OptionSheet extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Who is signed in: the provider's photo (initials when there is none, or
+/// it cannot load -- offline, say), name and email, and which provider.
+/// Whatever is missing is simply left out; with nothing at all it is just
+/// the provider line, which is what a session from before this showed.
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({
+    required this.name,
+    required this.email,
+    required this.photoUrl,
+    required this.providerLabel,
+  });
+
+  final String? name;
+  final String? email;
+  final String? photoUrl;
+  final String providerLabel;
+
+  String get _initials {
+    final source = name ?? email;
+    if (source == null) return '?';
+    final words = source.split(RegExp(r'[\s@.]+')).where((w) => w.isNotEmpty);
+    return words.take(2).map((w) => w.characters.first.toUpperCase()).join();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final url = photoUrl;
+    final title = name ?? email;
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 32,
+          backgroundColor: AppColors.primaryContainer,
+          foregroundImage: url == null ? null : NetworkImage(url),
+          // A photo that fails to load falls back to the initials below.
+          onForegroundImageError: url == null ? null : (_, _) {},
+          child: Text(
+            _initials,
+            style: AppTypography.headlineSm.copyWith(color: AppColors.onPrimary),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.spaceMd),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (title != null)
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+                ),
+              if (name != null && email != null)
+                Text(
+                  email!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySm.copyWith(color: AppColors.onSurfaceVariant),
+                ),
+              Text(
+                providerLabel,
+                style: AppTypography.bodySm.copyWith(color: AppColors.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

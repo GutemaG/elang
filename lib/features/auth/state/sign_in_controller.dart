@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../shared/models/provider_profile.dart';
 import '../../../shared/models/session_state.dart';
 import '../../../shared/services/auth_api.dart';
 import '../../../shared/services/onboarding_repository.dart';
@@ -98,6 +99,9 @@ class SignInController extends ChangeNotifier {
 
   Future<void> _completeWithToken(AuthProvider provider, String token) async {
     final pendingSelection = await _onboardingRepository.loadPendingSelection();
+    // Who signed in, for Settings -- read now, while the provider's token is
+    // in hand; only the backend's session token is kept afterwards.
+    final profile = ProviderProfile.fromIdToken(token);
 
     final result = switch (provider) {
       AuthProvider.google => await _authApi.signInWithGoogle(
@@ -117,6 +121,9 @@ class SignInController extends ChangeNotifier {
             token: token,
             expiresAt: expiresAt,
             authProvider: provider.name,
+            displayName: profile.name,
+            email: profile.email,
+            photoUrl: profile.photoUrl,
           ),
         );
         _status = SignInStatus.idle;

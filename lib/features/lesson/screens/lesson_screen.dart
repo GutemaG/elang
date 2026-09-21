@@ -18,6 +18,7 @@ import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/tactile_button.dart';
 import '../state/lesson_controller.dart';
 import '../widgets/choice_tile.dart';
+import '../widgets/exercise_prompt_header.dart';
 import '../widgets/gap_sentence.dart';
 import '../widgets/match_pairs_builder.dart';
 import '../widgets/out_of_beans_sheet.dart';
@@ -655,13 +656,8 @@ class _GapFillBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          exercise.prompt,
-          style: AppTypography.bodyMd.copyWith(
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.spaceSm),
+        ExercisePromptHeader(parts: splitPrompt(exercise.prompt)),
+        const SizedBox(height: AppSpacing.spaceMd),
         GapSentence(
           before: exercise.sentenceBefore,
           after: exercise.sentenceAfter,
@@ -820,10 +816,10 @@ class _SentenceConstructionBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Translate: "${exercise.promptTranslation}"',
-          style: AppTypography.headlineMd.copyWith(color: AppColors.onSurface),
-        ),
+        // The prompt already names the task ("Translate: 'I am fine'"); one
+        // that does not gets a generic one, rather than a second
+        // "Translate:" stacked in front of the prompt's own.
+        ExercisePromptHeader(parts: _translatePrompt(exercise.promptTranslation)),
         const SizedBox(height: AppSpacing.spaceLg),
         WordBankBuilder(
           wordBank: exercise.wordBank,
@@ -836,6 +832,12 @@ class _SentenceConstructionBody extends StatelessWidget {
       ],
     );
   }
+}
+
+PromptParts _translatePrompt(String prompt) {
+  final parts = splitPrompt(prompt);
+  if (parts.content != null) return parts;
+  return PromptParts(instruction: 'Translate this sentence', content: prompt);
 }
 
 class _MatchPairsBody extends StatelessWidget {

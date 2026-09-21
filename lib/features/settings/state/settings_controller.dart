@@ -57,6 +57,12 @@ class SettingsController extends ChangeNotifier {
   /// screen shows a generic fallback in that case, not an error.
   String? _authProvider;
 
+  /// The signed-in person as their provider reported it (see
+  /// `SessionState.displayName`); any of these may be `null`.
+  String? _displayName;
+  String? _email;
+  String? _photoUrl;
+
   SettingsLoadStatus get loadStatus => _loadStatus;
   String? get errorMessage => _errorMessage;
   String? get selectedLanguage => _selectedLanguage;
@@ -64,6 +70,9 @@ class SettingsController extends ChangeNotifier {
   bool get notificationEnabled => _notificationEnabled;
   bool get soundEnabled => _soundEnabled;
   String? get authProvider => _authProvider;
+  String? get displayName => _displayName;
+  String? get email => _email;
+  String? get photoUrl => _photoUrl;
 
   /// The current daily-goal preset's minutes, reverse-mapped from
   /// [_dailyXpTarget]. `null` only if the stored value somehow doesn't
@@ -85,6 +94,9 @@ class SettingsController extends ChangeNotifier {
 
     final session = await _sessionRepository.getSessionState();
     _authProvider = session.authProvider;
+    _displayName = session.displayName;
+    _email = session.email;
+    _photoUrl = session.photoUrl;
     final token = session.token;
     if (token == null || token.isEmpty) {
       _loadStatus = SettingsLoadStatus.error;

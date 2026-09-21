@@ -81,6 +81,57 @@ Widget _wrap({
 }
 
 void main() {
+  group('profile header', () {
+    Future<SessionRepository> withProfile({String? photoUrl}) async {
+      final repo = SessionRepository(storage: InMemorySecureStorageService());
+      await repo.saveSession(
+        SessionState(
+          token: 'session-token',
+          expiresAt: DateTime.now().add(const Duration(days: 1)),
+          authProvider: 'google',
+          displayName: 'Abebe Bikila',
+          email: 'abebe@example.com',
+          photoUrl: photoUrl,
+        ),
+      );
+      return repo;
+    }
+
+    testWidgets('shows the name, email and initials from Google', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          sessionApi: _sessionApiReturning(),
+          sessionRepository: await withProfile(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Abebe Bikila'), findsOneWidget);
+      expect(find.text('abebe@example.com'), findsOneWidget);
+      expect(find.text('AB'), findsOneWidget);
+      expect(find.text('Signed in with Google'), findsOneWidget);
+    });
+
+    testWidgets('a photo that cannot load falls back to the initials', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          sessionApi: _sessionApiReturning(),
+          sessionRepository: await withProfile(
+            photoUrl: 'https://example.com/photo.jpg',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('AB'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   testWidgets(
     'shows the provider label, daily goal, course, and both switches',
     (tester) async {

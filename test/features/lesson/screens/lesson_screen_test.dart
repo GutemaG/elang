@@ -27,6 +27,7 @@ import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
 import 'package:elang/shared/models/practice_completion_result.dart';
 
+import 'package:elang/shared/services/lesson_api_exception.dart';
 import 'package:elang/shared/services/lesson_pack_downloader.dart';
 import 'package:elang/shared/services/sync_engine.dart';
 
@@ -1256,5 +1257,113 @@ void main() {
         );
       },
     );
+  });
+
+  group('connection lost before the lesson is saved', () {
+    Future<FakePendingSyncQueueStore> finishWith(
+      WidgetTester tester,
+      Object error,
+    ) async {
+      final api = _apiFor(_gapFillLesson)..completeLessonError = error;
+      final queue = FakePendingSyncQueueStore();
+      final connectivity = FakeConnectivityMonitor();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            lessonId: 'lesson-gf',
+            lessonApi: api,
+            audioPlayer: FakeLessonAudioPlayer(),
+            feedbackPlayer: FakeAnswerFeedbackPlayer(),
+            connectivityMonitor: connectivity,
+            lessonPackStore: FakeLessonPackStore(),
+            // The lesson started online; by the end the connection is gone,
+            // so the engine holds the entry instead of retrying at once.
+            syncEngine: SyncEngine(
+              lessonApi: api,
+              connectivityMonitor: FakeConnectivityMonitor(online: false),
+              queueStore: queue,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(_gapTile('ቡና'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      return queue;
+    }
+
+    testWidgets(
+      'no network: the lesson still finishes, queued to sync, with no error',
+      (tester) async {
+        final queue = await finishWith(
+          tester,
+          const LessonApiException('Network request failed'),
+        );
+
+        expect(find.text('Lesson Complete!'), findsOneWidget);
+        expect(find.text('SYNCS WHEN ONLINE'), findsOneWidget);
+        expect(
+          find.text("Couldn't save your progress. Tap Continue to try again."),
+          findsNothing,
+        );
+        expect(await queue.count(), 1);
+      },
+    );
+
+    testWidgets('a refusal from the server still shows the error', (
+      tester,
+    ) async {
+      final queue = await finishWith(
+        tester,
+        const LessonApiException('nope', errorCode: 'invalid_completion'),
+      );
+
+      expect(
+        find.text("Couldn't save your progress. Tap Continue to try again."),
+        findsOneWidget,
+      );
+      expect(await queue.count(), 0);
+    });
+  });
+
+  testWidgets(
+    'a translate prompt shows its task and its sentence on separate lines, once',
+    (tester) async {
+      const lesson = LessonContent(
+        lessonId: 'lesson-tr',
+        skillId: 'skill-tr',
+        title: 'Translate',
+        beansAtStart: 5,
+        beansMax: 5,
+        exercises: [
+          SentenceConstructionExercise(
+            id: 'sc-1',
+            promptTranslation: "Translate: 'I am fine'",
+            wordBank: ['ደህና', 'ነኝ'],
+            correctSentence: ['ደህና', 'ነኝ'],
+          ),
+        ],
+      );
+      await tester.pumpWidget(_wrapped(_apiFor(lesson), lessonId: 'lesson-tr'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Translate'), findsOneWidget);
+      expect(find.text('I am fine'), findsOneWidget);
+      expect(find.textContaining('Translate: '), findsNothing);
+    },
+  );
+
+  testWidgets('a gap-fill prompt shows its task and its sentence apart', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrapped(_apiFor(_gapFillLesson), lessonId: 'lesson-gf'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Complete the sentence'), findsOneWidget);
+    expect(find.text('I want coffee'), findsOneWidget);
   });
 }

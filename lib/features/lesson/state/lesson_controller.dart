@@ -10,6 +10,7 @@ import '../../../shared/models/pending_sync_entry.dart';
 import '../../../shared/models/practice_completion_result.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/lesson_api.dart';
+import '../../../shared/services/lesson_api_exception.dart';
 import '../../../shared/services/sync_engine.dart';
 
 /// How the current exercise's tile(s) should render.
@@ -411,37 +412,7 @@ class LessonController extends ChangeNotifier {
       // sync-ui, story 003). The mode was fixed at lesson start and stays
       // fixed even if connectivity has since returned (FR-2's "doesn't
       // switch modes mid-attempt").
-      await _syncEngine.enqueueOfflineCompletion(
-        PendingSyncEntry(
-          attemptId: _attemptId,
-          lessonId: _content.lessonId,
-          correctCount: _reportedCorrect,
-          totalCount: _servedCount,
-          timeSpent: _stopwatch.elapsed,
-          beansRemainingAtEnd: _beansRemaining,
-          clientCompletedAt: clientCompletedAt,
-          missedExerciseIds: _missedExerciseIds.toList(),
-        ),
-      );
-      final accuracyPercent = _servedCount == 0
-          ? 0
-          : ((_reportedCorrect / _servedCount) * 100).round();
-      _completionResult = LessonCompletionResult(
-        xpEarned: isReview ? 0 : _reportedCorrect * kXpPerCorrectAnswer,
-        dailyXpTotal: 0,
-        dailyXpTarget: 0,
-        streakCount: 0,
-        streakIncreasedToday: false,
-        accuracyPercent: accuracyPercent,
-        correctCount: _reportedCorrect,
-        totalCount: _servedCount,
-        timeSpent: _stopwatch.elapsed,
-        pendingSync: true,
-        isReview: isReview,
-      );
-      _lessonFinished = true;
-      _completionError = null;
-      notifyListeners();
+      await _queueForSync(clientCompletedAt);
       return;
     }
 
@@ -462,6 +433,18 @@ class LessonController extends ChangeNotifier {
       _completionResult = result;
       _lessonFinished = true;
       _completionError = null;
+    } on LessonApiException catch (e) {
+      if (e.errorCode == null) {
+        // Never reached the server -- the connection dropped during the
+        // lesson. Queued exactly as if the lesson had started offline, so
+        // the learner finishes normally and it syncs on reconnect. Safe
+        // even if the request did land and only the answer was lost:
+        // completion is idempotent on `_attemptId`.
+        await _queueForSync(clientCompletedAt);
+        return;
+      }
+      // The server answered and refused. Tapping "Continue" retries.
+      _completionError = e;
     } catch (e) {
       // Idempotent on `_attemptId` server-side (ADR-5, Decision 2) -- a
       // retry (tapping "Continue" again) is always safe, never a double
@@ -469,6 +452,42 @@ class LessonController extends ChangeNotifier {
       // side but the response was lost.
       _completionError = e;
     }
+    notifyListeners();
+  }
+
+  /// Queues this attempt for `SyncEngine` and finishes the lesson with a
+  /// local result marked `pendingSync`.
+  Future<void> _queueForSync(DateTime clientCompletedAt) async {
+    await _syncEngine.enqueueOfflineCompletion(
+      PendingSyncEntry(
+        attemptId: _attemptId,
+        lessonId: _content.lessonId,
+        correctCount: _reportedCorrect,
+        totalCount: _servedCount,
+        timeSpent: _stopwatch.elapsed,
+        beansRemainingAtEnd: _beansRemaining,
+        clientCompletedAt: clientCompletedAt,
+        missedExerciseIds: _missedExerciseIds.toList(),
+      ),
+    );
+    final accuracyPercent = _servedCount == 0
+        ? 0
+        : ((_reportedCorrect / _servedCount) * 100).round();
+    _completionResult = LessonCompletionResult(
+      xpEarned: isReview ? 0 : _reportedCorrect * kXpPerCorrectAnswer,
+      dailyXpTotal: 0,
+      dailyXpTarget: 0,
+      streakCount: 0,
+      streakIncreasedToday: false,
+      accuracyPercent: accuracyPercent,
+      correctCount: _reportedCorrect,
+      totalCount: _servedCount,
+      timeSpent: _stopwatch.elapsed,
+      pendingSync: true,
+      isReview: isReview,
+    );
+    _lessonFinished = true;
+    _completionError = null;
     notifyListeners();
   }
 
