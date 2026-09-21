@@ -26,6 +26,7 @@ from app.domain.services import (
     AuthResult,
     SessionValidationService,
     UserPreferencesService,
+    ValidatedSession,
 )
 from app.domain.value_objects import AuthProvider
 
@@ -158,6 +159,16 @@ async def validate_session(service: SessionValidationService, token_value: str) 
     non-error outcome, never raised as an exception.
     """
     return await service.validate(token_value)
+
+
+async def check_session(
+    service: SessionValidationService, token_value: str
+) -> ValidatedSession | None:
+    """`GET /auth/session`: like `validate_session`, but also returns the
+    session's (possibly just renewed) expiry, so the app can keep its own
+    copy of it current.
+    """
+    return await service.validate_and_renew(token_value)
 
 
 async def update_user_preferences(

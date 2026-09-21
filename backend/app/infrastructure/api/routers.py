@@ -12,7 +12,7 @@ from app.application.use_cases import (
     PendingSelectionInput,
     authenticate_with_apple,
     authenticate_with_google,
-    validate_session,
+    check_session,
 )
 from app.domain.exceptions import MissingCredentialsError
 from app.domain.services import (
@@ -103,9 +103,10 @@ async def get_session(
     if not token_value:
         raise MissingCredentialsError("Missing or malformed Authorization header")
 
-    user = await validate_session(service, token_value)
-    if user is None:
+    validated = await check_session(service, token_value)
+    if validated is None:
         return SessionInvalidResponse()
+    user = validated.user
 
     return SessionValidResponse(
         user=SessionUserResponse(
@@ -114,5 +115,6 @@ async def get_session(
             daily_xp_target=user.daily_xp_target.xp_per_day,
             notification_enabled=user.notification_enabled,
             active_course_id=user.active_course_id,
-        )
+        ),
+        expires_at=validated.expires_at,
     )

@@ -104,6 +104,45 @@ class TestUserRepository:
         assert found.notification_enabled is False
 
 
+class TestAuthSessionRepositoryExtend:
+    """Sliding renewal writes the new expiry through to storage, where the
+    next request (a fresh DB session) reads it back."""
+
+    async def test_extend_moves_the_stored_expiry(self, async_engine: AsyncEngine) -> None:
+        factory = async_sessionmaker(bind=async_engine, expire_on_commit=False, autoflush=False)
+        user = _make_user("google-sub-extend-1")
+        now = datetime.now(UTC)
+        session_id = str(uuid.uuid4())
+
+        async with factory() as write_session:
+            await SqlAlchemyUserRepository(write_session).add(user)
+            await SqlAlchemyAuthSessionRepository(write_session).add(
+                AuthSession(
+                    id=session_id,
+                    user_id=user.id,
+                    token=SessionToken(
+                        value="raw-token-extend",
+                        issued_at=now - timedelta(days=10),
+                        expires_at=now + timedelta(days=20),
+                    ),
+                )
+            )
+            await write_session.commit()
+
+        renewed = now + timedelta(days=30)
+        async with factory() as extend_session:
+            await SqlAlchemyAuthSessionRepository(extend_session).extend(session_id, renewed)
+            await extend_session.commit()
+
+        async with factory() as read_session:
+            found = await SqlAlchemyAuthSessionRepository(read_session).find_by_token(
+                "raw-token-extend"
+            )
+
+        assert found is not None
+        assert abs(found.token.expires_at - renewed) < timedelta(seconds=1)
+
+
 class TestAuthSessionRepositoryTimezoneRoundTrip:
     """Bug #2 regression (`implementation-notes.md`, "Deviations from
     Plan"): SQLite does not round-trip timezone-aware datetimes even

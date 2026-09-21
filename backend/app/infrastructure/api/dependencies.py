@@ -69,7 +69,11 @@ async def get_session_validation_service(
 ) -> SessionValidationService:
     user_repo = SqlAlchemyUserRepository(session)
     session_repo = SqlAlchemyAuthSessionRepository(session)
-    return SessionValidationService(session_repo=session_repo, user_repo=user_repo)
+    return SessionValidationService(
+        session_repo=session_repo,
+        user_repo=user_repo,
+        session_ttl=timedelta(days=get_settings().session_ttl_days),
+    )
 
 
 async def get_current_user(

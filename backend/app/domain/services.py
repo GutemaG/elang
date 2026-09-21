@@ -43,6 +43,21 @@ from app.domain.value_objects import (
 # policy is a Stage 4 detail, not a Stage 2 architectural decision).
 DEFAULT_SESSION_TTL = timedelta(days=30)
 
+# Sliding renewal: a session in use is pushed back out to a full TTL, so
+# only someone who stays away for the whole TTL has to sign in again. It is
+# renewed at most once per this interval -- not on every request -- so an
+# active learner costs one extra write a day, not one per API call.
+SESSION_RENEW_AFTER = timedelta(days=1)
+
+
+@dataclass(frozen=True)
+class ValidatedSession:
+    """A session that passed validation: who it belongs to, and when it now
+    expires (after any renewal this validation did)."""
+
+    user: User
+    expires_at: datetime
+
 
 class TokenVerifier(Protocol):
     """Verifies a provider credential and returns the provider's stable
@@ -160,17 +175,47 @@ class SessionValidationService:
     never as an error that surfaces account data.
     """
 
-    def __init__(self, session_repo: AuthSessionRepository, user_repo: UserRepository) -> None:
+    def __init__(
+        self,
+        session_repo: AuthSessionRepository,
+        user_repo: UserRepository,
+        session_ttl: timedelta = DEFAULT_SESSION_TTL,
+        renew_after: timedelta = SESSION_RENEW_AFTER,
+    ) -> None:
         self._session_repo = session_repo
         self._user_repo = user_repo
+        self._session_ttl = session_ttl
+        self._renew_after = renew_after
 
     async def validate(self, token_value: str) -> User | None:
+        validated = await self.validate_and_renew(token_value)
+        return validated.user if validated is not None else None
+
+    async def validate_and_renew(
+        self, token_value: str, now: datetime | None = None
+    ) -> ValidatedSession | None:
+        """Validates the token and, when it is live and was last renewed more
+        than `renew_after` ago, extends it to a full TTL from `now`.
+
+        "Last renewed" is read off the expiry itself (`expires_at - ttl`),
+        so no extra column is needed. An expired session is never revived:
+        renewal only ever happens to a session that is still valid.
+        """
+        now = now or datetime.now(UTC)
         session = await self._session_repo.find_by_token(token_value)
         if session is None:
             return None
-        if session.token.is_expired(datetime.now(UTC)):
+        if session.token.is_expired(now):
             return None
-        return await self._user_repo.get_by_id(session.user_id)
+        user = await self._user_repo.get_by_id(session.user_id)
+        if user is None:
+            return None
+        expires_at = session.token.expires_at
+        last_renewed = expires_at - self._session_ttl
+        if now - last_renewed >= self._renew_after:
+            expires_at = now + self._session_ttl
+            await self._session_repo.extend(session.id, expires_at)
+        return ValidatedSession(user=user, expires_at=expires_at)
 
 
 class AuthenticationService:

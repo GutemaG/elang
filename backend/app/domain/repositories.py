@@ -6,6 +6,7 @@ depends on these Protocols, never on SQLAlchemy directly.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Protocol
 
 from app.domain.entities import AuthSession, User
@@ -39,3 +40,7 @@ class AuthSessionRepository(Protocol):
     async def find_by_token(self, token_value: str) -> AuthSession | None: ...
 
     async def get_by_id(self, session_id: str) -> AuthSession | None: ...
+
+    async def extend(self, session_id: str, expires_at: datetime) -> None:
+        """Moves a live session's expiry to `expires_at` (sliding renewal)."""
+        ...

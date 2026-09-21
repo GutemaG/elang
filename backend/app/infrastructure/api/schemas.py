@@ -5,6 +5,7 @@ Shapes match `ddd-02-technical-design.md`'s API Design table exactly.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel
@@ -53,6 +54,10 @@ class SessionUserResponse(BaseModel):
 class SessionValidResponse(BaseModel):
     valid: Literal[True] = True
     user: SessionUserResponse
+    # When the session now expires. Checking a session renews it (sliding
+    # renewal), so this can be later than the expiry given at sign-in; the
+    # app stores it so its own offline expiry check stays in step.
+    expires_at: datetime
 
 
 class SessionInvalidResponse(BaseModel):

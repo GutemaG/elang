@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import UTC, date, datetime
 
 from app.domain.course import Course, CourseStatus
@@ -159,6 +160,7 @@ class FakeAuthSessionRepository:
     def __init__(self) -> None:
         self._sessions: dict[str, AuthSession] = {}
         self._session_id_by_token: dict[str, str] = {}
+        self.extend_calls = 0
 
     async def add(self, session: AuthSession) -> AuthSession:
         self._sessions[session.id] = session
@@ -173,6 +175,13 @@ class FakeAuthSessionRepository:
 
     async def get_by_id(self, session_id: str) -> AuthSession | None:
         return self._sessions.get(session_id)
+
+    async def extend(self, session_id: str, expires_at: datetime) -> None:
+        session = self._sessions[session_id]
+        self._sessions[session_id] = replace(
+            session, token=replace(session.token, expires_at=expires_at)
+        )
+        self.extend_calls += 1
 
 
 class FakeCategoryRepository:

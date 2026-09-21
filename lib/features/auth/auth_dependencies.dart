@@ -6,6 +6,8 @@ import '../../shared/services/http_auth_api.dart';
 import '../../shared/services/http_course_api.dart';
 import '../../shared/services/onboarding_repository.dart';
 import '../../shared/services/secure_storage_service.dart';
+import '../../shared/services/session_api.dart';
+import '../../shared/services/session_renewer.dart';
 import '../../shared/services/session_repository.dart';
 import 'auth_flow_controller.dart';
 
@@ -25,6 +27,7 @@ class AuthDependencies {
     AuthApi? authApi,
     CourseApi? courseApi,
     CourseCacheStore? courseCache,
+    SessionApi? sessionApi,
   }) : courseCache = courseCache ?? FileCourseCacheStore(),
        storage = storage ?? FlutterSecureStorageService(),
        authApi = authApi ?? HttpAuthApi() {
@@ -43,6 +46,10 @@ class AuthDependencies {
         );
     authFlowController = AuthFlowController(
       sessionRepository: sessionRepository,
+      renewer: SessionRenewer(
+        sessionApi: sessionApi ?? SessionApi(),
+        sessionRepository: sessionRepository,
+      ),
     );
   }
 

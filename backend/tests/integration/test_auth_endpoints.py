@@ -210,6 +210,9 @@ class TestSessionEndpoint:
         body = response.json()
         assert body["valid"] is True
         assert body["user"]["id"] == auth_response.json()["user"]["id"]
+        # A session just issued is not renewed again: it expires when sign-in
+        # said it would, and the app can read that expiry from here.
+        assert body["expires_at"][:19] == auth_response.json()["expires_at"][:19]
 
     def test_unknown_token_is_200_invalid_not_an_error(self, make_client: ClientFactory) -> None:
         client = make_client(FakeTokenVerifier(), FakeTokenVerifier())

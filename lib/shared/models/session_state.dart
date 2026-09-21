@@ -58,6 +58,17 @@ class SessionState {
     'photoUrl': photoUrl,
   };
 
+  /// The same session with a new expiry -- what the server hands back when
+  /// it renews a session in use (sliding renewal).
+  SessionState withExpiresAt(DateTime expiresAt) => SessionState(
+    token: token,
+    expiresAt: expiresAt,
+    authProvider: authProvider,
+    displayName: displayName,
+    email: email,
+    photoUrl: photoUrl,
+  );
+
   static SessionState fromJson(Map<String, dynamic> json) {
     final token = json['token'];
     final expiresAtRaw = json['expiresAt'];

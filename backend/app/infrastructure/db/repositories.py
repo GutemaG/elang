@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities import AuthSession, User
@@ -179,4 +179,11 @@ class SqlAlchemyAuthSessionRepository:
                 issued_at=_ensure_utc(model.issued_at),
                 expires_at=_ensure_utc(model.expires_at),
             ),
+        )
+
+    async def extend(self, session_id: str, expires_at: datetime) -> None:
+        await self._session.execute(
+            update(AuthSessionModel)
+            .where(AuthSessionModel.id == session_id)
+            .values(expires_at=expires_at)
         )

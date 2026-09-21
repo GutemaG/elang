@@ -43,18 +43,26 @@ class SessionUser {
 
 /// Result of a session-validation call.
 class SessionCheckResult {
-  const SessionCheckResult.valid(this.user) : status = SessionCheckStatus.valid;
+  const SessionCheckResult.valid(this.user, {this.expiresAt})
+    : status = SessionCheckStatus.valid;
 
   const SessionCheckResult.invalid()
     : status = SessionCheckStatus.invalid,
-      user = null;
+      user = null,
+      expiresAt = null;
 
   const SessionCheckResult.error()
     : status = SessionCheckStatus.error,
-      user = null;
+      user = null,
+      expiresAt = null;
 
   final SessionCheckStatus status;
   final SessionUser? user;
+
+  /// When the session now expires. Checking a session renews it on the
+  /// server, so this can be later than the expiry saved at sign-in. `null`
+  /// for an older backend that does not send it.
+  final DateTime? expiresAt;
 }
 
 /// Thin client for `GET /api/v1/auth/session`.
@@ -82,10 +90,12 @@ class SessionApi {
   Future<SessionCheckResult> checkSession(String sessionToken) async {
     http.Response response;
     try {
-      response = await _client.get(
-        Uri.parse('$_baseUrl/api/v1/auth/session'),
-        headers: {'Authorization': 'Bearer $sessionToken'},
-      );
+      response = await _client
+          .get(
+            Uri.parse('$_baseUrl/api/v1/auth/session'),
+            headers: {'Authorization': 'Bearer $sessionToken'},
+          )
+          .timeout(AuthConfig.requestTimeout);
     } on Object {
       return const SessionCheckResult.error();
     }
@@ -126,6 +136,9 @@ class SessionApi {
               ? user['active_course_id'] as String
               : null,
         ),
+        expiresAt: decoded['expires_at'] is String
+            ? DateTime.tryParse(decoded['expires_at'] as String)
+            : null,
       );
     } on FormatException {
       return const SessionCheckResult.error();
