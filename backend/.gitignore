@@ -1,7 +1,12 @@
 .venv/
 __pycache__/
 *.pyc
-.env
+# `.env` alone missed the duplicates an editor or Explorer leaves behind
+# (`.env copy`, `.env.bak`, `.env - Copy (2)`), each of which holds the same
+# live credentials as the original while being perfectly stageable.
+.env*
+# ...except the committed template, which is the whole point of the pattern.
+!.env.example
 dev.db
 *.db
 .mypy_cache/

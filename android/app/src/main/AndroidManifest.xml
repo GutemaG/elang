@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Every backend call depends on this. Flutter injects INTERNET into the
+         debug and profile manifests only (see src/debug/AndroidManifest.xml),
+         which is why local development works without it and a release build
+         would not: manifest merging skips those source sets, and the app
+         fails at the socket with no permission dialog to explain why. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Answer-grading feedback's vibration cue (see AnswerFeedbackPlayer). -->
     <uses-permission android:name="android.permission.VIBRATE"/>
     <application

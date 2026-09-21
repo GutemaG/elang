@@ -95,6 +95,31 @@ dev_dependencies:
   # `coding-standards.md`'s testing convention.
   path_provider_platform_interface: ^2.1.3
 
+  # Generates every Android density and the whole iOS icon set from the two
+  # source images in `assets/icon/`. Dev-only: it runs on demand via
+  # `dart run flutter_launcher_icons`, writes into `android/` and `ios/`,
+  # and nothing in `lib/` imports it.
+  flutter_launcher_icons: ^0.14.3
+
+# App icon generation. Run after changing either source image:
+#   dart run flutter_launcher_icons
+#
+# Two images rather than one because Android adaptive icons are layered:
+# the launcher composites `adaptive_icon_foreground` over
+# `adaptive_icon_background` and then masks the result to whatever shape it
+# likes (circle, squircle, teardrop). The foreground therefore carries the
+# artwork alone on transparency, sized so it survives that crop, while
+# `image_path` is the flat full-bleed version iOS and older Android use.
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: true
+  ios: true
+  # iOS rejects an icon with an alpha channel outright; this flattens it.
+  remove_alpha_ios: true
+  adaptive_icon_background: "#004527" # AppColors.primary
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  min_sdk_android: 24
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

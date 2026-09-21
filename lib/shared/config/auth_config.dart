@@ -4,11 +4,12 @@
 // that needs real sign-in to succeed, analogous to `backend/.env.example`'s
 // header comment.
 //
-// Real values are intended to be supplied via
-// `--dart-define-from-file=<untracked-file>` at build time, read through
+// Real values are intended to be supplied via `--dart-define` (or
+// `--dart-define-from-file=<untracked-file>`) at build time, read through
 // `String.fromEnvironment(...)` defaults into this same class, so call
-// sites never need to change. That wiring is not built in this bolt — this
-// file only defines the placeholder constants themselves.
+// sites never need to change. [apiBaseUrl] now works this way; the OAuth
+// identifiers below still do not, because they are not secrets and the
+// Google client ID is already the real one.
 //
 // `googleServerClientId` must stay in sync with the backend's
 // `GOOGLE_OAUTH_CLIENT_ID` (see `backend/.env.example`) — both sides verify
@@ -20,9 +21,25 @@
 /// safe to commit, matching `backend/.env.example`'s "commit the example,
 /// not the real values" precedent.
 abstract final class AuthConfig {
-  /// Base URL of the backend's auth API. Defaults to the local dev server
-  /// per `backend/.env.example`'s local-first pattern.
-  static const String apiBaseUrl = 'http://localhost:8000';
+  /// Base URL of the backend's auth API.
+  ///
+  /// Supplied at build time so one codebase can point at either environment
+  /// without a source edit:
+  ///
+  /// ```
+  /// flutter build apk --release \
+  ///   --dart-define=API_BASE_URL=https://ethio-lang.vercel.app
+  /// ```
+  ///
+  /// The default is the local dev server, per `backend/.env.example`'s
+  /// local-first pattern, so `flutter run` keeps working untouched. Note
+  /// that a plain `flutter build` with no define therefore produces an APK
+  /// pointing at the *phone's own* localhost, which resolves to nothing --
+  /// pass the define for any build that leaves your machine.
+  static const String apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8000',
+  );
 
   /// Google OAuth client ID used to initialize `google_sign_in` on the
   /// client. This is the Web application client (used for the web/iOS
