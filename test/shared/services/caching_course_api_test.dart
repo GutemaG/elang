@@ -1,6 +1,8 @@
 // Tests for the offline rules in `CachingCourseApi` (010-multi-language-
 // courses, bolt 027, story 003 / ADR-14).
 
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/shared/models/course.dart';
@@ -222,4 +224,60 @@ void main() {
       expect(list.activeCourseId, 'c-en-om');
     });
   });
+
+  group('instant switch to a course already on the device', () {
+    late _GatedCourseApi gated;
+
+    setUp(() async {
+      gated = _GatedCourseApi();
+      api = CachingCourseApi(inner: gated, cache: cache);
+      await api.getCourses();
+      await cache.saveDashboard('c-en-om', _tree('c-en-om'), amoleBalance: 0);
+      await cache.saveDashboard('c-am-om', _tree('c-am-om'), amoleBalance: 0);
+    });
+
+    test('returns before the server answers, then tells the server', () async {
+      gated.gate = Completer<void>();
+
+      final course = await api.switchCourse('c-en-om');
+
+      expect(course.id, 'c-en-om');
+      expect(await cache.activeCourseId(), 'c-en-om');
+      expect(gated.activeCourseId, 'c-en-am'); // still on its way
+
+      gated.gate!.complete();
+      await api.syncPendingSwitch();
+
+      expect(gated.activeCourseId, 'c-en-om');
+      expect(await cache.pendingSwitchCourseId(), isNull);
+    });
+
+    test('a newer choice made while an older one is sent is not lost', () async {
+      gated.gate = Completer<void>();
+      await api.switchCourse('c-en-om');
+      await cache.setActiveCourseId('c-am-om', pendingSync: true);
+
+      gated.gate!.complete();
+      gated.gate = null;
+      await api.syncPendingSwitch();
+
+      // c-am-om is "coming soon", so the server refuses it; what matters is
+      // that it was sent at all, not cleared along with c-en-om.
+      expect(gated.switchCalls, ['c-en-om', 'c-am-om']);
+      expect(await cache.pendingSwitchCourseId(), isNull);
+    });
+  });
+}
+
+/// Holds [switchCourse] until [gate] completes, to observe a switch whose
+/// request is still in flight.
+class _GatedCourseApi extends FakeCourseApi {
+  Completer<void>? gate;
+
+  @override
+  Future<Course> switchCourse(String courseId) async {
+    final waitFor = gate;
+    if (waitFor != null) await waitFor.future;
+    return super.switchCourse(courseId);
+  }
 }

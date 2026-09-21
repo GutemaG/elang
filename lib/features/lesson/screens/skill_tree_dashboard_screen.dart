@@ -46,6 +46,10 @@ import 'lesson_screen.dart';
 /// Fetches the skill tree once on load (and again whenever a lesson
 /// screen is popped back to this one, so a completed lesson's updated
 /// node state is visible without a manual refresh).
+///
+/// Cache first: the active course's saved copy is on screen as soon as it
+/// is read from the device, and the network result replaces it when it
+/// arrives. The learner only ever waits on a course never opened here.
 class SkillTreeDashboardScreen extends StatefulWidget {
   const SkillTreeDashboardScreen({
     super.key,
@@ -109,7 +113,17 @@ class _DashboardData {
 
   /// True when the network failed and this is the saved copy of the course.
   final bool fromCache;
+
+  /// The same data shown while a refresh is still in flight -- not yet
+  /// known to be offline, so without the offline note.
+  _DashboardData get whileRefreshing =>
+      _DashboardData(tree: tree, beansStatus: beansStatus, dueCount: dueCount);
 }
+
+/// How many lessons one dashboard load may fetch ahead of a tap. Each is two
+/// requests, and every copy fetched stays until its skill changes, so a
+/// small number per load still ends with every open lesson on the device.
+const _prefetchPerLoad = 4;
 
 class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   late Future<_DashboardData> _future;
@@ -142,9 +156,17 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   /// means "never loaded", which is why the panel is not built before then.
   Future<List<Course>>? _railFuture;
 
+  /// The sync queue depth last seen, so a drain can be told from a new
+  /// entry (see [_onSyncChanged]).
+  int _pendingSeen = 0;
+
+  bool _prefetching = false;
+
   @override
   void initState() {
     super.initState();
+    _pendingSeen = widget.syncEngine.pendingCount;
+    widget.syncEngine.addListener(_onSyncChanged);
     _future = _load();
     // So a previously-downloaded pack shows as downloaded immediately,
     // without the user re-tapping the download affordance.
@@ -157,11 +179,32 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
 
   @override
   void dispose() {
+    widget.syncEngine.removeListener(_onSyncChanged);
     _scrollController.dispose();
     super.dispose();
   }
 
+  /// Offline completions reaching the server change XP, streak and crowns,
+  /// so the tree is reloaded once the queue shrinks.
+  void _onSyncChanged() {
+    final pending = widget.syncEngine.pendingCount;
+    final drained = pending < _pendingSeen;
+    _pendingSeen = pending;
+    if (drained && mounted) _reload();
+  }
+
   Future<_DashboardData> _load() async {
+    // The saved copy goes up first, so opening the app or switching course
+    // never waits on the network. Only when it is a different course from
+    // what is showing: after a lesson, the tree already on screen is newer.
+    final cached = await _loadFromCache();
+    final shownCourse = _lastData?.tree.course?.id;
+    if (cached != null &&
+        mounted &&
+        (shownCourse == null || shownCourse != cached.tree.course?.id)) {
+      setState(() => _lastData = cached.whileRefreshing);
+    }
+
     // An offline course choice is sent first, so the tree fetched below is
     // the course the learner picked.
     await widget.courseApi.syncPendingSwitch();
@@ -178,15 +221,48 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
       );
       widget.lessonPackDownloader.currentCourse = data.tree.course;
       unawaited(_saveToCache(data));
+      unawaited(_prefetchLessons(data.tree));
       _lastData = data;
       return data;
     } on LessonApiException catch (e) {
       // A backend answer (e.g. an expired session) is not "offline".
       if (e.errorCode != null) rethrow;
-      final cached = await _loadFromCache();
       if (cached == null) rethrow;
       _lastData = cached;
       return cached;
+    }
+  }
+
+  /// Fetches the lessons the learner can open and keeps a copy of each, so a
+  /// tap starts the lesson at once. The next thing to learn goes first.
+  /// Copies still current for their skill are skipped, so this settles to
+  /// nothing once the device has them all.
+  Future<void> _prefetchLessons(SkillTreeResponse tree) async {
+    final cache = widget.courseCache;
+    if (cache == null || _prefetching) return;
+    _prefetching = true;
+    try {
+      final open = [
+        ...tree.nodes.where((n) => n.state == SkillNodeState.active),
+        ...tree.nodes.where((n) => n.state == SkillNodeState.completed),
+      ];
+      var fetched = 0;
+      for (final node in open) {
+        if (fetched >= _prefetchPerLoad || !mounted) return;
+        final cached = await cache.loadLesson(node.lessonId);
+        if (cached != null && cached.isFreshFor(node.contentVersion)) continue;
+        fetched++;
+        try {
+          final content = await widget.lessonApi.startLesson(node.lessonId);
+          await cache.saveLesson(content, skillVersion: node.contentVersion);
+        } on Object {
+          // Offline or refused: this lesson just fetches when tapped.
+        }
+      }
+    } on Object {
+      // A prefetch is an optimisation; nothing depends on it finishing.
+    } finally {
+      _prefetching = false;
     }
   }
 
@@ -199,6 +275,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
         course.id,
         data.tree,
         amoleBalance: data.beansStatus.amoleBalance,
+        dueCount: data.dueCount,
       );
       await cache.setActiveCourseId(course.id);
     } on Object {
@@ -225,7 +302,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           amoleBalance: cached.amoleBalance,
           refillCostAmole: 0,
         ),
-        dueCount: 0,
+        dueCount: cached.dueCount,
         fromCache: true,
       );
     } on Object {
@@ -273,9 +350,39 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     setState(() => _panelOpen = false);
   }
 
+  /// The saved course list when there is one, refreshed in the background;
+  /// the network only when this device has never listed courses.
   Future<List<Course>> _loadRail() async {
+    final cache = widget.courseCache;
+    if (cache != null) {
+      try {
+        final saved = await cache.loadCourseList();
+        if (saved != null) {
+          final active = await cache.activeCourseId();
+          unawaited(_refreshRail());
+          return await railCoursesFor(
+            active == null ? saved : saved.withActive(active),
+            cache: cache,
+          );
+        }
+      } on Object {
+        // Fall through to the network.
+      }
+    }
     final list = await widget.courseApi.getCourses();
-    return railCoursesFor(list, cache: widget.courseCache);
+    return railCoursesFor(list, cache: cache);
+  }
+
+  Future<void> _refreshRail() async {
+    try {
+      final list = await widget.courseApi.getCourses();
+      final rail = await railCoursesFor(list, cache: widget.courseCache);
+      if (mounted && _railFuture != null) {
+        setState(() => _railFuture = Future.value(rail));
+      }
+    } on Object {
+      // The saved rail stays; it is what offline shows anyway.
+    }
   }
 
   /// Switching from the rail. The active course just closes the panel; a
@@ -336,6 +443,9 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           connectivityMonitor: widget.connectivityMonitor,
           lessonPackStore: widget.lessonPackStore,
           syncEngine: widget.syncEngine,
+          lessonCache: widget.courseCache,
+          skillVersion: node.contentVersion,
+          beansNow: _lastData?.beansStatus.beans,
         ),
       ),
     );
@@ -470,7 +580,11 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
             child: FutureBuilder<List<Course>>(
               future: railFuture,
               builder: (context, snapshot) => CoursePanel(
-                loading: snapshot.connectionState != ConnectionState.done,
+                // A refreshed rail swaps its future; the rail it replaces
+                // stays up meanwhile rather than flashing a spinner.
+                loading:
+                    snapshot.connectionState != ConnectionState.done &&
+                    !snapshot.hasData,
                 courses: snapshot.data ?? const [],
                 activeCourseId: data.tree.course?.id,
                 onCourseSelected: _switchFromRail,

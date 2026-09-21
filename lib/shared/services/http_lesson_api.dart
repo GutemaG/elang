@@ -63,7 +63,9 @@ class HttpLessonApi implements LessonApi {
   Future<http.Response> _get(String path) async {
     final headers = await _authHeaders();
     try {
-      return await _client.get(Uri.parse('$_baseUrl$path'), headers: headers);
+      return await _client
+          .get(Uri.parse('$_baseUrl$path'), headers: headers)
+          .timeout(AuthConfig.requestTimeout);
     } on Object {
       throw const LessonApiException('Network request failed');
     }
@@ -76,7 +78,7 @@ class HttpLessonApi implements LessonApi {
         Uri.parse('$_baseUrl$path'),
         headers: headers,
         body: body == null ? null : jsonEncode(body),
-      );
+      ).timeout(AuthConfig.requestTimeout);
     } on Object {
       throw const LessonApiException('Network request failed');
     }

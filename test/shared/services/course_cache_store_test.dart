@@ -5,6 +5,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/shared/models/course.dart';
+import 'package:elang/shared/models/exercise.dart';
+import 'package:elang/shared/models/lesson_content.dart';
 import 'package:elang/shared/models/skill_tree.dart';
 import 'package:elang/shared/services/course_cache_store.dart';
 
@@ -185,5 +187,71 @@ void main() {
     final store = InMemoryCourseCacheStore()..rawJson = 'not json at all';
 
     expect(await store.cachedCourseIds(), isEmpty);
+  });
+
+  test('the Practice due count is kept with the dashboard', () async {
+    final store = InMemoryCourseCacheStore();
+
+    await store.saveDashboard('a', _tree('a', 'x'), amoleBalance: 1, dueCount: 7);
+
+    expect((await store.loadDashboard('a'))?.dueCount, 7);
+  });
+
+  group('lessons', () {
+    const lesson = LessonContent(
+      lessonId: 'l-1',
+      skillId: 's-1',
+      title: 'Greetings',
+      beansAtStart: 3,
+      beansMax: 5,
+      unrenderableCount: 1,
+      exercises: [
+        MultipleChoiceExercise(
+          id: 'mc-1',
+          prompt: 'ሰላም',
+          promptTranslation: 'Hello?',
+          options: ['hello', 'bye'],
+          correctOptionIndex: 0,
+        ),
+      ],
+    );
+    final v1 = DateTime.utc(2026, 9, 1);
+    final v2 = DateTime.utc(2026, 9, 2);
+
+    test('a lesson round-trips with its skill version', () async {
+      final store = InMemoryCourseCacheStore();
+
+      await store.saveLesson(lesson, skillVersion: v1);
+      final cached = await store.loadLesson('l-1');
+
+      expect(cached!.content.title, 'Greetings');
+      expect(cached.content.unrenderableCount, 1);
+      expect(cached.content.exercises.single, isA<MultipleChoiceExercise>());
+      expect(cached.skillVersion, v1);
+    });
+
+    test('a lesson never fetched is a miss', () async {
+      expect(await InMemoryCourseCacheStore().loadLesson('nope'), isNull);
+    });
+
+    test('a copy is fresh only for the skill version it was saved at', () async {
+      final store = InMemoryCourseCacheStore();
+      await store.saveLesson(lesson, skillVersion: v1);
+      final cached = await store.loadLesson('l-1');
+
+      expect(cached!.isFreshFor(v1), isTrue);
+      expect(cached.isFreshFor(v2), isFalse);
+      expect(cached.isFreshFor(null), isTrue);
+    });
+
+    test('lessons do not disturb the dashboards beside them', () async {
+      final store = InMemoryCourseCacheStore();
+      await store.saveDashboard('a', _tree('a', 'Akkam'), amoleBalance: 1);
+
+      await store.saveLesson(lesson);
+
+      expect((await store.loadDashboard('a'))?.tree.nodes.single.title, 'Akkam');
+      expect(await store.cachedCourseIds(), ['a']);
+    });
   });
 }

@@ -5,11 +5,24 @@ import 'package:flutter/foundation.dart';
 import '../models/pending_sync_entry.dart';
 import 'connectivity_monitor.dart';
 import 'lesson_api.dart';
+import 'lesson_api_exception.dart';
 import 'pending_sync_queue_store.dart';
 
 /// The sync queue's current draining state, for the connectivity/sync
 /// indicator (story 004).
 enum SyncStatus { idle, syncing, failed }
+
+/// Backend `error_code`s that reject a completion outright: the same request
+/// replayed later gets the same answer. Anything else -- no code at all
+/// (offline), an expired session, `beans_exhausted` (beans regenerate) -- is
+/// worth retrying.
+const permanentRejectionCodes = {
+  'invalid_completion',
+  'invalid_completion_timestamp',
+  'lesson_not_found',
+  'skill_locked',
+  'course_not_available',
+};
 
 /// Owns the pending-sync queue and drains it automatically on reconnect
 /// (010-offline-caching-and-sync-ui, story 003).
@@ -119,6 +132,21 @@ class SyncEngine extends ChangeNotifier {
             beansRemainingAtEnd: entry.beansRemainingAtEnd,
             clientCompletedAt: entry.clientCompletedAt,
             missedExerciseIds: entry.missedExerciseIds,
+          );
+          await _queueStore.remove(entry.attemptId);
+          succeededAny = true;
+        } on LessonApiException catch (e) {
+          if (!permanentRejectionCodes.contains(e.errorCode)) {
+            _status = SyncStatus.failed;
+            _scheduleRetry();
+            return;
+          }
+          // Replaying the same request can never succeed, and the queue
+          // drains in order, so keeping it would block every later entry
+          // forever. Drop it and carry on with the rest.
+          debugPrint(
+            'SyncEngine: dropping ${entry.attemptId}, rejected with '
+            '${e.errorCode}: ${e.message}',
           );
           await _queueStore.remove(entry.attemptId);
           succeededAny = true;

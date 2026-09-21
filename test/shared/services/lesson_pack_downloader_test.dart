@@ -203,6 +203,37 @@ void main() {
     expect(await packStore.load('lesson-mixed'), isNull);
   });
 
+  test(
+    // Dropping it made an offline completion of this lesson report a short
+    // `total_count`, which the server rejects -- so it could never sync.
+    'rewriting audio keeps the count of exercises this build skipped',
+    () async {
+      final api = ControllableLessonApi()
+        ..lessonContent = LessonContent(
+          lessonId: _withAudio.lessonId,
+          skillId: _withAudio.skillId,
+          title: _withAudio.title,
+          beansAtStart: 5,
+          beansMax: 5,
+          exercises: _withAudio.exercises,
+          unrenderableCount: 2,
+        );
+      final packStore = FakeLessonPackStore();
+      final downloader = LessonPackDownloader(
+        lessonApi: api,
+        packStore: packStore,
+        httpClient: MockClient(
+          (request) async => http.Response.bytes([1, 2, 3], 200),
+        ),
+      );
+
+      await downloader.downloadLesson('lesson-mixed');
+
+      final saved = await packStore.load('lesson-mixed');
+      expect(saved!.unrenderableCount, 2);
+    },
+  );
+
   test('statusFor defaults to notDownloaded for a lesson never touched', () async {
     final downloader = LessonPackDownloader(
       lessonApi: ControllableLessonApi(),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/beans_status.dart';
@@ -5,6 +7,7 @@ import '../../../shared/models/exercise.dart';
 import '../../../shared/models/lesson_content.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/connectivity_monitor.dart';
+import '../../../shared/services/course_cache_store.dart';
 import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
 import '../../../shared/services/lesson_pack_store.dart';
@@ -45,6 +48,9 @@ class LessonScreen extends StatefulWidget {
     required this.connectivityMonitor,
     required this.lessonPackStore,
     required this.syncEngine,
+    this.lessonCache,
+    this.skillVersion,
+    this.beansNow,
   }) : practiceContent = null,
        practiceVocabItemIdByExerciseId = null;
 
@@ -66,7 +72,10 @@ class LessonScreen extends StatefulWidget {
     required this.syncEngine,
   }) : lessonId = '',
        connectivityMonitor = null,
-       lessonPackStore = null;
+       lessonPackStore = null,
+       lessonCache = null,
+       skillVersion = null,
+       beansNow = null;
 
   final String lessonId;
   final LessonApi lessonApi;
@@ -77,6 +86,21 @@ class LessonScreen extends StatefulWidget {
   final SyncEngine syncEngine;
   final LessonContent? practiceContent;
   final Map<String, String>? practiceVocabItemIdByExerciseId;
+
+  /// The last fetched copy of each lesson. When set, a lesson opened before
+  /// starts from its copy at once and the copy is refreshed in the
+  /// background; `null` always fetches.
+  final CourseCacheStore? lessonCache;
+
+  /// The tapped node's `contentVersion`. A cached copy saved under a
+  /// different version is stale and is not played.
+  final DateTime? skillVersion;
+
+  /// The beans balance the dashboard is showing. A cached copy's own
+  /// `beansAtStart` is from whenever it was fetched, so this replaces it.
+  /// The server recomputes beans on completion either way; this only drives
+  /// the local out-of-beans prompt.
+  final int? beansNow;
 
   bool get isPractice => practiceContent != null;
 
@@ -130,14 +154,66 @@ class _LessonScreenState extends State<LessonScreen> {
     }
     final online = await widget.connectivityMonitor!.isOnline();
     _startedOffline = !online;
+    final copy = await _cachedCopy();
     if (online) {
-      return widget.lessonApi.startLesson(widget.lessonId);
+      if (copy != null) {
+        unawaited(_fetchAndCache().then<void>((_) {}, onError: (Object _) {}));
+        return _withCurrentBeans(copy);
+      }
+      return _fetchAndCache();
     }
-    final cached = await widget.lessonPackStore!.load(widget.lessonId);
-    if (cached == null) {
-      throw const LessonNotDownloadedOfflineException();
+    final pack = await widget.lessonPackStore!.load(widget.lessonId);
+    if (pack != null) return pack;
+    // A cached copy streams its audio, which cannot play offline -- only a
+    // downloaded pack carries the clips. Without listening exercises the
+    // copy is as good as a pack.
+    if (copy != null && !copy.exercises.any((e) => e is ListeningExercise)) {
+      return _withCurrentBeans(copy);
     }
-    return cached;
+    throw const LessonNotDownloadedOfflineException();
+  }
+
+  /// This lesson's cached copy, if there is one and it is still current.
+  Future<LessonContent?> _cachedCopy() async {
+    final cache = widget.lessonCache;
+    if (cache == null) return null;
+    try {
+      final cached = await cache.loadLesson(widget.lessonId);
+      if (cached == null || !cached.isFreshFor(widget.skillVersion)) {
+        return null;
+      }
+      return cached.content;
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<LessonContent> _fetchAndCache() async {
+    final content = await widget.lessonApi.startLesson(widget.lessonId);
+    try {
+      await widget.lessonCache?.saveLesson(
+        content,
+        skillVersion: widget.skillVersion,
+      );
+    } on Object {
+      // No copy just means the next open fetches again.
+    }
+    return content;
+  }
+
+  LessonContent _withCurrentBeans(LessonContent content) {
+    final beans = widget.beansNow;
+    if (beans == null) return content;
+    return LessonContent(
+      lessonId: content.lessonId,
+      skillId: content.skillId,
+      title: content.title,
+      exercises: content.exercises,
+      beansAtStart: beans.clamp(0, content.beansMax),
+      beansMax: content.beansMax,
+      contentVersion: content.contentVersion,
+      unrenderableCount: content.unrenderableCount,
+    );
   }
 
   void _onControllerChanged() {

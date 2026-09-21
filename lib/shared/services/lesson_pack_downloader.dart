@@ -112,6 +112,10 @@ class LessonPackDownloader extends ChangeNotifier {
       beansAtStart: content.beansAtStart,
       beansMax: content.beansMax,
       contentVersion: content.contentVersion,
+      // Dropping this made an offline completion of any lesson with a
+      // skipped exercise report a short `total_count`, which the server
+      // rejects -- so it could never sync.
+      unrenderableCount: content.unrenderableCount,
     );
   }
 

@@ -4,13 +4,17 @@
 // cached course; a choice made offline reaches the server on the next online
 // load; and course A's tree is never shown for course B.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/course.dart';
+import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
+import 'package:elang/shared/models/pending_sync_entry.dart';
 import 'package:elang/shared/models/skill_tree.dart';
 import 'package:elang/shared/services/caching_course_api.dart';
 import 'package:elang/shared/services/course_api.dart';
@@ -74,6 +78,20 @@ SkillTreeResponse _tree(Course course, String skillTitle) => SkillTreeResponse(
   totalXp: 10,
 );
 
+/// Holds `getSkillTree` until [gate] completes: a network that is up but
+/// slow, which is when the saved copy matters most.
+class _SlowTreeLessonApi extends ControllableLessonApi {
+  _SlowTreeLessonApi(this.gate);
+
+  final Completer<void> gate;
+
+  @override
+  Future<SkillTreeResponse> getSkillTree() async {
+    await gate.future;
+    return super.getSkillTree();
+  }
+}
+
 ControllableLessonApi _lessonApi(SkillTreeResponse tree) =>
     ControllableLessonApi()
       ..skillTree = tree
@@ -92,8 +110,14 @@ class _Rig {
     packStore: packStore,
   );
 
+  final connectivity = FakeConnectivityMonitor();
+  late final syncEngine = SyncEngine(
+    lessonApi: lessonApi,
+    connectivityMonitor: connectivity,
+    queueStore: FakePendingSyncQueueStore(),
+  );
+
   Widget build() {
-    final connectivity = FakeConnectivityMonitor();
     final session = SessionRepository(storage: InMemorySecureStorageService());
     return MaterialApp(
       home: SkillTreeDashboardScreen(
@@ -103,11 +127,7 @@ class _Rig {
         connectivityMonitor: connectivity,
         lessonPackStore: packStore,
         lessonPackDownloader: downloader,
-        syncEngine: SyncEngine(
-          lessonApi: lessonApi,
-          connectivityMonitor: connectivity,
-          queueStore: FakePendingSyncQueueStore(),
-        ),
+        syncEngine: syncEngine,
         courseApi: courseApi,
         courseCache: cache,
         sessionRepository: session,
@@ -331,6 +351,112 @@ void main() {
     await rig.downloader.downloadLesson('lesson-c-en-om');
 
     expect(rig.packStore.courseIdOf('lesson-c-en-om'), 'c-en-om');
+  });
+
+  testWidgets('the saved copy is on screen while the network is still slow', (
+    tester,
+  ) async {
+    final cache = InMemoryCourseCacheStore();
+    await cache.saveDashboard(
+      'c-en-am',
+      _tree(_amharic, 'Greetings (saved)'),
+      amoleBalance: 500,
+    );
+    await cache.setActiveCourseId('c-en-am');
+    final gate = Completer<void>();
+    final lessonApi = _SlowTreeLessonApi(gate)
+      ..skillTree = _tree(_amharic, 'Greetings (live)')
+      ..beansStatus = _beans
+      ..dueCount = 2;
+    final rig = _Rig(
+      lessonApi: lessonApi,
+      courseApi: FakeCourseApi(courses: [_amharic, _oromo]),
+      cache: cache,
+    );
+
+    await tester.pumpWidget(rig.build());
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Greetings (saved)'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('Offline, showing saved progress'), findsNothing);
+
+    gate.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Greetings (live)'), findsOneWidget);
+    expect(find.text('Greetings (saved)'), findsNothing);
+  });
+
+  testWidgets('an online load keeps a copy of the lessons that can be opened', (
+    tester,
+  ) async {
+    final cache = InMemoryCourseCacheStore();
+    final rig = _Rig(
+      lessonApi: _lessonApi(_tree(_amharic, 'Greetings'))
+        ..lessonContent = const LessonContent(
+          lessonId: 'lesson-c-en-am',
+          skillId: 'skill-c-en-am',
+          title: 'Greetings',
+          exercises: [],
+          beansAtStart: 5,
+          beansMax: 5,
+        ),
+      courseApi: FakeCourseApi(courses: [_amharic, _oromo]),
+      cache: cache,
+    );
+
+    await tester.pumpWidget(rig.build());
+    await tester.pumpAndSettle();
+
+    expect(await cache.loadLesson('lesson-c-en-am'), isNotNull);
+  });
+
+  testWidgets('offline progress reaching the server reloads the tree', (
+    tester,
+  ) async {
+    final lessonApi = _lessonApi(_tree(_amharic, 'Before sync'))
+      ..completionResult = const LessonCompletionResult(
+        xpEarned: 10,
+        dailyXpTotal: 10,
+        dailyXpTarget: 30,
+        streakCount: 2,
+        streakIncreasedToday: true,
+        accuracyPercent: 100,
+        correctCount: 1,
+        totalCount: 1,
+        timeSpent: Duration(seconds: 5),
+      );
+    final rig = _Rig(
+      lessonApi: lessonApi,
+      courseApi: FakeCourseApi(courses: [_amharic, _oromo]),
+      cache: InMemoryCourseCacheStore(),
+    );
+    await tester.pumpWidget(rig.build());
+    await tester.pumpAndSettle();
+
+    rig.connectivity.setOnline(false);
+    await tester.pump();
+    await rig.syncEngine.enqueueOfflineCompletion(
+      PendingSyncEntry(
+        attemptId: 'a-1',
+        lessonId: 'lesson-c-en-am',
+        correctCount: 1,
+        totalCount: 1,
+        timeSpent: const Duration(seconds: 5),
+        beansRemainingAtEnd: 5,
+        clientCompletedAt: DateTime.now().toUtc(),
+      ),
+    );
+    await tester.pump();
+    lessonApi.skillTree = _tree(_amharic, 'After sync');
+
+    rig.connectivity.setOnline(true);
+    await tester.pumpAndSettle();
+
+    expect(lessonApi.completeLessonCalls, hasLength(1));
+    expect(find.text('After sync'), findsOneWidget);
   });
 
   for (final width in [360.0, 320.0]) {

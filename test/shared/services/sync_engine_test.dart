@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/pending_sync_entry.dart';
+import 'package:elang/shared/services/lesson_api_exception.dart';
 import 'package:elang/shared/services/sync_engine.dart';
 
 import '../../helpers/controllable_lesson_api.dart';
@@ -337,5 +338,57 @@ void main() {
 
     expect(await engine.hasPendingEntriesForLesson('lesson-a'), isTrue);
     expect(await engine.hasPendingEntriesForLesson('lesson-b'), isFalse);
+  });
+
+  test(
+    'a completion the server rejects outright is dropped, and the rest still sync',
+    () async {
+      final api = _apiWithCompletionResult()
+        ..completeLessonFailingAttemptIds = {'r1'}
+        ..completeLessonError = const LessonApiException(
+          'total_count=3 does not match',
+          errorCode: 'invalid_completion',
+        );
+      final queue = FakePendingSyncQueueStore();
+      await queue.enqueue(_entry('r1'));
+      await queue.enqueue(_entry('r2'));
+      final engine = SyncEngine(
+        lessonApi: api,
+        connectivityMonitor: FakeConnectivityMonitor(online: true),
+        queueStore: queue,
+      );
+
+      await engine.syncNow();
+
+      expect(api.completeLessonCalls.map((c) => c.attemptId), ['r1', 'r2']);
+      expect(engine.pendingCount, 0);
+      expect(engine.status, SyncStatus.idle);
+    },
+  );
+
+  test('a rejection worth retrying (expired session) stays queued', () async {
+    final api = _apiWithCompletionResult()
+      ..completeLessonFailingAttemptIds = {'t1'}
+      ..completeLessonError = const LessonApiException(
+        'expired',
+        errorCode: 'expired_token',
+      );
+    final queue = FakePendingSyncQueueStore();
+    await queue.enqueue(_entry('t1'));
+    await queue.enqueue(_entry('t2'));
+    final engine = SyncEngine(
+      lessonApi: api,
+      connectivityMonitor: FakeConnectivityMonitor(online: true),
+      queueStore: queue,
+      baseRetryDelay: const Duration(hours: 1),
+      maxRetryDelay: const Duration(hours: 1),
+    );
+
+    await engine.syncNow();
+
+    expect(api.completeLessonCalls.map((c) => c.attemptId), ['t1']);
+    expect(engine.pendingCount, 2);
+    expect(engine.status, SyncStatus.failed);
+    engine.dispose();
   });
 }

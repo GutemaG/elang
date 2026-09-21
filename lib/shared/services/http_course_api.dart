@@ -92,7 +92,7 @@ class HttpCourseApi implements CourseApi {
 
   Future<http.Response> _send(Future<http.Response> Function() request) async {
     try {
-      return await request();
+      return await request().timeout(AuthConfig.requestTimeout);
     } on Object {
       throw const CourseApiException('Network request failed');
     }

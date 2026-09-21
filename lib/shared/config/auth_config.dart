@@ -21,6 +21,13 @@
 /// safe to commit, matching `backend/.env.example`'s "commit the example,
 /// not the real values" precedent.
 abstract final class AuthConfig {
+  /// How long any backend request may take before it counts as a network
+  /// failure. Without a limit, a connection that is up but has no internet
+  /// hangs forever instead of falling back to the on-device cache. Generous
+  /// because a cold Vercel function plus a waking Neon database can take
+  /// several seconds on its own.
+  static const Duration requestTimeout = Duration(seconds: 20);
+
   /// Base URL of the backend's auth API.
   ///
   /// Supplied at build time so one codebase can point at either environment
