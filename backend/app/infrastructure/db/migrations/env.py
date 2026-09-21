@@ -14,6 +14,7 @@ from app.config import get_settings
 # auth bounded context) directly otherwise.
 from app.infrastructure.db import lesson_models  # noqa: F401
 from app.infrastructure.db.models import Base
+from app.infrastructure.db.url import normalize_database_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -28,8 +29,12 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Use the same DATABASE_URL the app itself reads from .env/environment,
-# rather than duplicating it in alembic.ini.
-config.set_main_option("sqlalchemy.url", get_settings().database_url)
+# rather than duplicating it in alembic.ini. Normalized the same way
+# `session.py` normalizes it, so `alembic upgrade head` and the running app
+# connect to a managed Postgres through identical driver settings -- a
+# migration that applies here must not be one the app then cannot reach.
+_url, _connect_args = normalize_database_url(get_settings().database_url)
+config.set_main_option("sqlalchemy.url", _url)
 
 
 def run_migrations_offline() -> None:
@@ -64,6 +69,7 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=_connect_args,
     )
 
     async with connectable.connect() as connection:

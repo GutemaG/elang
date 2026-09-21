@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.config import get_settings
+from app.infrastructure.db.url import normalize_database_url
 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
@@ -26,12 +27,14 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         settings = get_settings()
-        connect_args = {}
-        if settings.database_url.startswith("sqlite"):
+        # Managed Postgres URLs arrive in libpq's dialect and have to be
+        # translated before asyncpg will accept them -- see `url.py`.
+        url, connect_args = normalize_database_url(settings.database_url)
+        if url.startswith("sqlite"):
             # Allows the same connection's objects to be used across the
             # async event loop callbacks FastAPI schedules a request onto.
             connect_args = {"check_same_thread": False}
-        _engine = create_async_engine(settings.database_url, connect_args=connect_args)
+        _engine = create_async_engine(url, connect_args=connect_args)
     return _engine
 
 
