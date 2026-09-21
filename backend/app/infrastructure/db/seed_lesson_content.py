@@ -749,7 +749,27 @@ async def seed(session: AsyncSession) -> None:
     absent, inserted; if present, updated in place. No rows are ever
     deleted here.
     """
-    for course_data in COURSES:
+    await seed_content(
+        session,
+        courses=COURSES,
+        vocabulary=VOCABULARY,
+        categories=CATEGORIES,
+        curriculum=CURRICULUM,
+    )
+
+
+async def seed_content(
+    session: AsyncSession,
+    *,
+    courses: list[dict[str, Any]],
+    vocabulary: list[dict[str, str]],
+    categories: list[dict[str, Any]],
+    curriculum: list[dict[str, Any]],
+) -> None:
+    """The upsert loop behind [seed], for any content in the same shape --
+    also used by `seed_local_audio.py`.
+    """
+    for course_data in courses:
         course_id = _content_id(course_data["slug"])
         course = await session.get(CourseModel, course_id)
         if course is None:
@@ -762,7 +782,7 @@ async def seed(session: AsyncSession) -> None:
         course.order_index = course_data["order_index"]
     await session.flush()
 
-    for vocab_data in VOCABULARY:
+    for vocab_data in vocabulary:
         vocab_id = _content_id(vocab_data["slug"])
         vocab_item = await session.get(VocabItemModel, vocab_id)
         if vocab_item is None:
@@ -772,7 +792,7 @@ async def seed(session: AsyncSession) -> None:
         vocab_item.word = vocab_data["word"]
         vocab_item.translation = vocab_data["translation"]
 
-    for category_data in CATEGORIES:
+    for category_data in categories:
         category_id = _content_id(category_data["slug"])
         category = await session.get(CategoryModel, category_id)
         if category is None:
@@ -784,7 +804,7 @@ async def seed(session: AsyncSession) -> None:
         category.order_index = category_data["order_index"]
     await session.flush()
 
-    for skill_data in CURRICULUM:
+    for skill_data in curriculum:
         skill_id = _content_id(skill_data["slug"])
         skill = await session.get(SkillModel, skill_id)
         if skill is None:

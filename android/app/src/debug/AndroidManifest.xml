@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug only: lets the media player stream lesson audio from the local
+         backend over plain http (see res/xml/network_security_config.xml).
+         Release builds keep Android's default of https only.
+    -->
+    <application android:networkSecurityConfig="@xml/network_security_config"/>
 </manifest>

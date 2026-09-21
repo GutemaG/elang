@@ -302,7 +302,11 @@ class HttpLessonApi implements LessonApi {
         final correctChoiceId = json['correct_choice_id'] as String;
         return ListeningExercise(
           id: id,
-          audioUrl: json['audio_url'] as String,
+          // Recorded clips come as a path on this API ("/media/audio/..."),
+          // so the same content works against local and deployed backends.
+          audioUrl: Uri.parse(_baseUrl)
+              .resolve(json['audio_url'] as String)
+              .toString(),
           instruction: json['prompt'] as String,
           options: choices.map((c) => c['text'] as String).toList(),
           correctOptionIndex: choices.indexWhere(

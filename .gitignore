@@ -51,5 +51,9 @@ app.*.map.json
 .mcp.json
 backend/.env
 
+# Recorded lesson audio: served locally from here, hosted elsewhere in
+# production -- never committed
+backend/media/
+
 # specsmd tooling deps (fs-extra, js-yaml for bolt-complete.cjs)
 .specsmd/aidlc/scripts/node_modules/

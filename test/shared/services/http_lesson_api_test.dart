@@ -426,6 +426,63 @@ void main() {
       },
     );
 
+    test('a recorded clip served by the API resolves to a full URL', () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/beans') {
+          return http.Response(
+            jsonEncode({
+              'beans': 5,
+              'beans_max': 5,
+              'next_bean_at': null,
+              'regen_minutes_per_bean': 30,
+              'amole_balance': 0,
+              'refill_cost_amole': 350,
+            }),
+            200,
+          );
+        }
+        return http.Response(
+          jsonEncode({
+            'lesson': {
+              'id': 'lesson-a1',
+              'skill_id': 'skill-a',
+              'title': 'Hello',
+              'order_index': 1,
+            },
+            'exercises': [
+              {
+                'id': 'ex-1',
+                'order_index': 1,
+                'type': 'listening',
+                'prompt': 'What does this word mean?',
+                'audio_url': '/media/audio/am/hello.m4a',
+                'choices': [
+                  {'id': 'a', 'text': 'Hello'},
+                  {'id': 'b', 'text': 'Goodbye'},
+                ],
+                'correct_choice_id': 'a',
+              },
+            ],
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final api = HttpLessonApi(
+        client: client,
+        baseUrl: 'https://ethio-lang.vercel.app',
+        sessionRepository: await _signedInSessionRepository(),
+      );
+
+      final content = await api.startLesson('lesson-a1');
+
+      final listening = content.exercises.single as ListeningExercise;
+      expect(
+        listening.audioUrl,
+        'https://ethio-lang.vercel.app/media/audio/am/hello.m4a',
+      );
+    });
+
     test(
       'a 404 response throws LessonApiException with lesson_not_found',
       () async {
