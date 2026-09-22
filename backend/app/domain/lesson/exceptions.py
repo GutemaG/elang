@@ -90,3 +90,60 @@ class InvalidCompletionTimestampError(LessonDomainError):
     """
 
     error_code = "invalid_completion_timestamp"
+
+
+# --- Content admin API (bolt 035-admin-content-api, 017-content-admin-web) ---
+
+
+class AdminContentError(LessonDomainError):
+    """Base for content admin API failures. `details` travels to the client
+    in the error body alongside `error_code` and `message`."""
+
+    error_code = "admin_content_error"
+
+    def __init__(self, message: str, **details: object) -> None:
+        super().__init__(message)
+        self.details = details
+
+
+class ContentNotFoundError(AdminContentError):
+    """No course, section, skill, lesson or exercise has the given id."""
+
+    error_code = "content_not_found"
+
+
+class InvalidContentError(AdminContentError):
+    """A write's input is unusable; `details["field"]` names the part."""
+
+    error_code = "invalid_content"
+
+    def __init__(self, field: str, message: str) -> None:
+        super().__init__(message, field=field)
+        self.field = field
+
+
+class InvalidExerciseError(InvalidContentError):
+    """An exercise the app could not play: bad shape, broken invariant, or
+    an answer key naming ids its content does not have."""
+
+    error_code = "invalid_exercise"
+
+
+class InvalidOrderError(AdminContentError):
+    """A reorder's ids are not exactly the parent's current children."""
+
+    error_code = "invalid_order"
+
+
+class ContentInUseError(AdminContentError):
+    """A delete would remove content that learners have progress or
+    attempts on. Refused even when confirmed."""
+
+    error_code = "content_in_use"
+
+
+class ConfirmationRequiredError(AdminContentError):
+    """A delete of unused content that removes children too; repeat it with
+    `confirm=true`. `details` says what would go."""
+
+    error_code = "confirmation_required"

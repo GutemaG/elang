@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import UTC, date, datetime
-from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,22 +32,13 @@ from app.domain.lesson.entities import (
     UserVocabProgress,
     VocabItem,
 )
-from app.domain.lesson.value_objects import (
-    AnswerKey,
-    ChoiceAnswerKey,
-    ExerciseContent,
-    ExerciseType,
-    GapFillContent,
-    LessonCompletionOutcome,
-    ListeningContent,
-    MatchPairsContent,
-    MultipleChoiceContent,
-    PairAnswerKey,
-    SentenceConstructionContent,
-    SequenceAnswerKey,
-    SpellTilesContent,
-)
-from app.domain.lesson.value_objects import Choice as ChoiceVO
+
+# Lifted to the domain by bolt 035 so the admin write path validates with
+# the same mapping the read path uses; re-bound here under their old names,
+# which `test_exercise_type_dispatch.py` imports.
+from app.domain.lesson.exercise_parts import answer_key_from_json as _answer_key_from_json
+from app.domain.lesson.exercise_parts import content_from_json as _content_from_json
+from app.domain.lesson.value_objects import ExerciseType, LessonCompletionOutcome
 from app.infrastructure.db.lesson_models import (
     AmoleTransactionModel,
     CategoryModel,
@@ -75,61 +65,6 @@ def _ensure_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)
-
-
-def _choices_from_json(raw: list[dict[str, Any]]) -> tuple[ChoiceVO, ...]:
-    return tuple(ChoiceVO(id=item["id"], text=item["text"]) for item in raw)
-
-
-def _content_from_json(exercise_type: ExerciseType, content: dict[str, Any]) -> ExerciseContent:
-    if exercise_type is ExerciseType.MULTIPLE_CHOICE:
-        return MultipleChoiceContent(choices=_choices_from_json(content["choices"]))
-    if exercise_type is ExerciseType.LISTENING:
-        return ListeningContent(
-            audio_url=content["audio_url"], choices=_choices_from_json(content["choices"])
-        )
-    if exercise_type is ExerciseType.SENTENCE_CONSTRUCTION:
-        return SentenceConstructionContent(word_bank=_choices_from_json(content["word_bank"]))
-    if exercise_type is ExerciseType.MATCH_PAIRS:
-        return MatchPairsContent(
-            left_tiles=_choices_from_json(content["left_tiles"]),
-            right_tiles=_choices_from_json(content["right_tiles"]),
-        )
-    # Every type is now tested explicitly. Until bolt 030 the match-pairs
-    # branch was the unguarded fall-through, which meant any type added
-    # later was silently read as match-pairs and died on a missing
-    # `left_tiles` key -- a confusing failure a long way from its cause.
-    if exercise_type is ExerciseType.GAP_FILL:
-        return GapFillContent(
-            sentence_before=content["sentence_before"],
-            sentence_after=content["sentence_after"],
-            choices=_choices_from_json(content["choices"]),
-        )
-    if exercise_type is ExerciseType.SPELL_TILES:
-        return SpellTilesContent(tiles=_choices_from_json(content["tiles"]))
-    raise ValueError(f"No content mapping for exercise type {exercise_type}")
-
-
-def _answer_key_from_json(exercise_type: ExerciseType, answer_key: dict[str, Any]) -> AnswerKey:
-    if exercise_type in (ExerciseType.SENTENCE_CONSTRUCTION, ExerciseType.SPELL_TILES):
-        return SequenceAnswerKey(correct_sequence=tuple(answer_key["correct_sequence"]))
-    if exercise_type is ExerciseType.MATCH_PAIRS:
-        return PairAnswerKey(
-            correct_pairs=tuple(tuple(pair) for pair in answer_key["correct_pairs"])
-        )
-    # `multiple_choice`, `listening` and `gap_fill` all answer the same
-    # question -- which one of these is right -- so they share
-    # `ChoiceAnswerKey`.
-    #
-    # Note this is a fall-through, not an explicit list, which makes it the
-    # one place in this module where a new type is absorbed rather than
-    # rejected. Bolt 030 needed no edit here because `gap_fill` genuinely
-    # does answer with a choice id. Bolt 032 did: `spell_tiles` answers
-    # with a sequence, and without being named above it would have fallen
-    # through to here and died on a missing `correct_choice_id` -- the
-    # exact trap the previous wording warned about. Any future type must
-    # be checked against this, not assumed into it.
-    return ChoiceAnswerKey(correct_choice_id=answer_key["correct_choice_id"])
 
 
 def _exercise_model_to_domain(model: ExerciseModel) -> Exercise:

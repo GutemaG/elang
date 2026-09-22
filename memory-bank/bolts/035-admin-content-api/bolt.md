@@ -3,15 +3,24 @@ id: 035-admin-content-api
 unit: 001-content-admin-api
 intent: 017-content-admin-web
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 003-content-tree-and-crud-api
   - 004-exercise-write-validation
 created: '2026-09-22T10:00:00Z'
-started: null
-completed: null
+started: '2026-09-22T11:55:22Z'
+completed: '2026-09-22T13:17:13Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-22T12:05:07Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-22T12:18:29Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-22T13:17:22Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 034-admin-api-foundation
 enables_bolts:

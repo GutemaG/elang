@@ -28,10 +28,17 @@ from app.domain.exceptions import (
     ProviderUnreachableError,
 )
 from app.domain.lesson.exceptions import (
+    AdminContentError,
     BeansExhaustedError,
+    ConfirmationRequiredError,
+    ContentInUseError,
+    ContentNotFoundError,
     InsufficientAmoleError,
     InvalidCompletionError,
     InvalidCompletionTimestampError,
+    InvalidContentError,
+    InvalidExerciseError,
+    InvalidOrderError,
     InvalidPracticeCompletionError,
     LessonCourseUnavailableError,
     LessonDomainError,
@@ -62,6 +69,12 @@ _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     InsufficientAmoleError: 422,
     InvalidCompletionTimestampError: 422,
     InvalidPracticeCompletionError: 422,
+    ContentNotFoundError: 404,
+    InvalidContentError: 422,
+    InvalidExerciseError: 422,
+    InvalidOrderError: 422,
+    ContentInUseError: 409,
+    ConfirmationRequiredError: 409,
 }
 _LESSON_DEFAULT_STATUS = 400
 
@@ -78,7 +91,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(LessonDomainError)
     async def handle_lesson_domain_error(request: Request, exc: LessonDomainError) -> JSONResponse:
         status_code = _LESSON_STATUS_BY_EXCEPTION.get(type(exc), _LESSON_DEFAULT_STATUS)
-        return JSONResponse(
-            status_code=status_code,
-            content={"error_code": exc.error_code, "message": exc.message},
-        )
+        content: dict[str, object] = {"error_code": exc.error_code, "message": exc.message}
+        # Bolt 035: admin errors say which field, or what a delete would do.
+        if isinstance(exc, AdminContentError) and exc.details:
+            content["details"] = exc.details
+        return JSONResponse(status_code=status_code, content=content)
