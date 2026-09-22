@@ -14,6 +14,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application import admin_audio_use_cases as audio_uc
 from app.application import admin_content_use_cases as uc
 from app.config import get_settings
 from app.domain.entities import User
@@ -31,7 +32,11 @@ from app.infrastructure.api.admin_schemas import (
     AdminTreeLesson,
     AdminTreeSection,
     AdminTreeSkill,
+    AudioLinkRequest,
+    AudioLinkResponse,
     AudioStatus,
+    AudioUploadRequest,
+    AudioUploadResponse,
     CreateSectionRequest,
     ExerciseRequest,
     ReorderRequest,
@@ -50,6 +55,8 @@ from app.infrastructure.db.admin_content_repository import (
 from app.infrastructure.db.lesson_models import CourseModel, ExerciseModel
 from app.infrastructure.db.seed_category_content import PLACEHOLDER_AUDIO_URL
 from app.infrastructure.db.session import get_db_session
+from app.infrastructure.external.audio_link_checker import AudioLinkChecker
+from app.infrastructure.external.r2_storage import R2Storage
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -64,6 +71,16 @@ async def _ctx(admin: User = Depends(require_admin)) -> uc.AdminContext:
     return uc.AdminContext(
         email=admin.email or "", allow_local_media=get_settings().environment == "local"
     )
+
+
+def get_audio_storage() -> R2Storage | None:
+    """Overridable in tests; `None` when R2 is not configured."""
+    return R2Storage.from_settings(get_settings())
+
+
+def get_audio_link_checker() -> AudioLinkChecker:
+    """Overridable in tests, which never reach the network."""
+    return AudioLinkChecker()
 
 
 def _course(course: CourseModel, section_count: int) -> AdminCourse:
@@ -402,3 +419,35 @@ async def delete_exercise(
 ) -> Response:
     await uc.delete_exercise(repo, ctx, exercise_id)
     return Response(status_code=204)
+
+
+# --- audio (bolt 036) ---------------------------------------------------------
+
+
+@router.post("/audio/uploads", response_model=AudioUploadResponse, status_code=201)
+async def create_audio_upload(
+    body: AudioUploadRequest,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+    storage: R2Storage | None = Depends(get_audio_storage),
+) -> AudioUploadResponse:
+    """A short-lived PUT link straight to R2 for one recording or file."""
+    key, upload = await audio_uc.presign_upload(
+        repo, ctx, storage, lesson_id=body.lesson_id, content_type=body.content_type, size=body.size
+    )
+    return AudioUploadResponse(
+        upload_url=upload.url,
+        headers=upload.headers,
+        key=key,
+        public_url=upload.public_url,
+        expires_in=upload.expires_in,
+    )
+
+
+@router.post("/audio/links", response_model=AudioLinkResponse)
+async def check_audio_link(
+    body: AudioLinkRequest, checker: AudioLinkChecker = Depends(get_audio_link_checker)
+) -> AudioLinkResponse:
+    """Checks a pasted link answers with audio before the admin saves it."""
+    url, content_type = await audio_uc.check_audio_link(checker, body.url)
+    return AudioLinkResponse(url=url, content_type=content_type)

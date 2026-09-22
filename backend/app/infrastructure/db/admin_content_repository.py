@@ -161,6 +161,18 @@ class SqlAlchemyAdminContentRepository:
         ).scalar_one()
         return Subtree(skill_ids=skill_ids, lesson_ids=lesson_ids, exercise_count=exercise_count)
 
+    async def learning_language_of_lesson(self, lesson_id: str) -> str | None:
+        """The lesson's course's learning language -- the folder its audio
+        goes in (bolt 036)."""
+        stmt = (
+            select(CourseModel.learning_language)
+            .join(CategoryModel, CategoryModel.course_id == CourseModel.id)
+            .join(SkillModel, SkillModel.category_id == CategoryModel.id)
+            .join(LessonModel, LessonModel.skill_id == SkillModel.id)
+            .where(LessonModel.id == lesson_id)
+        )
+        return (await self._session.execute(stmt)).scalar_one_or_none()
+
     async def count_learners(self, subtree: Subtree) -> int:
         """Distinct learners with progress on any skill, or an attempt at
         any lesson, in the subtree -- the only two tables that point at

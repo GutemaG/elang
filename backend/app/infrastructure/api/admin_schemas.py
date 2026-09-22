@@ -129,3 +129,32 @@ class AdminExercise(BaseModel):
 
 class AdminExerciseList(BaseModel):
     exercises: list[AdminExercise]
+
+
+# --- audio (bolt 036) ---------------------------------------------------------
+
+
+class AudioUploadRequest(BaseModel):
+    lesson_id: str
+    content_type: str
+    size: int = Field(description="Exact size in bytes of the file to be uploaded")
+
+
+class AudioUploadResponse(BaseModel):
+    upload_url: str
+    method: Literal["PUT"] = "PUT"
+    # Send exactly these headers with the PUT; the size is bound to the
+    # signature, so the body must be the file that was described.
+    headers: dict[str, str]
+    key: str
+    public_url: str
+    expires_in: int
+
+
+class AudioLinkRequest(BaseModel):
+    url: str
+
+
+class AudioLinkResponse(BaseModel):
+    url: str
+    content_type: str

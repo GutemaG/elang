@@ -31,6 +31,7 @@ implemented: false
 ## Technical Notes
 
 - MediaRecorder with `MediaRecorder.isTypeSupported('audio/mp4')` first.
+- PUT with exactly the `headers` the upload response returns (bolt 036). The link is signed for the base type, e.g. `audio/webm`, and R2 refuses a PUT whose Content-Type differs, such as the blob's `audio/webm;codecs=opus`. This was shown live in bolt 036's test report.
 - The end-to-end phone check depends on the R2 public URL working (`system-context.md` finding 7).
 
 ## Dependencies

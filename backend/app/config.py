@@ -43,6 +43,16 @@ class Settings(BaseSettings):
     # admin.
     admin_emails: str = ""
 
+    # Recorded lesson audio on Cloudflare R2 (bolt `036-admin-audio-api`).
+    # `audio_base_url` is the bucket's public address; the rest sign upload
+    # links on the server. All are server-side only -- never sent to a
+    # browser. Uploads answer 503 until every one is set.
+    audio_base_url: str = ""
+    r2_account_id: str = ""
+    r2_bucket: str = ""
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
+
     # Cache TTL for Apple's JWKS, independent of key-rotation-triggered
     # refetches (ADR-2 / open item: refetch-once on an unknown `kid`).
     apple_jwks_cache_ttl_seconds: int = 3600

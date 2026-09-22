@@ -2,11 +2,11 @@
 id: 005-audio-upload-and-link-api
 unit: 001-content-admin-api
 intent: 017-content-admin-web
-status: generated
+status: complete
 priority: must
 created: '2026-09-22T10:00:00Z'
 assigned_bolt: 036-admin-audio-api
-implemented: false
+implemented: true
 ---
 
 # Story: 005-audio-upload-and-link-api

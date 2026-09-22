@@ -147,3 +147,17 @@ class ConfirmationRequiredError(AdminContentError):
     `confirm=true`. `details` says what would go."""
 
     error_code = "confirmation_required"
+
+
+class InvalidAudioLinkError(AdminContentError):
+    """A pasted audio link that cannot be used; `details["reason"]` says
+    why (`not_https`, `private_address`, `unreachable`, `timeout`,
+    `bad_status`, `not_audio`). Bolt 036."""
+
+    error_code = "invalid_audio_link"
+
+
+class AudioStorageNotConfiguredError(AdminContentError):
+    """Uploads need `AUDIO_BASE_URL` and every `R2_*` setting. Bolt 036."""
+
+    error_code = "audio_storage_not_configured"

@@ -3,14 +3,23 @@ id: 036-admin-audio-api
 unit: 001-content-admin-api
 intent: 017-content-admin-web
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 005-audio-upload-and-link-api
 created: '2026-09-22T10:00:00Z'
-started: null
-completed: null
+started: '2026-09-22T13:34:50Z'
+completed: '2026-09-22T14:36:16Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-22T13:49:29Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-22T13:59:20Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-22T14:36:17Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 034-admin-api-foundation
 enables_bolts:

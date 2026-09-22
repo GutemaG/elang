@@ -29,11 +29,13 @@ from app.domain.exceptions import (
 )
 from app.domain.lesson.exceptions import (
     AdminContentError,
+    AudioStorageNotConfiguredError,
     BeansExhaustedError,
     ConfirmationRequiredError,
     ContentInUseError,
     ContentNotFoundError,
     InsufficientAmoleError,
+    InvalidAudioLinkError,
     InvalidCompletionError,
     InvalidCompletionTimestampError,
     InvalidContentError,
@@ -75,6 +77,8 @@ _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     InvalidOrderError: 422,
     ContentInUseError: 409,
     ConfirmationRequiredError: 409,
+    InvalidAudioLinkError: 422,
+    AudioStorageNotConfiguredError: 503,
 }
 _LESSON_DEFAULT_STATUS = 400
 
