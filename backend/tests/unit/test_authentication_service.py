@@ -179,3 +179,65 @@ class TestTokenVerificationFailures:
 
         with pytest.raises(ProviderUnreachableError):
             await service.authenticate_with_google("token", None, None)
+
+
+class TestVerifiedEmail:
+    """ADR-16 (bolt 034): sign-in records the provider-verified email."""
+
+    async def test_new_user_is_created_with_the_verified_email(self) -> None:
+        verifier = FakeTokenVerifier(subject="sub-email-1", email="admin@example.com")
+        service, _, _ = _make_service(google_verifier=verifier)
+
+        result = await service.authenticate_with_google("t", None, None)
+
+        assert result.user.email == "admin@example.com"
+
+    async def test_new_user_without_a_verified_email_has_none(self) -> None:
+        service, _, _ = _make_service(google_verifier=FakeTokenVerifier(subject="sub-email-2"))
+
+        result = await service.authenticate_with_google("t", None, None)
+
+        assert result.user.email is None
+
+    async def test_returning_user_email_follows_the_latest_sign_in(self) -> None:
+        verifier = FakeTokenVerifier(subject="sub-email-3", email="old@example.com")
+        service, user_repo, _ = _make_service(google_verifier=verifier)
+        first = await service.authenticate_with_google("t1", "am", 15)
+
+        verifier.next_email = "new@example.com"
+        changed = await service.authenticate_with_google("t2", None, None)
+        verifier.next_email = None
+        dropped = await service.authenticate_with_google("t3", None, None)
+
+        assert changed.user.id == first.user.id
+        assert changed.user.email == "new@example.com"
+        assert dropped.user.email is None
+        # Only the email moved: sign-in still never writes preferences (ADR-7).
+        stored = user_repo._users[first.user.id]
+        assert stored.daily_xp_target.xp_per_day == 60
+        assert user_repo.update_calls == 0
+
+    async def test_unchanged_email_is_not_rewritten(self) -> None:
+        verifier = FakeTokenVerifier(subject="sub-email-4", email="same@example.com")
+        user_repo = FakeUserRepository()
+        writes: list[str | None] = []
+        original = user_repo.set_email
+
+        async def counting_set_email(user_id: str, email: str | None) -> User:
+            writes.append(email)
+            return await original(user_id, email)
+
+        user_repo.set_email = counting_set_email  # type: ignore[method-assign]
+        service, _, _ = _make_service(google_verifier=verifier, user_repo=user_repo)
+
+        await service.authenticate_with_google("t1", None, None)
+        await service.authenticate_with_google("t2", None, None)
+
+        assert writes == []
+
+    async def test_apple_sign_in_stores_no_email(self) -> None:
+        service, _, _ = _make_service(apple_verifier=FakeTokenVerifier(subject="apple-sub-1"))
+
+        result = await service.authenticate_with_apple("t", None, None)
+
+        assert result.user.email is None

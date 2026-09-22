@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     # dev server port isn't fixed run to run -- see `main.py`.
     cors_allowed_origins: str = ""
 
+    # Comma-separated Google-verified emails allowed on `/api/v1/admin/*`
+    # (ADR-16, bolt `034-admin-api-foundation`). Empty means nobody is an
+    # admin.
+    admin_emails: str = ""
+
     # Cache TTL for Apple's JWKS, independent of key-rotation-triggered
     # refetches (ADR-2 / open item: refetch-once on an unknown `kid`).
     apple_jwks_cache_ttl_seconds: int = 3600

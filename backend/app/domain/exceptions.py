@@ -106,3 +106,10 @@ class InvalidSessionError(AuthDomainError):
     """
 
     error_code = "invalid_session"
+
+
+class NotAdminError(AuthDomainError):
+    """A valid session whose user's verified email is not in `ADMIN_EMAILS`
+    called an admin endpoint (ADR-16, bolt `034-admin-api-foundation`)."""
+
+    error_code = "not_admin"

@@ -36,6 +36,7 @@ from app.domain.value_objects import (
     PendingOnboardingSelection,
     ProviderIdentity,
     SessionToken,
+    VerifiedIdentity,
 )
 
 # Session lifetime: an implementation-level constant (per
@@ -60,15 +61,16 @@ class ValidatedSession:
 
 
 class TokenVerifier(Protocol):
-    """Verifies a provider credential and returns the provider's stable
-    subject identifier (Google's `sub`, Apple's stable user identifier).
+    """Verifies a provider credential and returns what the provider vouches
+    for: its stable subject identifier (Google's `sub`, Apple's stable user
+    identifier) and, when the provider verified it, the email (ADR-16).
 
     Implementations raise `InvalidTokenError`, `ExpiredTokenError`, or
     `ProviderUnreachableError` (from `app.domain.exceptions`) on failure —
     never return a sentinel for a failed verification.
     """
 
-    async def verify(self, token: str) -> str: ...
+    async def verify(self, token: str) -> VerifiedIdentity: ...
 
 
 @dataclass(frozen=True)
@@ -286,8 +288,8 @@ class AuthenticationService:
         # Raises InvalidTokenError / ExpiredTokenError / ProviderUnreachableError
         # on failure -- caller (application layer) is responsible for logging
         # AuthenticationRejected and re-raising for the presentation layer.
-        provider_user_id = await verifier.verify(token)
-        identity = ProviderIdentity(auth_provider=auth_provider, provider_user_id=provider_user_id)
+        verified = await verifier.verify(token)
+        identity = ProviderIdentity(auth_provider=auth_provider, provider_user_id=verified.subject)
 
         existing_user = await self._user_repo.find_by_provider_identity(
             identity.auth_provider, identity.provider_user_id
@@ -296,6 +298,10 @@ class AuthenticationService:
 
         if existing_user is not None:
             user = existing_user
+            # ADR-16: keep the verified email current, so the admin check
+            # follows the account's Google email. Written only on change.
+            if user.email != verified.email:
+                user = await self._user_repo.set_email(user.id, verified.email)
         else:
             # Only ever consulted on the account-creation branch -- pending
             # selections on a returning-user sign-in are ignored entirely,
@@ -317,6 +323,7 @@ class AuthenticationService:
                     notification_enabled=True,
                     created_at=datetime.now(UTC),
                     active_course_id=course.id,
+                    email=verified.email,
                 ),
                 course,
             )

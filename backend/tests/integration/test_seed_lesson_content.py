@@ -46,26 +46,29 @@ class TestSeedIdempotency:
         assert lesson_count_1 == lesson_count_2
         assert exercise_count_1 == exercise_count_2
 
-    async def test_re_running_seed_after_editing_content_updates_in_place(
+    async def test_re_running_seed_leaves_an_edited_row_untouched(
         self, db_session: AsyncSession
     ) -> None:
+        """Bolt 034: the seed is insert-only, so an edit made in the
+        database (as the admin API will) survives a re-seed. This replaced
+        the old upsert test, which asserted the opposite."""
         await seed(db_session)
         await db_session.commit()
 
-        original_title = CURRICULUM[0]["title"]
-        CURRICULUM[0]["title"] = "Edited Title For Idempotency Test"
-        try:
-            await seed(db_session)
-            await db_session.commit()
+        skill_id = _content_id(CURRICULUM[0]["slug"])
+        skill = await db_session.get(SkillModel, skill_id)
+        assert skill is not None
+        skill.title = "Edited By An Admin"
+        await db_session.commit()
 
-            # Per-category ordering (ADR-11): several skills share order_index 1,
-            # so look the edited skill up by its deterministic id instead.
-            stmt = select(SkillModel).where(SkillModel.id == _content_id(CURRICULUM[0]["slug"]))
-            result = await db_session.execute(stmt)
-            skill = result.scalar_one()
-            assert skill.title == "Edited Title For Idempotency Test"
-        finally:
-            CURRICULUM[0]["title"] = original_title
+        await seed(db_session)
+        await db_session.commit()
+
+        # Per-category ordering (ADR-11): several skills share order_index 1,
+        # so look the edited skill up by its deterministic id instead.
+        stmt = select(SkillModel).where(SkillModel.id == skill_id)
+        result = await db_session.execute(stmt)
+        assert result.scalar_one().title == "Edited By An Admin"
 
 
 class TestSeedContentAcceptanceCriteria:

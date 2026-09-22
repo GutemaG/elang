@@ -1,8 +1,8 @@
 ---
 intent: 017-content-admin-web
 created: '2026-09-22T09:00:00Z'
-completed: null
-status: in-progress
+completed: '2026-09-22T10:00:00Z'
+status: complete
 ---
 
 # Inception Log: content-admin-web
@@ -22,10 +22,10 @@ from `002-core-lesson-loop`, `009-course-categories` and
 | Artifact | Status | File |
 |----------|--------|------|
 | Requirements | ✅ approved (Checkpoint 2) | requirements.md |
-| System Context | 📝 awaiting review (Checkpoint 3) | system-context.md |
-| Units | 📝 awaiting review | units.md, units/{unit-name}/unit-brief.md |
-| Stories | 📝 awaiting review | units/{unit-name}/stories/*.md |
-| Bolt Plan | 📝 awaiting review | memory-bank/bolts/034-040 |
+| System Context | ✅ | system-context.md |
+| Units | ✅ | units.md, units/{unit-name}/unit-brief.md |
+| Stories | ✅ | units/{unit-name}/stories/*.md |
+| Bolt Plan | ✅ | memory-bank/bolts/034-040 |
 
 ## Summary
 
@@ -57,6 +57,8 @@ from `002-core-lesson-loop`, `009-course-categories` and
 | 2026-09-22 | Audio uploads use presigned PUT URLs to R2 | Avoids Vercel's 4.5 MB body limit; R2 keys stay on the backend | Default |
 | 2026-09-22 | Audio can be recorded in the browser, uploaded, or linked by URL | Admins record directly or reuse hosted clips (Checkpoint 2 feedback) | Yes |
 | 2026-09-22 | Keep the local Audio Lab until FR-5 ships | Still the only way to hear real clips locally | Default |
+| 2026-09-22 | Seeds go insert-only in the first bolt, before any admin write exists | Closes the window in which a seed run erases admin edits | Yes |
+| 2026-09-22 | Validation reuses the domain value objects; no admin-only rule set | A second copy would drift and let the app be served content it cannot render | Yes |
 
 ## Pre-Inception Findings
 
@@ -69,9 +71,6 @@ from `002-core-lesson-loop`, `009-course-categories` and
   root. Its public dev URL currently returns 404, which must be fixed before
   FR-5 can be verified.
 
-| 2026-09-22 | Seeds go insert-only in the first bolt, before any admin write exists | Closes the window in which a seed run erases admin edits | Yes |
-| 2026-09-22 | Validation reuses the domain value objects; no admin-only rule set | A second copy would drift and let the app be served content it cannot render | Yes |
-
 ## Scope Changes
 
 | Date | Change | Reason | Impact |
@@ -81,16 +80,14 @@ from `002-core-lesson-loop`, `009-course-categories` and
 ## Ready for Construction
 
 **Checklist**:
-- [ ] All requirements documented
-- [ ] System context defined
-- [ ] Units decomposed
-- [ ] Stories created for all units
-- [ ] Bolts planned
-- [ ] Human review complete
+- [x] All requirements documented
+- [x] System context defined
+- [x] Units decomposed
+- [x] Stories created for all units
+- [x] Bolts planned
+- [x] Human review complete
 
 ## Next Steps
 
-1. Answer the Checkpoint 1 open questions in requirements.md
-2. Approve requirements (Checkpoint 2)
-3. Review system context, units, stories and bolts (Checkpoint 3)
-4. Start construction with bolt `034-admin-api-foundation`
+1. Review system context, units, stories and bolts (Checkpoint 3)
+2. Start construction with bolt `034-admin-api-foundation`

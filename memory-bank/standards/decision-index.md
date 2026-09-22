@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-09-21T06:10:00Z
-total_decisions: 15
+last_updated: 2026-09-22T10:10:00Z
+total_decisions: 16
 ---
 
 # Decision Index
@@ -17,6 +17,14 @@ Use this to find relevant prior decisions when working on related features.
 ---
 
 ## Decisions
+
+### ADR-16: Admins are identified by the Google-verified email, stored on `users`
+- **Status**: accepted
+- **Date**: 2026-09-22
+- **Bolt**: 034-admin-api-foundation (001-content-admin-api)
+- **Path**: `bolts/034-admin-api-foundation/adr-16-admin-identity-verified-email.md`
+- **Summary**: Verifiers return `VerifiedIdentity(subject, email)`; Google's email is kept only when `email_verified`, Apple's never. A nullable `users.email` is rewritten at each sign-in via `set_email`, and `require_admin` checks it against `ADMIN_EMAILS` on every `/api/v1/admin/*` request. Email never identifies an account.
+- **Read when**: Touching sign-in, `TokenVerifier`, `users.email`, `ADMIN_EMAILS`, `require_admin`, or anything under `/api/v1/admin`.
 
 ### ADR-15: The course rail is the courses the learner has opened, derived from the offline cache
 - **Status**: accepted

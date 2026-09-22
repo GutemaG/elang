@@ -743,11 +743,22 @@ VOCABULARY.extend(NEW_COURSE_VOCABULARY)
 
 
 async def seed(session: AsyncSession) -> None:
-    """Idempotent: safe to call repeatedly against the same database.
+    """Insert-only (bolt 034-admin-api-foundation, ADR-16's intent
+    `017-content-admin-web`): safe to call repeatedly against the same
+    database, and it never changes a row that already exists.
 
-    Each skill/lesson/exercise is fetched by its deterministic id; if
-    absent, inserted; if present, updated in place. No rows are ever
-    deleted here.
+    The database is the source of truth for content once it has been seeded
+    -- admins edit it through `/api/v1/admin/*`. So each row is looked up by
+    its deterministic id and inserted only if absent. Two consequences:
+
+    - Changing an already-seeded row here no longer reaches a database that
+      has it. Fix such content through the admin API, or reset a local
+      `dev.db`.
+    - A seeded row that an admin deleted is inserted again on the next run,
+      since insert-only cannot tell "deleted" from "never seeded".
+
+    New rows added here (a new lesson under an old skill, a new exercise)
+    are still inserted. No rows are ever deleted.
     """
     await seed_content(
         session,
@@ -766,78 +777,93 @@ async def seed_content(
     categories: list[dict[str, Any]],
     curriculum: list[dict[str, Any]],
 ) -> None:
-    """The upsert loop behind [seed], for any content in the same shape --
-    also used by `seed_local_audio.py`.
+    """The insert-only loop behind [seed], for any content in the same
+    shape -- also used by `seed_local_audio.py`. An existing row is skipped
+    untouched, but its children are still visited, so new children of an
+    existing parent are inserted.
     """
     for course_data in courses:
         course_id = _content_id(course_data["slug"])
-        course = await session.get(CourseModel, course_id)
-        if course is None:
-            course = CourseModel(id=course_id)
-            session.add(course)
-        course.learning_language = course_data["learning_language"]
-        course.from_language = course_data["from_language"]
-        course.title = course_data["title"]
-        course.status = course_data["status"]
-        course.order_index = course_data["order_index"]
+        if await session.get(CourseModel, course_id) is None:
+            session.add(
+                CourseModel(
+                    id=course_id,
+                    learning_language=course_data["learning_language"],
+                    from_language=course_data["from_language"],
+                    title=course_data["title"],
+                    status=course_data["status"],
+                    order_index=course_data["order_index"],
+                )
+            )
     await session.flush()
 
     for vocab_data in vocabulary:
         vocab_id = _content_id(vocab_data["slug"])
-        vocab_item = await session.get(VocabItemModel, vocab_id)
-        if vocab_item is None:
-            vocab_item = VocabItemModel(id=vocab_id)
-            session.add(vocab_item)
-        vocab_item.course_id = _content_id(vocab_data.get("course_slug", DEFAULT_COURSE_SLUG))
-        vocab_item.word = vocab_data["word"]
-        vocab_item.translation = vocab_data["translation"]
+        if await session.get(VocabItemModel, vocab_id) is None:
+            session.add(
+                VocabItemModel(
+                    id=vocab_id,
+                    course_id=_content_id(vocab_data.get("course_slug", DEFAULT_COURSE_SLUG)),
+                    word=vocab_data["word"],
+                    translation=vocab_data["translation"],
+                )
+            )
 
     for category_data in categories:
         category_id = _content_id(category_data["slug"])
-        category = await session.get(CategoryModel, category_id)
-        if category is None:
-            category = CategoryModel(id=category_id)
-            session.add(category)
-        category.course_id = _content_id(category_data.get("course_slug", DEFAULT_COURSE_SLUG))
-        category.title = category_data["title"]
-        category.subtitle = category_data["subtitle"]
-        category.order_index = category_data["order_index"]
+        if await session.get(CategoryModel, category_id) is None:
+            session.add(
+                CategoryModel(
+                    id=category_id,
+                    course_id=_content_id(category_data.get("course_slug", DEFAULT_COURSE_SLUG)),
+                    title=category_data["title"],
+                    subtitle=category_data["subtitle"],
+                    order_index=category_data["order_index"],
+                )
+            )
     await session.flush()
 
     for skill_data in curriculum:
         skill_id = _content_id(skill_data["slug"])
-        skill = await session.get(SkillModel, skill_id)
-        if skill is None:
-            skill = SkillModel(id=skill_id)
-            session.add(skill)
-        skill.category_id = _content_id(skill_data["category_slug"])
-        skill.title = skill_data["title"]
-        skill.order_index = skill_data["order_index"]
+        if await session.get(SkillModel, skill_id) is None:
+            session.add(
+                SkillModel(
+                    id=skill_id,
+                    category_id=_content_id(skill_data["category_slug"]),
+                    title=skill_data["title"],
+                    order_index=skill_data["order_index"],
+                )
+            )
 
         for lesson_data in skill_data["lessons"]:
             lesson_id = _content_id(lesson_data["slug"])
-            lesson = await session.get(LessonModel, lesson_id)
-            if lesson is None:
-                lesson = LessonModel(id=lesson_id)
-                session.add(lesson)
-            lesson.skill_id = skill_id
-            lesson.title = lesson_data["title"]
-            lesson.order_index = lesson_data["order_index"]
+            if await session.get(LessonModel, lesson_id) is None:
+                session.add(
+                    LessonModel(
+                        id=lesson_id,
+                        skill_id=skill_id,
+                        title=lesson_data["title"],
+                        order_index=lesson_data["order_index"],
+                    )
+                )
 
             for exercise_data in lesson_data["exercises"]:
                 exercise_id = _content_id(exercise_data["slug"])
-                exercise = await session.get(ExerciseModel, exercise_id)
-                if exercise is None:
-                    exercise = ExerciseModel(id=exercise_id)
-                    session.add(exercise)
-                exercise.lesson_id = lesson_id
-                exercise.order_index = exercise_data["order_index"]
-                exercise.type = exercise_data["type"]
-                exercise.prompt = exercise_data["prompt"]
-                exercise.content = exercise_data["content"]
-                exercise.answer_key = exercise_data["answer_key"]
+                if await session.get(ExerciseModel, exercise_id) is not None:
+                    continue
                 vocab_slug = exercise_data.get("vocab_slug")
-                exercise.vocab_item_id = _content_id(vocab_slug) if vocab_slug else None
+                session.add(
+                    ExerciseModel(
+                        id=exercise_id,
+                        lesson_id=lesson_id,
+                        order_index=exercise_data["order_index"],
+                        type=exercise_data["type"],
+                        prompt=exercise_data["prompt"],
+                        content=exercise_data["content"],
+                        answer_key=exercise_data["answer_key"],
+                        vocab_item_id=_content_id(vocab_slug) if vocab_slug else None,
+                    )
+                )
 
     await session.flush()
 

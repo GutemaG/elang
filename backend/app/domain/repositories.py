@@ -26,6 +26,12 @@ class UserRepository(Protocol):
 
     async def update(self, user: User) -> User: ...
 
+    async def set_email(self, user_id: str, email: str | None) -> User:
+        """Records the provider-verified email from a sign-in (ADR-16).
+        Separate from `update` so the authentication path writes only this
+        field (User invariants 2 and 5)."""
+        ...
+
 
 class AuthSessionRepository(Protocol):
     """Entity: `AuthSession`.

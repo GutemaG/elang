@@ -38,6 +38,10 @@ class User:
        never null (existing rows were backfilled to `true`).
     4. A `User` cannot exist without a valid, non-empty `provider_user_id`
        (enforced by `ProviderIdentity.__post_init__`).
+    5. `email` is the provider-verified email from the latest sign-in, or
+       `None` (ADR-16, bolt `034-admin-api-foundation`). Authentication is
+       its only writer, and it is used only for the `ADMIN_EMAILS` check --
+       never to find or merge accounts (invariant 1).
     """
 
     id: str
@@ -50,6 +54,7 @@ class User:
     # an available course. Its learning language is mirrored in
     # `selected_language`.
     active_course_id: str
+    email: str | None = None
 
 
 @dataclass

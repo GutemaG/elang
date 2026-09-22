@@ -14,8 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases import validate_session
 from app.config import get_settings
+from app.domain.admin import is_admin
 from app.domain.entities import User
-from app.domain.exceptions import InvalidSessionError, MissingCredentialsError
+from app.domain.exceptions import InvalidSessionError, MissingCredentialsError, NotAdminError
 from app.domain.services import (
     AuthenticationService,
     OnboardingAttachmentPolicy,
@@ -100,4 +101,16 @@ async def get_current_user(
     user = await validate_session(service, token_value)
     if user is None:
         raise InvalidSessionError("Session token is unknown or expired")
+    return user
+
+
+async def require_admin(user: User = Depends(get_current_user)) -> User:
+    """ADR-16 (bolt `034-admin-api-foundation`): an admin is a signed-in user
+    whose provider-verified email is in `ADMIN_EMAILS`. Layered on
+    `get_current_user`, so a missing or invalid session is still its 401;
+    a valid non-admin session is a 403. The allow-list is read on every
+    request, so removing an email takes effect on the next one.
+    """
+    if not is_admin(user.email, get_settings().admin_emails):
+        raise NotAdminError("This account is not an admin")
     return user

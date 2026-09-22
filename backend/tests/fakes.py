@@ -29,7 +29,7 @@ from app.domain.lesson.entities import (
     UserVocabProgress,
     VocabItem,
 )
-from app.domain.value_objects import AuthProvider
+from app.domain.value_objects import AuthProvider, VerifiedIdentity
 
 # Bolt 024: the deterministic id of the English to Amharic course -- the same
 # one the migration and the seed create (uuid5 of the "course:en-am" slug), so
@@ -104,18 +104,27 @@ class FakeTokenVerifier:
     `ProviderUnreachableError`. Never makes a real network call.
     """
 
-    def __init__(self, *, subject: str | None = None, exception: Exception | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        subject: str | None = None,
+        exception: Exception | None = None,
+        email: str | None = None,
+    ) -> None:
         self.next_subject = subject
         self.next_exception = exception
+        # The provider-verified email to vouch for (ADR-16); `None` is an
+        # unverified or absent email.
+        self.next_email = email
         self.calls: list[str] = []
 
-    async def verify(self, token: str) -> str:
+    async def verify(self, token: str) -> VerifiedIdentity:
         self.calls.append(token)
         if self.next_exception is not None:
             raise self.next_exception
         if self.next_subject is None:
             raise AssertionError("FakeTokenVerifier: no subject or exception configured")
-        return self.next_subject
+        return VerifiedIdentity(subject=self.next_subject, email=self.next_email)
 
     async def aclose(self) -> None:
         """No-op -- matches AppleTokenVerifier's interface for lifespan/teardown symmetry."""
@@ -151,6 +160,11 @@ class FakeUserRepository:
     async def update(self, user: User) -> User:
         self.update_calls += 1
         self._users[user.id] = user
+        return user
+
+    async def set_email(self, user_id: str, email: str | None) -> User:
+        user = replace(self._users[user_id], email=email)
+        self._users[user_id] = user
         return user
 
 

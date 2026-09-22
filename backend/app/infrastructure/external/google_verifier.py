@@ -2,7 +2,8 @@
 Security Design: the official `google-auth` package's
 `google.oauth2.id_token.verify_oauth2_token`, checking signature, issuer,
 audience (our OAuth client ID), and expiry. The verified `sub` claim becomes
-`provider_user_id`. Never trusts a client-asserted user ID.
+`provider_user_id`. Never trusts a client-asserted user ID. The `email` claim
+is passed on only when Google marks it `email_verified` (ADR-16).
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from app.domain.exceptions import (
     InvalidTokenError,
     ProviderUnreachableError,
 )
+from app.domain.value_objects import VerifiedIdentity
 
 _VALID_ISSUERS = ("accounts.google.com", "https://accounts.google.com")
 
@@ -31,7 +33,7 @@ class GoogleTokenVerifier:
         # calls so certificate fetches can be cached by the library itself.
         self._transport_request = google_auth_requests.Request()
 
-    async def verify(self, token: str) -> str:
+    async def verify(self, token: str) -> VerifiedIdentity:
         # verify_oauth2_token is a synchronous, blocking call (it may fetch
         # Google's public certs over HTTP) -- run it off the event loop.
         try:
@@ -65,4 +67,6 @@ class GoogleTokenVerifier:
         subject = claims.get("sub")
         if not subject:
             raise InvalidTokenError("Google ID token missing 'sub' claim")
-        return subject
+        email = claims.get("email")
+        verified_email = email if email and claims.get("email_verified") is True else None
+        return VerifiedIdentity(subject=subject, email=verified_email)

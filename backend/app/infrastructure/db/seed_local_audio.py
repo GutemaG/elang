@@ -12,7 +12,10 @@ production content yet. Run the main seed first -- the section belongs to
 its English to Amharic course.
 
 To add a recording: put the file in `media/audio/am/`, add a
-`(word, meaning, file)` line to `RECORDINGS`, and re-run.
+`(word, meaning, file)` line to `RECORDINGS`, and re-run. Like the main seed
+it is insert-only: re-running adds new recordings but does not change
+exercises it already created (delete `dev.db`'s Audio Lab rows, or reset
+`dev.db`, to rebuild them).
 """
 
 from __future__ import annotations

@@ -58,6 +58,10 @@ class UserModel(Base):
     active_course_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("courses.id"), nullable=False
     )
+    # Bolt 034 (ADR-16): the provider-verified email from the latest sign-in,
+    # for the `ADMIN_EMAILS` check only. Not unique -- the account key is
+    # (`auth_provider`, `provider_user_id`).
+    email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )

@@ -24,6 +24,7 @@ from app.domain.exceptions import (
     InvalidSessionError,
     InvalidTokenError,
     MissingCredentialsError,
+    NotAdminError,
     ProviderUnreachableError,
 )
 from app.domain.lesson.exceptions import (
@@ -48,6 +49,7 @@ _AUTH_STATUS_BY_EXCEPTION: dict[type[AuthDomainError], int] = {
     InvalidPreferenceValueError: 422,
     CourseNotFoundError: 404,
     CourseNotAvailableError: 422,
+    NotAdminError: 403,
 }
 _AUTH_DEFAULT_STATUS = 400
 

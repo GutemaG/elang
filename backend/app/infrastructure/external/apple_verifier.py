@@ -20,6 +20,7 @@ from app.domain.exceptions import (
     InvalidTokenError,
     ProviderUnreachableError,
 )
+from app.domain.value_objects import VerifiedIdentity
 
 
 class AppleTokenVerifier:
@@ -92,7 +93,7 @@ class AppleTokenVerifier:
                 return key
         return None
 
-    async def verify(self, token: str) -> str:
+    async def verify(self, token: str) -> VerifiedIdentity:
         try:
             header = jwt.get_unverified_header(token)
         except PyJWTError as exc:
@@ -133,7 +134,9 @@ class AppleTokenVerifier:
         subject = claims.get("sub")
         if not subject:
             raise InvalidTokenError("Apple identity token missing 'sub' claim")
-        return subject
+        # No email (ADR-16): Apple may hand out a private relay address, so
+        # Apple accounts are never admins in v1.
+        return VerifiedIdentity(subject=subject)
 
     async def aclose(self) -> None:
         if self._owns_http_client and self._http_client is not None:

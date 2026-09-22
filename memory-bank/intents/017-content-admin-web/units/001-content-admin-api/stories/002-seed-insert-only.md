@@ -2,11 +2,11 @@
 id: 002-seed-insert-only
 unit: 001-content-admin-api
 intent: 017-content-admin-web
-status: generated
+status: complete
 priority: must
 created: '2026-09-22T10:00:00Z'
 assigned_bolt: 034-admin-api-foundation
-implemented: false
+implemented: true
 ---
 
 # Story: 002-seed-insert-only

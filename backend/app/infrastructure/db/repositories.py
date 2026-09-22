@@ -57,6 +57,7 @@ def _user_model_to_domain(model: UserModel) -> User:
         notification_enabled=model.notification_enabled,
         created_at=_ensure_utc(model.created_at),
         active_course_id=model.active_course_id,
+        email=model.email,
     )
 
 
@@ -70,6 +71,7 @@ def _user_domain_to_model(user: User) -> UserModel:
         notification_enabled=user.notification_enabled,
         created_at=user.created_at,
         active_course_id=user.active_course_id,
+        email=user.email,
     )
 
 
@@ -116,6 +118,15 @@ class SqlAlchemyUserRepository:
         model.active_course_id = user.active_course_id
         model.daily_xp_target = user.daily_xp_target.xp_per_day
         model.notification_enabled = user.notification_enabled
+        await self._session.flush()
+        return _user_model_to_domain(model)
+
+    async def set_email(self, user_id: str, email: str | None) -> User:
+        """ADR-16: the authentication path's only write to an existing user."""
+        stmt = select(UserModel).where(UserModel.id == user_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one()
+        model.email = email
         await self._session.flush()
         return _user_model_to_domain(model)
 
