@@ -57,3 +57,9 @@ backend/media/
 
 # specsmd tooling deps (fs-extra, js-yaml for bolt-complete.cjs)
 .specsmd/aidlc/scripts/node_modules/
+
+# Admin web site (intent 017): dependencies, build output and local env
+admin/node_modules/
+admin/dist/
+admin/.env*
+!admin/.env.example

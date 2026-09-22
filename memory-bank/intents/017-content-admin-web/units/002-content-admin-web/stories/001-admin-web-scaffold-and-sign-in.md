@@ -2,11 +2,11 @@
 id: 001-admin-web-scaffold-and-sign-in
 unit: 002-content-admin-web
 intent: 017-content-admin-web
-status: generated
+status: complete
 priority: must
 created: '2026-09-22T10:00:00Z'
 assigned_bolt: 037-admin-web-shell
-implemented: false
+implemented: true
 ---
 
 # Story: 001-admin-web-scaffold-and-sign-in
