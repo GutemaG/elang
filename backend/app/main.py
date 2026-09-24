@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.infrastructure.api.admin_routers import router as admin_router
+from app.infrastructure.api.audio_file_routers import router as audio_file_router
 from app.infrastructure.api.course_routers import router as course_router
 from app.infrastructure.api.error_handlers import register_exception_handlers
 from app.infrastructure.api.lesson_routers import router as lesson_router
@@ -25,11 +25,7 @@ from app.infrastructure.api.user_routers import router as user_router
 from app.infrastructure.external.apple_verifier import AppleTokenVerifier
 from app.infrastructure.external.google_verifier import GoogleTokenVerifier
 from app.infrastructure.logging_config import configure_logging
-
-# `backend/media`: recorded lesson audio for local development (see
-# `seed_local_audio.py`). Git-ignored, so absent when deployed -- production
-# audio is hosted elsewhere and referenced by full URL.
-MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
+from app.infrastructure.media import MEDIA_DIR, MEDIA_URL_PREFIX
 
 
 @asynccontextmanager
@@ -78,13 +74,17 @@ def create_app() -> FastAPI:
     app.include_router(practice_router)
     app.include_router(course_router)
     app.include_router(admin_router)
+    app.include_router(audio_file_router)
 
     @app.get("/health", tags=["ops"])
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    if MEDIA_DIR.is_dir():
-        app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
+    # `backend/media` (see `app/infrastructure/media.py`). Locally it is
+    # mounted even before it exists, since the local audio store creates it
+    # on the first upload (bolt 041).
+    if MEDIA_DIR.is_dir() or settings.environment == "local":
+        app.mount(MEDIA_URL_PREFIX, StaticFiles(directory=MEDIA_DIR, check_dir=False), name="media")
 
     return app
 

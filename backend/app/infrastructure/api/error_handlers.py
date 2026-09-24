@@ -29,6 +29,7 @@ from app.domain.exceptions import (
 )
 from app.domain.lesson.exceptions import (
     AdminContentError,
+    AudioFileExistsError,
     AudioStorageNotConfiguredError,
     BeansExhaustedError,
     ConfirmationRequiredError,
@@ -42,10 +43,12 @@ from app.domain.lesson.exceptions import (
     InvalidExerciseError,
     InvalidOrderError,
     InvalidPracticeCompletionError,
+    InvalidUploadLinkError,
     LessonCourseUnavailableError,
     LessonDomainError,
     LessonNotFoundError,
     SkillLockedError,
+    UploadLinkExpiredError,
 )
 
 _AUTH_STATUS_BY_EXCEPTION: dict[type[AuthDomainError], int] = {
@@ -79,6 +82,9 @@ _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     ConfirmationRequiredError: 409,
     InvalidAudioLinkError: 422,
     AudioStorageNotConfiguredError: 503,
+    InvalidUploadLinkError: 403,
+    UploadLinkExpiredError: 403,
+    AudioFileExistsError: 409,
 }
 _LESSON_DEFAULT_STATUS = 400
 

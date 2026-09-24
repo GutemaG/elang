@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application import admin_audio_use_cases as audio_uc
@@ -56,6 +56,10 @@ from app.infrastructure.db.lesson_models import CourseModel, ExerciseModel
 from app.infrastructure.db.seed_category_content import PLACEHOLDER_AUDIO_URL
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.external.audio_link_checker import AudioLinkChecker
+from app.infrastructure.external.local_audio_storage import (
+    LocalAudioStorage,
+    choose_audio_storage,
+)
 from app.infrastructure.external.r2_storage import R2Storage
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -73,9 +77,10 @@ async def _ctx(admin: User = Depends(require_admin)) -> uc.AdminContext:
     )
 
 
-def get_audio_storage() -> R2Storage | None:
-    """Overridable in tests; `None` when R2 is not configured."""
-    return R2Storage.from_settings(get_settings())
+def get_audio_storage(request: Request) -> R2Storage | LocalAudioStorage | None:
+    """Overridable in tests. R2 when configured; in local development
+    without R2, this backend (bolt 041); otherwise `None` (503)."""
+    return choose_audio_storage(get_settings(), upload_base_url=str(request.base_url))
 
 
 def get_audio_link_checker() -> AudioLinkChecker:
@@ -429,9 +434,10 @@ async def create_audio_upload(
     body: AudioUploadRequest,
     repo: SqlAlchemyAdminContentRepository = Depends(_repo),
     ctx: uc.AdminContext = Depends(_ctx),
-    storage: R2Storage | None = Depends(get_audio_storage),
+    storage: R2Storage | LocalAudioStorage | None = Depends(get_audio_storage),
 ) -> AudioUploadResponse:
-    """A short-lived PUT link straight to R2 for one recording or file."""
+    """A short-lived PUT link for one recording or file: straight to R2, or
+    to this backend in local development without R2."""
     key, upload = await audio_uc.presign_upload(
         repo, ctx, storage, lesson_id=body.lesson_id, content_type=body.content_type, size=body.size
     )

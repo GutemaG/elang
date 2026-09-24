@@ -18,11 +18,13 @@ last_updated: '2026-09-22T10:10:00Z'
 | 035-admin-content-api | 003-content-tree-and-crud-api, 004-exercise-write-validation | simple-construction-bolt |
 | 036-admin-audio-api | 005-audio-upload-and-link-api | simple-construction-bolt |
 | 040-admin-vocabulary | 006-vocabulary-api (+ web 006-vocabulary-screen) | simple-construction-bolt |
+| 041-local-audio-storage | 007-local-audio-storage | simple-construction-bolt |
 
 ## Replanning History
 
 | Date | Action | Change | Reason | Approved |
 |------|--------|--------|--------|----------|
+| 2026-09-24 | Added | 041-local-audio-storage (story 007) | Serve and save audio locally until R2 serves files; unblocks 039 | Yes (user, in conversation) |
 
 ## Execution Log
 
@@ -38,3 +40,7 @@ last_updated: '2026-09-22T10:10:00Z'
 - **2026-09-22T13:49:29Z**: 036-admin-audio-api stage-complete - plan → implement
 - **2026-09-22T13:59:20Z**: 036-admin-audio-api stage-complete - implement → test
 - **2026-09-22T14:36:17Z**: 036-admin-audio-api completed - All 3 stages done
+- **2026-09-24T07:09:11Z**: 041-local-audio-storage started - Stage 1: plan
+- **2026-09-24T07:09:11Z**: 041-local-audio-storage stage-complete - plan → implement
+- **2026-09-24T07:30:00Z**: 041-local-audio-storage stage-complete - implement → test
+- **2026-09-24T08:01:56Z**: 041-local-audio-storage completed - All 3 stages done

@@ -161,3 +161,22 @@ class AudioStorageNotConfiguredError(AdminContentError):
     """Uploads need `AUDIO_BASE_URL` and every `R2_*` setting. Bolt 036."""
 
     error_code = "audio_storage_not_configured"
+
+
+class InvalidUploadLinkError(AdminContentError):
+    """A local upload link that this backend did not issue, or that was
+    altered after it was issued. Bolt 041."""
+
+    error_code = "invalid_upload_link"
+
+
+class UploadLinkExpiredError(InvalidUploadLinkError):
+    """A local upload link used after its 10 minutes. Bolt 041."""
+
+    error_code = "upload_link_expired"
+
+
+class AudioFileExistsError(AdminContentError):
+    """A local upload would replace a file already saved. Bolt 041."""
+
+    error_code = "audio_file_exists"

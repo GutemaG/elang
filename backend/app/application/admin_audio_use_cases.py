@@ -1,15 +1,17 @@
 """Audio for listening exercises, from the admin API (bolt
 `036-admin-audio-api`, story 005-audio-upload-and-link-api).
 
-Either way the result is a full https address the admin then saves as the
-exercise's `audio_url` through the ordinary exercise update, which already
-refuses anything else.
+Either way the result is an address the admin then saves as the exercise's
+`audio_url` through the ordinary exercise update: a full https address, or
+in local development without R2 a `/media/audio/...` path (bolt 041), which
+that update accepts only locally.
 """
 
 from __future__ import annotations
 
 import logging
 import secrets
+from typing import Protocol
 
 from app.application.admin_content_use_cases import AdminContext
 from app.domain.lesson.exceptions import (
@@ -19,7 +21,7 @@ from app.domain.lesson.exceptions import (
 )
 from app.infrastructure.db.admin_content_repository import SqlAlchemyAdminContentRepository
 from app.infrastructure.external.audio_link_checker import AudioLinkChecker
-from app.infrastructure.external.r2_storage import PresignedUpload, R2Storage
+from app.infrastructure.external.r2_storage import PresignedUpload
 
 logger = logging.getLogger("app.admin")
 
@@ -36,10 +38,19 @@ MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 UPLOAD_LINK_SECONDS = 600
 
 
+class AudioStore(Protocol):
+    """Where uploads go: R2, or the local backend until R2 serves files
+    (bolt 041). Both hand out the same kind of short-lived PUT link."""
+
+    def presign_put(
+        self, key: str, *, content_type: str, size: int, expires_in: int
+    ) -> PresignedUpload: ...
+
+
 async def presign_upload(
     repo: SqlAlchemyAdminContentRepository,
     ctx: AdminContext,
-    storage: R2Storage | None,
+    storage: AudioStore | None,
     *,
     lesson_id: str,
     content_type: str,
