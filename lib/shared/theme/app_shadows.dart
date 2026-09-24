@@ -68,6 +68,17 @@ abstract final class AppShadows {
     ),
   ];
 
+  /// A choice tile on a [rim]-coloured shelf (DESIGN.md component 4, whose
+  /// rim changes with the tile's state), with [visible] of the rim showing,
+  /// as for [button].
+  static List<BoxShadow> tileRaised(Color rim, {double visible = 1}) {
+    final shown = visible < 0 ? 0.0 : visible;
+    return [
+      if (shown > 0) shelf(rim, depth: tileShelfDepth * shown),
+      tile.last,
+    ];
+  }
+
   /// DESIGN.md "Tactile Level 2": a push button resting on a [bevel]-coloured
   /// shelf, with a soft glow of the same hue beneath it.
   ///

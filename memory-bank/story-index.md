@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 89
 - **Generated**: 89
-- **Completed**: 74
+- **Completed**: 77
 - **Last updated**: 2026-09-24
 
 ---
@@ -199,9 +199,9 @@
 
 #### Unit: 002-question-kit-ui
 
-- [x] **001-exercise-layout-and-question-prompt** (question-kit-ui): Every question to have the same top bar, prompt style and button position - Must - ✅ GENERATED (bolt 044-question-kit)
-- [x] **002-one-answer-tile-for-every-question-type** (question-kit-ui): Every answer tile, word chip and match card to look and react the same way - Must - ✅ GENERATED (bolt 044-question-kit)
-- [x] **003-audio-button-slot-line-and-action-bar** (question-kit-ui): The play button, the line my sentence builds on and the Check/Continue bar to look the same in every question - Must - ✅ GENERATED (bolt 044-question-kit)
+- [x] **001-exercise-layout-and-question-prompt** (question-kit-ui): Every question to have the same top bar, prompt style and button position - Must - ✅ COMPLETED (bolt 044-question-kit)
+- [x] **002-one-answer-tile-for-every-question-type** (question-kit-ui): Every answer tile, word chip and match card to look and react the same way - Must - ✅ COMPLETED (bolt 044-question-kit)
+- [x] **003-audio-button-slot-line-and-action-bar** (question-kit-ui): The play button, the line my sentence builds on and the Check/Continue bar to look the same in every question - Must - ✅ COMPLETED (bolt 044-question-kit)
 - [x] **004-lesson-screen-on-the-kit** (question-kit-ui): Every question in a lesson to share one layout and style - Must - ✅ GENERATED (bolt 045-lesson-screen-on-kit)
 
 #### Unit: 003-screen-migration-ui
@@ -217,7 +217,7 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 15
+- **Generated**: 12
 - **In Progress**: 0
-- **Completed**: 74
+- **Completed**: 77
 - **Retired**: 1

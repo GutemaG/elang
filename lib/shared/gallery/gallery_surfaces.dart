@@ -29,7 +29,7 @@ class PageShellGallerySection extends StatelessWidget {
       children: [
         GalleryCase(
           label: 'plain, with a titled top bar and a dock',
-          child: _PhoneFrame(
+          child: GalleryPhoneFrame(
             child: AppPage(
               topBar: AppTopBar(
                 leading: const AppIconButton(
@@ -72,7 +72,7 @@ class PageShellGallerySection extends StatelessWidget {
         ),
         GalleryCase(
           label: 'patterned, with stat pills in the top bar',
-          child: _PhoneFrame(
+          child: GalleryPhoneFrame(
             child: AppPage(
               background: AppPageBackground.patterned,
               topBar: const AppTopBar(
@@ -88,7 +88,7 @@ class PageShellGallerySection extends StatelessWidget {
         ),
         GalleryCase(
           label: 'celebration, with the brand bar, a dock and the stripe',
-          child: _PhoneFrame(
+          child: GalleryPhoneFrame(
             child: AppPage(
               background: AppPageBackground.celebration,
               topBar: const AppTopBar.brand(
@@ -129,8 +129,8 @@ class PageShellGallerySection extends StatelessWidget {
 
 /// A phone-shaped window onto a page, so a whole [AppPage] can sit inside
 /// the gallery's own scrolling page.
-class _PhoneFrame extends StatelessWidget {
-  const _PhoneFrame({required this.child});
+class GalleryPhoneFrame extends StatelessWidget {
+  const GalleryPhoneFrame({super.key, required this.child});
 
   final Widget child;
 

@@ -3,16 +3,25 @@ id: 044-question-kit
 unit: 002-question-kit-ui
 intent: 018-mobile-design-system
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-exercise-layout-and-question-prompt
   - 002-one-answer-tile-for-every-question-type
   - 003-audio-button-slot-line-and-action-bar
 created: '2026-09-24T12:55:00Z'
-started: null
-completed: null
+started: '2026-09-24T18:51:40Z'
+completed: '2026-09-24T20:24:04Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-24T19:05:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-24T19:58:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-24T20:24:03Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 043-design-surfaces
 enables_bolts:
@@ -34,9 +43,9 @@ Build the question-type kit from fetched references and show every piece and sta
 
 ## Stories Included
 
-- [ ] **001-exercise-layout-and-question-prompt** (Must)
-- [ ] **002-one-answer-tile-for-every-question-type** (Must)
-- [ ] **003-audio-button-slot-line-and-action-bar** (Must)
+- [x] **001-exercise-layout-and-question-prompt** (Must)
+- [x] **002-one-answer-tile-for-every-question-type** (Must)
+- [x] **003-audio-button-slot-line-and-action-bar** (Must)
 
 ## Bolt Type
 
@@ -45,9 +54,9 @@ Build the question-type kit from fetched references and show every piece and sta
 
 ## Stages
 
-- [ ] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

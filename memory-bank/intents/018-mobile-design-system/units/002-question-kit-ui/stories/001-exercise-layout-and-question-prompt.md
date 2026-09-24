@@ -2,11 +2,11 @@
 id: 001-exercise-layout-and-question-prompt
 unit: 002-question-kit-ui
 intent: 018-mobile-design-system
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T12:55:00Z'
 assigned_bolt: 044-question-kit
-implemented: false
+implemented: true
 ---
 
 # Story: 001-exercise-layout-and-question-prompt
@@ -19,11 +19,11 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** `ExerciseLayout`, **When** built, **Then** it has the top bar (close via the lesson's `PopScope`, `AppProgressBar`, beans `StatPill`), the prompt, a scrolling answer area and a bottom-docked `AnswerActionBar` slot, on `AppPage`
-- [ ] **Given** `QuestionPrompt`, **When** given an instruction and a question, **Then** the instruction is one muted line and the question large and bold below it; without a question the instruction alone is the headline
-- [ ] **Given** an optional translation, speaker chip or pronunciation, **When** set, **Then** each appears in its fixed place; the pronunciation uses muted `body-sm` 500, as DESIGN.md asks for under Fidel
-- [ ] **Given** the prompt splitting in `splitPrompt`, **When** `QuestionPrompt` replaces `ExercisePromptHeader`, **Then** `splitPrompt` keeps its behaviour and tests
-- [ ] **Given** the gallery, **When** opened, **Then** `ExerciseLayout` and every `QuestionPrompt` variant are shown with Latin and Fidel text
+- [x] **Given** `ExerciseLayout`, **When** built, **Then** it has the top bar (close via the lesson's `PopScope`, `AppProgressBar`, beans `StatPill`), the prompt, a scrolling answer area and a bottom-docked `AnswerActionBar` slot, on `AppPage`
+- [x] **Given** `QuestionPrompt`, **When** given an instruction and a question, **Then** the instruction is one muted line and the question large and bold below it; without a question the instruction alone is the headline
+- [x] **Given** an optional translation, speaker chip or pronunciation, **When** set, **Then** each appears in its fixed place; the pronunciation uses muted `body-sm` 500, as DESIGN.md asks for under Fidel
+- [x] **Given** the prompt splitting in `splitPrompt`, **When** `QuestionPrompt` replaces `ExercisePromptHeader`, **Then** `splitPrompt` keeps its behaviour and tests
+- [x] **Given** the gallery, **When** opened, **Then** `ExerciseLayout` and every `QuestionPrompt` variant are shown with Latin and Fidel text
 
 ## Reference Design (FR-11)
 

@@ -21,6 +21,11 @@ abstract final class AppMotion {
   /// The incorrect-answer shake.
   static const Duration shake = Duration(milliseconds: 400);
 
+  /// The graded-answer panel sliding up above Continue (Duolingo's
+  /// feedback banner: about 200 ms, easing out).
+  static const Duration feedback = Duration(milliseconds: 200);
+  static const Curve feedbackCurve = Curves.easeOut;
+
   /// A progress bar moving to a new value.
   static const Duration progress = Duration(milliseconds: 400);
   static const Curve progressCurve = Curves.easeOutCubic;

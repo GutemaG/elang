@@ -10,6 +10,7 @@ import '../widgets/app_button.dart';
 import '../widgets/app_icon_button.dart';
 import '../widgets/app_page.dart';
 import '../widgets/tactile_button.dart';
+import 'gallery_exercise.dart';
 import 'gallery_sheets.dart';
 import 'gallery_status.dart';
 import 'gallery_surfaces.dart';
@@ -57,6 +58,7 @@ class ComponentGallery extends StatelessWidget {
           CardsGallerySection(),
           SheetsGallerySection(),
           StatusGallerySection(),
+          ExerciseGallerySection(),
         ],
       ),
     );
