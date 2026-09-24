@@ -2,11 +2,11 @@
 id: 005-exercise-preview
 unit: 002-content-admin-web
 intent: 017-content-admin-web
-status: generated
+status: complete
 priority: should
 created: '2026-09-22T10:00:00Z'
 assigned_bolt: 038-admin-exercise-editors
-implemented: false
+implemented: true
 ---
 
 # Story: 005-exercise-preview

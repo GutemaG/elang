@@ -80,3 +80,78 @@ export interface DeleteDetails {
   exercises: number
   learners?: number
 }
+
+// --- Exercises (bolt 038), mirroring backend/app/domain/lesson/exercise_parts.py
+
+/** A choice, word, letter or match-pairs tile. `id` is identity; `text` is
+ * only what is shown, and may repeat (two tiles can both read "ላ"). */
+export interface Tile {
+  id: string
+  text: string
+}
+
+export type ExerciseType =
+  | 'multiple_choice'
+  | 'listening'
+  | 'sentence_construction'
+  | 'match_pairs'
+  | 'gap_fill'
+  | 'spell_tiles'
+
+export const EXERCISE_TYPES: readonly ExerciseType[] = [
+  'multiple_choice',
+  'listening',
+  'gap_fill',
+  'sentence_construction',
+  'spell_tiles',
+  'match_pairs',
+]
+
+interface ChoiceKey {
+  correct_choice_id: string
+}
+
+interface SequenceKey {
+  correct_sequence: string[]
+}
+
+/** The type, prompt, content and answer key an exercise is written as --
+ * exactly what `POST`/`PUT` send and what the server stores. */
+export type ExerciseBody =
+  | { type: 'multiple_choice'; prompt: string; content: { choices: Tile[] }; answer_key: ChoiceKey }
+  | {
+      type: 'listening'
+      prompt: string
+      content: { audio_url: string; choices: Tile[] }
+      answer_key: ChoiceKey
+    }
+  | {
+      type: 'gap_fill'
+      prompt: string
+      content: { sentence_before: string; sentence_after: string; choices: Tile[] }
+      answer_key: ChoiceKey
+    }
+  | {
+      type: 'sentence_construction'
+      prompt: string
+      content: { word_bank: Tile[] }
+      answer_key: SequenceKey
+    }
+  | { type: 'spell_tiles'; prompt: string; content: { tiles: Tile[] }; answer_key: SequenceKey }
+  | {
+      type: 'match_pairs'
+      prompt: string
+      content: { left_tiles: Tile[]; right_tiles: Tile[] }
+      answer_key: { correct_pairs: [string, string][] }
+    }
+
+export type AdminExercise = ExerciseBody & {
+  id: string
+  lesson_id: string
+  order_index: number
+  vocab_item_id: string | null
+}
+
+export interface AdminExerciseList {
+  exercises: AdminExercise[]
+}

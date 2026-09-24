@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { NotAuthorisedScreen } from './auth/NotAuthorisedScreen'
 import { useSession } from './auth/SessionContext'
 import { SignInScreen } from './auth/SignInScreen'
+import { ExerciseEditorRoute } from './exercises/ExerciseEditorPage'
 import { AppShell } from './shell/AppShell'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
@@ -31,6 +32,14 @@ export function App() {
           <Routes>
             <Route path="/" element={<CourseList />} />
             <Route path="/courses/:courseId" element={<CourseTree />} />
+            <Route
+              path="/courses/:courseId/lessons/:lessonId/exercises/new/:type"
+              element={<ExerciseEditorRoute />}
+            />
+            <Route
+              path="/courses/:courseId/lessons/:lessonId/exercises/:exerciseId"
+              element={<ExerciseEditorRoute />}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppShell>

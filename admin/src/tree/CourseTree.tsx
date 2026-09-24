@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { ApiError } from '../api'
 import { messageOf, useSession } from '../auth/SessionContext'
+import { AddExerciseMenu } from '../exercises/AddExerciseMenu'
 import { courseStatus, languageName, plural } from '../format'
 import { StatCard, StatRow } from '../shell/Page'
 import type { AdminCourseTree, DeleteDetails } from '../types'
@@ -44,6 +45,9 @@ function totalsOf(tree: AdminCourseTree) {
  * locally; every write is followed by a fresh load from the server. */
 export function CourseTree() {
   const { courseId = '' } = useParams()
+  // `?open=<lessonId>`: coming back from an exercise, reopen its lesson.
+  const [search] = useSearchParams()
+  const openLesson = search.get('open')
   const { api } = useSession()
   const [tree, setTree] = useState<AdminCourseTree | null>(null)
   const [loadError, setLoadError] = useState<ApiError | Error | null>(null)
@@ -300,9 +304,11 @@ export function CourseTree() {
           {sections.map((section, s) => {
             const skills = byOrder(section.skills)
             const skillIds = skills.map((sk) => sk.id)
+            const holdsOpen = skills.some((sk) => sk.lessons.some((l) => l.id === openLesson))
             return (
               <NodeRow
                 key={section.id}
+                defaultExpanded={holdsOpen}
                 level="section"
                 id={section.id}
                 title={section.title}
@@ -320,6 +326,7 @@ export function CourseTree() {
                     return (
                       <NodeRow
                         key={skill.id}
+                        defaultExpanded={lessons.some((l) => l.id === openLesson)}
                         level="skill"
                         id={skill.id}
                         title={skill.title}
@@ -333,6 +340,10 @@ export function CourseTree() {
                           {lessons.map((lesson, l) => (
                             <NodeRow
                               key={lesson.id}
+                              defaultExpanded={lesson.id === openLesson}
+                              extraAction={
+                                <AddExerciseMenu courseId={tree.course.id} lessonId={lesson.id} disabled={busy} />
+                              }
                               level="lesson"
                               id={lesson.id}
                               title={lesson.title}
@@ -341,7 +352,11 @@ export function CourseTree() {
                               siblingIds={lessonIds}
                               parentId={skill.id}
                             >
-                              <ExerciseList exercises={lesson.exercises} />
+                              <ExerciseList
+                                courseId={tree.course.id}
+                                lessonId={lesson.id}
+                                exercises={lesson.exercises}
+                              />
                             </NodeRow>
                           ))}
                         </ul>

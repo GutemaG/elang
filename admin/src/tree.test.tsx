@@ -218,11 +218,12 @@ describe('adding', () => {
     expect(server.callsTo('POST', '/api/v1/admin/sections/sec-1/skills')[0]!.body).toEqual({ title: 'Colours' })
   })
 
-  it('offers no child below a lesson (exercises come later)', async () => {
+  it('offers exercises, and nothing else, below a lesson', async () => {
     await openCourse()
     await openToLesson()
 
-    expect(actions('lesson Hello').queryByRole('button', { name: /^Add / })).not.toBeInTheDocument()
+    const adds = actions('lesson Hello').getAllByRole('button', { name: /^Add / })
+    expect(adds.map((b) => b.textContent)).toEqual([expect.stringContaining('Add exercise')])
   })
 })
 
@@ -402,5 +403,123 @@ describe('a write the server refuses', () => {
 
     expect(await screen.findByRole('button', { name: 'Sign in with Google' })).toBeInTheDocument()
     expect(sessionStorage.getItem('buna_admin.session_token')).toBeNull()
+  })
+})
+
+describe('exercises in the tree', () => {
+  const LIST = '/api/v1/admin/lessons/lesson-1/exercises'
+  const exerciseActions = (n: number) => within(screen.getByRole('group', { name: `Actions for exercise ${n}` }))
+
+  /** Full exercises for lesson-1, matching the tree's summary of it. */
+  function serveLesson(): void {
+    server.on('GET', LIST, {
+      body: {
+        exercises: tree.sections[0]!.skills[0]!.lessons[0]!.exercises.map((e) => ({
+          id: e.id,
+          lesson_id: 'lesson-1',
+          order_index: e.order_index,
+          vocab_item_id: null,
+          type: e.type,
+          prompt: e.prompt,
+          content:
+            e.type === 'listening'
+              ? { audio_url: '/media/audio/am/hello.m4a', choices: [{ id: 'a', text: 'Hello' }, { id: 'b', text: 'Bye' }] }
+              : { choices: [{ id: 'a', text: 'ሰላም' }, { id: 'b', text: 'ቻው' }] },
+          answer_key: { correct_choice_id: 'a' },
+        })),
+      },
+    })
+  }
+
+  it('a lesson offers every type, and each leads to a new exercise of it', async () => {
+    await openCourse()
+    await openToLesson()
+
+    await userEvent.click(actions('lesson Hello').getByRole('button', { name: /Add exercise/ }))
+    const menu = within(screen.getByRole('navigation', { name: 'Exercise type' }))
+    expect(menu.getAllByRole('link').map((a) => a.querySelector('.font-semibold')?.textContent)).toEqual([
+      'Multiple choice',
+      'Listening',
+      'Gap fill',
+      'Sentence',
+      'Spell tiles',
+      'Match pairs',
+    ])
+
+    await userEvent.click(menu.getByRole('link', { name: /Gap fill/ }))
+
+    expect(await screen.findByRole('heading', { name: 'New exercise' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Text before the gap')).toBeInTheDocument()
+  })
+
+  it('moving an exercise sends the whole lesson in its new order', async () => {
+    server.on('PUT', `${LIST}/order`, { body: { exercises: [] } })
+    await openCourse()
+    await openToLesson()
+
+    await userEvent.click(exerciseActions(1).getByRole('button', { name: 'Move down' }))
+
+    await waitFor(() =>
+      expect(server.callsTo('PUT', `${LIST}/order`)[0]!.body).toEqual({ ids: ['ex-2', 'ex-1', 'ex-3'] }),
+    )
+    expect(server.callsTo('GET', TREE)).toHaveLength(2)
+    expect(exerciseActions(1).getByRole('button', { name: 'Move up' })).toBeDisabled()
+    expect(exerciseActions(3).getByRole('button', { name: 'Move down' })).toBeDisabled()
+  })
+
+  it('deleting an exercise asks first, and Cancel sends nothing', async () => {
+    server.on('DELETE', '/api/v1/admin/exercises/ex-2', () => {
+      tree.sections[0]!.skills[0]!.lessons[0]!.exercises.splice(1, 1)
+      return { status: 204 }
+    })
+    await openCourse()
+    await openToLesson()
+
+    await userEvent.click(exerciseActions(2).getByRole('button', { name: 'Delete' }))
+    let dialog = screen.getByRole('dialog', { name: 'Delete exercise 2?' })
+    expect(dialog).toHaveTextContent('What do you hear?')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(server.callsTo('DELETE', '/api/v1/admin/exercises/ex-2')).toHaveLength(0)
+
+    await userEvent.click(exerciseActions(2).getByRole('button', { name: 'Delete' }))
+    dialog = screen.getByRole('dialog', { name: 'Delete exercise 2?' })
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(screen.queryByText('What do you hear?')).not.toBeInTheDocument())
+    expect(server.callsTo('DELETE', '/api/v1/admin/exercises/ex-2')[0]!.query).toBe('')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('an exercise opens in the editor', async () => {
+    serveLesson()
+    await openCourse()
+    await openToLesson()
+
+    await userEvent.click(exerciseActions(1).getByRole('link', { name: 'Edit' }))
+
+    expect(await screen.findByRole('heading', { name: 'Edit exercise' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Prompt')).toHaveValue('Which means hello?')
+  })
+
+  it('previews the saved exercise with its answer', async () => {
+    serveLesson()
+    await openCourse()
+    await openToLesson()
+
+    await userEvent.click(exerciseActions(2).getByRole('button', { name: 'Preview' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Preview' })
+    const correct = await within(dialog).findByText('(correct)')
+    expect(correct.closest('li')).toHaveTextContent('Hello')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('coming back from an exercise reopens its lesson', async () => {
+    renderApp('/courses/course-1?open=lesson-1')
+
+    expect(await screen.findByText('Which means hello?')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Collapse lesson Hello' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Expand lesson Goodbye' })).toBeInTheDocument()
   })
 })

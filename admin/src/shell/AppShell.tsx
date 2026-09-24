@@ -8,7 +8,6 @@ import { Icon } from '../ui/Icon'
 /** The next bolts of unit 002, shown so the tool is honest about what is
  * still missing. Plain text, not controls: none of it works yet. */
 const PLANNED = [
-  { icon: 'edit_note', label: 'Exercise editor' },
   { icon: 'graphic_eq', label: 'Audio studio' },
   { icon: 'translate', label: 'Vocabulary' },
 ]

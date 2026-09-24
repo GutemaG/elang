@@ -1,0 +1,5989 @@
+[
+ {
+  "id": "92bdbc49-017b-5e00-85bb-a2102fdaf661",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'I' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "አንተ"
+    },
+    {
+     "id": "b",
+     "text": "እሱ"
+    },
+    {
+     "id": "c",
+     "text": "እኔ"
+    },
+    {
+     "id": "d",
+     "text": "እሷ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "363c449a-e537-5c82-bbfb-8030acc2ed14",
+  "type": "multiple_choice",
+  "prompt": "What does 'እሷ' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "I"
+    },
+    {
+     "id": "b",
+     "text": "you (m.)"
+    },
+    {
+     "id": "c",
+     "text": "he"
+    },
+    {
+     "id": "d",
+     "text": "she"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "b83211c8-8b53-5457-ae72-8826854f6286",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "he"
+    },
+    {
+     "id": "b",
+     "text": "I"
+    },
+    {
+     "id": "c",
+     "text": "you (m.)"
+    },
+    {
+     "id": "d",
+     "text": "she"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "0f3b0b7d-c0f2-5d21-99fd-194fa99fb913",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I am a teacher'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ነው"
+    },
+    {
+     "id": "w2",
+     "text": "መምህር"
+    },
+    {
+     "id": "w3",
+     "text": "እኔ"
+    },
+    {
+     "id": "w4",
+     "text": "ነኝ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w2",
+    "w4"
+   ]
+  }
+ },
+ {
+  "id": "3fbafbe6-38e6-5c90-ab59-9a6845bc4a37",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "እኔ"
+    },
+    {
+     "id": "l2",
+     "text": "አንተ"
+    },
+    {
+     "id": "l3",
+     "text": "እሱ"
+    },
+    {
+     "id": "l4",
+     "text": "እሷ"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "you (m.)"
+    },
+    {
+     "id": "r2",
+     "text": "he"
+    },
+    {
+     "id": "r3",
+     "text": "she"
+    },
+    {
+     "id": "r4",
+     "text": "I"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "4f2d670a-ba3f-50e3-9980-158d195039fe",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'hello' in Afaan Oromo?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Nagaatti"
+    },
+    {
+     "id": "b",
+     "text": "Akkam"
+    },
+    {
+     "id": "c",
+     "text": "Galatoomi"
+    },
+    {
+     "id": "d",
+     "text": "Maaloo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "d19e8757-e86c-59f1-ac43-dbec27d82f1e",
+  "type": "multiple_choice",
+  "prompt": "What does 'Nagaatti' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "hello"
+    },
+    {
+     "id": "b",
+     "text": "thank you"
+    },
+    {
+     "id": "c",
+     "text": "goodbye"
+    },
+    {
+     "id": "d",
+     "text": "please"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "1d8b6fda-772d-5340-aaa4-d01a302efffe",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "hello"
+    },
+    {
+     "id": "b",
+     "text": "goodbye"
+    },
+    {
+     "id": "c",
+     "text": "please"
+    },
+    {
+     "id": "d",
+     "text": "thank you"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "a3d01896-49c1-5e1b-a60a-f057664e16f5",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Thank you, goodbye'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "nagaatti"
+    },
+    {
+     "id": "w2",
+     "text": "Akkam"
+    },
+    {
+     "id": "w3",
+     "text": "Galatoomi"
+    },
+    {
+     "id": "w4",
+     "text": "Maaloo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "cc9a5aa6-35aa-5281-b1bd-95f3b03cf2a8",
+  "type": "gap_fill",
+  "prompt": "Complete the sentence: 'Thank you, goodbye'",
+  "content": {
+   "sentence_before": "Galatoomi",
+   "sentence_after": "",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Akkam"
+    },
+    {
+     "id": "b",
+     "text": "nagaatti"
+    },
+    {
+     "id": "c",
+     "text": "Maaloo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "c52a9c89-ed85-5c54-8092-51c9afe20a5b",
+  "type": "spell_tiles",
+  "prompt": "Spell 'please'",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "o"
+    },
+    {
+     "id": "t2",
+     "text": "a"
+    },
+    {
+     "id": "t3",
+     "text": "M"
+    },
+    {
+     "id": "t4",
+     "text": "k"
+    },
+    {
+     "id": "t5",
+     "text": "a"
+    },
+    {
+     "id": "t6",
+     "text": "o"
+    },
+    {
+     "id": "t7",
+     "text": "i"
+    },
+    {
+     "id": "t8",
+     "text": "l"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t3",
+    "t5",
+    "t2",
+    "t8",
+    "t6",
+    "t1"
+   ]
+  }
+ },
+ {
+  "id": "00bfa17a-240e-534f-9909-12f41d6eb335",
+  "type": "multiple_choice",
+  "prompt": "'ቡና' በኦሮምኛ እንዴት ይባላል?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Shaayii"
+    },
+    {
+     "id": "b",
+     "text": "Buna"
+    },
+    {
+     "id": "c",
+     "text": "Bishaan"
+    },
+    {
+     "id": "d",
+     "text": "Aannan"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "59b70290-a491-5203-8397-34f7d3fbd510",
+  "type": "multiple_choice",
+  "prompt": "'Shaayii' ምን ማለት ነው?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ቡና"
+    },
+    {
+     "id": "b",
+     "text": "ውሃ"
+    },
+    {
+     "id": "c",
+     "text": "ሻይ"
+    },
+    {
+     "id": "d",
+     "text": "ወተት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "1281ba82-50a8-5330-bef4-62310d9c57a9",
+  "type": "listening",
+  "prompt": "ይህ ቃል ምን ማለት ነው?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ቡና"
+    },
+    {
+     "id": "b",
+     "text": "ሻይ"
+    },
+    {
+     "id": "c",
+     "text": "ወተት"
+    },
+    {
+     "id": "d",
+     "text": "ውሃ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "f11e27fc-940b-5201-8cb5-8c837ddffd64",
+  "type": "sentence_construction",
+  "prompt": "ተርጉም፦ 'ቡና እባክዎ'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "maaloo"
+    },
+    {
+     "id": "w2",
+     "text": "Shaayii"
+    },
+    {
+     "id": "w3",
+     "text": "Buna"
+    },
+    {
+     "id": "w4",
+     "text": "Bishaan"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "2c92741c-281c-56a0-8047-f2a502b6c138",
+  "type": "gap_fill",
+  "prompt": "ዓረፍተ ነገሩን ሙላ፦ 'ቡና እባክዎ'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "maaloo",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Shaayii"
+    },
+    {
+     "id": "b",
+     "text": "Buna"
+    },
+    {
+     "id": "c",
+     "text": "Bishaan"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "5f8c6a6c-9a29-58b9-be1f-d843122a5b1b",
+  "type": "spell_tiles",
+  "prompt": "'ወተት'ን ፊደል በፊደል ጻፍ",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "n"
+    },
+    {
+     "id": "t2",
+     "text": "n"
+    },
+    {
+     "id": "t3",
+     "text": "A"
+    },
+    {
+     "id": "t4",
+     "text": "s"
+    },
+    {
+     "id": "t5",
+     "text": "a"
+    },
+    {
+     "id": "t6",
+     "text": "a"
+    },
+    {
+     "id": "t7",
+     "text": "i"
+    },
+    {
+     "id": "t8",
+     "text": "n"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t3",
+    "t5",
+    "t2",
+    "t8",
+    "t6",
+    "t1"
+   ]
+  }
+ },
+ {
+  "id": "a4d37b7d-4170-5b9b-bc16-0b304f98428d",
+  "type": "multiple_choice",
+  "prompt": "Afaan Amaaraatiin 'Buna' akkamitti jedhama?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሻይ"
+    },
+    {
+     "id": "b",
+     "text": "ቡና"
+    },
+    {
+     "id": "c",
+     "text": "ውሃ"
+    },
+    {
+     "id": "d",
+     "text": "ወተት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "3aa28c2c-fe0e-53d6-b02f-1d9f517c106a",
+  "type": "multiple_choice",
+  "prompt": "'ሻይ' maal jechuudha?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Buna"
+    },
+    {
+     "id": "b",
+     "text": "Bishaan"
+    },
+    {
+     "id": "c",
+     "text": "Shaayii"
+    },
+    {
+     "id": "d",
+     "text": "Aannan"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "00e505b8-b9ed-5c66-9fa7-f09079315b57",
+  "type": "listening",
+  "prompt": "Jechi kun maal jechuudha?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Buna"
+    },
+    {
+     "id": "b",
+     "text": "Shaayii"
+    },
+    {
+     "id": "c",
+     "text": "Aannan"
+    },
+    {
+     "id": "d",
+     "text": "Bishaan"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "631799b9-c6f5-5c22-b707-eadb57e3f1ee",
+  "type": "sentence_construction",
+  "prompt": "Hiiki: 'Buna maaloo'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "w2",
+     "text": "ሻይ"
+    },
+    {
+     "id": "w3",
+     "text": "ቡና"
+    },
+    {
+     "id": "w4",
+     "text": "ውሃ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "5387b04e-2604-587d-b218-fca346b1075d",
+  "type": "gap_fill",
+  "prompt": "Hima kana guuti: 'Buna maaloo'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "እባክዎ",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሻይ"
+    },
+    {
+     "id": "b",
+     "text": "ቡና"
+    },
+    {
+     "id": "c",
+     "text": "ውሃ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "aee19813-93a5-5d24-9a31-9590118164fb",
+  "type": "spell_tiles",
+  "prompt": "'Aannan' qubeedhaan barreessi",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "ወ"
+    },
+    {
+     "id": "t2",
+     "text": "ተ"
+    },
+    {
+     "id": "t3",
+     "text": "ና"
+    },
+    {
+     "id": "t4",
+     "text": "ይ"
+    },
+    {
+     "id": "t5",
+     "text": "ት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t1",
+    "t2",
+    "t5"
+   ]
+  }
+ },
+ {
+  "id": "abfc70d2-fc64-5806-b02b-c538552adb0b",
+  "type": "multiple_choice",
+  "prompt": "Afaan Amaaraatiin 'Akkam' akkamitti jedhama?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ደህና ሁን"
+    },
+    {
+     "id": "b",
+     "text": "ሰላም"
+    },
+    {
+     "id": "c",
+     "text": "አመሰግናለሁ"
+    },
+    {
+     "id": "d",
+     "text": "እባክዎ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "bd604bca-ef8b-5780-9b30-d2fb0e592ca0",
+  "type": "multiple_choice",
+  "prompt": "'ደህና ሁን' maal jechuudha?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Akkam"
+    },
+    {
+     "id": "b",
+     "text": "Galatoomi"
+    },
+    {
+     "id": "c",
+     "text": "Nagaatti"
+    },
+    {
+     "id": "d",
+     "text": "Maaloo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "e4734d8e-e5bb-58d7-aa81-c410d3763bfd",
+  "type": "listening",
+  "prompt": "Jechi kun maal jechuudha?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Akkam"
+    },
+    {
+     "id": "b",
+     "text": "Nagaatti"
+    },
+    {
+     "id": "c",
+     "text": "Maaloo"
+    },
+    {
+     "id": "d",
+     "text": "Galatoomi"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "481c4258-4f42-5a3a-bc2b-17503c5eb9d4",
+  "type": "sentence_construction",
+  "prompt": "Hiiki: 'Galatoomi, nagaatti'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ሁን"
+    },
+    {
+     "id": "w2",
+     "text": "ሰላም"
+    },
+    {
+     "id": "w3",
+     "text": "አመሰግናለሁ"
+    },
+    {
+     "id": "w4",
+     "text": "ደህና"
+    },
+    {
+     "id": "w5",
+     "text": "እባክዎ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w4",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "62bec1f0-967f-51d6-98f2-93e13953a9ce",
+  "type": "gap_fill",
+  "prompt": "Hima kana guuti: 'Galatoomi, nagaatti'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "ደህና ሁን",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሰላም"
+    },
+    {
+     "id": "b",
+     "text": "አመሰግናለሁ"
+    },
+    {
+     "id": "c",
+     "text": "እባክዎ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "ac28df88-a956-5ff0-a69f-a37b57f7ce32",
+  "type": "spell_tiles",
+  "prompt": "'Maaloo' qubeedhaan barreessi",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "ህ"
+    },
+    {
+     "id": "t2",
+     "text": "ሁ"
+    },
+    {
+     "id": "t3",
+     "text": "እ"
+    },
+    {
+     "id": "t4",
+     "text": "ክ"
+    },
+    {
+     "id": "t5",
+     "text": "ዎ"
+    },
+    {
+     "id": "t6",
+     "text": "ባ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t3",
+    "t6",
+    "t4",
+    "t5"
+   ]
+  }
+ },
+ {
+  "id": "04b25d14-82e3-5f18-87a9-846358ad6494",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'bread' in Afaan Oromo?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Nyaata"
+    },
+    {
+     "id": "b",
+     "text": "Foon"
+    },
+    {
+     "id": "c",
+     "text": "Daabboo"
+    },
+    {
+     "id": "d",
+     "text": "Hanqaaquu"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "cbaada12-d5a8-5aa5-88da-e15fbfde23e6",
+  "type": "multiple_choice",
+  "prompt": "What does 'Nyaata' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "bread"
+    },
+    {
+     "id": "b",
+     "text": "meat"
+    },
+    {
+     "id": "c",
+     "text": "egg"
+    },
+    {
+     "id": "d",
+     "text": "food"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "4a407be1-371d-57e7-8910-3507037ea1d1",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "meat"
+    },
+    {
+     "id": "b",
+     "text": "bread"
+    },
+    {
+     "id": "c",
+     "text": "food"
+    },
+    {
+     "id": "d",
+     "text": "egg"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "171b6df6-ba5e-5ebf-8401-bcc1a798b727",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I want bread'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "barbaada"
+    },
+    {
+     "id": "w2",
+     "text": "Nyaata"
+    },
+    {
+     "id": "w3",
+     "text": "Daabboo"
+    },
+    {
+     "id": "w4",
+     "text": "nan"
+    },
+    {
+     "id": "w5",
+     "text": "Foon"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w4",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "c4e1b9c8-0354-53f4-9998-ff6a33f739af",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "Daabboo"
+    },
+    {
+     "id": "l2",
+     "text": "Nyaata"
+    },
+    {
+     "id": "l3",
+     "text": "Foon"
+    },
+    {
+     "id": "l4",
+     "text": "Hanqaaquu"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "food"
+    },
+    {
+     "id": "r2",
+     "text": "meat"
+    },
+    {
+     "id": "r3",
+     "text": "egg"
+    },
+    {
+     "id": "r4",
+     "text": "bread"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "605aa326-f283-581f-88af-1d3427343116",
+  "type": "gap_fill",
+  "prompt": "Complete the sentence: 'I want bread'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "nan barbaada",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Nyaata"
+    },
+    {
+     "id": "b",
+     "text": "Foon"
+    },
+    {
+     "id": "c",
+     "text": "Daabboo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "106f01bb-c0f9-5f0c-a8d3-be84511f6cf5",
+  "type": "spell_tiles",
+  "prompt": "Spell 'egg'",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "u"
+    },
+    {
+     "id": "t2",
+     "text": "n"
+    },
+    {
+     "id": "t3",
+     "text": "t"
+    },
+    {
+     "id": "t4",
+     "text": "a"
+    },
+    {
+     "id": "t5",
+     "text": "q"
+    },
+    {
+     "id": "t6",
+     "text": "a"
+    },
+    {
+     "id": "t7",
+     "text": "a"
+    },
+    {
+     "id": "t8",
+     "text": "u"
+    },
+    {
+     "id": "t9",
+     "text": "q"
+    },
+    {
+     "id": "t10",
+     "text": "H"
+    },
+    {
+     "id": "t11",
+     "text": "y"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t10",
+    "t6",
+    "t2",
+    "t5",
+    "t7",
+    "t4",
+    "t9",
+    "t1",
+    "t8"
+   ]
+  }
+ },
+ {
+  "id": "9737fb86-b65b-5384-a4fa-fd7d267eb11a",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Coffee'?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ቡና"
+    },
+    {
+     "id": "b",
+     "text": "ሻይ"
+    },
+    {
+     "id": "c",
+     "text": "ውሃ"
+    },
+    {
+     "id": "d",
+     "text": "ወተት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "6d86f1d4-07f0-560a-869e-a418fd08d377",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Tea'?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሻይ"
+    },
+    {
+     "id": "b",
+     "text": "ቡና"
+    },
+    {
+     "id": "c",
+     "text": "ውሃ"
+    },
+    {
+     "id": "d",
+     "text": "ዳቦ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "8181b284-c9f9-5cc4-871b-e44568f16df4",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Water"
+    },
+    {
+     "id": "b",
+     "text": "Coffee"
+    },
+    {
+     "id": "c",
+     "text": "Tea"
+    },
+    {
+     "id": "d",
+     "text": "Bread"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "084477bb-b99e-5eb7-9ab7-b3ee8b4c2faa",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I want coffee'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "እፈልጋለሁ"
+    },
+    {
+     "id": "w2",
+     "text": "ቡና"
+    },
+    {
+     "id": "w3",
+     "text": "ሻይ"
+    },
+    {
+     "id": "w4",
+     "text": "ውሃ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w2",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "ea373472-9cd5-58f3-88da-5b1f0d13c6c7",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ቡና"
+    },
+    {
+     "id": "l2",
+     "text": "ሻይ"
+    },
+    {
+     "id": "l3",
+     "text": "ውሃ"
+    },
+    {
+     "id": "l4",
+     "text": "ዳቦ"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "Coffee"
+    },
+    {
+     "id": "r2",
+     "text": "Tea"
+    },
+    {
+     "id": "r3",
+     "text": "Water"
+    },
+    {
+     "id": "r4",
+     "text": "Bread"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r1"
+    ],
+    [
+     "l2",
+     "r2"
+    ],
+    [
+     "l3",
+     "r3"
+    ],
+    [
+     "l4",
+     "r4"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "84adaa82-d968-5ea1-9234-465e32e99f78",
+  "type": "gap_fill",
+  "prompt": "Complete the sentence: 'I want coffee'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "እፈልጋለሁ",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሻይ"
+    },
+    {
+     "id": "b",
+     "text": "ውሃ"
+    },
+    {
+     "id": "c",
+     "text": "ቡና"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "1e4ced13-9daa-5745-a132-57087ceff15e",
+  "type": "spell_tiles",
+  "prompt": "Spell 'Tea'",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "ና"
+    },
+    {
+     "id": "t2",
+     "text": "ይ"
+    },
+    {
+     "id": "t3",
+     "text": "ቡ"
+    },
+    {
+     "id": "t4",
+     "text": "ሻ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t4",
+    "t2"
+   ]
+  }
+ },
+ {
+  "id": "a301e94d-ce56-5671-be11-847b4b11b6e0",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Bread'?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "b",
+     "text": "ምግብ"
+    },
+    {
+     "id": "c",
+     "text": "ውሃ"
+    },
+    {
+     "id": "d",
+     "text": "ቡና"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "0cf317c8-79ba-55ee-a391-ef0a436988ad",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Food'?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ምግብ"
+    },
+    {
+     "id": "b",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "c",
+     "text": "ሻይ"
+    },
+    {
+     "id": "d",
+     "text": "ውሃ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "1725c40b-a99b-5fa9-9369-2858158ee2f6",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Food"
+    },
+    {
+     "id": "b",
+     "text": "Bread"
+    },
+    {
+     "id": "c",
+     "text": "Water"
+    },
+    {
+     "id": "d",
+     "text": "Coffee"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "170a311a-0e27-5bf7-aaab-2d157a299e17",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I want bread'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "እፈልጋለሁ"
+    },
+    {
+     "id": "w2",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "w3",
+     "text": "ምግብ"
+    },
+    {
+     "id": "w4",
+     "text": "ውሃ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w2",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "6d89b36e-d6af-5cc4-801e-057b4f403909",
+  "type": "gap_fill",
+  "prompt": "Complete the sentence: 'I want bread'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "እፈልጋለሁ",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "b",
+     "text": "ምግብ"
+    },
+    {
+     "id": "c",
+     "text": "ውሃ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "e0d8abd0-16b4-5fc6-849d-15443f4140ab",
+  "type": "spell_tiles",
+  "prompt": "Spell 'Food'",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "ብ"
+    },
+    {
+     "id": "t2",
+     "text": "ዳ"
+    },
+    {
+     "id": "t3",
+     "text": "ም"
+    },
+    {
+     "id": "t4",
+     "text": "ቦ"
+    },
+    {
+     "id": "t5",
+     "text": "ግ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t3",
+    "t5",
+    "t1"
+   ]
+  }
+ },
+ {
+  "id": "49bdffc1-63c1-5bac-a9fb-4e8e9facc0d8",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Hello' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሰላም"
+    },
+    {
+     "id": "b",
+     "text": "ደህና ሁን"
+    },
+    {
+     "id": "c",
+     "text": "አመሰግናለሁ"
+    },
+    {
+     "id": "d",
+     "text": "አይ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "2ba1036d-54e6-5baa-9909-e345bf2d3f93",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Goodbye' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ደህና ሁን"
+    },
+    {
+     "id": "b",
+     "text": "ሰላም"
+    },
+    {
+     "id": "c",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "d",
+     "text": "አዎ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "a1e9a5b1-d382-523a-ac0d-9b0dd80aa8fb",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Hello"
+    },
+    {
+     "id": "b",
+     "text": "Goodbye"
+    },
+    {
+     "id": "c",
+     "text": "Thank you"
+    },
+    {
+     "id": "d",
+     "text": "Please"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "39c1c404-e17d-572e-bd49-bc19301e468d",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I am fine'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ደህና"
+    },
+    {
+     "id": "w2",
+     "text": "ነኝ"
+    },
+    {
+     "id": "w3",
+     "text": "ጥሩ"
+    },
+    {
+     "id": "w4",
+     "text": "እንደምን"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w1",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "c8443d81-f507-5d03-9348-065992e7586e",
+  "type": "gap_fill",
+  "prompt": "Complete the sentence: 'I am fine'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "ነኝ",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ደህና"
+    },
+    {
+     "id": "b",
+     "text": "ጥሩ"
+    },
+    {
+     "id": "c",
+     "text": "እንደምን"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "b9f22fcf-7774-512b-9590-87b607c3acf3",
+  "type": "spell_tiles",
+  "prompt": "Spell 'Hello'",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "ላ"
+    },
+    {
+     "id": "t2",
+     "text": "ደ"
+    },
+    {
+     "id": "t3",
+     "text": "ም"
+    },
+    {
+     "id": "t4",
+     "text": "ሰ"
+    },
+    {
+     "id": "t5",
+     "text": "ና"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t4",
+    "t1",
+    "t3"
+   ]
+  }
+ },
+ {
+  "id": "0bb95f8a-a901-5c25-95d1-197b234be2dd",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ሰላም"
+    },
+    {
+     "id": "l2",
+     "text": "ደህና ሁን"
+    },
+    {
+     "id": "l3",
+     "text": "አመሰግናለሁ"
+    },
+    {
+     "id": "l4",
+     "text": "እባክዎ"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "Thank you"
+    },
+    {
+     "id": "r2",
+     "text": "Hello"
+    },
+    {
+     "id": "r3",
+     "text": "Please"
+    },
+    {
+     "id": "r4",
+     "text": "Goodbye"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r2"
+    ],
+    [
+     "l2",
+     "r4"
+    ],
+    [
+     "l3",
+     "r1"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "196a1db4-1e45-55ae-883a-a85a44f357d5",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'red' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሰማያዊ"
+    },
+    {
+     "id": "b",
+     "text": "ቀይ"
+    },
+    {
+     "id": "c",
+     "text": "አረንጓዴ"
+    },
+    {
+     "id": "d",
+     "text": "ቢጫ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "14bc821c-2592-56c3-b29a-08eedcbd9cfc",
+  "type": "multiple_choice",
+  "prompt": "What does 'ሰማያዊ' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "red"
+    },
+    {
+     "id": "b",
+     "text": "green"
+    },
+    {
+     "id": "c",
+     "text": "blue"
+    },
+    {
+     "id": "d",
+     "text": "yellow"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "28799065-824b-51f6-a927-fa216d3dd90a",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "red"
+    },
+    {
+     "id": "b",
+     "text": "blue"
+    },
+    {
+     "id": "c",
+     "text": "yellow"
+    },
+    {
+     "id": "d",
+     "text": "green"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "41307087-2385-546c-b35a-8e4ddb5c9cd3",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'It is red'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ነው"
+    },
+    {
+     "id": "w2",
+     "text": "ሰማያዊ"
+    },
+    {
+     "id": "w3",
+     "text": "ቀይ"
+    },
+    {
+     "id": "w4",
+     "text": "ነኝ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "d47bd220-93f8-51cb-b33b-5ea0f11eb920",
+  "type": "multiple_choice",
+  "prompt": "Afaan Amaaraatiin 'Eeyyee' akkamitti jedhama?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "አይ"
+    },
+    {
+     "id": "b",
+     "text": "ጥሩ"
+    },
+    {
+     "id": "c",
+     "text": "አዎ"
+    },
+    {
+     "id": "d",
+     "text": "ጓደኛ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "b35516f5-75a5-564e-879e-46ac459529a6",
+  "type": "multiple_choice",
+  "prompt": "'አይ' maal jechuudha?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "b",
+     "text": "Gaarii"
+    },
+    {
+     "id": "c",
+     "text": "Hiriyaa"
+    },
+    {
+     "id": "d",
+     "text": "Lakki"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "b703e968-5bd5-5321-a984-94895f12bf0b",
+  "type": "listening",
+  "prompt": "Jechi kun maal jechuudha?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Gaarii"
+    },
+    {
+     "id": "b",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "c",
+     "text": "Lakki"
+    },
+    {
+     "id": "d",
+     "text": "Hiriyaa"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "fac47530-a33f-5c29-806c-fd77dd5c4aed",
+  "type": "sentence_construction",
+  "prompt": "Hiiki: 'Akkam hiriyaa'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ጓደኛ"
+    },
+    {
+     "id": "w2",
+     "text": "አዎ"
+    },
+    {
+     "id": "w3",
+     "text": "ሰላም"
+    },
+    {
+     "id": "w4",
+     "text": "አይ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "2e672840-a3c1-55ff-a7e9-10263afca667",
+  "type": "match_pairs",
+  "prompt": "Jechoota hiikaa isaanii waliin wal simsiisi",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "አዎ"
+    },
+    {
+     "id": "l2",
+     "text": "አይ"
+    },
+    {
+     "id": "l3",
+     "text": "ጥሩ"
+    },
+    {
+     "id": "l4",
+     "text": "ጓደኛ"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "Lakki"
+    },
+    {
+     "id": "r2",
+     "text": "Gaarii"
+    },
+    {
+     "id": "r3",
+     "text": "Hiriyaa"
+    },
+    {
+     "id": "r4",
+     "text": "Eeyyee"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "343adedd-1125-5e59-9bb6-ac016c628c2e",
+  "type": "gap_fill",
+  "prompt": "Hima kana guuti: 'Akkam hiriyaa'",
+  "content": {
+   "sentence_before": "ሰላም",
+   "sentence_after": "",
+   "choices": [
+    {
+     "id": "a",
+     "text": "አዎ"
+    },
+    {
+     "id": "b",
+     "text": "አይ"
+    },
+    {
+     "id": "c",
+     "text": "ጓደኛ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "45cc5d74-52d4-5a54-8ba2-5c929c70e502",
+  "type": "spell_tiles",
+  "prompt": "'Hiriyaa' qubeedhaan barreessi",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "ኛ"
+    },
+    {
+     "id": "t2",
+     "text": "ሩ"
+    },
+    {
+     "id": "t3",
+     "text": "ይ"
+    },
+    {
+     "id": "t4",
+     "text": "ደ"
+    },
+    {
+     "id": "t5",
+     "text": "ጓ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t5",
+    "t4",
+    "t1"
+   ]
+  }
+ },
+ {
+  "id": "3876349a-5afb-5ebe-94b9-56e431472b68",
+  "type": "multiple_choice",
+  "prompt": "'ሰላም' በኦሮምኛ እንዴት ይባላል?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Nagaatti"
+    },
+    {
+     "id": "b",
+     "text": "Akkam"
+    },
+    {
+     "id": "c",
+     "text": "Galatoomi"
+    },
+    {
+     "id": "d",
+     "text": "Maaloo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "08847bdf-629b-570d-a1a6-be82a643c098",
+  "type": "multiple_choice",
+  "prompt": "'Nagaatti' ምን ማለት ነው?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሰላም"
+    },
+    {
+     "id": "b",
+     "text": "አመሰግናለሁ"
+    },
+    {
+     "id": "c",
+     "text": "ደህና ሁን"
+    },
+    {
+     "id": "d",
+     "text": "እባክዎ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "30e96307-0b4f-58ad-aacb-a8a7a511c763",
+  "type": "listening",
+  "prompt": "ይህ ቃል ምን ማለት ነው?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሰላም"
+    },
+    {
+     "id": "b",
+     "text": "ደህና ሁን"
+    },
+    {
+     "id": "c",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "d",
+     "text": "አመሰግናለሁ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "9f9898fa-0822-5616-82d7-1262d7cc7f87",
+  "type": "sentence_construction",
+  "prompt": "ተርጉም፦ 'አመሰግናለሁ፣ ደህና ሁን'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "nagaatti"
+    },
+    {
+     "id": "w2",
+     "text": "Akkam"
+    },
+    {
+     "id": "w3",
+     "text": "Galatoomi"
+    },
+    {
+     "id": "w4",
+     "text": "Maaloo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "2a017719-46c8-5d5f-943c-84d9e6a7147c",
+  "type": "gap_fill",
+  "prompt": "ዓረፍተ ነገሩን ሙላ፦ 'አመሰግናለሁ፣ ደህና ሁን'",
+  "content": {
+   "sentence_before": "Galatoomi",
+   "sentence_after": "",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Akkam"
+    },
+    {
+     "id": "b",
+     "text": "nagaatti"
+    },
+    {
+     "id": "c",
+     "text": "Maaloo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "49b2b592-0eab-51d4-9375-1505d7695ece",
+  "type": "spell_tiles",
+  "prompt": "'እባክዎ'ን ፊደል በፊደል ጻፍ",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "o"
+    },
+    {
+     "id": "t2",
+     "text": "a"
+    },
+    {
+     "id": "t3",
+     "text": "M"
+    },
+    {
+     "id": "t4",
+     "text": "k"
+    },
+    {
+     "id": "t5",
+     "text": "a"
+    },
+    {
+     "id": "t6",
+     "text": "o"
+    },
+    {
+     "id": "t7",
+     "text": "i"
+    },
+    {
+     "id": "t8",
+     "text": "l"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t3",
+    "t5",
+    "t2",
+    "t8",
+    "t6",
+    "t1"
+   ]
+  }
+ },
+ {
+  "id": "dd6746c7-c524-56c8-888b-cf80520d3103",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'right' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ግራ"
+    },
+    {
+     "id": "b",
+     "text": "ቀጥታ"
+    },
+    {
+     "id": "c",
+     "text": "ቀኝ"
+    },
+    {
+     "id": "d",
+     "text": "እዚህ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "f643fb9b-a700-5fe7-9221-25a855868095",
+  "type": "multiple_choice",
+  "prompt": "What does 'ግራ' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "right"
+    },
+    {
+     "id": "b",
+     "text": "straight"
+    },
+    {
+     "id": "c",
+     "text": "here"
+    },
+    {
+     "id": "d",
+     "text": "left"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "a7c379f9-976a-502c-9ab7-35fce171816e",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "straight"
+    },
+    {
+     "id": "b",
+     "text": "right"
+    },
+    {
+     "id": "c",
+     "text": "left"
+    },
+    {
+     "id": "d",
+     "text": "here"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "535b3862-0519-5aec-b5e9-3d5b847ef3a9",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Go straight'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ቀኝ"
+    },
+    {
+     "id": "w2",
+     "text": "ሂድ"
+    },
+    {
+     "id": "w3",
+     "text": "ግራ"
+    },
+    {
+     "id": "w4",
+     "text": "ቀጥታ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w4",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "34ca3698-f257-5bc5-a023-40322b8432a7",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ቀኝ"
+    },
+    {
+     "id": "l2",
+     "text": "ግራ"
+    },
+    {
+     "id": "l3",
+     "text": "ቀጥታ"
+    },
+    {
+     "id": "l4",
+     "text": "እዚህ"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "left"
+    },
+    {
+     "id": "r2",
+     "text": "straight"
+    },
+    {
+     "id": "r3",
+     "text": "here"
+    },
+    {
+     "id": "r4",
+     "text": "right"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "0eeb7dd1-6d16-5554-8876-1efbc343479f",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'white' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ጥቁር"
+    },
+    {
+     "id": "b",
+     "text": "ብርቱካናማ"
+    },
+    {
+     "id": "c",
+     "text": "ነጭ"
+    },
+    {
+     "id": "d",
+     "text": "ሐምራዊ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "d5fd1a67-899c-5b0f-8ffe-a550d923545e",
+  "type": "multiple_choice",
+  "prompt": "What does 'ጥቁር' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "white"
+    },
+    {
+     "id": "b",
+     "text": "orange"
+    },
+    {
+     "id": "c",
+     "text": "purple"
+    },
+    {
+     "id": "d",
+     "text": "black"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "b0b4de94-db30-5e86-ba3e-7b384b1d05a3",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "orange"
+    },
+    {
+     "id": "b",
+     "text": "white"
+    },
+    {
+     "id": "c",
+     "text": "black"
+    },
+    {
+     "id": "d",
+     "text": "purple"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "29f209c1-9e6d-546c-a195-3fae96bc5fe8",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'The bread is white'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ነጭ"
+    },
+    {
+     "id": "w2",
+     "text": "ጥቁር"
+    },
+    {
+     "id": "w3",
+     "text": "ዳቦው"
+    },
+    {
+     "id": "w4",
+     "text": "ነው"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1",
+    "w4"
+   ]
+  }
+ },
+ {
+  "id": "13cadba6-ca4a-5265-aad9-189a0ea0ed56",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ነጭ"
+    },
+    {
+     "id": "l2",
+     "text": "ጥቁር"
+    },
+    {
+     "id": "l3",
+     "text": "ብርቱካናማ"
+    },
+    {
+     "id": "l4",
+     "text": "ሐምራዊ"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "black"
+    },
+    {
+     "id": "r2",
+     "text": "orange"
+    },
+    {
+     "id": "r3",
+     "text": "purple"
+    },
+    {
+     "id": "r4",
+     "text": "white"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "17ea3354-60da-5a91-b1e5-726c9a5d40cd",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'yes' in Afaan Oromo?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Lakki"
+    },
+    {
+     "id": "b",
+     "text": "Gaarii"
+    },
+    {
+     "id": "c",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "d",
+     "text": "Hiriyaa"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "85145c74-c34f-5de7-b82a-3b22a868c509",
+  "type": "multiple_choice",
+  "prompt": "What does 'Lakki' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "yes"
+    },
+    {
+     "id": "b",
+     "text": "good"
+    },
+    {
+     "id": "c",
+     "text": "friend"
+    },
+    {
+     "id": "d",
+     "text": "no"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "aa3aea7d-5afe-5a74-bba4-9f75b2c26bc1",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "good"
+    },
+    {
+     "id": "b",
+     "text": "yes"
+    },
+    {
+     "id": "c",
+     "text": "no"
+    },
+    {
+     "id": "d",
+     "text": "friend"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "6d15de37-1b31-5325-a6bc-df0a82f6c20b",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Hello, friend'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "hiriyaa"
+    },
+    {
+     "id": "w2",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "w3",
+     "text": "Akkam"
+    },
+    {
+     "id": "w4",
+     "text": "Lakki"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "c646d9f0-6ebe-5a25-94ff-c23dd126caf8",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "l2",
+     "text": "Lakki"
+    },
+    {
+     "id": "l3",
+     "text": "Gaarii"
+    },
+    {
+     "id": "l4",
+     "text": "Hiriyaa"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "no"
+    },
+    {
+     "id": "r2",
+     "text": "good"
+    },
+    {
+     "id": "r3",
+     "text": "friend"
+    },
+    {
+     "id": "r4",
+     "text": "yes"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "12800982-0910-507a-a57f-bb9b718f7d23",
+  "type": "gap_fill",
+  "prompt": "Complete the sentence: 'Hello, friend'",
+  "content": {
+   "sentence_before": "Akkam",
+   "sentence_after": "",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "b",
+     "text": "Lakki"
+    },
+    {
+     "id": "c",
+     "text": "hiriyaa"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "c0238a88-ba8b-5719-b97e-1e3d3b5a5e78",
+  "type": "spell_tiles",
+  "prompt": "Spell 'friend'",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "e"
+    },
+    {
+     "id": "t2",
+     "text": "y"
+    },
+    {
+     "id": "t3",
+     "text": "r"
+    },
+    {
+     "id": "t4",
+     "text": "i"
+    },
+    {
+     "id": "t5",
+     "text": "i"
+    },
+    {
+     "id": "t6",
+     "text": "a"
+    },
+    {
+     "id": "t7",
+     "text": "a"
+    },
+    {
+     "id": "t8",
+     "text": "H"
+    },
+    {
+     "id": "t9",
+     "text": "k"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t8",
+    "t4",
+    "t3",
+    "t5",
+    "t2",
+    "t7",
+    "t6"
+   ]
+  }
+ },
+ {
+  "id": "27853801-fd95-577b-bb40-c26430bdf845",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'mother' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "አባት"
+    },
+    {
+     "id": "b",
+     "text": "እናት"
+    },
+    {
+     "id": "c",
+     "text": "ወንድም"
+    },
+    {
+     "id": "d",
+     "text": "እህት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "a55bcbfd-0871-5b32-bf86-f7f140932007",
+  "type": "multiple_choice",
+  "prompt": "What does 'አባት' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "mother"
+    },
+    {
+     "id": "b",
+     "text": "brother"
+    },
+    {
+     "id": "c",
+     "text": "father"
+    },
+    {
+     "id": "d",
+     "text": "sister"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "43112355-96ea-5e80-864a-f4ea07c233de",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "mother"
+    },
+    {
+     "id": "b",
+     "text": "father"
+    },
+    {
+     "id": "c",
+     "text": "sister"
+    },
+    {
+     "id": "d",
+     "text": "brother"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "81b20324-a13a-53b3-b1e8-2859a640980d",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I have a brother'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "እህት"
+    },
+    {
+     "id": "w2",
+     "text": "ወንድም"
+    },
+    {
+     "id": "w3",
+     "text": "ነኝ"
+    },
+    {
+     "id": "w4",
+     "text": "አለኝ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w2",
+    "w4"
+   ]
+  }
+ },
+ {
+  "id": "08c52400-610d-54c6-9a2e-0fd4c397dd68",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'where' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ምን"
+    },
+    {
+     "id": "b",
+     "text": "የት"
+    },
+    {
+     "id": "c",
+     "text": "መቼ"
+    },
+    {
+     "id": "d",
+     "text": "ስንት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "06187089-3521-5efe-acce-0e100235d381",
+  "type": "multiple_choice",
+  "prompt": "What does 'ስንት' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "where"
+    },
+    {
+     "id": "b",
+     "text": "what"
+    },
+    {
+     "id": "c",
+     "text": "how much"
+    },
+    {
+     "id": "d",
+     "text": "when"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "917f077a-94aa-521f-a87a-46dd84d69c99",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "where"
+    },
+    {
+     "id": "b",
+     "text": "what"
+    },
+    {
+     "id": "c",
+     "text": "how much"
+    },
+    {
+     "id": "d",
+     "text": "when"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "7b3d1dbf-b541-5928-a810-8ccf4ec260d6",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'How much is it?'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "የት"
+    },
+    {
+     "id": "w2",
+     "text": "ነው"
+    },
+    {
+     "id": "w3",
+     "text": "ስንት"
+    },
+    {
+     "id": "w4",
+     "text": "ምን"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "99ba0c0b-cb51-5e74-977f-7750973d8ad4",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'six' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሰባት"
+    },
+    {
+     "id": "b",
+     "text": "ስምንት"
+    },
+    {
+     "id": "c",
+     "text": "ስድስት"
+    },
+    {
+     "id": "d",
+     "text": "ዘጠኝ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "a0202228-cf35-5b5a-aacc-c41b26ac1986",
+  "type": "multiple_choice",
+  "prompt": "What does 'ስምንት' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "six"
+    },
+    {
+     "id": "b",
+     "text": "seven"
+    },
+    {
+     "id": "c",
+     "text": "nine"
+    },
+    {
+     "id": "d",
+     "text": "eight"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "e4ae928b-7067-5c9a-8a29-e881320c9420",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ten"
+    },
+    {
+     "id": "b",
+     "text": "six"
+    },
+    {
+     "id": "c",
+     "text": "seven"
+    },
+    {
+     "id": "d",
+     "text": "eight"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "84b481ce-d2e3-5a2f-b839-506c16bc42c4",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Five breads, please'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "w2",
+     "text": "አሥር"
+    },
+    {
+     "id": "w3",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "w4",
+     "text": "አምስት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w4",
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "7a63d4ba-41a3-5780-b458-7193f6992b07",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ስድስት"
+    },
+    {
+     "id": "l2",
+     "text": "ሰባት"
+    },
+    {
+     "id": "l3",
+     "text": "ዘጠኝ"
+    },
+    {
+     "id": "l4",
+     "text": "አሥር"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "seven"
+    },
+    {
+     "id": "r2",
+     "text": "nine"
+    },
+    {
+     "id": "r3",
+     "text": "ten"
+    },
+    {
+     "id": "r4",
+     "text": "six"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "20a976c1-7e2f-58d6-8d4a-b34b609a2086",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Monday' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ማክሰኞ"
+    },
+    {
+     "id": "b",
+     "text": "ረቡዕ"
+    },
+    {
+     "id": "c",
+     "text": "ሰኞ"
+    },
+    {
+     "id": "d",
+     "text": "ሐሙስ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "fcc70360-e1db-56b2-9ace-c9f0953ee9fc",
+  "type": "multiple_choice",
+  "prompt": "What does 'አርብ' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Monday"
+    },
+    {
+     "id": "b",
+     "text": "Tuesday"
+    },
+    {
+     "id": "c",
+     "text": "Wednesday"
+    },
+    {
+     "id": "d",
+     "text": "Friday"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "a12972ce-a11d-5967-8ab8-bb369b9cee28",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Sunday"
+    },
+    {
+     "id": "b",
+     "text": "Monday"
+    },
+    {
+     "id": "c",
+     "text": "Tuesday"
+    },
+    {
+     "id": "d",
+     "text": "Wednesday"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "fe56e81a-7c49-54df-9533-342406200ada",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Today is Monday'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ነገ"
+    },
+    {
+     "id": "w2",
+     "text": "ሰኞ"
+    },
+    {
+     "id": "w3",
+     "text": "ነው"
+    },
+    {
+     "id": "w4",
+     "text": "ዛሬ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w4",
+    "w2",
+    "w3"
+   ]
+  }
+ },
+ {
+  "id": "4209e68e-98b7-5450-8b84-f3f4c18620bf",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ሰኞ"
+    },
+    {
+     "id": "l2",
+     "text": "ረቡዕ"
+    },
+    {
+     "id": "l3",
+     "text": "ቅዳሜ"
+    },
+    {
+     "id": "l4",
+     "text": "እሑድ"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "Wednesday"
+    },
+    {
+     "id": "r2",
+     "text": "Saturday"
+    },
+    {
+     "id": "r3",
+     "text": "Sunday"
+    },
+    {
+     "id": "r4",
+     "text": "Monday"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "8c2c935b-0600-5d30-ab12-707020339bb4",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'head' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "እጅ"
+    },
+    {
+     "id": "b",
+     "text": "ራስ"
+    },
+    {
+     "id": "c",
+     "text": "እግር"
+    },
+    {
+     "id": "d",
+     "text": "ዓይን"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "47c28f2b-f2ff-5be8-94af-2e35d776c50d",
+  "type": "multiple_choice",
+  "prompt": "What does 'እጅ' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "head"
+    },
+    {
+     "id": "b",
+     "text": "foot"
+    },
+    {
+     "id": "c",
+     "text": "hand"
+    },
+    {
+     "id": "d",
+     "text": "eye"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "2127c520-ac98-576e-a75c-3f352435d0c1",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "head"
+    },
+    {
+     "id": "b",
+     "text": "hand"
+    },
+    {
+     "id": "c",
+     "text": "foot"
+    },
+    {
+     "id": "d",
+     "text": "eye"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "1ff34c61-f10e-5610-b944-2207ba8615b6",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'My head hurts'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "እጄን"
+    },
+    {
+     "id": "w2",
+     "text": "ያመኛል"
+    },
+    {
+     "id": "w3",
+     "text": "ራሴን"
+    },
+    {
+     "id": "w4",
+     "text": "ነው"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "7f2d2393-7a8f-50c0-a082-f8b9f5153d79",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'doctor' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "መድኃኒት"
+    },
+    {
+     "id": "b",
+     "text": "ህመም"
+    },
+    {
+     "id": "c",
+     "text": "ሐኪም"
+    },
+    {
+     "id": "d",
+     "text": "ውሃ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "922601f6-85f4-5a9f-9889-8f30558a7593",
+  "type": "multiple_choice",
+  "prompt": "What does 'መድኃኒት' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "doctor"
+    },
+    {
+     "id": "b",
+     "text": "pain"
+    },
+    {
+     "id": "c",
+     "text": "water"
+    },
+    {
+     "id": "d",
+     "text": "medicine"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "20706e19-84a3-5587-9314-f9fd78cd0c87",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "pain"
+    },
+    {
+     "id": "b",
+     "text": "doctor"
+    },
+    {
+     "id": "c",
+     "text": "medicine"
+    },
+    {
+     "id": "d",
+     "text": "water"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "5239295d-9cc6-56ba-b217-029036a54904",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I need a doctor'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "መድኃኒት"
+    },
+    {
+     "id": "w2",
+     "text": "እፈልጋለሁ"
+    },
+    {
+     "id": "w3",
+     "text": "ሐኪም"
+    },
+    {
+     "id": "w4",
+     "text": "ነኝ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "ed0515ec-c7af-514a-b523-51e7aede45ea",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ሐኪም"
+    },
+    {
+     "id": "l2",
+     "text": "መድኃኒት"
+    },
+    {
+     "id": "l3",
+     "text": "ህመም"
+    },
+    {
+     "id": "l4",
+     "text": "ውሃ"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "medicine"
+    },
+    {
+     "id": "r2",
+     "text": "pain"
+    },
+    {
+     "id": "r3",
+     "text": "water"
+    },
+    {
+     "id": "r4",
+     "text": "doctor"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "47e44880-e589-5615-94b3-a80516460753",
+  "type": "multiple_choice",
+  "prompt": "'ዳቦ' በኦሮምኛ እንዴት ይባላል?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Nyaata"
+    },
+    {
+     "id": "b",
+     "text": "Foon"
+    },
+    {
+     "id": "c",
+     "text": "Daabboo"
+    },
+    {
+     "id": "d",
+     "text": "Hanqaaquu"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "82e9f265-1e77-50d5-9e30-3eaf218be1ff",
+  "type": "multiple_choice",
+  "prompt": "'Nyaata' ምን ማለት ነው?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "b",
+     "text": "ስጋ"
+    },
+    {
+     "id": "c",
+     "text": "እንቁላል"
+    },
+    {
+     "id": "d",
+     "text": "ምግብ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "30f8090f-90c6-515b-b017-865ecb6e6984",
+  "type": "listening",
+  "prompt": "ይህ ቃል ምን ማለት ነው?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ስጋ"
+    },
+    {
+     "id": "b",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "c",
+     "text": "ምግብ"
+    },
+    {
+     "id": "d",
+     "text": "እንቁላል"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "c0f18555-ebcb-5307-8272-afed79a1d6bc",
+  "type": "sentence_construction",
+  "prompt": "ተርጉም፦ 'ዳቦ እፈልጋለሁ'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "barbaada"
+    },
+    {
+     "id": "w2",
+     "text": "Nyaata"
+    },
+    {
+     "id": "w3",
+     "text": "Daabboo"
+    },
+    {
+     "id": "w4",
+     "text": "nan"
+    },
+    {
+     "id": "w5",
+     "text": "Foon"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w4",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "4e00b74a-3eb3-5c93-b392-2bc2f1697941",
+  "type": "match_pairs",
+  "prompt": "እያንዳንዱን ቃል ከትርጉሙ ጋር አዛምድ",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "Daabboo"
+    },
+    {
+     "id": "l2",
+     "text": "Nyaata"
+    },
+    {
+     "id": "l3",
+     "text": "Foon"
+    },
+    {
+     "id": "l4",
+     "text": "Hanqaaquu"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "ምግብ"
+    },
+    {
+     "id": "r2",
+     "text": "ስጋ"
+    },
+    {
+     "id": "r3",
+     "text": "እንቁላል"
+    },
+    {
+     "id": "r4",
+     "text": "ዳቦ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "cc2f70d7-742d-53a0-961d-0b10314f7b95",
+  "type": "gap_fill",
+  "prompt": "ዓረፍተ ነገሩን ሙላ፦ 'ዳቦ እፈልጋለሁ'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "nan barbaada",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Nyaata"
+    },
+    {
+     "id": "b",
+     "text": "Foon"
+    },
+    {
+     "id": "c",
+     "text": "Daabboo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "4c814396-e286-5809-934c-eb30542d110e",
+  "type": "spell_tiles",
+  "prompt": "'እንቁላል'ን ፊደል በፊደል ጻፍ",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "u"
+    },
+    {
+     "id": "t2",
+     "text": "n"
+    },
+    {
+     "id": "t3",
+     "text": "t"
+    },
+    {
+     "id": "t4",
+     "text": "a"
+    },
+    {
+     "id": "t5",
+     "text": "q"
+    },
+    {
+     "id": "t6",
+     "text": "a"
+    },
+    {
+     "id": "t7",
+     "text": "a"
+    },
+    {
+     "id": "t8",
+     "text": "u"
+    },
+    {
+     "id": "t9",
+     "text": "q"
+    },
+    {
+     "id": "t10",
+     "text": "H"
+    },
+    {
+     "id": "t11",
+     "text": "y"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t10",
+    "t6",
+    "t2",
+    "t5",
+    "t7",
+    "t4",
+    "t9",
+    "t1",
+    "t8"
+   ]
+  }
+ },
+ {
+  "id": "aa49ad9c-a2bc-5ac3-834a-4005ffc21df0",
+  "type": "multiple_choice",
+  "prompt": "Afaan Amaaraatiin 'Daabboo' akkamitti jedhama?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ምግብ"
+    },
+    {
+     "id": "b",
+     "text": "ስጋ"
+    },
+    {
+     "id": "c",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "d",
+     "text": "እንቁላል"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "49479776-1adc-5770-9824-0fb3b65eceb7",
+  "type": "multiple_choice",
+  "prompt": "'ምግብ' maal jechuudha?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Daabboo"
+    },
+    {
+     "id": "b",
+     "text": "Foon"
+    },
+    {
+     "id": "c",
+     "text": "Hanqaaquu"
+    },
+    {
+     "id": "d",
+     "text": "Nyaata"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "7df51efc-6a38-5ae6-8f0e-f43ba25d68bf",
+  "type": "listening",
+  "prompt": "Jechi kun maal jechuudha?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Foon"
+    },
+    {
+     "id": "b",
+     "text": "Daabboo"
+    },
+    {
+     "id": "c",
+     "text": "Nyaata"
+    },
+    {
+     "id": "d",
+     "text": "Hanqaaquu"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "69ece070-48bb-57c8-afa1-fb831d5025ec",
+  "type": "sentence_construction",
+  "prompt": "Hiiki: 'Daabboo nan barbaada'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "እፈልጋለሁ"
+    },
+    {
+     "id": "w2",
+     "text": "ምግብ"
+    },
+    {
+     "id": "w3",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "w4",
+     "text": "ስጋ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "a798d3e3-a490-5b05-b616-f292f00893fd",
+  "type": "match_pairs",
+  "prompt": "Jechoota hiikaa isaanii waliin wal simsiisi",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ዳቦ"
+    },
+    {
+     "id": "l2",
+     "text": "ምግብ"
+    },
+    {
+     "id": "l3",
+     "text": "ስጋ"
+    },
+    {
+     "id": "l4",
+     "text": "እንቁላል"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "Nyaata"
+    },
+    {
+     "id": "r2",
+     "text": "Foon"
+    },
+    {
+     "id": "r3",
+     "text": "Hanqaaquu"
+    },
+    {
+     "id": "r4",
+     "text": "Daabboo"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "2f117437-9827-5784-b736-9a4cb689d2e1",
+  "type": "gap_fill",
+  "prompt": "Hima kana guuti: 'Daabboo nan barbaada'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "እፈልጋለሁ",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ምግብ"
+    },
+    {
+     "id": "b",
+     "text": "ስጋ"
+    },
+    {
+     "id": "c",
+     "text": "ዳቦ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "f9399590-3a4e-52b7-8e46-4edfe060b3c7",
+  "type": "spell_tiles",
+  "prompt": "'Hanqaaquu' qubeedhaan barreessi",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "እ"
+    },
+    {
+     "id": "t2",
+     "text": "ግ"
+    },
+    {
+     "id": "t3",
+     "text": "ን"
+    },
+    {
+     "id": "t4",
+     "text": "ላ"
+    },
+    {
+     "id": "t5",
+     "text": "ቁ"
+    },
+    {
+     "id": "t6",
+     "text": "ጋ"
+    },
+    {
+     "id": "t7",
+     "text": "ል"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t1",
+    "t3",
+    "t5",
+    "t4",
+    "t7"
+   ]
+  }
+ },
+ {
+  "id": "85c4a5e2-ce3c-563b-a818-1cb7ce5799ee",
+  "type": "multiple_choice",
+  "prompt": "'አዎ' በኦሮምኛ እንዴት ይባላል?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Lakki"
+    },
+    {
+     "id": "b",
+     "text": "Gaarii"
+    },
+    {
+     "id": "c",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "d",
+     "text": "Hiriyaa"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "a46e357e-dc3f-555a-bc2e-5752dbd4b340",
+  "type": "multiple_choice",
+  "prompt": "'Lakki' ምን ማለት ነው?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "አዎ"
+    },
+    {
+     "id": "b",
+     "text": "ጥሩ"
+    },
+    {
+     "id": "c",
+     "text": "ጓደኛ"
+    },
+    {
+     "id": "d",
+     "text": "አይ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "041ff093-0414-5708-8f03-5d1e700d674c",
+  "type": "listening",
+  "prompt": "ይህ ቃል ምን ማለት ነው?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "ጥሩ"
+    },
+    {
+     "id": "b",
+     "text": "አዎ"
+    },
+    {
+     "id": "c",
+     "text": "አይ"
+    },
+    {
+     "id": "d",
+     "text": "ጓደኛ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "ddf71929-4396-5958-9a96-cde2efabfb9c",
+  "type": "sentence_construction",
+  "prompt": "ተርጉም፦ 'ሰላም ጓደኛ'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "hiriyaa"
+    },
+    {
+     "id": "w2",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "w3",
+     "text": "Akkam"
+    },
+    {
+     "id": "w4",
+     "text": "Lakki"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "bd396cc7-314e-519f-931d-c2a214416106",
+  "type": "match_pairs",
+  "prompt": "እያንዳንዱን ቃል ከትርጉሙ ጋር አዛምድ",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "l2",
+     "text": "Lakki"
+    },
+    {
+     "id": "l3",
+     "text": "Gaarii"
+    },
+    {
+     "id": "l4",
+     "text": "Hiriyaa"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "አይ"
+    },
+    {
+     "id": "r2",
+     "text": "ጥሩ"
+    },
+    {
+     "id": "r3",
+     "text": "ጓደኛ"
+    },
+    {
+     "id": "r4",
+     "text": "አዎ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "e3b5d85f-331f-5e2c-8237-1acb3036e39e",
+  "type": "gap_fill",
+  "prompt": "ዓረፍተ ነገሩን ሙላ፦ 'ሰላም ጓደኛ'",
+  "content": {
+   "sentence_before": "Akkam",
+   "sentence_after": "",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Eeyyee"
+    },
+    {
+     "id": "b",
+     "text": "Lakki"
+    },
+    {
+     "id": "c",
+     "text": "hiriyaa"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "b203988d-3cf1-5b32-b67c-956dc1f65d3f",
+  "type": "spell_tiles",
+  "prompt": "'ጓደኛ'ን ፊደል በፊደል ጻፍ",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "e"
+    },
+    {
+     "id": "t2",
+     "text": "y"
+    },
+    {
+     "id": "t3",
+     "text": "r"
+    },
+    {
+     "id": "t4",
+     "text": "i"
+    },
+    {
+     "id": "t5",
+     "text": "i"
+    },
+    {
+     "id": "t6",
+     "text": "a"
+    },
+    {
+     "id": "t7",
+     "text": "a"
+    },
+    {
+     "id": "t8",
+     "text": "H"
+    },
+    {
+     "id": "t9",
+     "text": "k"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t8",
+    "t4",
+    "t3",
+    "t5",
+    "t2",
+    "t7",
+    "t6"
+   ]
+  }
+ },
+ {
+  "id": "54fbab07-ffdb-5637-b0e3-6a688cf18964",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'market' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ቤት"
+    },
+    {
+     "id": "b",
+     "text": "ገበያ"
+    },
+    {
+     "id": "c",
+     "text": "ሆቴል"
+    },
+    {
+     "id": "d",
+     "text": "ትምህርት ቤት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "5a5a1273-820f-5044-a097-ebf6284580c4",
+  "type": "multiple_choice",
+  "prompt": "What does 'ሆቴል' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "home"
+    },
+    {
+     "id": "b",
+     "text": "market"
+    },
+    {
+     "id": "c",
+     "text": "hotel"
+    },
+    {
+     "id": "d",
+     "text": "school"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "36c7a5af-f06c-5677-b157-c81670b3b0d3",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "home"
+    },
+    {
+     "id": "b",
+     "text": "market"
+    },
+    {
+     "id": "c",
+     "text": "hotel"
+    },
+    {
+     "id": "d",
+     "text": "school"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "7f98e038-26f9-54b5-b99d-b32db4d14922",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I want a hotel'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ገበያ"
+    },
+    {
+     "id": "w2",
+     "text": "እፈልጋለሁ"
+    },
+    {
+     "id": "w3",
+     "text": "ሆቴል"
+    },
+    {
+     "id": "w4",
+     "text": "ነኝ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "19fba704-a87b-5e52-84b3-9bc0d38895b8",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'friend' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ጎረቤት"
+    },
+    {
+     "id": "b",
+     "text": "ጓደኛ"
+    },
+    {
+     "id": "c",
+     "text": "መምህር"
+    },
+    {
+     "id": "d",
+     "text": "ሰው"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "1b50aaae-9303-5677-b4ea-98684a6be420",
+  "type": "multiple_choice",
+  "prompt": "What does 'መምህር' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "friend"
+    },
+    {
+     "id": "b",
+     "text": "neighbor"
+    },
+    {
+     "id": "c",
+     "text": "teacher"
+    },
+    {
+     "id": "d",
+     "text": "person"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "6ad72b2a-580a-5ae6-94c9-05302cbbc64e",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "friend"
+    },
+    {
+     "id": "b",
+     "text": "teacher"
+    },
+    {
+     "id": "c",
+     "text": "person"
+    },
+    {
+     "id": "d",
+     "text": "neighbor"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "fe04791d-ff29-5bb2-b66c-3067b757de10",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'He is a teacher'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ጓደኛ"
+    },
+    {
+     "id": "w2",
+     "text": "መምህር"
+    },
+    {
+     "id": "w3",
+     "text": "ነው"
+    },
+    {
+     "id": "w4",
+     "text": "እሱ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w4",
+    "w2",
+    "w3"
+   ]
+  }
+ },
+ {
+  "id": "cccd3e0c-0238-5846-912d-98090bd766c2",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'coffee' in Afaan Oromo?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "Shaayii"
+    },
+    {
+     "id": "b",
+     "text": "Buna"
+    },
+    {
+     "id": "c",
+     "text": "Bishaan"
+    },
+    {
+     "id": "d",
+     "text": "Aannan"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "e6417a8a-89b1-5c58-801f-d590797e5f42",
+  "type": "multiple_choice",
+  "prompt": "What does 'Shaayii' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "coffee"
+    },
+    {
+     "id": "b",
+     "text": "water"
+    },
+    {
+     "id": "c",
+     "text": "tea"
+    },
+    {
+     "id": "d",
+     "text": "milk"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "6de5b0fd-724e-5d65-89ca-6d7a3c83a14e",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "coffee"
+    },
+    {
+     "id": "b",
+     "text": "tea"
+    },
+    {
+     "id": "c",
+     "text": "milk"
+    },
+    {
+     "id": "d",
+     "text": "water"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "8803a12b-4a31-588b-9055-4d002b0f37e3",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Coffee, please'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "maaloo"
+    },
+    {
+     "id": "w2",
+     "text": "Shaayii"
+    },
+    {
+     "id": "w3",
+     "text": "Buna"
+    },
+    {
+     "id": "w4",
+     "text": "Bishaan"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "2a6fedab-c554-5f74-aad8-c980682d4340",
+  "type": "gap_fill",
+  "prompt": "Complete the sentence: 'Coffee, please'",
+  "content": {
+   "sentence_before": "",
+   "sentence_after": "maaloo",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Shaayii"
+    },
+    {
+     "id": "b",
+     "text": "Buna"
+    },
+    {
+     "id": "c",
+     "text": "Bishaan"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "bb714047-a2c6-5d53-a23a-f79428b38475",
+  "type": "spell_tiles",
+  "prompt": "Spell 'milk'",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "n"
+    },
+    {
+     "id": "t2",
+     "text": "n"
+    },
+    {
+     "id": "t3",
+     "text": "A"
+    },
+    {
+     "id": "t4",
+     "text": "s"
+    },
+    {
+     "id": "t5",
+     "text": "a"
+    },
+    {
+     "id": "t6",
+     "text": "a"
+    },
+    {
+     "id": "t7",
+     "text": "i"
+    },
+    {
+     "id": "t8",
+     "text": "n"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t3",
+    "t5",
+    "t2",
+    "t8",
+    "t6",
+    "t1"
+   ]
+  }
+ },
+ {
+  "id": "d12f5574-0d9c-5a27-a4f1-dcf85c449143",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'one' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሁለት"
+    },
+    {
+     "id": "b",
+     "text": "አንድ"
+    },
+    {
+     "id": "c",
+     "text": "ሦስት"
+    },
+    {
+     "id": "d",
+     "text": "አራት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "16012f2b-b01a-5803-9e23-2d7440b9fa0e",
+  "type": "multiple_choice",
+  "prompt": "What does 'ሦስት' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "one"
+    },
+    {
+     "id": "b",
+     "text": "two"
+    },
+    {
+     "id": "c",
+     "text": "three"
+    },
+    {
+     "id": "d",
+     "text": "four"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "39639655-5079-57c0-9d2c-a2e3e80b5d49",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "one"
+    },
+    {
+     "id": "b",
+     "text": "two"
+    },
+    {
+     "id": "c",
+     "text": "three"
+    },
+    {
+     "id": "d",
+     "text": "four"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "0ac0add3-f074-5453-a02f-c2175ec18075",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Two teas, please'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "አንድ"
+    },
+    {
+     "id": "w2",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "w3",
+     "text": "ሻይ"
+    },
+    {
+     "id": "w4",
+     "text": "ሁለት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w4",
+    "w3",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "0074611b-81fd-5920-adc7-40f7b681c5bd",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'today' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ነገ"
+    },
+    {
+     "id": "b",
+     "text": "ዛሬ"
+    },
+    {
+     "id": "c",
+     "text": "ትናንት"
+    },
+    {
+     "id": "d",
+     "text": "ጠዋት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "9687e380-f5a5-5a34-a409-efcba252891d",
+  "type": "multiple_choice",
+  "prompt": "What does 'ነገ' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "today"
+    },
+    {
+     "id": "b",
+     "text": "yesterday"
+    },
+    {
+     "id": "c",
+     "text": "tomorrow"
+    },
+    {
+     "id": "d",
+     "text": "morning"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "28b9ff6c-4433-5f43-b901-a28b1cefa717",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "today"
+    },
+    {
+     "id": "b",
+     "text": "tomorrow"
+    },
+    {
+     "id": "c",
+     "text": "morning"
+    },
+    {
+     "id": "d",
+     "text": "yesterday"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "79da0b5c-a042-500c-b510-6d88ed306c83",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'See you tomorrow'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ዛሬ"
+    },
+    {
+     "id": "w2",
+     "text": "እንገናኛለን"
+    },
+    {
+     "id": "w3",
+     "text": "ትናንት"
+    },
+    {
+     "id": "w4",
+     "text": "ነገ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w4",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "3413656c-85f3-5bff-9ad0-5691f766b85a",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'husband' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "ሚስት"
+    },
+    {
+     "id": "b",
+     "text": "ልጅ"
+    },
+    {
+     "id": "c",
+     "text": "ባል"
+    },
+    {
+     "id": "d",
+     "text": "አያት"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "c2da97c0-18f3-5d98-8552-e6fd3dd6b543",
+  "type": "multiple_choice",
+  "prompt": "What does 'ሚስት' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "husband"
+    },
+    {
+     "id": "b",
+     "text": "child"
+    },
+    {
+     "id": "c",
+     "text": "grandparent"
+    },
+    {
+     "id": "d",
+     "text": "wife"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "69374c33-c8da-5742-a229-9f8561304032",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "child"
+    },
+    {
+     "id": "b",
+     "text": "husband"
+    },
+    {
+     "id": "c",
+     "text": "wife"
+    },
+    {
+     "id": "d",
+     "text": "grandparent"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "d3d23e55-2beb-553b-8e34-4c5ff412f875",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'I have a child'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "አለኝ"
+    },
+    {
+     "id": "w2",
+     "text": "ባል"
+    },
+    {
+     "id": "w3",
+     "text": "ልጅ"
+    },
+    {
+     "id": "w4",
+     "text": "ነኝ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w3",
+    "w1"
+   ]
+  }
+ },
+ {
+  "id": "63c69b89-2ad5-563a-aa76-7792ffecc411",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "ባል"
+    },
+    {
+     "id": "l2",
+     "text": "ሚስት"
+    },
+    {
+     "id": "l3",
+     "text": "ልጅ"
+    },
+    {
+     "id": "l4",
+     "text": "አያት"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "wife"
+    },
+    {
+     "id": "r2",
+     "text": "child"
+    },
+    {
+     "id": "r3",
+     "text": "grandparent"
+    },
+    {
+     "id": "r4",
+     "text": "husband"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "5d7a3c4b-341f-536f-84c2-c22cbbdc1ce1",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Thank you'?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "አመሰግናለሁ"
+    },
+    {
+     "id": "b",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "c",
+     "text": "ይቅርታ"
+    },
+    {
+     "id": "d",
+     "text": "አዎ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "78559167-4e7a-5e5d-b336-7aed01a837aa",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'Please'?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "b",
+     "text": "አመሰግናለሁ"
+    },
+    {
+     "id": "c",
+     "text": "ደህና ሁን"
+    },
+    {
+     "id": "d",
+     "text": "የለም"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "c1f4cbc9-df20-56d4-b884-8416c0da9cbf",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "Thank you"
+    },
+    {
+     "id": "b",
+     "text": "Please"
+    },
+    {
+     "id": "c",
+     "text": "Yes"
+    },
+    {
+     "id": "d",
+     "text": "No"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "e7b5ad0c-ecfc-51b7-ab34-1bbdd6c6e2c9",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Yes, please'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "አዎ"
+    },
+    {
+     "id": "w2",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "w3",
+     "text": "አይ"
+    },
+    {
+     "id": "w4",
+     "text": "ደህና"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w1",
+    "w2"
+   ]
+  }
+ },
+ {
+  "id": "5c468908-1038-5de3-acd9-3ee499bb8519",
+  "type": "gap_fill",
+  "prompt": "Complete the sentence: 'Yes, please'",
+  "content": {
+   "sentence_before": "አዎ",
+   "sentence_after": "",
+   "choices": [
+    {
+     "id": "a",
+     "text": "አይ"
+    },
+    {
+     "id": "b",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "c",
+     "text": "ደህና"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "b"
+  }
+ },
+ {
+  "id": "08439758-1708-53c2-9e6d-a229d8696b33",
+  "type": "spell_tiles",
+  "prompt": "Spell 'Thank you'",
+  "content": {
+   "tiles": [
+    {
+     "id": "t1",
+     "text": "ግ"
+    },
+    {
+     "id": "t2",
+     "text": "አ"
+    },
+    {
+     "id": "t3",
+     "text": "ለ"
+    },
+    {
+     "id": "t4",
+     "text": "ሰ"
+    },
+    {
+     "id": "t5",
+     "text": "እ"
+    },
+    {
+     "id": "t6",
+     "text": "መ"
+    },
+    {
+     "id": "t7",
+     "text": "ሁ"
+    },
+    {
+     "id": "t8",
+     "text": "ክ"
+    },
+    {
+     "id": "t9",
+     "text": "ና"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "t2",
+    "t6",
+    "t4",
+    "t1",
+    "t9",
+    "t3",
+    "t7"
+   ]
+  }
+ },
+ {
+  "id": "7ee319c2-0ac5-5081-93f0-aa6d3b3f366a",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "አዎ"
+    },
+    {
+     "id": "l2",
+     "text": "አይ"
+    },
+    {
+     "id": "l3",
+     "text": "እባክዎ"
+    },
+    {
+     "id": "l4",
+     "text": "ደህና"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "Please"
+    },
+    {
+     "id": "r2",
+     "text": "No"
+    },
+    {
+     "id": "r3",
+     "text": "Fine"
+    },
+    {
+     "id": "r4",
+     "text": "Yes"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r2"
+    ],
+    [
+     "l3",
+     "r1"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ },
+ {
+  "id": "62b8dde0-2413-520c-975a-107273e2cb3f",
+  "type": "multiple_choice",
+  "prompt": "How do you say 'bus' in Amharic?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "መኪና"
+    },
+    {
+     "id": "b",
+     "text": "ታክሲ"
+    },
+    {
+     "id": "c",
+     "text": "አውቶቡስ"
+    },
+    {
+     "id": "d",
+     "text": "አውሮፕላን"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "c"
+  }
+ },
+ {
+  "id": "742b5097-2932-56ee-9441-8aa1079df095",
+  "type": "multiple_choice",
+  "prompt": "What does 'ታክሲ' mean?",
+  "content": {
+   "choices": [
+    {
+     "id": "a",
+     "text": "car"
+    },
+    {
+     "id": "b",
+     "text": "bus"
+    },
+    {
+     "id": "c",
+     "text": "airplane"
+    },
+    {
+     "id": "d",
+     "text": "taxi"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "d"
+  }
+ },
+ {
+  "id": "ee965441-218f-5bdd-bbf2-606b7821c7ba",
+  "type": "listening",
+  "prompt": "What does this word mean?",
+  "content": {
+   "audio_url": "https://www.kozco.com/tech/piano2-CoolEdit.mp3",
+   "choices": [
+    {
+     "id": "a",
+     "text": "airplane"
+    },
+    {
+     "id": "b",
+     "text": "car"
+    },
+    {
+     "id": "c",
+     "text": "bus"
+    },
+    {
+     "id": "d",
+     "text": "taxi"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_choice_id": "a"
+  }
+ },
+ {
+  "id": "18cb8419-0fa8-5f6e-8471-af6d590aa0d8",
+  "type": "sentence_construction",
+  "prompt": "Translate: 'Where is the bus?'",
+  "content": {
+   "word_bank": [
+    {
+     "id": "w1",
+     "text": "ስንት"
+    },
+    {
+     "id": "w2",
+     "text": "የት"
+    },
+    {
+     "id": "w3",
+     "text": "ነው"
+    },
+    {
+     "id": "w4",
+     "text": "አውቶቡስ"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_sequence": [
+    "w4",
+    "w2",
+    "w3"
+   ]
+  }
+ },
+ {
+  "id": "96ef4f44-dc1a-5d9e-b7c6-affa2d7fa51b",
+  "type": "match_pairs",
+  "prompt": "Match each word to its meaning",
+  "content": {
+   "left_tiles": [
+    {
+     "id": "l1",
+     "text": "መኪና"
+    },
+    {
+     "id": "l2",
+     "text": "አውቶቡስ"
+    },
+    {
+     "id": "l3",
+     "text": "ታክሲ"
+    },
+    {
+     "id": "l4",
+     "text": "አውሮፕላን"
+    }
+   ],
+   "right_tiles": [
+    {
+     "id": "r1",
+     "text": "bus"
+    },
+    {
+     "id": "r2",
+     "text": "taxi"
+    },
+    {
+     "id": "r3",
+     "text": "airplane"
+    },
+    {
+     "id": "r4",
+     "text": "car"
+    }
+   ]
+  },
+  "answer_key": {
+   "correct_pairs": [
+    [
+     "l1",
+     "r4"
+    ],
+    [
+     "l2",
+     "r1"
+    ],
+    [
+     "l3",
+     "r2"
+    ],
+    [
+     "l4",
+     "r3"
+    ]
+   ]
+  }
+ }
+]

@@ -22,6 +22,12 @@ interface Props {
   parentId: string
   /** The expanded content: child rows or the exercise list. */
   children: ReactNode
+  /** Opened from the start, e.g. the lesson just returned to from an
+   * exercise, and the section and skill above it. */
+  defaultExpanded?: boolean
+  /** An extra action for a level with no child level of its own: a
+   * lesson's "Add exercise". */
+  extraAction?: ReactNode
 }
 
 type Editing = 'rename' | 'add' | null
@@ -54,10 +60,22 @@ const TITLE: Record<LevelKey, string> = {
 
 /** One section, skill or lesson: its title and counts, its actions, and
  * its children when expanded. */
-export function NodeRow({ level, id, title, subtitle, number, countLabel, siblingIds, parentId, children }: Props) {
+export function NodeRow({
+  level,
+  id,
+  title,
+  subtitle,
+  number,
+  countLabel,
+  siblingIds,
+  parentId,
+  children,
+  defaultExpanded = false,
+  extraAction,
+}: Props) {
   const { api } = useSession()
   const { busy, run, requestDelete } = useTreeActions()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(defaultExpanded)
   const [editing, setEditing] = useState<Editing>(null)
   const def = LEVELS[level]
   const index = siblingIds.indexOf(id)
@@ -137,6 +155,7 @@ export function NodeRow({ level, id, title, subtitle, number, countLabel, siblin
           role="group"
           aria-label={`Actions for ${def.name} ${title}`}
         >
+          {!childLevel && extraAction}
           {childLevel && (
             <Button
               size="sm"

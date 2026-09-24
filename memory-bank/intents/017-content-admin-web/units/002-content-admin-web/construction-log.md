@@ -31,3 +31,7 @@ last_updated: '2026-09-22T17:30:00Z'
 - **2026-09-22T17:00:00Z**: 037-admin-web-shell stage-complete - implement (admin/ scaffold, sign-in, content tree)
 - **2026-09-22T17:25:00Z**: 037-admin-web-shell stage-complete - test (50 tests, 6 falsification runs)
 - **2026-09-22T17:30:00Z**: 037-admin-web-shell completed - stories 001, 002 complete
+- **2026-09-24T08:03:32Z**: 038-admin-exercise-editors started - Stage 1: plan
+- **2026-09-24T08:11:03Z**: 038-admin-exercise-editors stage-complete - plan → implement
+- **2026-09-24T08:36:28Z**: 038-admin-exercise-editors stage-complete - implement → test
+- **2026-09-24T08:52:47Z**: 038-admin-exercise-editors completed - stories 003, 005 complete (330 tests, 14 falsification runs)
