@@ -63,3 +63,6 @@ admin/node_modules/
 admin/dist/
 admin/.env*
 !admin/.env.example
+# Google Stitch mockups: kept locally; the design notes are in
+# memory-bank/standards/admin-design.md
+admin/image/

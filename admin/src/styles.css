@@ -1,11 +1,11 @@
 @import 'tailwindcss';
 
-/* The Stitch mockups use hundreds of classes this site does not; without
-   this Tailwind would find them and ship them all. */
+/* Local copies of the Stitch mockups (gitignored) use hundreds of classes
+   this site does not; without this Tailwind would find them and ship them. */
 @source not '../image';
 
 /* Highland Pulse — the design system in
-   admin/image/stitch_ethiopian_language_learning_app/highland_pulse/DESIGN.md.
+   memory-bank/standards/admin-design.md.
    Warm parchment canvas, deep forest acacia green, roasted coffee text and
    highland terracotta for anything live or in need of attention. */
 @theme {
