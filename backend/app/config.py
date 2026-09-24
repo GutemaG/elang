@@ -33,9 +33,11 @@ class Settings(BaseSettings):
     session_ttl_days: int = 30
 
     # Comma-separated extra CORS origins (e.g. a deployed web app's real
-    # domain). In `environment == "local"`, any `http://localhost:<port>`
-    # origin is already allowed regardless of this list, since Flutter Web's
-    # dev server port isn't fixed run to run -- see `main.py`.
+    # domain). A `*` stands for one name, e.g. `https://*.vercel.app` for
+    # every Vercel site. In `environment == "local"`, any
+    # `http://localhost:<port>` origin is already allowed regardless of this
+    # list, since Flutter Web's dev server port isn't fixed run to run -- see
+    # `main.py`.
     cors_allowed_origins: str = ""
 
     # Comma-separated Google-verified emails allowed on `/api/v1/admin/*`

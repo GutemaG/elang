@@ -6,6 +6,7 @@ Run locally with: `uv run uvicorn app.main:app --reload` (from `backend/`).
 
 from __future__ import annotations
 
+import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -13,7 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.infrastructure.api.admin_routers import router as admin_router
 from app.infrastructure.api.audio_file_routers import router as audio_file_router
 from app.infrastructure.api.course_routers import router as course_router
@@ -49,19 +50,32 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await app.state.apple_verifier.aclose()
 
 
+def cors_origins(settings: Settings) -> tuple[list[str], str | None]:
+    """`CORS_ALLOWED_ORIGINS` as exact origins plus one pattern.
+
+    An entry with `*` matches one DNS label there: `https://*.vercel.app`
+    admits `https://admin-ethio-lang.vercel.app` but not `http://...`,
+    `https://a.b.vercel.app` or `https://x.vercel.app.evil.com`. In local
+    development any `http://localhost:<port>` is allowed as well, since
+    Flutter Web's dev server picks whichever port is free run to run.
+    """
+    entries = [o.strip().rstrip("/") for o in settings.cors_allowed_origins.split(",") if o.strip()]
+    exact = [o for o in entries if "*" not in o]
+    patterns = [re.escape(o).replace(r"\*", "[a-z0-9-]+") for o in entries if "*" in o]
+    if settings.environment == "local":
+        patterns.append(r"http://localhost:\d+")
+    return exact, "|".join(f"(?:{p})" for p in patterns) or None
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="Buna Auth Service", version="0.1.0", lifespan=lifespan)
 
     settings = get_settings()
-    extra_origins = [o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip()]
+    exact_origins, origin_pattern = cors_origins(settings)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=extra_origins,
-        # Flutter Web's dev server picks whichever port is free/requested
-        # run to run, so pin-listing origins is impractical locally. Only
-        # active in `environment == "local"`; staging/production rely
-        # solely on `cors_allowed_origins` above.
-        allow_origin_regex=r"http://localhost:\d+" if settings.environment == "local" else None,
+        allow_origins=exact_origins,
+        allow_origin_regex=origin_pattern,
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
