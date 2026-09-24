@@ -20,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/lesson/screens/lesson_screen.dart';
-import 'package:elang/features/lesson/widgets/choice_tile.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
@@ -30,6 +29,7 @@ import 'package:elang/shared/models/practice_completion_result.dart';
 import 'package:elang/shared/services/lesson_api_exception.dart';
 import 'package:elang/shared/services/lesson_pack_downloader.dart';
 import 'package:elang/shared/services/sync_engine.dart';
+import 'package:elang/shared/widgets/exercise/answer_tile.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
 import '../../../helpers/fake_answer_feedback_player.dart';
@@ -150,7 +150,7 @@ const _matchPairsLesson = LessonContent(
 /// in the sentence's gap. Once a word is chosen it is on screen twice, so a
 /// bare `find.text` is ambiguous and `tap` refuses it.
 Finder _gapTile(String label) => find.descendant(
-  of: find.byType(ChoiceTile),
+  of: find.byType(AnswerTile),
   matching: find.text(label),
 );
 
@@ -403,7 +403,7 @@ void main() {
             "Let's get them right this time!"),
         findsOneWidget,
       );
-      expect(find.text('2'), findsOneWidget); // the badge's count
+      expect(find.text('2 mistakes'), findsOneWidget); // the badge's count
 
       await tester.tap(find.text('Continue'));
       await tester.pump();
@@ -496,16 +496,16 @@ void main() {
     await tester.pump();
 
     expect(find.text('Tap what you hear'), findsOneWidget);
-    expect(audioPlayer.playedUrls, isEmpty);
-
-    await tester.tap(find.byIcon(Icons.volume_up));
-    await tester.pump();
+    // The clip plays once by itself when the question appears.
     expect(audioPlayer.playedUrls, ['https://cdn.buna.app/audio/test.mp3']);
 
     // Replay.
     await tester.tap(find.byIcon(Icons.volume_up));
     await tester.pump();
-    expect(audioPlayer.playedUrls.length, 2);
+    expect(audioPlayer.playedUrls, [
+      'https://cdn.buna.app/audio/test.mp3',
+      'https://cdn.buna.app/audio/test.mp3',
+    ]);
   });
 
   testWidgets(

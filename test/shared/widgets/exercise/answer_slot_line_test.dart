@@ -397,6 +397,48 @@ void main() {
       }
     }
 
+    // The full matrix the old GapSentence test ran, so deleting that
+    // widget's tests in bolt 045 lost no phone width or text size.
+    for (final scale in [1.0, 1.15, 1.3, 1.5, 2.0]) {
+      for (final width in [320.0, 360.0, 412.0]) {
+        testWidgets('Fidel at ${scale}x on ${width}px does not overflow', (
+          tester,
+        ) async {
+          await tester.pumpWidget(
+            _host(
+              width: width,
+              scale: scale,
+              const AnswerSlotLine.gap(
+                before: 'እኔ',
+                after: 'እፈልጋለሁ',
+                options: ['ቡና', 'ሻይ', 'ውሃ'],
+                filled: 'ቡና',
+              ),
+            ),
+          );
+          expect(tester.takeException(), isNull);
+        });
+
+        testWidgets('Latin at ${scale}x on ${width}px does not overflow', (
+          tester,
+        ) async {
+          await tester.pumpWidget(
+            _host(
+              width: width,
+              scale: scale,
+              const AnswerSlotLine.gap(
+                before: 'Daabboo',
+                after: 'barbaada guddaa',
+                options: ['nan', 'Nyaata', 'Hanqaaquu'],
+                filled: 'Hanqaaquu',
+              ),
+            ),
+          );
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
+
     testWidgets('an empty gap reads as "blank"; a filled one names its '
         'word', (tester) async {
       final handle = tester.ensureSemantics();

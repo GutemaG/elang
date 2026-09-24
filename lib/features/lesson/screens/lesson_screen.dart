@@ -15,13 +15,22 @@ import '../../../shared/services/lesson_pack_store.dart';
 import '../../../shared/services/sync_engine.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
+import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
-import '../../../shared/widgets/tactile_button.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_icon_button.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/app_status.dart';
+import '../../../shared/widgets/exercise/answer_action_bar.dart';
+import '../../../shared/widgets/exercise/answer_slot_line.dart';
+import '../../../shared/widgets/exercise/answer_tile.dart';
+import '../../../shared/widgets/exercise/audio_play_button.dart';
+import '../../../shared/widgets/exercise/exercise_layout.dart';
+import '../prompt_parts.dart';
 import '../state/lesson_controller.dart';
-import '../widgets/choice_tile.dart';
-import '../widgets/exercise_prompt_header.dart';
+import '../widgets/answer_states.dart';
 import '../widgets/exit_lesson_sheet.dart';
-import '../widgets/gap_sentence.dart';
 import '../widgets/match_pairs_builder.dart';
 import '../widgets/out_of_beans_sheet.dart';
 import '../widgets/word_bank_builder.dart';
@@ -137,7 +146,18 @@ class _LessonScreenState extends State<LessonScreen> {
   @override
   void initState() {
     super.initState();
-    _future = _loadLessonContent().then((content) {
+    _future = _startLesson();
+  }
+
+  /// "Try again" after a failed load starts over from the top.
+  void _retryLoad() {
+    setState(() {
+      _future = _startLesson();
+    });
+  }
+
+  Future<LessonContent> _startLesson() {
+    return _loadLessonContent().then((content) {
       final controller = LessonController(
         lessonApi: widget.lessonApi,
         feedbackPlayer: widget.feedbackPlayer,
@@ -333,46 +353,66 @@ class _LessonScreenState extends State<LessonScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: FutureBuilder<LessonContent>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              if (snapshot.error is LessonNotDownloadedOfflineException) {
-                return const _DownloadRequiredState();
-              }
-              return Center(
-                child: Text(
-                  "Couldn't load this lesson.",
-                  style: AppTypography.bodyMd.copyWith(
-                    color: AppColors.onSurface,
-                  ),
-                ),
-              );
-            }
-            return AnimatedBuilder(
-              animation: _controller!,
-              // Inside the builder so `canPop` follows the controller: once
-              // the lesson is finished or out of beans, back just goes back.
-              builder: (context, _) => PopScope(
-                canPop: !_midLesson,
-                onPopInvokedWithResult: (didPop, _) {
-                  if (!didPop) _confirmExit();
-                },
-                child: _ExerciseBody(
-                  controller: _controller!,
-                  audioPlayer: widget.audioPlayer,
-                ),
-              ),
-            );
-          },
+    return FutureBuilder<LessonContent>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _StatusPage(
+            child: LoadingState(message: 'Loading lesson'),
+          );
+        }
+        if (snapshot.hasError) {
+          if (snapshot.error is LessonNotDownloadedOfflineException) {
+            return const _StatusPage(child: _DownloadRequiredState());
+          }
+          return _StatusPage(
+            child: ErrorState(
+              title: "Couldn't load this lesson.",
+              message: 'Check your connection and try again.',
+              onRetry: _retryLoad,
+            ),
+          );
+        }
+        return AnimatedBuilder(
+          animation: _controller!,
+          // Inside the builder so `canPop` follows the controller: once
+          // the lesson is finished or out of beans, back just goes back.
+          builder: (context, _) => PopScope(
+            canPop: !_midLesson,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop) _confirmExit();
+            },
+            child: _ExerciseBody(
+              controller: _controller!,
+              audioPlayer: widget.audioPlayer,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A lesson that is not showing a question yet: loading, failed to load,
+/// or offline without a download. Close leaves; nothing is lost yet.
+class _StatusPage extends StatelessWidget {
+  const _StatusPage({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPage(
+      scrollable: false,
+      padded: false,
+      topBar: AppTopBar(
+        leading: AppIconButton(
+          icon: Icons.close,
+          tooltip: 'Exit lesson',
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
+      body: child,
     );
   }
 }
@@ -385,39 +425,14 @@ class _DownloadRequiredState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spaceLg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.cloud_off,
-              size: 40,
-              color: AppColors.tertiaryBrand,
-            ),
-            const SizedBox(height: AppSpacing.spaceSm),
-            Text(
-              "You're offline",
-              style: AppTypography.headlineSm.copyWith(
-                color: AppColors.onSurface,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.space2xs),
-            Text(
-              'Download this lesson while online to take it offline.',
-              textAlign: TextAlign.center,
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceMd),
-            TactileButton(
-              label: 'Go back',
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
+    return EmptyState(
+      icon: Icons.cloud_off,
+      title: "You're offline",
+      message: 'Download this lesson while online to take it offline.',
+      action: AppButton.primary(
+        label: 'Go back',
+        expand: false,
+        onPressed: () => Navigator.of(context).pop(),
       ),
     );
   }
@@ -434,60 +449,50 @@ class _ExerciseBody extends StatelessWidget {
     if (controller.lessonInterrupted || controller.lessonFinished) {
       // Out-of-beans modal / navigation to the summary is already in
       // flight (triggered by the controller listener) — render an inert
-      // placeholder underneath rather than stale exercise content. Not a
-      // spinner: an indeterminate `CircularProgressIndicator` runs a
-      // never-ending animation, which would keep `pumpAndSettle()` from
-      // ever settling for as long as the modal/summary is showing on top.
-      return const SizedBox.shrink();
+      // page underneath rather than stale exercise content. Not a
+      // spinner: an indeterminate one runs a never-ending animation, which
+      // would keep `pumpAndSettle()` from ever settling for as long as the
+      // modal/summary is showing on top.
+      return const AppPage(scrollable: false, body: SizedBox.shrink());
     }
 
     if (controller.awaitingRetryIntro) {
-      return _MistakeReviewCard(controller: controller);
+      return _MistakeReview(controller: controller);
     }
 
-    final exercise = controller.currentExercise;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.marginMobile),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: AppSpacing.spaceSm),
-          _ProgressHeader(controller: controller),
-          const SizedBox(height: AppSpacing.spaceLg),
-          Expanded(
-            child: SingleChildScrollView(
-              child: _ExercisePrompt(
-                exercise: exercise,
-                controller: controller,
-                audioPlayer: audioPlayer,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.spaceMd),
-          if (controller.completionError != null) ...[
-            Text(
-              "Couldn't save your progress. Tap Continue to try again.",
-              textAlign: TextAlign.center,
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.tertiaryBrand,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceSm),
-          ],
-          _ActionBar(controller: controller),
-          const SizedBox(height: AppSpacing.spaceMd),
-        ],
-      ),
+    // Keyed by queue position, so each question (a requeued one too) gets
+    // fresh state: its own scroll position and its own first play.
+    return _LessonQuestion(
+      key: ValueKey(controller.currentIndex),
+      controller: controller,
+      audioPlayer: audioPlayer,
     );
   }
+}
+
+/// The lesson's top bar, the same on every question and the mistake review.
+ExerciseTopBar _topBarFor(BuildContext context, LessonController controller) {
+  final total = controller.exercises.length;
+  return ExerciseTopBar(
+    // Goes through the lesson's PopScope, so part-way through it asks
+    // before leaving, the same as the back gesture.
+    onClose: () => Navigator.of(context).maybePop(),
+    progress: ((controller.currentIndex + 1) / total).clamp(0.0, 1.0),
+    beans: controller.usesBeans ? controller.beansRemaining : null,
+    beansMax: controller.usesBeans ? controller.content.beansMax : null,
+  );
 }
 
 /// Shown between exercises whenever the queue advances onto a previously
 /// missed exercise (see `LessonController.awaitingRetryIntro`) -- a short
 /// beat that names the mistake(s) before dropping the learner back into
 /// them, rather than the requeued exercise just silently reappearing.
-class _MistakeReviewCard extends StatelessWidget {
-  const _MistakeReviewCard({required this.controller});
+///
+/// Laid out like the app's pop-ups ([SheetHero]), with the count on the
+/// illustration so it is the first thing seen, and Continue docked where
+/// every question's button sits.
+class _MistakeReview extends StatelessWidget {
+  const _MistakeReview({required this.controller});
 
   final LessonController controller;
 
@@ -497,366 +502,229 @@ class _MistakeReviewCard extends StatelessWidget {
     final noun = missedCount == 1 ? 'question' : 'questions';
     final pronoun = missedCount == 1 ? 'it' : 'them';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.marginMobile),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _MistakeBadge(count: missedCount),
-            const SizedBox(height: AppSpacing.spaceLg),
-            Text(
-              "Let's review your mistakes",
-              textAlign: TextAlign.center,
-              style: AppTypography.headlineLg.copyWith(
-                color: AppColors.onSurface,
-              ),
+    return AppPage(
+      scrollable: false,
+      topBar: _topBarFor(context, controller),
+      body: Center(
+        child: SingleChildScrollView(
+          child: SheetHero(
+            illustration: const Icon(Icons.replay),
+            illustrationBadge: CountBadge(
+              label: missedCount == 1 ? '1 mistake' : '$missedCount mistakes',
+              tone: AppTone.tertiary,
             ),
-            const SizedBox(height: AppSpacing.space2xs),
-            Text(
-              'You missed $missedCount $noun earlier. '
-              "Let's get $pronoun right this time!",
-              textAlign: TextAlign.center,
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceLg),
-            TactileButton(
-              label: 'Continue',
-              onPressed: controller.startRetryExercise,
-            ),
-          ],
+            tone: AppTone.tertiary,
+            title: "Let's review your mistakes",
+            body:
+                'You missed $missedCount $noun earlier. '
+                "Let's get $pronoun right this time!",
+          ),
         ),
       ),
-    );
-  }
-}
-
-/// The [_MistakeReviewCard]'s illustration: a soft terracotta halo behind a
-/// gradient "retry" badge, with the actual missed-question count pinned
-/// to its corner -- so the number the copy quotes is also the first thing
-/// the learner sees, not just read in a sentence.
-class _MistakeBadge extends StatelessWidget {
-  const _MistakeBadge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 128,
-      height: 128,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: 128,
-            height: 128,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.tertiaryFixed,
-            ),
-          ),
-          Center(
-            child: Container(
-              width: 92,
-              height: 92,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.tertiaryBrand,
-                    AppColors.tertiaryContainer,
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.tertiaryBevel.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.replay,
-                size: 44,
-                color: AppColors.onTertiary,
-              ),
-            ),
-          ),
-          Positioned(
-            top: -4,
-            right: -4,
-            child: Container(
-              width: 34,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.secondaryContainer,
-                border: Border.all(color: AppColors.background, width: 3),
-              ),
-              child: Text(
-                '$count',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.onSecondaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgressHeader extends StatelessWidget {
-  const _ProgressHeader({required this.controller});
-
-  final LessonController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final total = controller.exercises.length;
-    return Row(
-      children: [
-        // Goes through the lesson's PopScope, so part-way through it asks
-        // before leaving, the same as the back gesture.
-        IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.close, color: AppColors.onSurfaceVariant),
-          tooltip: 'Exit lesson',
-          visualDensity: VisualDensity.compact,
+      bottomDock: [
+        AppButton.primary(
+          label: 'Continue',
+          onPressed: controller.startRetryExercise,
         ),
-        const SizedBox(width: AppSpacing.space2xs),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadii.full),
-            child: LinearProgressIndicator(
-              value: ((controller.currentIndex + 1) / total).clamp(0.0, 1.0),
-              minHeight: 10,
-              backgroundColor: AppColors.surfaceContainer,
-              valueColor: const AlwaysStoppedAnimation(
-                AppColors.primaryContainer,
-              ),
-            ),
-          ),
-        ),
-        if (controller.usesBeans) ...[
-          const SizedBox(width: AppSpacing.spaceSm),
-          Semantics(
-            label: '${controller.beansRemaining} beans remaining',
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.favorite,
-                  color: AppColors.tertiaryBrand,
-                  size: 18,
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  '${controller.beansRemaining}',
-                  style: AppTypography.labelMd.copyWith(
-                    color: AppColors.tertiaryBrand,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }
 }
 
-class _ExercisePrompt extends StatelessWidget {
-  const _ExercisePrompt({
-    required this.exercise,
+/// The audio a question plays, if it has any. Every question with a clip
+/// plays it once by itself when it appears.
+String? _clipOf(Exercise exercise) => switch (exercise) {
+  ListeningExercise e => e.audioUrl,
+  _ => null,
+};
+
+/// One question, whatever its type, in the one frame: [ExerciseLayout]
+/// with the lesson's top bar, the type's prompt and answers, and
+/// [AnswerActionBar]. Each type only supplies its prompt and answers, so
+/// the frame cannot drift between them.
+class _LessonQuestion extends StatefulWidget {
+  const _LessonQuestion({
+    super.key,
     required this.controller,
     required this.audioPlayer,
   });
 
-  final Exercise exercise;
   final LessonController controller;
   final LessonAudioPlayer audioPlayer;
 
   @override
+  State<_LessonQuestion> createState() => _LessonQuestionState();
+}
+
+class _LessonQuestionState extends State<_LessonQuestion> {
+  /// Plays asked for (a tap, or the first play) whose clip has not
+  /// started yet; the button shows "playing" while there are any.
+  int _starting = 0;
+
+  /// A Continue still being handled; a second tap meanwhile is ignored.
+  bool _continuing = false;
+
+  LessonController get _controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final clip = _clipOf(_controller.currentExercise);
+    // Not after a refill: the question comes back already answered.
+    if (clip != null && !_controller.isChecked) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _play(clip);
+      });
+    }
+  }
+
+  Future<void> _play(String url) async {
+    setState(() => _starting++);
+    try {
+      await widget.audioPlayer.play(url);
+    } on Object {
+      // Nothing to show: the learner can tap play again.
+    } finally {
+      if (mounted) setState(() => _starting--);
+    }
+  }
+
+  Future<void> _continue() async {
+    if (_continuing) return;
+    _continuing = true;
+    try {
+      await _controller.continueToNext();
+    } finally {
+      _continuing = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final controller = _controller;
+    final exercise = controller.currentExercise;
+    final topBar = _topBarFor(context, controller);
+    final built = exercise is SentenceConstructionExercise
+        ? controller.selectedAnswer as List<String>?
+        : null;
+    return ExerciseLayout(
+      onClose: topBar.onClose,
+      progress: topBar.progress,
+      beans: topBar.beans,
+      beansMax: topBar.beansMax,
+      prompt: _promptFor(exercise),
+      answers: _answersFor(exercise),
+      actionBar: AnswerActionBar(
+        grade: gradeOf(controller.feedback),
+        // Only a built sentence needs Check: it has no single tap that
+        // means "done". Every other type grades itself as it is answered
+        // -- a choice on its tap, a match pair on its second tile.
+        onCheck: exercise is SentenceConstructionExercise
+            ? controller.check
+            : null,
+        canCheck: built != null && built.isNotEmpty,
+        onContinue: _continue,
+        notice: controller.completionError == null
+            ? null
+            : "Couldn't save your progress. Tap Continue to try again.",
+      ),
+    );
+  }
+
+  Widget _promptFor(Exercise exercise) {
     return switch (exercise) {
-      MultipleChoiceExercise e => _MultipleChoiceBody(
-        exercise: e,
-        controller: controller,
+      MultipleChoiceExercise e => _choicePrompt(e),
+      ListeningExercise e => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _questionPrompt(splitPrompt(e.instruction)),
+          const SizedBox(height: AppSpacing.spaceLg),
+          Center(
+            child: AudioPlayButton(
+              onPressed: () => _play(e.audioUrl),
+              playing: _starting > 0,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.space2xs),
+          Text(
+            'Tap to play/replay',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySm.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
-      ListeningExercise e => _ListeningBody(
-        exercise: e,
-        controller: controller,
-        audioPlayer: audioPlayer,
+      // The prompt already names the task ("Translate: 'I am fine'"); one
+      // that does not gets a generic one, rather than a second
+      // "Translate:" stacked in front of the prompt's own.
+      SentenceConstructionExercise e => _questionPrompt(
+        _translatePrompt(e.promptTranslation),
       ),
-      SentenceConstructionExercise e => _SentenceConstructionBody(
-        exercise: e,
-        controller: controller,
-      ),
-      MatchPairsExercise e => _MatchPairsBody(
-        exercise: e,
-        controller: controller,
-      ),
-      GapFillExercise e => _GapFillBody(exercise: e, controller: controller),
+      MatchPairsExercise e => _questionPrompt(splitPrompt(e.prompt)),
+      GapFillExercise e => _questionPrompt(splitPrompt(e.prompt)),
     };
   }
-}
 
-class _GapFillBody extends StatelessWidget {
-  const _GapFillBody({required this.exercise, required this.controller});
+  Widget _answersFor(Exercise exercise) {
+    final controller = _controller;
+    return switch (exercise) {
+      MultipleChoiceExercise e => _choices(e.options),
+      ListeningExercise e => _choices(e.options),
+      SentenceConstructionExercise e => WordBankBuilder(
+        wordBank: e.wordBank,
+        built: (controller.selectedAnswer as List<String>?) ?? const [],
+        feedback: controller.feedback,
+        onToggle: controller.toggleWordBankToken,
+      ),
+      MatchPairsExercise e => MatchPairsBuilder(
+        leftTiles: e.leftTiles,
+        rightTiles: e.rightTiles,
+        matchedPairs: controller.matchedPairs,
+        armedTileId: controller.armedTileId,
+        armedIsLeft: controller.armedIsLeft,
+        wrongPair: controller.wrongPair,
+        onTileTap: controller.selectMatchPairsTile,
+      ),
+      GapFillExercise e => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AnswerSlotLine.gap(
+            before: e.sentenceBefore,
+            after: e.sentenceAfter,
+            options: e.options,
+            filled: switch (controller.selectedAnswer) {
+              final int chosen => e.options[chosen],
+              _ => null,
+            },
+            grade: gradeOf(controller.feedback),
+          ),
+          const SizedBox(height: AppSpacing.spaceLg),
+          // Graded on the tap, like the other choice types: the chosen
+          // word drops into the gap and the tile shows right or wrong.
+          _choices(e.options),
+        ],
+      ),
+    };
+  }
 
-  final GapFillExercise exercise;
-  final LessonController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = controller.selectedAnswer as int?;
+  /// Full-width answer rows. Only the chosen one shows the grade, and none
+  /// takes a tap once the question is graded.
+  Widget _choices(List<String> options) {
+    final controller = _controller;
+    final chosen = controller.selectedAnswer as int?;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ExercisePromptHeader(parts: splitPrompt(exercise.prompt)),
-        const SizedBox(height: AppSpacing.spaceMd),
-        GapSentence(
-          before: exercise.sentenceBefore,
-          after: exercise.sentenceAfter,
-          options: exercise.options,
-          filled: selected == null ? null : exercise.options[selected],
-        ),
-        const SizedBox(height: AppSpacing.spaceLg),
-        for (int i = 0; i < exercise.options.length; i++)
+        for (var i = 0; i < options.length; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
-            child: ChoiceTile(
-              label: exercise.options[i],
-              selected: selected == i,
-              feedback: controller.isChecked
-                  ? controller.feedback
-                  : TileFeedback.none,
-              // Graded on the tap, like the other choice types: the chosen
-              // word drops into the gap and the tile shows right or wrong.
-              onTap: controller.isChecked
-                  ? null
-                  : () => controller.chooseOption(i),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _MultipleChoiceBody extends StatelessWidget {
-  const _MultipleChoiceBody({required this.exercise, required this.controller});
-
-  final MultipleChoiceExercise exercise;
-  final LessonController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = controller.selectedAnswer as int?;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          exercise.prompt,
-          style: AppTypography.displayLgMobile.copyWith(
-            color: AppColors.onSurface,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.space2xs),
-        Text(
-          exercise.promptTranslation,
-          style: AppTypography.bodyMd.copyWith(
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.spaceLg),
-        for (int i = 0; i < exercise.options.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
-            child: ChoiceTile(
-              label: exercise.options[i],
-              selected: selected == i,
-              feedback: controller.isChecked
-                  ? controller.feedback
-                  : TileFeedback.none,
-              onTap: controller.isChecked
-                  ? null
-                  : () => controller.chooseOption(i),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _ListeningBody extends StatelessWidget {
-  const _ListeningBody({
-    required this.exercise,
-    required this.controller,
-    required this.audioPlayer,
-  });
-
-  final ListeningExercise exercise;
-  final LessonController controller;
-  final LessonAudioPlayer audioPlayer;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = controller.selectedAnswer as int?;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          exercise.instruction,
-          style: AppTypography.headlineMd.copyWith(color: AppColors.onSurface),
-        ),
-        const SizedBox(height: AppSpacing.spaceMd),
-        Center(
-          child: InkWell(
-            onTap: () => audioPlayer.play(exercise.audioUrl),
-            customBorder: const CircleBorder(),
-            child: Container(
-              width: 88,
-              height: 88,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryContainer,
+            child: AnswerTile(
+              label: options[i],
+              state: choiceStateOf(
+                chosen: chosen == i,
+                feedback: controller.feedback,
               ),
-              child: const Icon(
-                Icons.volume_up,
-                color: AppColors.onPrimary,
-                size: 36,
-              ),
-            ),
-          ),
-        ),
-        const Center(
-          child: Padding(
-            padding: EdgeInsets.only(top: AppSpacing.space2xs),
-            child: Text(
-              'Tap to play/replay',
-              style: TextStyle(color: AppColors.onSurfaceVariant),
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.spaceLg),
-        for (int i = 0; i < exercise.options.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
-            child: ChoiceTile(
-              label: exercise.options[i],
-              selected: selected == i,
-              feedback: controller.isChecked
-                  ? controller.feedback
-                  : TileFeedback.none,
               onTap: controller.isChecked
                   ? null
                   : () => controller.chooseOption(i),
@@ -867,116 +735,27 @@ class _ListeningBody extends StatelessWidget {
   }
 }
 
-class _SentenceConstructionBody extends StatelessWidget {
-  const _SentenceConstructionBody({
-    required this.exercise,
-    required this.controller,
-  });
-
-  final SentenceConstructionExercise exercise;
-  final LessonController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final built = (controller.selectedAnswer as List<String>?) ?? const [];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // The prompt already names the task ("Translate: 'I am fine'"); one
-        // that does not gets a generic one, rather than a second
-        // "Translate:" stacked in front of the prompt's own.
-        ExercisePromptHeader(
-          parts: _translatePrompt(exercise.promptTranslation),
-        ),
-        const SizedBox(height: AppSpacing.spaceLg),
-        WordBankBuilder(
-          wordBank: exercise.wordBank,
-          built: built,
-          feedback: controller.isChecked
-              ? controller.feedback
-              : TileFeedback.none,
-          onToggle: controller.toggleWordBankToken,
-        ),
-      ],
-    );
+/// A bare word with a gloss (the fake's "ቡና" with "What does this word
+/// mean?") asks the gloss and shows the word as the question. Anything else
+/// is split like every other prompt, with a gloss as its translation.
+Widget _choicePrompt(MultipleChoiceExercise exercise) {
+  final parts = splitPrompt(exercise.prompt);
+  final gloss = exercise.promptTranslation.trim();
+  if (parts.content == null && gloss.isNotEmpty) {
+    return QuestionPrompt(instruction: gloss, question: parts.instruction);
   }
+  return QuestionPrompt(
+    instruction: parts.instruction,
+    question: parts.content,
+    translation: gloss.isEmpty ? null : gloss,
+  );
 }
+
+Widget _questionPrompt(PromptParts parts) =>
+    QuestionPrompt(instruction: parts.instruction, question: parts.content);
 
 PromptParts _translatePrompt(String prompt) {
   final parts = splitPrompt(prompt);
   if (parts.content != null) return parts;
   return PromptParts(instruction: 'Translate this sentence', content: prompt);
-}
-
-class _MatchPairsBody extends StatelessWidget {
-  const _MatchPairsBody({required this.exercise, required this.controller});
-
-  final MatchPairsExercise exercise;
-  final LessonController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          exercise.prompt,
-          style: AppTypography.headlineMd.copyWith(color: AppColors.onSurface),
-        ),
-        const SizedBox(height: AppSpacing.spaceLg),
-        MatchPairsBuilder(
-          leftTiles: exercise.leftTiles,
-          rightTiles: exercise.rightTiles,
-          matchedPairs: controller.matchedPairs,
-          armedTileId: controller.armedTileId,
-          armedIsLeft: controller.armedIsLeft,
-          wrongPair: controller.wrongPair,
-          onTileTap: controller.selectMatchPairsTile,
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionBar extends StatelessWidget {
-  const _ActionBar({required this.controller});
-
-  final LessonController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!controller.isChecked) {
-      // Only a built sentence needs Check: it has no single tap that means
-      // "done". Every other type grades itself as it is answered -- a
-      // choice on its tap, a match pair on its second tile.
-      if (controller.currentExercise is SentenceConstructionExercise) {
-        final built = controller.selectedAnswer as List<String>?;
-        return TactileButton(
-          label: 'Check',
-          onPressed: built != null && built.isNotEmpty
-              ? controller.check
-              : null,
-        );
-      }
-      // Holds the button's place so the exercise does not jump when
-      // Continue appears.
-      return const ExcludeSemantics(
-        child: IgnorePointer(
-          child: Opacity(
-            opacity: 0,
-            child: TactileButton(label: '', onPressed: null),
-          ),
-        ),
-      );
-    }
-    final correct = controller.feedback == TileFeedback.correct;
-    return TactileButton(
-      label: 'Continue',
-      onPressed: controller.continueToNext,
-      backgroundColor: correct
-          ? AppColors.primaryContainer
-          : AppColors.tertiaryBrand,
-      bevelColor: correct ? AppColors.primaryBevel : AppColors.tertiaryBevel,
-    );
-  }
 }

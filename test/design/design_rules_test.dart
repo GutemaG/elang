@@ -104,14 +104,8 @@ const _notYetMigrated = <String, Set<_Rule>>{
     _Rule.pageScaffold,
     _Rule.progressIndicator,
   },
-  'lib/features/lesson/screens/lesson_screen.dart': {
-    _Rule.boxShadow,
-    _Rule.radiusOrBorder,
-    _Rule.materialButton,
-    _Rule.rawSheetOrDialog,
-    _Rule.pageScaffold,
-    _Rule.progressIndicator,
-  },
+  // The exit and out-of-beans sheets move to showAppSheet in bolt 048.
+  'lib/features/lesson/screens/lesson_screen.dart': {_Rule.rawSheetOrDialog},
   'lib/features/lesson/screens/skill_tree_dashboard_screen.dart': {
     _Rule.radiusOrBorder,
     _Rule.rawSheetOrDialog,
@@ -123,16 +117,8 @@ const _notYetMigrated = <String, Set<_Rule>>{
     _Rule.radiusOrBorder,
     _Rule.progressIndicator,
   },
-  'lib/features/lesson/widgets/choice_tile.dart': {
-    _Rule.boxShadow,
-    _Rule.radiusOrBorder,
-  },
   'lib/features/lesson/widgets/exit_lesson_sheet.dart': {_Rule.materialButton},
   'lib/features/lesson/widgets/lesson_hud.dart': {_Rule.radiusOrBorder},
-  'lib/features/lesson/widgets/match_pairs_builder.dart': {
-    _Rule.boxShadow,
-    _Rule.radiusOrBorder,
-  },
   'lib/features/lesson/widgets/out_of_beans_sheet.dart': {
     _Rule.radiusOrBorder,
     _Rule.materialButton,
@@ -142,10 +128,6 @@ const _notYetMigrated = <String, Set<_Rule>>{
     _Rule.radiusOrBorder,
   },
   'lib/features/lesson/widgets/sync_status_banner.dart': {_Rule.radiusOrBorder},
-  'lib/features/lesson/widgets/word_bank_builder.dart': {
-    _Rule.boxShadow,
-    _Rule.radiusOrBorder,
-  },
   'lib/features/settings/screens/settings_screen.dart': {
     _Rule.materialButton,
     _Rule.rawSheetOrDialog,

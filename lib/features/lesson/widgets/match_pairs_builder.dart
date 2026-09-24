@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/exercise.dart';
-import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
-import '../../../shared/theme/app_typography.dart';
+import '../../../shared/widgets/exercise/answer_tile.dart';
 
 /// Match-pairs' "tap-to-link" interaction (FR-2/FR-3 of
 /// 004-match-pairs-exercise-type): two independently-shuffled tile
@@ -43,134 +42,61 @@ class MatchPairsBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _column(leftTiles, isLeft: true)),
-        const SizedBox(width: AppSpacing.spaceSm),
-        Expanded(child: _column(rightTiles, isLeft: false)),
-      ],
-    );
-  }
-
-  Widget _column(List<MatchPairsTile> tiles, {required bool isLeft}) {
+    // Laid out a row at a time, not as two columns, so the two tiles side
+    // by side are always the same height: a Fidel label is taller than a
+    // Latin one, and two free columns would drift out of line.
+    final rows = leftTiles.length > rightTiles.length
+        ? leftTiles.length
+        : rightTiles.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final tile in tiles)
+        for (var i = 0; i < rows; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
-            child: Builder(
-              builder: (context) {
-                final state = _stateFor(tile.id, isLeft: isLeft);
-                return _MatchPairsTileChip(
-                  label: tile.text,
-                  state: state,
-                  onTap: state == _MatchPairsTileState.correct
-                      ? null
-                      : () => onTileTap(tile.id, isLeft: isLeft),
-                );
-              },
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _cell(leftTiles, i, isLeft: true)),
+                  const SizedBox(width: AppSpacing.spaceSm),
+                  Expanded(child: _cell(rightTiles, i, isLeft: false)),
+                ],
+              ),
             ),
           ),
       ],
     );
   }
 
-  _MatchPairsTileState _stateFor(String tileId, {required bool isLeft}) {
+  Widget _cell(List<MatchPairsTile> tiles, int index, {required bool isLeft}) {
+    if (index >= tiles.length) return const SizedBox.shrink();
+    final tile = tiles[index];
+    final state = _stateFor(tile.id, isLeft: isLeft);
+    return AnswerTile(
+      label: tile.text,
+      shape: AnswerTileShape.cell,
+      state: state,
+      onTap: state == AnswerTileState.correct
+          ? null
+          : () => onTileTap(tile.id, isLeft: isLeft),
+    );
+  }
+
+  /// Armed is the kit's selected; a locked pair is correct; the pair just
+  /// graded wrong is incorrect, which shakes.
+  AnswerTileState _stateFor(String tileId, {required bool isLeft}) {
     final matched = isLeft
         ? matchedPairs.containsKey(tileId)
         : matchedPairs.containsValue(tileId);
-    if (matched) return _MatchPairsTileState.correct;
+    if (matched) return AnswerTileState.correct;
     final wrong = wrongPair;
     if (wrong != null && tileId == (isLeft ? wrong.$1 : wrong.$2)) {
-      return _MatchPairsTileState.incorrect;
+      return AnswerTileState.incorrect;
     }
     if (tileId == armedTileId && isLeft == armedIsLeft) {
-      return _MatchPairsTileState.armed;
+      return AnswerTileState.selected;
     }
-    return _MatchPairsTileState.unselected;
+    return AnswerTileState.idle;
   }
-}
-
-enum _MatchPairsTileState { unselected, armed, correct, incorrect }
-
-class _MatchPairsTileChip extends StatelessWidget {
-  const _MatchPairsTileChip({
-    required this.label,
-    required this.state,
-    this.onTap,
-  });
-
-  final String label;
-  final _MatchPairsTileState state;
-  final VoidCallback? onTap;
-
-  _ChipStyle get _style => switch (state) {
-    _MatchPairsTileState.unselected => const _ChipStyle(
-      background: AppColors.surfaceContainerLowest,
-      border: AppColors.cardBorderDefault,
-      textColor: AppColors.onSurface,
-    ),
-    _MatchPairsTileState.armed => const _ChipStyle(
-      background: AppColors.answerSelected,
-      border: AppColors.secondaryContainer,
-      textColor: AppColors.onSurface,
-    ),
-    _MatchPairsTileState.correct => const _ChipStyle(
-      background: AppColors.answerCorrect,
-      border: AppColors.primaryContainer,
-      textColor: AppColors.primaryContainer,
-    ),
-    _MatchPairsTileState.incorrect => const _ChipStyle(
-      background: AppColors.answerIncorrect,
-      border: AppColors.tertiaryBrand,
-      textColor: AppColors.tertiaryBrand,
-    ),
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final style = _style;
-    final interactive = onTap != null;
-    return Semantics(
-      button: true,
-      selected: state != _MatchPairsTileState.unselected,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.spaceMd,
-            vertical: AppSpacing.spaceSm,
-          ),
-          decoration: BoxDecoration(
-            color: style.background,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: style.border, width: 2),
-            boxShadow: [
-              BoxShadow(color: AppColors.cardBevelDefault, offset: const Offset(0, 3)),
-            ],
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: AppTypography.bodyMd.copyWith(
-              color: interactive ? style.textColor : style.textColor.withValues(alpha: 0.6),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChipStyle {
-  const _ChipStyle({required this.background, required this.border, required this.textColor});
-
-  final Color background;
-  final Color border;
-  final Color textColor;
 }

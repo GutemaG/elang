@@ -3,14 +3,23 @@ id: 045-lesson-screen-on-kit
 unit: 002-question-kit-ui
 intent: 018-mobile-design-system
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 004-lesson-screen-on-the-kit
 created: '2026-09-24T12:55:00Z'
-started: null
-completed: null
+started: '2026-09-24T20:31:26Z'
+completed: '2026-09-24T21:20:20Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-24T20:52:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-24T21:02:05Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-24T21:20:19Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 044-question-kit
 enables_bolts:
@@ -32,7 +41,7 @@ Rebuild the lesson screen and its five question types on the kit, delete the old
 
 ## Stories Included
 
-- [ ] **004-lesson-screen-on-the-kit** (Must)
+- [x] **004-lesson-screen-on-the-kit** (Must)
 
 ## Bolt Type
 
@@ -41,9 +50,9 @@ Rebuild the lesson screen and its five question types on the kit, delete the old
 
 ## Stages
 
-- [ ] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

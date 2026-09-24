@@ -51,12 +51,13 @@ class AnswerActionBar extends StatelessWidget {
       final check = onCheck;
       button = check == null
           // Holds the button's place so the question does not jump when
-          // Continue appears.
+          // Continue appears. No label: nothing that says "Check" is there
+          // for a question that has no Check.
           ? const ExcludeSemantics(
               child: IgnorePointer(
                 child: Opacity(
                   opacity: 0,
-                  child: AppButton.primary(label: 'Check', onPressed: null),
+                  child: AppButton.primary(label: '', onPressed: null),
                 ),
               ),
             )

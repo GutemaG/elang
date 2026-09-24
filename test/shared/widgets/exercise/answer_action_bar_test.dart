@@ -104,6 +104,7 @@ void main() {
       await tester.pumpWidget(_host(const AnswerActionBar()));
       expect(tester.getSize(find.byType(AnswerActionBar)), withCheck);
       expect(find.bySemanticsLabel('Check'), findsNothing);
+      expect(find.text('Check'), findsNothing);
       expect(
         find.descendant(
           of: find.byType(AnswerActionBar),

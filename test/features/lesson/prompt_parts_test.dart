@@ -3,7 +3,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:elang/features/lesson/widgets/exercise_prompt_header.dart';
+import 'package:elang/features/lesson/prompt_parts.dart';
 
 void main() {
   test('splits "Instruction: \'content\'"', () {
