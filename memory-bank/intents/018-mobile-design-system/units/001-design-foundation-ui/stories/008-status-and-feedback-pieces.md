@@ -2,11 +2,11 @@
 id: 008-status-and-feedback-pieces
 unit: 001-design-foundation-ui
 intent: 018-mobile-design-system
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T12:55:00Z'
 assigned_bolt: 043-design-surfaces
-implemented: false
+implemented: true
 ---
 
 # Story: 008-status-and-feedback-pieces
@@ -19,11 +19,11 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** `StatPill` for streak, beans, gems or XP, **When** built, **Then** it is a translucent white pill with a tinted border, coloured icon and `label-md` number, as in the dashboard HUD, with its semantics label
-- [ ] **Given** `CountBadge` and `RibbonBadge`, **When** built, **Then** they match "3/5 Completed" and "+1 TODAY" in the mockups
-- [ ] **Given** `AppProgressBar`, **When** built, **Then** it has a sunken track, a rounded fill, an optional gradient and optional label, and animates value changes within `AppMotion.state`
-- [ ] **Given** `EmptyState`, `ErrorState` and `LoadingState`, **When** built, **Then** each has an `IconBadge` illustration, title, text and optional action, and `LoadingState` stops animating under `pumpAndSettle` where today's screens rely on that
-- [ ] **Given** `InfoBanner`, **When** used for sync status, **Then** it can show the three states `SyncStatusBanner` has today
+- [x] **Given** `StatPill` for streak, beans, gems or XP, **When** built, **Then** it is a translucent white pill with a tinted border, coloured icon and `label-md` number, as in the dashboard HUD, with its semantics label
+- [x] **Given** `CountBadge` and `RibbonBadge`, **When** built, **Then** they match "3/5 Completed" and "+1 TODAY" in the mockups
+- [x] **Given** `AppProgressBar`, **When** built, **Then** it has a sunken track, a rounded fill, an optional gradient and optional label, and animates value changes within `AppMotion.state`
+- [x] **Given** `EmptyState`, `ErrorState` and `LoadingState`, **When** built, **Then** each has an `IconBadge` illustration, title, text and optional action, and `LoadingState` stops animating under `pumpAndSettle` where today's screens rely on that
+- [x] **Given** `InfoBanner`, **When** used for sync status, **Then** it can show the three states `SyncStatusBanner` has today
 
 ## Reference Design (FR-11)
 

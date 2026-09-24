@@ -2,11 +2,11 @@
 id: 005-page-shell-and-backgrounds
 unit: 001-design-foundation-ui
 intent: 018-mobile-design-system
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T12:55:00Z'
 assigned_bolt: 043-design-surfaces
-implemented: false
+implemented: true
 ---
 
 # Story: 005-page-shell-and-backgrounds
@@ -19,12 +19,12 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** `AppPage`, **When** a screen uses it, **Then** it gets the cream background, safe area, 20 px side margins and scrolling content without setting any of them itself
-- [ ] **Given** `background: patterned`, **When** shown, **Then** the faint diagonal lattice from the dashboard mockup is painted once and repaints only on resize (NFR-3)
-- [ ] **Given** `background: celebration`, **When** shown, **Then** a soft radial glow sits behind the hero area, as in the lesson-complete mockup
-- [ ] **Given** a `topBar` (leading close/back, centred title or logo, trailing actions or stat pills), **When** set, **Then** it lines up with the page margins on every screen
-- [ ] **Given** a `bottomDock`, **When** set, **Then** its buttons are pinned above the safe area with the same padding on every screen, and content scrolls behind it without being hidden
-- [ ] **Given** `footerStripe: true`, **When** shown, **Then** the Tibeb stripe (green, gold, terracotta diagonal band) sits at the bottom, as in the out-of-beans mockup
+- [x] **Given** `AppPage`, **When** a screen uses it, **Then** it gets the cream background, safe area, 20 px side margins and scrolling content without setting any of them itself
+- [x] **Given** `background: patterned`, **When** shown, **Then** the faint diagonal lattice from the dashboard mockup is painted once and repaints only on resize (NFR-3)
+- [x] **Given** `background: celebration`, **When** shown, **Then** a soft radial glow sits behind the hero area, as in the lesson-complete mockup
+- [x] **Given** a `topBar` (leading close/back, centred title or logo, trailing actions or stat pills), **When** set, **Then** it lines up with the page margins on every screen
+- [x] **Given** a `bottomDock`, **When** set, **Then** its buttons are pinned above the safe area with the same padding on every screen, and content scrolls behind it without being hidden
+- [x] **Given** `footerStripe: true`, **When** shown, **Then** the Tibeb stripe (green, gold, terracotta diagonal band) sits at the bottom, as in the out-of-beans mockup
 
 ## Reference Design (FR-11)
 

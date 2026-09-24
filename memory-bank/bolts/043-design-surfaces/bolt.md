@@ -3,17 +3,26 @@ id: 043-design-surfaces
 unit: 001-design-foundation-ui
 intent: 018-mobile-design-system
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 005-page-shell-and-backgrounds
   - 006-cards-and-surfaces
   - 007-sheets-and-dialogs
   - 008-status-and-feedback-pieces
 created: '2026-09-24T12:55:00Z'
-started: null
-completed: null
+started: '2026-09-24T14:14:32Z'
+completed: '2026-09-24T18:18:19Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-24T14:20:49Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-24T15:57:24Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-24T18:18:18Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 042-design-foundation
 enables_bolts:
@@ -38,10 +47,10 @@ Complete the library: `AppPage` and its three backgrounds, `AppCard` and its fam
 
 ## Stories Included
 
-- [ ] **005-page-shell-and-backgrounds** (Must)
-- [ ] **006-cards-and-surfaces** (Must)
-- [ ] **007-sheets-and-dialogs** (Must)
-- [ ] **008-status-and-feedback-pieces** (Must)
+- [x] **005-page-shell-and-backgrounds** (Must)
+- [x] **006-cards-and-surfaces** (Must)
+- [x] **007-sheets-and-dialogs** (Must)
+- [x] **008-status-and-feedback-pieces** (Must)
 
 ## Bolt Type
 
@@ -50,9 +59,9 @@ Complete the library: `AppPage` and its three backgrounds, `AppCard` and its fam
 
 ## Stages
 
-- [ ] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

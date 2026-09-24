@@ -1,0 +1,496 @@
+import 'package:flutter/material.dart';
+
+import '../theme/app_colors.dart';
+import '../theme/app_shadows.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_tone.dart';
+import '../theme/app_typography.dart';
+import 'app_page.dart';
+import 'app_status.dart';
+import 'tactile_pressable.dart';
+
+/// How much room a card leaves around its content.
+enum AppCardPadding {
+  /// 16 px: most cards.
+  regular,
+
+  /// 12 px: small cards in a row, such as stat cards.
+  compact,
+
+  /// None: the content (a list of rows) pads itself.
+  none,
+}
+
+/// DESIGN.md "Tactile Level 1": a white face, a 2 px border, a 24 px radius
+/// and a shelf with a soft shadow (018-mobile-design-system, FR-4).
+///
+/// A [tone] tints the border and shelf only; the face stays white. With
+/// [onTap] the card presses like a button and is one button for a screen
+/// reader. [selected] marks a chosen option: the border takes the tone's
+/// strong colour and the face its selected tint.
+class AppCard extends StatelessWidget {
+  const AppCard({
+    super.key,
+    required this.child,
+    this.tone = AppTone.neutral,
+    this.topStripe = false,
+    this.onTap,
+    this.selected,
+    this.padding = AppCardPadding.regular,
+  });
+
+  final Widget child;
+  final AppTone tone;
+
+  /// The green-gold-terracotta band along the top edge, as on the milestone
+  /// and refill-timer cards.
+  final bool topStripe;
+  final VoidCallback? onTap;
+
+  /// `null` for a card that is not a choice; otherwise whether it is chosen.
+  /// A choice is a button for a screen reader even while disabled.
+  final bool? selected;
+  final AppCardPadding padding;
+
+  static const double borderWidth = 2;
+
+  EdgeInsets get _insets => switch (padding) {
+    AppCardPadding.regular => const EdgeInsets.all(AppSpacing.spaceMd),
+    AppCardPadding.compact => const EdgeInsets.all(AppSpacing.spaceSm),
+    AppCardPadding.none => EdgeInsets.zero,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = selected ?? false;
+    final border = isSelected ? tone.icon : tone.border;
+    final face = isSelected
+        ? tone.selectedFace
+        : AppColors.surfaceContainerLowest;
+    final radius = BorderRadius.circular(AppRadii.card);
+
+    // The content is clipped to the inside of the border, so a stripe or a
+    // pressed row never paints over the corners.
+    final inner = ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadii.card - borderWidth),
+      child: topStripe
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const TibebStripe(style: TibebStyle.gradient),
+                Padding(padding: _insets, child: child),
+              ],
+            )
+          : Padding(padding: _insets, child: child),
+    );
+
+    final Widget card;
+    if (onTap == null) {
+      card = Padding(
+        padding: const EdgeInsets.only(bottom: AppShadows.shelfDepth),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: face,
+            borderRadius: radius,
+            border: Border.all(color: border, width: borderWidth),
+            boxShadow: AppShadows.raised(tone.shelf),
+          ),
+          // A DecoratedBox, unlike the pressable's Container, does not inset
+          // its child by the border.
+          child: Padding(
+            padding: const EdgeInsets.all(borderWidth),
+            child: inner,
+          ),
+        ),
+      );
+    } else {
+      card = TactilePressable(
+        onPressed: onTap,
+        faceColor: face,
+        borderColor: border,
+        borderWidth: borderWidth,
+        borderRadius: radius,
+        shelfDepth: AppShadows.shelfDepth,
+        shadows: (visible) => AppShadows.raised(tone.shelf, visible: visible),
+        child: inner,
+      );
+    }
+
+    if (onTap == null && selected == null) return card;
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: onTap != null,
+      selected: selected,
+      child: card,
+    );
+  }
+}
+
+/// A lesson-complete stat card: an icon circle, a big value, a label, and
+/// optionally a ribbon ("+1 TODAY") hanging over the top edge.
+///
+/// It always leaves room above itself for half a ribbon, so a row of stat
+/// cards lines up whether or not one has a ribbon.
+class StatCard extends StatelessWidget {
+  const StatCard({
+    super.key,
+    required this.icon,
+    required this.value,
+    required this.label,
+    this.tone = AppTone.neutral,
+    this.ribbon,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final AppTone tone;
+  final String? ribbon;
+
+  @override
+  Widget build(BuildContext context) {
+    final ribbonHalf = RibbonBadge.heightOf(context) / 2;
+    return MergeSemantics(
+      child: Padding(
+        padding: EdgeInsets.only(top: ribbonHalf),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: AppCard(
+                tone: tone,
+                padding: AppCardPadding.compact,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconBadge(icon: icon, tone: tone, size: 36),
+                    const SizedBox(height: AppSpacing.space2xs),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        value,
+                        maxLines: 1,
+                        style: AppTypography.headlineSm.copyWith(
+                          color: tone == AppTone.neutral
+                              ? AppColors.onSurface
+                              : tone.ink,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.forText(
+                        AppTypography.labelSm.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        label,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (ribbon != null)
+              Positioned(
+                top: -ribbonHalf,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: RibbonBadge(label: ribbon!, tone: tone),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tinted stadium with an icon and a message, e.g. "Daily goal complete!"
+/// or a sync status. [emphasis] strengthens the border for a message that
+/// needs attention (unsynced for 30+ days).
+class InfoBanner extends StatelessWidget {
+  const InfoBanner({
+    super.key,
+    required this.icon,
+    required this.message,
+    this.tone = AppTone.secondary,
+    this.emphasis = false,
+  });
+
+  final IconData icon;
+  final String message;
+  final AppTone tone;
+  final bool emphasis;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = tone == AppTone.neutral ? AppColors.onSurfaceVariant : tone.ink;
+    return Semantics(
+      container: true,
+      label: message,
+      excludeSemantics: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.spaceMd,
+          vertical: AppSpacing.spaceXs,
+        ),
+        decoration: BoxDecoration(
+          color: tone.surface,
+          borderRadius: BorderRadius.circular(AppRadii.full),
+          border: Border.all(
+            color: emphasis ? tone.icon : ink.withValues(alpha: 0.2),
+            width: emphasis ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: emphasis ? tone.icon : ink),
+            const SizedBox(width: AppSpacing.spaceXs),
+            Flexible(
+              child: Text(
+                message,
+                style: AppTypography.forText(
+                  AppTypography.bodySm.copyWith(
+                    color: ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  message,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One settings or downloads row: a leading icon badge, a title, an
+/// optional subtitle, and a trailing control (Material 3 list anatomy).
+///
+/// With [onTap] the whole row is one button, darkens while pressed and, if
+/// no [trailing] is given, shows a chevron.
+class ListRow extends StatefulWidget {
+  const ListRow({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.icon,
+    this.tone = AppTone.neutral,
+    this.trailing,
+    this.onTap,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData? icon;
+  final AppTone tone;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  static const double oneLineHeight = 56;
+  static const double twoLineHeight = 72;
+
+  @override
+  State<ListRow> createState() => _ListRowState();
+}
+
+class _ListRowState extends State<ListRow> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (widget.onTap == null || value == _pressed) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final trailing =
+        widget.trailing ??
+        (widget.onTap == null
+            ? null
+            : const Icon(
+                Icons.chevron_right,
+                size: 24,
+                color: AppColors.onSurfaceVariant,
+              ));
+    final row = ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: widget.subtitle == null
+            ? ListRow.oneLineHeight
+            : ListRow.twoLineHeight,
+      ),
+      child: ColoredBox(
+        color: _pressed
+            ? AppColors.surfaceContainerLow
+            : AppColors.surfaceContainerLowest.withValues(alpha: 0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.spaceMd,
+            vertical: AppSpacing.spaceSm,
+          ),
+          child: Row(
+            children: [
+              if (widget.icon != null) ...[
+                IconBadge(icon: widget.icon!, tone: widget.tone),
+                const SizedBox(width: AppSpacing.spaceMd),
+              ],
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: AppTypography.forText(
+                        AppTypography.labelLg.copyWith(
+                          color: AppColors.onSurface,
+                        ),
+                        widget.title,
+                      ),
+                    ),
+                    if (widget.subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.subtitle!,
+                        style: AppTypography.forText(
+                          AppTypography.bodySm.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                          widget.subtitle!,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: AppSpacing.spaceSm),
+                trailing,
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    if (widget.onTap == null) return MergeSemantics(child: row);
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (_) => _setPressed(true),
+          onTapUp: (_) => _setPressed(false),
+          onTapCancel: () => _setPressed(false),
+          onTap: widget.onTap,
+          child: row,
+        ),
+      ),
+    );
+  }
+}
+
+/// Rows grouped on one card with dividers between them: the settings
+/// pattern. Dividers start where the text does.
+class ListRowGroup extends StatelessWidget {
+  const ListRowGroup({super.key, required this.children});
+
+  final List<Widget> children;
+
+  static const double dividerIndent =
+      AppSpacing.spaceMd + IconBadge.defaultSize + AppSpacing.spaceMd;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: AppCardPadding.none,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0)
+              const Padding(
+                padding: EdgeInsets.only(left: dividerIndent),
+                child: SizedBox(
+                  height: 1,
+                  child: ColoredBox(color: AppColors.cardBorderDefault),
+                ),
+              ),
+            children[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The heading above a group of rows or cards: an optional small gold
+/// eyebrow ("Current milestone"), the title, and an optional trailing
+/// action such as a text link.
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.eyebrow,
+    this.trailing,
+  });
+
+  final String title;
+  final String? eyebrow;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppSpacing.spaceLg,
+        bottom: AppSpacing.spaceXs,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (eyebrow != null)
+                    Text(
+                      eyebrow!,
+                      style: AppTypography.labelSm.copyWith(
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                  Text(
+                    title,
+                    style: AppTypography.forText(
+                      AppTypography.headlineSm.copyWith(
+                        color: AppColors.onSurface,
+                      ),
+                      title,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: AppSpacing.spaceSm),
+            trailing!,
+          ],
+        ],
+      ),
+    );
+  }
+}

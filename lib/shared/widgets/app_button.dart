@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import 'app_status.dart';
 import 'tactile_pressable.dart';
 
 /// The kinds of action a button can stand for. Each has exactly one look,
@@ -201,13 +202,7 @@ class AppButton extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Opacity(opacity: 0, child: content),
-          SizedBox.square(
-            dimension: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: style.foreground,
-            ),
-          ),
+          AppSpinner(size: 22, color: style.foreground),
         ],
       );
     }

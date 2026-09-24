@@ -119,6 +119,23 @@ abstract final class AppColors {
   /// Progress-track lanes and path connectors: DESIGN.md "Layout".
   static const Color track = Color(0xFFE2D9CC);
 
+  // Tones (see `app_tone.dart`). Borders and icon surfaces are the
+  // lesson-complete stat cards' (`#D1E8D9`, `#E5F5EC`, `#F3DFC7`, `#FBD6CF`,
+  // `#FEE9E6`). No mockup draws a tinted shelf, so each shelf is its border
+  // one step darker, as `cardBevelDefault` is to `cardBorderDefault`.
+  static const Color primaryToneBorder = Color(0xFFD1E8D9);
+  static const Color primaryToneShelf = Color(0xFFB9D6C3);
+  static const Color primaryToneSurface = Color(0xFFE5F5EC);
+  static const Color secondaryToneBorder = Color(0xFFF3DFC7);
+  static const Color secondaryToneShelf = Color(0xFFE3C6A3);
+  static const Color tertiaryToneBorder = Color(0xFFFBD6CF);
+  static const Color tertiaryToneShelf = Color(0xFFEDB9AF);
+  static const Color tertiaryToneSurface = Color(0xFFFEE9E6);
+
+  /// The shelf under a dialog card: the level-up mockup's
+  /// `0 8px 0 #e5d8c3`.
+  static const Color dialogShelf = Color(0xFFE5D8C3);
+
   /// Behind sheets and dialogs: DESIGN.md "Floating Overlays", a warm
   /// vignette `rgba(43, 33, 24, 0.45)`.
   static const Color scrim = Color(0x732B2118);

@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../theme/app_tone.dart';
 import '../theme/app_typography.dart';
+import 'app_card.dart';
 
 /// A single-select, tactile-card list item shared by the language-selection
 /// and daily-goal-selection screens (radio-style behavior: at most one
 /// [SelectableOptionCard] in a group is selected at a time).
 ///
 /// Handles three visual states: selected, unselected/selectable, and
-/// disabled ("coming soon" style locked options).
+/// disabled ("coming soon" style locked options). Built on [AppCard]
+/// (018-mobile-design-system, story 006), so it presses like every other
+/// card and a chosen option takes the primary tone's border and face.
 class SelectableOptionCard extends StatelessWidget {
   const SelectableOptionCard({
     super.key,
@@ -34,99 +38,81 @@ class SelectableOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color borderColor = !enabled
-        ? AppColors.outlineVariant
-        : selected
-        ? AppColors.primaryContainer
-        : AppColors.cardBorderDefault;
-    final Color background = !enabled
-        ? AppColors.surfaceContainerLowest.withValues(alpha: 0.6)
-        : selected
-        ? AppColors.optionChosen
-        : AppColors.surfaceContainerLowest;
-
+    // Disabled options stay readable but visibly out of reach: dimmed, with
+    // the lock in place of the radio indicator.
     return Opacity(
-      opacity: enabled ? 1 : 0.8,
-      child: Semantics(
-        button: true,
-        selected: selected,
-        enabled: enabled,
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.spaceMd),
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: borderColor, width: 2),
-            ),
-            child: Column(
+      opacity: enabled ? 1 : 0.7,
+      child: AppCard(
+        tone: enabled && selected ? AppTone.primary : AppTone.neutral,
+        selected: enabled && selected,
+        onTap: enabled ? onTap : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          leading,
-                          const SizedBox(width: AppSpacing.spaceMd),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (badgeLabel != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: AppSpacing.space2xs,
-                                    ),
-                                    child: Text(
-                                      badgeLabel!,
-                                      style: AppTypography.labelSm.copyWith(
-                                        color: enabled
-                                            ? AppColors.primaryContainer
-                                            : AppColors.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ),
-                                Text(
-                                  title,
-                                  style: AppTypography.headlineSm.copyWith(
-                                    color: enabled
-                                        ? (selected
-                                              ? AppColors.primaryContainer
-                                              : AppColors.onSurface)
-                                        : AppColors.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: AppSpacing.space2xs),
-                                Text(
-                                  subtitle,
-                                  style: AppTypography.bodySm.copyWith(
-                                    color: AppColors.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+                leading,
+                const SizedBox(width: AppSpacing.spaceMd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (badgeLabel != null)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: AppSpacing.space2xs,
+                          ),
+                          child: Text(
+                            badgeLabel!,
+                            style: AppTypography.labelSm.copyWith(
+                              color: enabled
+                                  ? AppColors.primaryContainer
+                                  : AppColors.onSurfaceVariant,
                             ),
                           ),
-                        ],
+                        ),
+                      Text(
+                        title,
+                        style: AppTypography.forText(
+                          AppTypography.headlineSm.copyWith(
+                            color: enabled
+                                ? (selected
+                                      ? AppColors.primaryContainer
+                                      : AppColors.onSurface)
+                                : AppColors.onSurfaceVariant,
+                          ),
+                          title,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.spaceSm),
-                    _buildIndicator(),
-                  ],
+                      const SizedBox(height: AppSpacing.space2xs),
+                      Text(
+                        subtitle,
+                        style: AppTypography.forText(
+                          AppTypography.bodySm.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                          subtitle,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                if (trailingAction != null) ...[
-                  const SizedBox(height: AppSpacing.spaceSm),
-                  Divider(height: 1, color: AppColors.surfaceContainer),
-                  const SizedBox(height: AppSpacing.spaceXs),
-                  trailingAction!,
-                ],
+                const SizedBox(width: AppSpacing.spaceSm),
+                _buildIndicator(),
               ],
             ),
-          ),
+            if (trailingAction != null) ...[
+              const SizedBox(height: AppSpacing.spaceSm),
+              const SizedBox(
+                height: 1,
+                width: double.infinity,
+                child: ColoredBox(color: AppColors.surfaceContainer),
+              ),
+              const SizedBox(height: AppSpacing.spaceXs),
+              trailingAction!,
+            ],
+          ],
         ),
       ),
     );

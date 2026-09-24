@@ -2,11 +2,11 @@
 id: 007-sheets-and-dialogs
 unit: 001-design-foundation-ui
 intent: 018-mobile-design-system
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T12:55:00Z'
 assigned_bolt: 043-design-surfaces
-implemented: false
+implemented: true
 ---
 
 # Story: 007-sheets-and-dialogs
@@ -19,11 +19,11 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** `showAppSheet`, **When** opened, **Then** it has a 32 px top radius, cream background, drag handle, the warm backdrop (`rgba(43,33,24,.45)`) and `AppShadows.overlay`
-- [ ] **Given** `showAppDialog`, **When** opened, **Then** it uses the same surface, radius, backdrop and `SheetHero` layout, with a destructive primary where the action deletes something
-- [ ] **Given** `SheetHero`, **When** filled, **Then** it shows an illustration circle with a soft glow and optional badge (e.g. "0/5"), a toned title, an optional second-language line, body text, and an action stack of primary, secondary and text link, in the mockup's spacing
-- [ ] **Given** a sheet taller than the screen at 1.3× text, **When** shown, **Then** it scrolls and its actions stay reachable
-- [ ] **Given** both functions, **When** closed, **Then** they return the chosen value exactly as the `showModalBottomSheet` / `showDialog` calls they replace do
+- [x] **Given** `showAppSheet`, **When** opened, **Then** it has a 32 px top radius, cream background, drag handle, the warm backdrop (`rgba(43,33,24,.45)`) and `AppShadows.overlay`
+- [x] **Given** `showAppDialog`, **When** opened, **Then** it uses the same surface, radius, backdrop and `SheetHero` layout, with a destructive primary where the action deletes something
+- [x] **Given** `SheetHero`, **When** filled, **Then** it shows an illustration circle with a soft glow and optional badge (e.g. "0/5"), a toned title, an optional second-language line, body text, and an action stack of primary, secondary and text link, in the mockup's spacing
+- [x] **Given** a sheet taller than the screen at 1.3× text, **When** shown, **Then** it scrolls and its actions stay reachable
+- [x] **Given** both functions, **When** closed, **Then** they return the chosen value exactly as the `showModalBottomSheet` / `showDialog` calls they replace do
 
 ## Reference Design (FR-11)
 

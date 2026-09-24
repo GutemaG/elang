@@ -8,7 +8,11 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_icon_button.dart';
+import '../widgets/app_page.dart';
 import '../widgets/tactile_button.dart';
+import 'gallery_sheets.dart';
+import 'gallery_status.dart';
+import 'gallery_surfaces.dart';
 
 /// The debug-only component gallery (018-mobile-design-system, FR-10): every
 /// token and every shared component in every state on one page, organised
@@ -36,29 +40,24 @@ class ComponentGallery extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Buna components')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-            vertical: AppSpacing.spaceLg,
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ColoursSection(),
-              _ShadowsSection(),
-              _RadiiSection(),
-              _MotionSection(),
-              _TypeSection(),
-              _ButtonsSection(),
-              _IconButtonsSection(),
-              _LegacyButtonSection(),
-            ],
-          ),
-        ),
+    return const AppPage(
+      topBar: AppTopBar(title: 'Buna components'),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ColoursSection(),
+          _ShadowsSection(),
+          _RadiiSection(),
+          _MotionSection(),
+          _TypeSection(),
+          _ButtonsSection(),
+          _IconButtonsSection(),
+          _LegacyButtonSection(),
+          PageShellGallerySection(),
+          CardsGallerySection(),
+          SheetsGallerySection(),
+          StatusGallerySection(),
+        ],
       ),
     );
   }
@@ -195,10 +194,21 @@ class _ColoursSection extends StatelessWidget {
       ('gem', AppColors.gem),
       ('xp', AppColors.xp),
     ],
+    'Tones (AppTone)': [
+      ('primaryToneBorder', AppColors.primaryToneBorder),
+      ('primaryToneShelf', AppColors.primaryToneShelf),
+      ('primaryToneSurface', AppColors.primaryToneSurface),
+      ('secondaryToneBorder', AppColors.secondaryToneBorder),
+      ('secondaryToneShelf', AppColors.secondaryToneShelf),
+      ('tertiaryToneBorder', AppColors.tertiaryToneBorder),
+      ('tertiaryToneShelf', AppColors.tertiaryToneShelf),
+      ('tertiaryToneSurface', AppColors.tertiaryToneSurface),
+    ],
     'Feedback and overlay': [
       ('error', AppColors.error),
       ('errorContainer', AppColors.errorContainer),
       ('scrim', AppColors.scrim),
+      ('dialogShelf', AppColors.dialogShelf),
     ],
   };
 
@@ -279,6 +289,13 @@ class _ShadowsSection extends StatelessWidget {
       ('card', AppShadows.card, AppColors.cardBorderDefault),
       ('tile', AppShadows.tile, AppColors.tileBorder),
       ('button(primaryBevel)', AppShadows.button(AppColors.primaryBevel), null),
+      (
+        'raised(primaryToneShelf)',
+        AppShadows.raised(AppColors.primaryToneShelf),
+        AppColors.primaryToneBorder,
+      ),
+      ('badge', AppShadows.badge, AppColors.outlineVariant),
+      ('dialog', AppShadows.dialog, AppColors.surfaceContainerHighest),
       ('overlay', AppShadows.overlay, null),
       ('glow(secondaryBrand)', AppShadows.glow(AppColors.secondaryBrand), null),
       ('none (pressed)', AppShadows.none, AppColors.cardBorderDefault),

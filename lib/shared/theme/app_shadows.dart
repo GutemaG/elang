@@ -33,6 +33,31 @@ abstract final class AppShadows {
   /// DESIGN.md "Tactile Level 1": cards and standard modules.
   static final List<BoxShadow> card = [shelf(AppColors.cardBevelDefault), soft];
 
+  /// A card on a [shelfColor] shelf (a tone's), with [visible] of the shelf
+  /// showing, as for [button]. The soft shadow stays put.
+  static List<BoxShadow> raised(Color shelfColor, {double visible = 1}) {
+    final shown = visible < 0 ? 0.0 : visible;
+    return [if (shown > 0) shelf(shelfColor, depth: shelfDepth * shown), soft];
+  }
+
+  /// A small read-only badge ("3/5 Completed"): the dashboard's
+  /// `0 2px 0 #EDE5D8`.
+  static final List<BoxShadow> badge = [
+    shelf(AppColors.cardBorderDefault, depth: 2),
+  ];
+
+  /// A dialog card: the level-up mockup's `0 8px 0 #e5d8c3,
+  /// 0 24px 48px -12px rgba(43,33,24,.28)`.
+  static final List<BoxShadow> dialog = [
+    shelf(AppColors.dialogShelf, depth: 8),
+    BoxShadow(
+      color: AppColors.scrim.withValues(alpha: 0.28),
+      offset: const Offset(0, 24),
+      blurRadius: 48,
+      spreadRadius: -12,
+    ),
+  ];
+
   /// DESIGN.md component 4: a choice tile at rest.
   static final List<BoxShadow> tile = [
     shelf(AppColors.tileShelf, depth: tileShelfDepth),
@@ -78,6 +103,13 @@ abstract final class AppShadows {
   /// DESIGN.md "Streak & Chest Glows": an ambient halo in [color].
   static List<BoxShadow> glow(Color color) => [
     BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 20),
+  ];
+
+  /// The pastel halo behind a sheet's illustration circle (the out-of-beans
+  /// mockup's blurred `tertiary-fixed` vignette): [color] spread past the
+  /// circle and softened.
+  static List<BoxShadow> halo(Color color) => [
+    BoxShadow(color: color, blurRadius: 24, spreadRadius: 4),
   ];
 
   /// Pressed: the shelf has collapsed.

@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 89
 - **Generated**: 89
-- **Completed**: 70
+- **Completed**: 74
 - **Last updated**: 2026-09-24
 
 ---
@@ -192,10 +192,10 @@
 - [x] **002-bundled-fonts-with-ethiopic-fallback** (design-foundation-ui): The same typeface on my Android phone and my friend's iPhone, in English and Amharic - Must - ✅ COMPLETED (bolt 042-design-foundation)
 - [x] **003-buttons** (design-foundation-ui): Every button in the app to look and press the same way for the same kind of action - Must - ✅ COMPLETED (bolt 042-design-foundation)
 - [x] **004-gallery-and-rules-test** (design-foundation-ui): One screen that shows every token and component in every state, and a test that fails when a screen draws its own decoration - Must - ✅ COMPLETED (bolt 042-design-foundation)
-- [x] **005-page-shell-and-backgrounds** (design-foundation-ui): Every screen to sit on the same warm background with the same margins, top bar and bottom action area - Must - ✅ GENERATED (bolt 043-design-surfaces)
-- [x] **006-cards-and-surfaces** (design-foundation-ui): Every card, row and banner to have the same border, corner and shadow - Must - ✅ GENERATED (bolt 043-design-surfaces)
-- [x] **007-sheets-and-dialogs** (design-foundation-ui): Every pop-up sheet and confirmation to look like part of the same family - Must - ✅ GENERATED (bolt 043-design-surfaces)
-- [x] **008-status-and-feedback-pieces** (design-foundation-ui): My streak, beans, gems, progress and any empty or error message to look the same wherever they appear - Must - ✅ GENERATED (bolt 043-design-surfaces)
+- [x] **005-page-shell-and-backgrounds** (design-foundation-ui): Every screen to sit on the same warm background with the same margins, top bar and bottom action area - Must - ✅ COMPLETED (bolt 043-design-surfaces)
+- [x] **006-cards-and-surfaces** (design-foundation-ui): Every card, row and banner to have the same border, corner and shadow - Must - ✅ COMPLETED (bolt 043-design-surfaces)
+- [x] **007-sheets-and-dialogs** (design-foundation-ui): Every pop-up sheet and confirmation to look like part of the same family - Must - ✅ COMPLETED (bolt 043-design-surfaces)
+- [x] **008-status-and-feedback-pieces** (design-foundation-ui): My streak, beans, gems, progress and any empty or error message to look the same wherever they appear - Must - ✅ COMPLETED (bolt 043-design-surfaces)
 
 #### Unit: 002-question-kit-ui
 
@@ -217,7 +217,7 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 19
+- **Generated**: 15
 - **In Progress**: 0
-- **Completed**: 70
+- **Completed**: 74
 - **Retired**: 1
