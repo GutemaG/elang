@@ -156,13 +156,17 @@ describe('choices', () => {
     )
   })
 
-  it('listening edits its audio address and plays it from the backend', async () => {
+  it('listening plays its clip from the backend, and a checked link replaces it', async () => {
+    server.on('POST', `${A}/audio/links`, (call: Call) => ({
+      body: { url: (call.body as { url: string }).url.trim(), content_type: 'audio/mp4' },
+    }))
     await open('ex-listening')
 
     expect(screen.getByLabelText('Play the clip')).toHaveAttribute('src', `${API_BASE_URL}/media/audio/am/hello.m4a`)
 
-    await userEvent.clear(screen.getByLabelText('Audio address'))
-    await userEvent.type(screen.getByLabelText('Audio address'), 'https://cdn.example/hello.m4a')
+    await userEvent.click(screen.getByRole('tab', { name: 'Link' }))
+    await userEvent.type(screen.getByLabelText('Audio link'), 'https://cdn.example/hello.m4a')
+    await userEvent.click(screen.getByRole('button', { name: 'Check link' }))
     await save()
 
     await waitFor(() =>
@@ -365,7 +369,7 @@ describe('a new exercise', () => {
   })
 
   it.each([
-    ['listening', 'Audio address'],
+    ['listening', 'Audio link'],
     ['gap_fill', 'Text before the gap'],
     ['sentence_construction', 'Word 1'],
     ['spell_tiles', 'Letter 2'],

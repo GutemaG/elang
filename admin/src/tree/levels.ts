@@ -36,6 +36,9 @@ export const routes = {
   exercises: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises`,
   exercise: (id: string) => `${ADMIN}/exercises/${id}`,
   exerciseOrder: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises/order`,
+  // Audio (bolt 039): an upload link for a clip, and a check of a pasted link.
+  audioUploads: `${ADMIN}/audio/uploads`,
+  audioLinks: `${ADMIN}/audio/links`,
 }
 
 /** `ids` with the item at `index` swapped with its neighbour, or null when

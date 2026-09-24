@@ -155,3 +155,22 @@ export type AdminExercise = ExerciseBody & {
 export interface AdminExerciseList {
   exercises: AdminExercise[]
 }
+
+/** A short-lived link for uploading one clip (bolt 036): PUT the file to
+ * `upload_url` with exactly `headers`, then save `public_url` as the
+ * exercise's `audio_url`. `public_url` is a relative `/media/...` path when
+ * the local backend is the store (bolt 041). */
+export interface AudioUploadResponse {
+  upload_url: string
+  method: 'PUT'
+  headers: Record<string, string>
+  key: string
+  public_url: string
+  expires_in: number
+}
+
+/** A pasted link the server has checked answers with audio. */
+export interface AudioLinkResponse {
+  url: string
+  content_type: string
+}

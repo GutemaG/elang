@@ -234,7 +234,7 @@ function ExerciseEditorPage() {
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <SlotErrors.Provider value={errors}>
-          <ExerciseForm body={draft} onChange={change} />
+          <ExerciseForm body={draft} saved={saved} lessonId={lessonId} onChange={change} />
         </SlotErrors.Provider>
         <div className="lg:sticky lg:top-6">
           <ExercisePreview body={draft} />

@@ -1,3 +1,4 @@
+import { AudioField } from '../audio/AudioField'
 import type { ExerciseBody } from '../types'
 import { cx } from '../ui/cx'
 import { FIELD_CLASS, Input } from '../ui/Input'
@@ -5,12 +6,23 @@ import { ChoicesEditor } from './ChoicesEditor'
 import { FieldError, Section } from './fields'
 import { PairsEditor } from './PairsEditor'
 import { SequenceEditor } from './SequenceEditor'
-import { playableUrl, setAudioUrl, setPrompt, setSentence } from './model'
+import { setAudioUrl, setPrompt, setSentence } from './model'
 
 /** The whole form for one exercise: the prompt, then whatever its type
  * needs. One branch per type, so each type's shape is checked by
  * TypeScript against the backend's. */
-export function ExerciseForm({ body, onChange }: { body: ExerciseBody; onChange: (next: ExerciseBody) => void }) {
+export function ExerciseForm({
+  body,
+  saved,
+  lessonId,
+  onChange,
+}: {
+  body: ExerciseBody
+  /** The stored copy, or null for an exercise not created yet. */
+  saved: ExerciseBody | null
+  lessonId: string
+  onChange: (next: ExerciseBody) => void
+}) {
   return (
     <div className="space-y-4">
       <Section title="Prompt" hint="The instruction or question the learner reads first.">
@@ -26,27 +38,12 @@ export function ExerciseForm({ body, onChange }: { body: ExerciseBody; onChange:
       </Section>
 
       {body.type === 'listening' && (
-        <Section
-          title="Audio"
-          hint="A full https:// address, or a /media/… path from a local upload. Recording and uploading here come next."
-        >
-          <Input
-            aria-label="Audio address"
-            placeholder="https://… or /media/audio/…"
-            value={body.content.audio_url}
-            onChange={(e) => onChange(setAudioUrl(body, e.target.value))}
-          />
-          <FieldError slot="audio_url" />
-          {body.content.audio_url.trim() && (
-            <audio
-              controls
-              preload="none"
-              src={playableUrl(body.content.audio_url.trim())}
-              aria-label="Play the clip"
-              className="mt-3 w-full"
-            />
-          )}
-        </Section>
+        <AudioField
+          lessonId={lessonId}
+          url={body.content.audio_url}
+          savedUrl={saved?.type === 'listening' ? saved.content.audio_url : null}
+          onChange={(url) => onChange(setAudioUrl(body, url))}
+        />
       )}
 
       {body.type === 'gap_fill' && (

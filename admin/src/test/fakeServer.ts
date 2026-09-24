@@ -5,6 +5,9 @@ export interface Call {
   path: string
   query: string
   body: unknown
+  /** The body as sent: a Blob or File for an audio upload. */
+  raw: unknown
+  headers: Record<string, string>
   token: string | null
 }
 
@@ -13,6 +16,7 @@ export interface Reply {
   body?: unknown
 }
 
+/** A handler that throws makes the request fail as a network error would. */
 type Handler = (call: Call) => Reply
 
 /** A stand-in for the backend: routes are registered per test, and every
@@ -41,6 +45,8 @@ export class FakeServer {
         path: url.pathname,
         query: url.search,
         body: typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : null,
+        raw: init?.body ?? null,
+        headers,
         token: headers.Authorization?.replace('Bearer ', '') ?? null,
       }
       this.calls.push(call)
