@@ -25,7 +25,14 @@ export function GoogleButton({ onCredential }: Props) {
       const gis = window.google?.accounts.id
       if (gis && container.current) {
         window.clearInterval(timer)
-        gis.initialize({ client_id: GOOGLE_CLIENT_ID, callback: (r) => callback.current(r.credential) })
+        gis.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (r) => callback.current(r.credential),
+          // The browser's own sign-in dialog (FedCM) where it has one, as in
+          // Chrome and Edge, instead of a pop-up window that pop-up blockers
+          // stop. Browsers without it still get the pop-up.
+          use_fedcm_for_button: true,
+        })
         gis.renderButton(container.current, { theme: 'outline', size: 'large', text: 'signin_with' })
       } else if (++tries > 100) {
         window.clearInterval(timer)

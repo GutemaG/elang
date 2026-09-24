@@ -18,7 +18,11 @@ interface Window {
   google?: {
     accounts: {
       id: {
-        initialize(config: { client_id: string; callback: (response: GoogleCredentialResponse) => void }): void
+        initialize(config: {
+          client_id: string
+          callback: (response: GoogleCredentialResponse) => void
+          use_fedcm_for_button?: boolean
+        }): void
         renderButton(parent: HTMLElement, options: Record<string, unknown>): void
         disableAutoSelect(): void
       }
