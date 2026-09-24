@@ -1,9 +1,10 @@
 /// <reference types="vitest/config" />
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   // 5173 is the origin registered with the Google web client and the R2
   // CORS rule, so fail rather than silently move to another port.
   server: { port: 5173, strictPort: true },

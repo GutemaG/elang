@@ -55,7 +55,7 @@ describe('the tree', () => {
   it('shows the course, its sections and their counts', async () => {
     await openCourse()
 
-    expect(screen.getByText(/am for en speakers/)).toHaveTextContent('active')
+    expect(screen.getByText(/Amharic for English speakers/)).toHaveTextContent('active')
     expect(screen.getByText('Basics')).toBeInTheDocument()
     expect(screen.getByText('First words', { exact: false })).toBeInTheDocument()
     expect(actions('section Basics').getByRole('button', { name: 'Rename' })).toBeInTheDocument()

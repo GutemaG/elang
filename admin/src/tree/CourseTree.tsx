@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { ApiError } from '../api'
 import { messageOf, useSession } from '../auth/SessionContext'
+import { courseStatus, languageName, plural } from '../format'
+import { StatCard, StatRow } from '../shell/Page'
 import type { AdminCourseTree, DeleteDetails } from '../types'
+import { Badge } from '../ui/Badge'
+import { Button } from '../ui/Button'
+import { Icon } from '../ui/Icon'
 import { DeleteDialog, type DeletePrompt } from './DeleteDialog'
 import { ExerciseList } from './ExerciseList'
 import { InlineForm } from './InlineForm'
@@ -16,8 +21,23 @@ const byOrder = <T extends { order_index: number }>(items: T[]): T[] =>
 
 const asError = (e: unknown): Error => (e instanceof Error ? e : new Error(messageOf(e)))
 
-function plural(n: number, word: string): string {
-  return `${n} ${word}${n === 1 ? '' : 's'}`
+/** Totals across the whole course, for the stat tiles. */
+function totalsOf(tree: AdminCourseTree) {
+  let skills = 0
+  let lessons = 0
+  let exercises = 0
+  let placeholders = 0
+  for (const section of tree.sections) {
+    skills += section.skill_count
+    for (const skill of section.skills) {
+      lessons += skill.lesson_count
+      for (const lesson of skill.lessons) {
+        exercises += lesson.exercise_count
+        placeholders += lesson.exercises.filter((ex) => ex.audio === 'placeholder').length
+      }
+    }
+  }
+  return { sections: tree.sections.length, skills, lessons, exercises, placeholders }
 }
 
 /** One course: sections → skills → lessons → exercises. Nothing is kept
@@ -121,90 +141,165 @@ export function CourseTree() {
     if (loadError) {
       const notFound = loadError instanceof ApiError && loadError.status === 404
       return (
-        <main className="page">
-          <p className="error" role="alert">
-            {notFound ? 'This course does not exist.' : loadError.message}
-          </p>
-          {!notFound && (
-            <button type="button" onClick={() => void load()}>
-              Try again
-            </button>
-          )}
-          <p>
-            <Link to="/">← All courses</Link>
-          </p>
-        </main>
+        <Page>
+          <div className="rounded-lg border border-line bg-surface p-8 text-center shadow-e1">
+            <span className="mx-auto grid size-12 place-items-center rounded-full bg-terracotta-tint text-terracotta">
+              <Icon name={notFound ? 'search_off' : 'cloud_off'} className="text-2xl" />
+            </span>
+            <p role="alert" className="mt-4 text-base font-semibold text-coffee">
+              {notFound ? 'This course does not exist.' : loadError.message}
+            </p>
+            <div className="mt-5 flex justify-center gap-2">
+              {!notFound && (
+                <Button variant="primary" onClick={() => void load()}>
+                  Try again
+                </Button>
+              )}
+              <Link
+                to="/"
+                className="inline-flex h-11 items-center gap-2 rounded border border-line bg-surface px-4 text-sm font-semibold text-coffee hover:bg-inset sm:h-10"
+              >
+                All courses
+              </Link>
+            </div>
+          </div>
+        </Page>
       )
     }
     return (
-      <main className="page">
-        <p className="muted">Loading…</p>
-      </main>
+      <Page>
+        <div className="animate-pulse space-y-4" aria-busy="true">
+          <p className="sr-only">Loading…</p>
+          <div className="h-44 rounded-lg bg-inset" />
+          <div className="h-20 rounded-lg bg-inset" />
+          <div className="h-20 rounded-lg bg-inset" />
+        </div>
+      </Page>
     )
   }
 
   const sections = byOrder(tree.sections)
   const sectionIds = sections.map((s) => s.id)
+  const totals = totalsOf(tree)
+  const status = courseStatus(tree.course.status)
 
   return (
     <TreeActionsContext.Provider value={actions}>
-      <main className="page">
-        <p>
-          <Link to="/">← All courses</Link>
-        </p>
-        <header className="tree-header">
-          {editing === 'course' ? (
-            <InlineForm
-              label="Rename course"
-              initial={{ title: tree.course.title }}
-              submitLabel="Save"
-              disabled={busy}
-              onSubmit={(v) => run(() => api.patch(routes.course(tree.course.id), { title: v.title }))}
-              onCancel={() => setEditing(null)}
+      <Page>
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-stone">
+          <Link to="/" className="font-medium hover:text-forest">
+            Courses
+          </Link>
+          <Icon name="chevron_right" className="text-base" />
+          <span className="min-w-0 truncate font-medium text-coffee">{tree.course.title}</span>
+        </nav>
+
+        <section className="mt-4 rounded-lg border border-line bg-surface p-5 shadow-e1 sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            {/* A 20rem basis sends the buttons to their own line on a phone
+                rather than squeezing the title to a word per line. */}
+            <div className="min-w-0 flex-[1_1_20rem]">
+              {editing === 'course' ? (
+                <InlineForm
+                  label="Rename course"
+                  initial={{ title: tree.course.title }}
+                  submitLabel="Save"
+                  disabled={busy}
+                  onSubmit={(v) => run(() => api.patch(routes.course(tree.course.id), { title: v.title }))}
+                  onCancel={() => setEditing(null)}
+                />
+              ) : (
+                <h1 className="text-[1.75rem] leading-9 font-bold tracking-[-0.02em] break-words text-coffee lg:text-4xl lg:leading-11">
+                  {tree.course.title}
+                </h1>
+              )}
+              <p className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-stone">
+                <Badge tone={status.tone} dot>
+                  {status.label}
+                </Badge>
+                {languageName(tree.course.learning_language)} for {languageName(tree.course.from_language)} speakers
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {editing !== 'course' && (
+                <Button disabled={busy} onClick={() => setEditing('course')}>
+                  <Icon name="edit" className="text-lg" />
+                  Rename course
+                </Button>
+              )}
+              <Button variant="primary" disabled={busy} onClick={() => setEditing('section')}>
+                <Icon name="add" className="text-lg" />
+                Add section
+              </Button>
+            </div>
+          </div>
+
+          <StatRow className="border-t border-line pt-5 lg:grid-cols-5">
+            <StatCard icon="view_agenda" label="Sections" value={totals.sections} />
+            <StatCard icon="account_tree" label="Skills" value={totals.skills} />
+            <StatCard icon="menu_book" label="Lessons" value={totals.lessons} />
+            <StatCard icon="quiz" label="Exercises" value={totals.exercises} tone="forest" />
+            <StatCard
+              icon="music_off"
+              label="Placeholder audio"
+              value={totals.placeholders}
+              tone={totals.placeholders > 0 ? 'terracotta' : 'coffee'}
             />
-          ) : (
-            <>
-              <h1>{tree.course.title}</h1>
-              <button type="button" disabled={busy} onClick={() => setEditing('course')}>
-                Rename course
-              </button>
-            </>
-          )}
-          <button type="button" className="primary" disabled={busy} onClick={() => setEditing('section')}>
-            Add section
-          </button>
-        </header>
-        <p className="muted">
-          {tree.course.learning_language} for {tree.course.from_language} speakers · {tree.course.status} ·{' '}
-          {plural(sections.length, 'section')}
-        </p>
+          </StatRow>
+        </section>
 
         {writeError && (
-          <div className="banner error" role="alert">
-            <span>{writeError}</span>
-            <button type="button" aria-label="Dismiss" onClick={() => setWriteError(null)}>
-              ×
-            </button>
+          <div
+            role="alert"
+            className="mt-5 flex items-start gap-3 rounded-md border border-danger-line bg-danger-tint px-4 py-3 text-sm text-danger"
+          >
+            <Icon name="error" className="mt-px text-lg" />
+            <span className="flex-1">{writeError}</span>
+            <Button size="icon" variant="danger-ghost" aria-label="Dismiss" onClick={() => setWriteError(null)}>
+              <Icon name="close" className="text-lg" />
+            </Button>
           </div>
         )}
-        {loadError && <p className="error">Could not refresh: {loadError.message}</p>}
-
-        {editing === 'section' && (
-          <InlineForm
-            label="Add section"
-            withSubtitle
-            submitLabel="Add section"
-            disabled={busy}
-            onSubmit={(v) => run(() => api.post(routes.create('section', tree.course.id), v))}
-            onCancel={() => setEditing(null)}
-          />
+        {loadError && (
+          <p className="mt-5 flex items-center gap-2 text-sm text-danger">
+            <Icon name="sync_problem" className="text-lg" />
+            Could not refresh: {loadError.message}
+          </p>
         )}
 
-        {sections.length === 0 && <p className="muted empty">No sections yet.</p>}
-        <ul className="tree">
-          {sections.map((section) => {
+        <div className="mt-8 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-xl leading-7 font-semibold tracking-[-0.015em] text-coffee">Curriculum</h2>
+            <p className="text-xs text-stone">
+              {plural(totals.sections, 'section')} in learning order. Open one to reach its skills, lessons and
+              exercises.
+            </p>
+          </div>
+        </div>
+
+        {editing === 'section' && (
+          <div className="mt-4 rounded-lg border border-dashed border-forest/40 bg-forest-tint/40 p-4">
+            <p className="mb-3 text-xs font-bold tracking-[0.06em] text-forest uppercase">New section</p>
+            <InlineForm
+              label="Add section"
+              withSubtitle
+              submitLabel="Add section"
+              disabled={busy}
+              onSubmit={(v) => run(() => api.post(routes.create('section', tree.course.id), v))}
+              onCancel={() => setEditing(null)}
+            />
+          </div>
+        )}
+
+        {sections.length === 0 && (
+          <p className="mt-4 rounded-lg border border-dashed border-line-strong px-6 py-10 text-center text-sm text-stone">
+            No sections yet.
+          </p>
+        )}
+        <ul className="mt-4 space-y-4">
+          {sections.map((section, s) => {
             const skills = byOrder(section.skills)
-            const skillIds = skills.map((s) => s.id)
+            const skillIds = skills.map((sk) => sk.id)
             return (
               <NodeRow
                 key={section.id}
@@ -212,13 +307,14 @@ export function CourseTree() {
                 id={section.id}
                 title={section.title}
                 subtitle={section.subtitle}
+                number={String(s + 1).padStart(2, '0')}
                 countLabel={plural(section.skill_count, 'skill')}
                 siblingIds={sectionIds}
                 parentId={tree.course.id}
               >
-                {skills.length === 0 && <p className="muted empty">No skills yet.</p>}
-                <ul>
-                  {skills.map((skill) => {
+                {skills.length === 0 && <Empty>No skills yet.</Empty>}
+                <ul className="space-y-3">
+                  {skills.map((skill, k) => {
                     const lessons = byOrder(skill.lessons)
                     const lessonIds = lessons.map((l) => l.id)
                     return (
@@ -227,18 +323,20 @@ export function CourseTree() {
                         level="skill"
                         id={skill.id}
                         title={skill.title}
+                        number={`${s + 1}.${k + 1}`}
                         countLabel={plural(skill.lesson_count, 'lesson')}
                         siblingIds={skillIds}
                         parentId={section.id}
                       >
-                        {lessons.length === 0 && <p className="muted empty">No lessons yet.</p>}
-                        <ul>
-                          {lessons.map((lesson) => (
+                        {lessons.length === 0 && <Empty>No lessons yet.</Empty>}
+                        <ul className="space-y-2">
+                          {lessons.map((lesson, l) => (
                             <NodeRow
                               key={lesson.id}
                               level="lesson"
                               id={lesson.id}
                               title={lesson.title}
+                              number={`${s + 1}.${k + 1}.${l + 1}`}
                               countLabel={plural(lesson.exercise_count, 'exercise')}
                               siblingIds={lessonIds}
                               parentId={skill.id}
@@ -264,7 +362,17 @@ export function CourseTree() {
             onClose={() => setDeletePrompt(null)}
           />
         )}
-      </main>
+      </Page>
     </TreeActionsContext.Provider>
+  )
+}
+
+function Page({ children }: { children: ReactNode }) {
+  return <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+}
+
+function Empty({ children }: { children: ReactNode }) {
+  return (
+    <p className="rounded border border-dashed border-line-strong px-3 py-3 text-sm text-stone">{children}</p>
   )
 }
