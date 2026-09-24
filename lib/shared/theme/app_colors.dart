@@ -79,4 +79,51 @@ abstract final class AppColors {
   // Neutral border used by "default" tactile cards in the exported markup.
   static const Color cardBorderDefault = Color(0xFFEDE5D8);
   static const Color cardBevelDefault = Color(0xFFE2D7C5);
+
+  // Answer states: DESIGN.md "Choice & Match Tiles" (component 4).
+  /// Selected, not yet graded: soft gold tint.
+  static const Color answerSelected = Color(0xFFFFF7ED);
+
+  /// Graded correct: soft mint.
+  static const Color answerCorrect = Color(0xFFE8F8F0);
+
+  /// Graded incorrect: soft blush.
+  static const Color answerIncorrect = Color(0xFFFDF0EE);
+
+  /// A chosen option card (language, daily goal): the daily-goal mockup's
+  /// `bg-[#F0F7F2]`.
+  static const Color optionChosen = Color(0xFFF0F7F2);
+
+  // Choice tiles at rest: DESIGN.md component 4, "2px #E5DDD0 border,
+  // 3px #D5CCBD bottom rim". The rim is also the neutral shelf of the
+  // white secondary button.
+  static const Color tileBorder = Color(0xFFE5DDD0);
+  static const Color tileShelf = Color(0xFFD5CCBD);
+
+  // Learning-map nodes: DESIGN.md component 2.
+  static const Color lockedNode = Color(0xFFE8DFD3);
+  static const Color lockedNodeIcon = Color(0xFFBAAFA1);
+
+  /// The active node's shelf, and the selected tile's rim in DESIGN.md.
+  static const Color activeNodeShelf = Color(0xFFC47318);
+
+  // Gamification accents: DESIGN.md "Gamification Electric Accents".
+  static const Color streak = Color(0xFFFF5A1F);
+  static const Color streakRim = Color(0xFFFFA726);
+  static const Color gem = Color(0xFF10B981);
+  static const Color xp = Color(0xFF0EA5E9);
+
+  /// Subheads, timestamps and pronunciation lines: DESIGN.md "Text Muted".
+  static const Color textMuted = Color(0xFF786A5E);
+
+  /// Progress-track lanes and path connectors: DESIGN.md "Layout".
+  static const Color track = Color(0xFFE2D9CC);
+
+  /// Behind sheets and dialogs: DESIGN.md "Floating Overlays", a warm
+  /// vignette `rgba(43, 33, 24, 0.45)`.
+  static const Color scrim = Color(0x732B2118);
+
+  /// The ink every soft shadow is mixed from (the mockups'
+  /// `rgba(35,26,17,…)`); only [AppShadows] reads it.
+  static const Color shadowInk = Color(0xFF231A11);
 }

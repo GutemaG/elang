@@ -42,7 +42,7 @@ class SelectableOptionCard extends StatelessWidget {
     final Color background = !enabled
         ? AppColors.surfaceContainerLowest.withValues(alpha: 0.6)
         : selected
-        ? const Color(0xFFF0F7F2)
+        ? AppColors.optionChosen
         : AppColors.surfaceContainerLowest;
 
     return Opacity(

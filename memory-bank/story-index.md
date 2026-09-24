@@ -1,10 +1,10 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 72
-- **Generated**: 72
-- **Completed**: 66
-- **Last updated**: 2026-09-20
+- **Total stories**: 89
+- **Generated**: 89
+- **Completed**: 70
+- **Last updated**: 2026-09-24
 
 ---
 
@@ -184,12 +184,40 @@
 - [x] **001-spell-tiles-exercise-screen** (spell-tiles-ui): Spell a word by tapping character tiles - Must - ✅ GENERATED
 - [x] **002-offline-spell-tiles-verification** (spell-tiles-ui): Spell-tiles works inside a downloaded pack - Must - ✅ GENERATED
 
+### 018-mobile-design-system
+
+#### Unit: 001-design-foundation-ui
+
+- [x] **001-design-tokens-shadows-and-motion** (design-foundation-ui): Every colour, shadow, radius and animation timing as a named token - Must - ✅ COMPLETED (bolt 042-design-foundation)
+- [x] **002-bundled-fonts-with-ethiopic-fallback** (design-foundation-ui): The same typeface on my Android phone and my friend's iPhone, in English and Amharic - Must - ✅ COMPLETED (bolt 042-design-foundation)
+- [x] **003-buttons** (design-foundation-ui): Every button in the app to look and press the same way for the same kind of action - Must - ✅ COMPLETED (bolt 042-design-foundation)
+- [x] **004-gallery-and-rules-test** (design-foundation-ui): One screen that shows every token and component in every state, and a test that fails when a screen draws its own decoration - Must - ✅ COMPLETED (bolt 042-design-foundation)
+- [x] **005-page-shell-and-backgrounds** (design-foundation-ui): Every screen to sit on the same warm background with the same margins, top bar and bottom action area - Must - ✅ GENERATED (bolt 043-design-surfaces)
+- [x] **006-cards-and-surfaces** (design-foundation-ui): Every card, row and banner to have the same border, corner and shadow - Must - ✅ GENERATED (bolt 043-design-surfaces)
+- [x] **007-sheets-and-dialogs** (design-foundation-ui): Every pop-up sheet and confirmation to look like part of the same family - Must - ✅ GENERATED (bolt 043-design-surfaces)
+- [x] **008-status-and-feedback-pieces** (design-foundation-ui): My streak, beans, gems, progress and any empty or error message to look the same wherever they appear - Must - ✅ GENERATED (bolt 043-design-surfaces)
+
+#### Unit: 002-question-kit-ui
+
+- [x] **001-exercise-layout-and-question-prompt** (question-kit-ui): Every question to have the same top bar, prompt style and button position - Must - ✅ GENERATED (bolt 044-question-kit)
+- [x] **002-one-answer-tile-for-every-question-type** (question-kit-ui): Every answer tile, word chip and match card to look and react the same way - Must - ✅ GENERATED (bolt 044-question-kit)
+- [x] **003-audio-button-slot-line-and-action-bar** (question-kit-ui): The play button, the line my sentence builds on and the Check/Continue bar to look the same in every question - Must - ✅ GENERATED (bolt 044-question-kit)
+- [x] **004-lesson-screen-on-the-kit** (question-kit-ui): Every question in a lesson to share one layout and style - Must - ✅ GENERATED (bolt 045-lesson-screen-on-kit)
+
+#### Unit: 003-screen-migration-ui
+
+- [x] **001-onboarding-and-sign-in-on-the-library** (screen-migration-ui): The first screens I see to look polished and consistent with each other - Must - ✅ GENERATED (bolt 046-onboarding-screens-on-kit)
+- [x] **002-dashboard-and-course-picker-on-the-library** (screen-migration-ui): The home screen to look like the mockup, with the same cards, pills and sheets as the rest of the app - Must - ✅ GENERATED (bolt 047-dashboard-on-kit)
+- [x] **003-lesson-complete-and-lesson-sheets-on-the-library** (screen-migration-ui): The end of a lesson and every lesson pop-up to look celebratory and consistent - Must - ✅ GENERATED (bolt 048-lesson-complete-and-sheets-on-kit)
+- [x] **004-settings-and-downloads-on-the-library** (screen-migration-ui): Settings and downloads to look like the rest of the app instead of stock system screens - Must - ✅ GENERATED (bolt 049-settings-downloads-and-sweep)
+- [x] **005-consistency-sweep** (screen-migration-ui): Every screen checked together against the same rules - Must - ✅ GENERATED (bolt 049-settings-downloads-and-sweep)
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 6
+- **Generated**: 19
 - **In Progress**: 0
-- **Completed**: 66
+- **Completed**: 70
 - **Retired**: 1

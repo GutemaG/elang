@@ -26,4 +26,10 @@ abstract final class AppRadii {
   static const double lg = 32;
   static const double xl = 48;
   static const double full = 9999;
+
+  /// Choice tiles and text entry: DESIGN.md "Shapes", 1.25rem.
+  static const double tile = 20;
+
+  /// Cards and exercise panels: DESIGN.md "Shapes", `rounded-2xl`.
+  static const double card = 24;
 }

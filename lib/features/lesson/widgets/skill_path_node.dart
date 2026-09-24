@@ -134,8 +134,8 @@ class SkillPathNode extends StatelessWidget {
   };
 
   static Color _bevelColor(SkillNodeState state) => switch (state) {
-    SkillNodeState.locked => const Color(0xFFBAAFA1),
-    SkillNodeState.active => const Color(0xFFC47318),
+    SkillNodeState.locked => AppColors.lockedNodeIcon,
+    SkillNodeState.active => AppColors.activeNodeShelf,
     SkillNodeState.completed => AppColors.primaryBevel,
   };
 

@@ -113,17 +113,17 @@ class _MatchPairsTileChip extends StatelessWidget {
       textColor: AppColors.onSurface,
     ),
     _MatchPairsTileState.armed => const _ChipStyle(
-      background: Color(0xFFFFF7ED),
+      background: AppColors.answerSelected,
       border: AppColors.secondaryContainer,
       textColor: AppColors.onSurface,
     ),
     _MatchPairsTileState.correct => const _ChipStyle(
-      background: Color(0xFFE8F8F0),
+      background: AppColors.answerCorrect,
       border: AppColors.primaryContainer,
       textColor: AppColors.primaryContainer,
     ),
     _MatchPairsTileState.incorrect => const _ChipStyle(
-      background: Color(0xFFFDF0EE),
+      background: AppColors.answerIncorrect,
       border: AppColors.tertiaryBrand,
       textColor: AppColors.tertiaryBrand,
     ),

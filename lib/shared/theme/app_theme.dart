@@ -48,6 +48,7 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       fontFamily: AppTypography.fontFamily,
+      fontFamilyFallback: AppTypography.fontFamilyFallback,
       textTheme: const TextTheme(
         displayLarge: AppTypography.displayLg,
         headlineLarge: AppTypography.headlineLg,

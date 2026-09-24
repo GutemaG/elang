@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import 'tactile_pressable.dart';
 
-/// A pill-shaped button with the Highland Pulse "3D extruded bevel" press
-/// effect: a solid bottom shelf that flattens and shifts the button down by
-/// [bevelThickness] while pressed, per `highland_pulse/DESIGN.md`'s
-/// "Tactile Level 2" elevation model.
+/// The original pill-shaped push button, whose colours each screen passes
+/// in by hand.
 ///
-/// Used for every primary/secondary/provider call-to-action across the
-/// auth/onboarding flow so the bevel-press behavior lives in one place.
-class TactileButton extends StatefulWidget {
+/// **New code uses [AppButton]**, whose variants fix the colours so the same
+/// kind of action looks the same everywhere. This widget stays, with the
+/// same parameters, until every screen has moved to [AppButton]
+/// (018-mobile-design-system, bolt 049). It presses exactly like
+/// [AppButton] because both are built on [TactilePressable].
+class TactileButton extends StatelessWidget {
   const TactileButton({
     super.key,
     required this.label,
@@ -23,7 +26,7 @@ class TactileButton extends StatefulWidget {
     this.foregroundColor = AppColors.onPrimary,
     this.borderColor,
     this.height = 56,
-    this.bevelThickness = 4,
+    this.bevelThickness = AppShadows.shelfDepth,
   });
 
   final String label;
@@ -38,71 +41,38 @@ class TactileButton extends StatefulWidget {
   final double bevelThickness;
 
   @override
-  State<TactileButton> createState() => _TactileButtonState();
-}
-
-class _TactileButtonState extends State<TactileButton> {
-  bool _pressed = false;
-
-  bool get _enabled => widget.onPressed != null;
-
-  void _setPressed(bool value) {
-    if (!_enabled) return;
-    setState(() => _pressed = value);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final double translateY = _pressed ? widget.bevelThickness : 0;
-    final double opacity = _enabled ? 1 : 0.6;
-
-    return GestureDetector(
-      onTapDown: (_) => _setPressed(true),
-      onTapUp: (_) => _setPressed(false),
-      onTapCancel: () => _setPressed(false),
-      onTap: widget.onPressed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOut,
-        margin: EdgeInsets.only(top: widget.bevelThickness - translateY),
-        transform: Matrix4.translationValues(0, translateY, 0),
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: widget.backgroundColor.withValues(alpha: opacity),
-          borderRadius: BorderRadius.circular(AppRadii.full),
-          border: widget.borderColor != null
-              ? Border.all(color: widget.borderColor!, width: 2)
-              : null,
-          boxShadow: _pressed
-              ? const []
-              : [
-                  BoxShadow(
-                    color: widget.bevelColor,
-                    offset: Offset(0, widget.bevelThickness),
-                  ),
-                ],
-        ),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (widget.leading != null) ...[
-                widget.leading!,
-                const SizedBox(width: AppSpacing.spaceSm),
-              ],
-              Text(
-                widget.label,
-                style: AppTypography.labelLg.copyWith(
-                  color: widget.foregroundColor,
-                ),
-              ),
-              if (widget.trailing != null) ...[
-                const SizedBox(width: AppSpacing.spaceSm),
-                widget.trailing!,
-              ],
+    final enabled = onPressed != null;
+    return TactilePressable(
+      onPressed: onPressed,
+      faceColor: backgroundColor.withValues(alpha: enabled ? 1 : 0.6),
+      borderColor: borderColor,
+      borderRadius: BorderRadius.circular(AppRadii.full),
+      height: height,
+      shelfDepth: bevelThickness,
+      shadows: (visible) => AppShadows.button(
+        bevelColor,
+        depth: bevelThickness,
+        visible: visible,
+      ),
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (leading != null) ...[
+              leading!,
+              const SizedBox(width: AppSpacing.spaceSm),
             ],
-          ),
+            Text(
+              label,
+              style: AppTypography.labelLg.copyWith(color: foregroundColor),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: AppSpacing.spaceSm),
+              trailing!,
+            ],
+          ],
         ),
       ),
     );

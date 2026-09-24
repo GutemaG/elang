@@ -76,17 +76,17 @@ class _ChoiceTileState extends State<ChoiceTile>
     }
     return switch (widget.feedback) {
       TileFeedback.none => const _TileStyle(
-        background: Color(0xFFFFF7ED),
+        background: AppColors.answerSelected,
         border: AppColors.secondaryContainer,
         textColor: AppColors.onSurface,
       ),
       TileFeedback.correct => const _TileStyle(
-        background: Color(0xFFE8F8F0),
+        background: AppColors.answerCorrect,
         border: AppColors.primaryContainer,
         textColor: AppColors.primaryContainer,
       ),
       TileFeedback.incorrect => const _TileStyle(
-        background: Color(0xFFFDF0EE),
+        background: AppColors.answerIncorrect,
         border: AppColors.tertiaryBrand,
         textColor: AppColors.tertiaryBrand,
       ),
