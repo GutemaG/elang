@@ -1,0 +1,44 @@
+{
+  "pictures": [
+    {
+      "file": "water.webp",
+      "subject": "Water",
+      "author": "Vanessa Boutzikoudi",
+      "source": "OpenMoji",
+      "source_url": "https://openmoji.org/library/emoji-1F4A7/",
+      "licence": "CC BY-SA 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "changes": "Resized to 512 px and converted to WebP"
+    },
+    {
+      "file": "dog.webp",
+      "subject": "Dog",
+      "author": "Sofie Ascherl",
+      "source": "OpenMoji",
+      "source_url": "https://openmoji.org/library/emoji-1F415/",
+      "licence": "CC BY-SA 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "changes": "Resized to 512 px and converted to WebP"
+    },
+    {
+      "file": "house.webp",
+      "subject": "House",
+      "author": "Martin Wehl",
+      "source": "OpenMoji",
+      "source_url": "https://openmoji.org/library/emoji-1F3E0/",
+      "licence": "CC BY-SA 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "changes": "Resized to 512 px and converted to WebP"
+    },
+    {
+      "file": "cat.webp",
+      "subject": "Cat",
+      "author": "Sofie Ascherl",
+      "source": "OpenMoji",
+      "source_url": "https://openmoji.org/library/emoji-1F408/",
+      "licence": "CC BY-SA 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "changes": "Resized to 512 px and converted to WebP"
+    }
+  ]
+}

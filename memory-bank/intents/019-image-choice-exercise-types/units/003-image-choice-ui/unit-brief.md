@@ -6,7 +6,7 @@ default_bolt_type: simple-construction-bolt
 phase: inception
 status: stories-defined
 created: '2026-09-25T06:15:00Z'
-updated: '2026-09-25T06:15:00Z'
+updated: '2026-09-25T20:00:46Z'
 ---
 
 # Unit Brief: Image Choice UI
@@ -64,8 +64,8 @@ Performance, accessibility, reliability and compatibility NFRs apply.
 
 | Story ID | Title | Priority | Status |
 |----------|-------|----------|--------|
-| 001-picture-tile-in-the-kit | A picture answer tile that looks and reacts like every other tile | Must | Planned |
-| 002-picture-questions-in-lessons-and-practice | Both picture questions in lessons and practice | Must | Planned |
+| 001-picture-tile-in-the-kit | A picture answer tile that looks and reacts like every other tile | Must | Complete (bolt 053) |
+| 002-picture-questions-in-lessons-and-practice | Both picture questions in lessons and practice | Must | Complete (bolt 053) |
 | 003-offline-packs-with-pictures | Downloaded lessons carry their pictures | Must | Planned |
 | 004-pictures-ready-before-their-question | A lesson's pictures load before they are needed | Should | Planned |
 | 005-picture-credits-in-the-app | Picture credits in the app's licences | Must | Planned |

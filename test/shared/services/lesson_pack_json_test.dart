@@ -19,6 +19,31 @@ import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_content.dart';
 import 'package:elang/shared/services/lesson_pack_store.dart';
 
+const _image = ImageChoiceExercise(
+  id: 'ic-1',
+  prompt: "Choose the picture: 'ውሻ'",
+  choices: [
+    PictureChoice(imageUrl: 'https://pub.r2.dev/cat.webp', altText: 'A cat'),
+    PictureChoice(
+      imageUrl: 'http://localhost:8000/media/images/samples/dog.webp',
+      altText: 'A dog',
+    ),
+    PictureChoice(imageUrl: 'assets/pictures/house.webp', altText: 'A house'),
+  ],
+  correctOptionIndex: 1,
+);
+
+const _audioImage = AudioImageChoiceExercise(
+  id: 'aic-1',
+  audioUrl: 'https://pub.r2.dev/audio/one.m4a',
+  instruction: 'Tap the picture you hear',
+  choices: [
+    PictureChoice(imageUrl: 'https://pub.r2.dev/two.webp', altText: 'Two'),
+    PictureChoice(imageUrl: 'https://pub.r2.dev/one.webp', altText: 'One'),
+  ],
+  correctOptionIndex: 1,
+);
+
 const _exercises = <Exercise>[
   MultipleChoiceExercise(
     id: 'mc-1',
@@ -53,6 +78,9 @@ const _exercises = <Exercise>[
     ],
     correctPairs: {'l1': 'r1', 'l2': 'r2'},
   ),
+  _image,
+  _audioImage,
+  // Last: the gap-fill tests below read `_exercises.last`.
   GapFillExercise(
     id: 'gf-1',
     prompt: "Complete the sentence: 'I want bread'",
@@ -94,6 +122,8 @@ void main() {
         'SentenceConstructionExercise',
         'MatchPairsExercise',
         'GapFillExercise',
+        'ImageChoiceExercise',
+        'AudioImageChoiceExercise',
       ]),
     );
   });
@@ -157,6 +187,50 @@ void main() {
       final gap = restored.exercises.single;
       expect(isAnswerCorrect(gap, 0), isTrue);
       expect(isAnswerCorrect(gap, 1), isFalse);
+    });
+  });
+
+  group('pictures', () {
+    ({String url, String alt}) plain(PictureChoice p) =>
+        (url: p.imageUrl, alt: p.altText);
+
+    test('an image choice question keeps its prompt, every picture in '
+        'order, and its answer', () {
+      final restored = _roundTrip(_packOf([_image]));
+
+      final image = restored.exercises.single as ImageChoiceExercise;
+      expect(image.id, 'ic-1');
+      expect(image.prompt, "Choose the picture: 'ውሻ'");
+      expect(image.choices.map(plain), _image.choices.map(plain));
+      expect(image.correctOptionIndex, 1);
+      expect(isAnswerCorrect(image, 1), isTrue);
+      expect(isAnswerCorrect(image, 0), isFalse);
+    });
+
+    test('an audio image choice question keeps its clip, instruction, '
+        'pictures and answer', () {
+      final restored = _roundTrip(_packOf([_audioImage]));
+
+      final audio = restored.exercises.single as AudioImageChoiceExercise;
+      expect(audio.id, 'aic-1');
+      expect(audio.audioUrl, 'https://pub.r2.dev/audio/one.m4a');
+      expect(audio.instruction, 'Tap the picture you hear');
+      expect(audio.choices.map(plain), _audioImage.choices.map(plain));
+      expect(audio.correctOptionIndex, 1);
+      expect(isAnswerCorrect(audio, 1), isTrue);
+    });
+
+    test('the stored shape names each type, so an older reader refuses it '
+        'rather than misreading it', () {
+      final json = [_image, _audioImage].map(packExerciseToJson).toList();
+      expect(json.map((j) => j['type']), [
+        'image_choice',
+        'audio_image_choice',
+      ]);
+      expect((json.first['choices'] as List).first, {
+        'imageUrl': 'https://pub.r2.dev/cat.webp',
+        'altText': 'A cat',
+      });
     });
   });
 

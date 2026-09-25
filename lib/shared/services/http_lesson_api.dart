@@ -266,6 +266,8 @@ class HttpLessonApi implements LessonApi {
       'sentence_construction',
       'match_pairs',
       'gap_fill',
+      'image_choice',
+      'audio_image_choice',
     };
     if (!known.contains(json['type'] as String)) return null;
     return _toExercise(json);
@@ -302,11 +304,7 @@ class HttpLessonApi implements LessonApi {
         final correctChoiceId = json['correct_choice_id'] as String;
         return ListeningExercise(
           id: id,
-          // Recorded clips come as a path on this API ("/media/audio/..."),
-          // so the same content works against local and deployed backends.
-          audioUrl: Uri.parse(_baseUrl)
-              .resolve(json['audio_url'] as String)
-              .toString(),
+          audioUrl: _mediaUrl(json['audio_url'] as String),
           instruction: json['prompt'] as String,
           options: choices.map((c) => c['text'] as String).toList(),
           correctOptionIndex: choices.indexWhere(
@@ -375,10 +373,44 @@ class HttpLessonApi implements LessonApi {
             (c) => c['id'] == correctChoiceId,
           ),
         );
+      case 'image_choice':
+        final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
+        final correctChoiceId = json['correct_choice_id'] as String;
+        return ImageChoiceExercise(
+          id: id,
+          prompt: json['prompt'] as String,
+          choices: choices.map(_toPictureChoice).toList(),
+          correctOptionIndex: choices.indexWhere(
+            (c) => c['id'] == correctChoiceId,
+          ),
+        );
+      case 'audio_image_choice':
+        final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
+        final correctChoiceId = json['correct_choice_id'] as String;
+        return AudioImageChoiceExercise(
+          id: id,
+          audioUrl: _mediaUrl(json['audio_url'] as String),
+          instruction: json['prompt'] as String,
+          choices: choices.map(_toPictureChoice).toList(),
+          correctOptionIndex: choices.indexWhere(
+            (c) => c['id'] == correctChoiceId,
+          ),
+        );
       default:
         throw LessonApiException('Unknown exercise type: $type');
     }
   }
+
+  PictureChoice _toPictureChoice(Map<String, dynamic> json) => PictureChoice(
+    imageUrl: _mediaUrl(json['image_url'] as String),
+    altText: json['alt_text'] as String,
+  );
+
+  /// Recorded clips and uploaded pictures come as a path on this API
+  /// ("/media/audio/...", "/media/images/...") in local development, so the
+  /// same content works against local and deployed backends. A full https
+  /// address is kept as it is.
+  String _mediaUrl(String url) => Uri.parse(_baseUrl).resolve(url).toString();
 
   @override
   Future<LessonCompletionResult> completeLesson({

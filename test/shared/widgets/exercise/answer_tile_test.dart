@@ -606,7 +606,10 @@ void main() {
   });
 
   group('text scale', () {
-    for (final shape in AnswerTileShape.values) {
+    // A picture tile draws no label; picture_tile_test.dart scales its text.
+    for (final shape in AnswerTileShape.values.where(
+      (s) => s != AnswerTileShape.picture,
+    )) {
       testWidgets('${shape.name}: a Fidel label at 1.3x grows and never '
           'overflows at 320 px', (tester) async {
         const long = 'እንደምን አደርክ? ዛሬ ጠዋት ቡና ጠጥተሃል ወይስ ሻይ?';

@@ -2,11 +2,11 @@
 id: 001-picture-tile-in-the-kit
 unit: 003-image-choice-ui
 intent: 019-image-choice-exercise-types
-status: draft
+status: complete
 priority: must
 created: '2026-09-25T06:15:00Z'
 assigned_bolt: 053-picture-tile-and-lesson
-implemented: false
+implemented: true
 ---
 
 # Story: 001-picture-tile-in-the-kit
@@ -19,14 +19,14 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** `PictureTile`, **When** built, **Then** it has `AnswerTile`'s six states (idle, selected, correct, incorrect, used, disabled) with the same press, shelf, shake and colours, and the picture in place of the label
-- [ ] **Given** 2, 3 or 4 tiles, **When** laid out by the grid, **Then** they sit 2×2, three as two then one, every tile the same size and 12 px apart
-- [ ] **Given** any picture, **When** shown, **Then** it is fitted inside the tile without cropping and decoded at tile size
-- [ ] **Given** a picture still loading, **When** shown, **Then** the tile shows a quiet placeholder; **Given** one that fails, **Then** the tile shows its alt text and still takes a tap
-- [ ] **Given** a screen reader, **When** a tile is focused, **Then** it reads the alt text with the button and selected state
-- [ ] **Given** the gallery, **When** opened, **Then** it shows the tile in every state, and grids of 2, 3 and 4, with a loading and a failed picture
-- [ ] **Given** 320 and 360 px at 1.0× and 1.3× text, **When** laid out, **Then** nothing overflows and every tile is at least 48 px
-- [ ] **Given** the rules test, **When** run, **Then** it passes with no new allow-list entries
+- [x] **Given** `PictureTile`, **When** built, **Then** it has `AnswerTile`'s six states (idle, selected, correct, incorrect, used, disabled) with the same press, shelf, shake and colours, and the picture in place of the label
+- [x] **Given** 2, 3 or 4 tiles, **When** laid out by the grid, **Then** they sit 2×2, three as two then one, every tile the same size and 12 px apart
+- [x] **Given** any picture, **When** shown, **Then** it is fitted inside the tile without cropping and decoded at tile size
+- [x] **Given** a picture still loading, **When** shown, **Then** the tile shows a quiet placeholder; **Given** one that fails, **Then** the tile shows its alt text and still takes a tap
+- [x] **Given** a screen reader, **When** a tile is focused, **Then** it reads the alt text with the button and selected state
+- [x] **Given** the gallery, **When** opened, **Then** it shows the tile in every state, and grids of 2, 3 and 4, with a loading and a failed picture
+- [x] **Given** 320 and 360 px at 1.0× and 1.3× text, **When** laid out, **Then** nothing overflows and every tile is at least 48 px
+- [x] **Given** the rules test, **When** run, **Then** it passes with no new allow-list entries
 
 ## Reference Design (FR-11 of intent 018)
 

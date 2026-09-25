@@ -142,10 +142,60 @@ class GapFillExercise extends Exercise {
   final int correctOptionIndex;
 }
 
+/// One picture a learner can choose in a picture question (019-image-
+/// choice-exercise-types).
+///
+/// [altText] is never shown beside the picture: it is what a screen reader
+/// reads, and what shows in the picture's place if it cannot be loaded.
+class PictureChoice {
+  const PictureChoice({required this.imageUrl, required this.altText});
+
+  /// An https address, a resolved local `/media/...` address, or in the
+  /// fake an `assets/...` path.
+  final String imageUrl;
+  final String altText;
+}
+
+/// Read a word, then tap its picture (019-image-choice-exercise-types).
+///
+/// Answered by index, like [MultipleChoiceExercise]: the API speaks in
+/// choice ids, and `_toExercise` converts.
+class ImageChoiceExercise extends Exercise {
+  const ImageChoiceExercise({
+    required super.id,
+    required this.prompt,
+    required this.choices,
+    required this.correctOptionIndex,
+  });
+
+  /// The instruction and the word, e.g. "Choose the picture: 'ውሻ'".
+  final String prompt;
+  final List<PictureChoice> choices;
+  final int correctOptionIndex;
+}
+
+/// Hear a word, then tap its picture (019-image-choice-exercise-types).
+/// The word is never written: [instruction] only says what to do.
+class AudioImageChoiceExercise extends Exercise {
+  const AudioImageChoiceExercise({
+    required super.id,
+    required this.audioUrl,
+    required this.instruction,
+    required this.choices,
+    required this.correctOptionIndex,
+  });
+
+  final String audioUrl;
+  final String instruction;
+  final List<PictureChoice> choices;
+  final int correctOptionIndex;
+}
+
 /// Grades a submitted answer against [exercise], client-side.
 ///
 /// [answer] must be an `int` (the selected option index) for
-/// [MultipleChoiceExercise]/[ListeningExercise]/[GapFillExercise], a
+/// [MultipleChoiceExercise]/[ListeningExercise]/[GapFillExercise] and both
+/// picture types, a
 /// `List<String>` (the learner's built token order) for
 /// [SentenceConstructionExercise], or a `Map<String, String>`
 /// (`leftTileId -> rightTileId`) for [MatchPairsExercise].
@@ -159,5 +209,7 @@ bool isAnswerCorrect(Exercise exercise, Object answer) {
       answer is Map<String, String> && mapEquals(answer, e.correctPairs),
     // Same shape as multiple choice: one index, no partial credit.
     GapFillExercise e => answer == e.correctOptionIndex,
+    ImageChoiceExercise e => answer == e.correctOptionIndex,
+    AudioImageChoiceExercise e => answer == e.correctOptionIndex,
   };
 }

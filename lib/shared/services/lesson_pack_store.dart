@@ -283,7 +283,39 @@ Map<String, dynamic> packExerciseToJson(Exercise exercise) => switch (exercise) 
     'options': e.options,
     'correctOptionIndex': e.correctOptionIndex,
   },
+  // Bolt 053: the picture addresses are kept as they came. Downloading the
+  // pictures into a pack, and rewriting these to local files, is bolt 054's.
+  ImageChoiceExercise e => {
+    'type': 'image_choice',
+    'id': e.id,
+    'prompt': e.prompt,
+    'choices': e.choices.map(_pictureToJson).toList(),
+    'correctOptionIndex': e.correctOptionIndex,
+  },
+  AudioImageChoiceExercise e => {
+    'type': 'audio_image_choice',
+    'id': e.id,
+    'audioUrl': e.audioUrl,
+    'instruction': e.instruction,
+    'choices': e.choices.map(_pictureToJson).toList(),
+    'correctOptionIndex': e.correctOptionIndex,
+  },
 };
+
+Map<String, dynamic> _pictureToJson(PictureChoice picture) => {
+  'imageUrl': picture.imageUrl,
+  'altText': picture.altText,
+};
+
+List<PictureChoice> _picturesFromJson(Object? json) => (json as List)
+    .cast<Map<String, dynamic>>()
+    .map(
+      (p) => PictureChoice(
+        imageUrl: p['imageUrl'] as String,
+        altText: p['altText'] as String,
+      ),
+    )
+    .toList();
 
 Exercise packExerciseFromJson(Map<String, dynamic> json) {
   switch (json['type'] as String) {
@@ -331,6 +363,21 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         sentenceBefore: json['sentenceBefore'] as String,
         sentenceAfter: json['sentenceAfter'] as String,
         options: (json['options'] as List).cast<String>(),
+        correctOptionIndex: json['correctOptionIndex'] as int,
+      );
+    case 'image_choice':
+      return ImageChoiceExercise(
+        id: json['id'] as String,
+        prompt: json['prompt'] as String,
+        choices: _picturesFromJson(json['choices']),
+        correctOptionIndex: json['correctOptionIndex'] as int,
+      );
+    case 'audio_image_choice':
+      return AudioImageChoiceExercise(
+        id: json['id'] as String,
+        audioUrl: json['audioUrl'] as String,
+        instruction: json['instruction'] as String,
+        choices: _picturesFromJson(json['choices']),
         correctOptionIndex: json['correctOptionIndex'] as int,
       );
     default:

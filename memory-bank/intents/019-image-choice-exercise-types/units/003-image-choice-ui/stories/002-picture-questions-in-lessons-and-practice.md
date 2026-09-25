@@ -2,11 +2,11 @@
 id: 002-picture-questions-in-lessons-and-practice
 unit: 003-image-choice-ui
 intent: 019-image-choice-exercise-types
-status: draft
+status: complete
 priority: must
 created: '2026-09-25T06:15:00Z'
 assigned_bolt: 053-picture-tile-and-lesson
-implemented: false
+implemented: true
 ---
 
 # Story: 002-picture-questions-in-lessons-and-practice
@@ -19,16 +19,16 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** an `image_choice` question, **When** it appears, **Then** `QuestionPrompt` shows the prompt, split as other prompts are, above the picture grid
-- [ ] **Given** an `audio_image_choice` question, **When** it appears, **Then** only the instruction and the large play button show above the grid, with no written word, and the clip plays once by itself
-- [ ] **Given** the audio question, **When** answered or rebuilt, **Then** the clip does not play again; the button replays it
-- [ ] **Given** a tap on a picture, **When** graded, **Then** only that tile shows correct or incorrect, an incorrect tile shakes, and no tile takes another tap
-- [ ] **Given** a wrong answer, **When** graded, **Then** a bean is lost and the question comes back later, as for multiple choice
-- [ ] **Given** a lesson with all seven types, **When** each appears, **Then** the frame test finds the same top bar, prompt place, action bar and answer edge for each
-- [ ] **Given** practice, **When** a due word's question is a picture question, **Then** it shows and grades there, and updates the word's review progress
-- [ ] **Given** a picture reference that is a `/media/...` path, **When** parsed, **Then** it resolves against the API base, as audio does
-- [ ] **Given** an app without these types (FR-9), **When** a lesson holds them, **Then** they are skipped and counted in `unrenderableCount`, and the lesson completes; a test with an unknown type proves it
-- [ ] **Given** 320 and 360 px at 1.0× and 1.3× text, **When** either type is shown before and after answering, **Then** nothing overflows
+- [x] **Given** an `image_choice` question, **When** it appears, **Then** `QuestionPrompt` shows the prompt, split as other prompts are, above the picture grid
+- [x] **Given** an `audio_image_choice` question, **When** it appears, **Then** only the instruction and the large play button show above the grid, with no written word, and the clip plays once by itself
+- [x] **Given** the audio question, **When** answered or rebuilt, **Then** the clip does not play again; the button replays it
+- [x] **Given** a tap on a picture, **When** graded, **Then** only that tile shows correct or incorrect, an incorrect tile shakes, and no tile takes another tap
+- [x] **Given** a wrong answer, **When** graded, **Then** a bean is lost and the question comes back later, as for multiple choice
+- [x] **Given** a lesson with all seven types, **When** each appears, **Then** the frame test finds the same top bar, prompt place, action bar and answer edge for each
+- [x] **Given** practice, **When** a due word's question is a picture question, **Then** it shows and grades there, and updates the word's review progress
+- [x] **Given** a picture reference that is a `/media/...` path, **When** parsed, **Then** it resolves against the API base, as audio does
+- [x] **Given** an app without these types (FR-9), **When** a lesson holds them, **Then** they are skipped and counted in `unrenderableCount`, and the lesson completes; a test with an unknown type proves it
+- [x] **Given** 320 and 360 px at 1.0× and 1.3× text, **When** either type is shown before and after answering, **Then** nothing overflows
 
 ## Technical Notes
 

@@ -74,6 +74,39 @@ const _gap = GapFillExercise(
   options: ['ውሃ', 'ዳቦ'],
   correctOptionIndex: 0,
 );
+// Pictures from the network: in a test they never arrive, so the tiles
+// show their descriptions, the most text a picture tile holds.
+const _image = ImageChoiceExercise(
+  id: 'ic',
+  prompt: "Choose the picture: 'ውሻ'",
+  choices: [
+    PictureChoice(
+      imageUrl: 'https://cdn.buna.app/p/dog.webp',
+      altText: 'A dog',
+    ),
+    PictureChoice(
+      imageUrl: 'https://cdn.buna.app/p/cat.webp',
+      altText: 'A cat',
+    ),
+    PictureChoice(
+      imageUrl: 'https://cdn.buna.app/p/house.webp',
+      altText: 'A house',
+    ),
+  ],
+  correctOptionIndex: 0,
+);
+const _audioImage = AudioImageChoiceExercise(
+  id: 'aic',
+  audioUrl: _clip,
+  instruction: 'Tap the picture you hear',
+  choices: [
+    PictureChoice(imageUrl: 'assets/pictures/water.webp', altText: 'Water'),
+    PictureChoice(imageUrl: 'assets/pictures/dog.webp', altText: 'A dog'),
+    PictureChoice(imageUrl: 'assets/pictures/house.webp', altText: 'A house'),
+    PictureChoice(imageUrl: 'assets/pictures/cat.webp', altText: 'A cat'),
+  ],
+  correctOptionIndex: 3,
+);
 
 LessonContent _lesson(List<Exercise> exercises, {int beans = 5}) =>
     LessonContent(
@@ -177,8 +210,16 @@ Future<void> _answerRight(WidgetTester tester, Exercise exercise) async {
         await _tap(tester, _tile(text[left]!));
         await _tap(tester, _tile(text[right]!));
       }
+    case ImageChoiceExercise e:
+      await _tap(tester, _picture(e.choices[e.correctOptionIndex].altText));
+    case AudioImageChoiceExercise e:
+      await _tap(tester, _picture(e.choices[e.correctOptionIndex].altText));
   }
 }
+
+/// The picture tile described as [altText]: its picture shows no text.
+Finder _picture(String altText) =>
+    find.byWidgetPredicate((w) => w is AnswerTile && w.label == altText);
 
 /// Where the frame puts things, for comparing question types.
 ({Rect topBar, Offset prompt, Rect actionBar, double firstTileLeft}) _frame(
@@ -230,9 +271,17 @@ class _SlowStartApi extends ControllableLessonApi {
 void main() {
   group('one frame for every question type', () {
     testWidgets('the top bar, prompt, answers and action bar sit in the same '
-        'place for all five types', (tester) async {
+        'place for all seven types', (tester) async {
       _phone(tester);
-      const exercises = [_mc, _listen, _sentence, _pairs, _gap];
+      const exercises = [
+        _mc,
+        _listen,
+        _sentence,
+        _pairs,
+        _gap,
+        _image,
+        _audioImage,
+      ];
       await tester.pumpWidget(_app(_api(_lesson(exercises))));
       await tester.pumpAndSettle();
 
@@ -431,7 +480,15 @@ void main() {
         testWidgets('no overflow in any type at ${width}px and ${scale}x, '
             'before and after answering', (tester) async {
           _phone(tester, width: width, height: 640);
-          const exercises = [_mc, _listen, _sentence, _pairs, _gap];
+          const exercises = [
+            _mc,
+            _listen,
+            _sentence,
+            _pairs,
+            _gap,
+            _image,
+            _audioImage,
+          ];
           await tester.pumpWidget(_app(_api(_lesson(exercises)), scale: scale));
           await tester.pumpAndSettle();
           for (final exercise in exercises) {

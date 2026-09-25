@@ -3,15 +3,24 @@ id: 053-picture-tile-and-lesson
 unit: 003-image-choice-ui
 intent: 019-image-choice-exercise-types
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-picture-tile-in-the-kit
   - 002-picture-questions-in-lessons-and-practice
 created: '2026-09-25T06:15:00Z'
-started: null
-completed: null
+started: '2026-09-25T15:04:32Z'
+completed: '2026-09-25T20:00:46Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-25T18:35:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-25T19:33:41Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-25T20:00:45Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 050-image-choice-service
 enables_bolts:
@@ -33,8 +42,8 @@ Add the picture tile and grid to the question kit, then show both types on the l
 
 ## Stories Included
 
-- [ ] **001-picture-tile-in-the-kit** (Must)
-- [ ] **002-picture-questions-in-lessons-and-practice** (Must)
+- [x] **001-picture-tile-in-the-kit** (Must)
+- [x] **002-picture-questions-in-lessons-and-practice** (Must)
 
 ## Bolt Type
 
@@ -43,9 +52,9 @@ Add the picture tile and grid to the question kit, then show both types on the l
 
 ## Stages
 
-- [ ] **1. Plan**: includes deciding the reference designs (FR-11 of intent 018) and how the tile shares `AnswerTile`'s states
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**: includes deciding the reference designs (FR-11 of intent 018) and how the tile shares `AnswerTile`'s states
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

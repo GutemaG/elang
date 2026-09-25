@@ -41,6 +41,10 @@ enum AnswerTileShape {
 
   /// Fills its column, label centred: match pairs.
   cell,
+
+  /// Square, a picture in place of the label: the two picture question
+  /// types (019-image-choice-exercise-types). Built through `PictureTile`.
+  picture,
 }
 
 /// The one answer tile (018-mobile-design-system, FR-7): every choice, word
@@ -52,6 +56,9 @@ enum AnswerTileShape {
 /// (not with reduced motion).
 /// With [onTap] `null`, or when [state] is used or disabled, it cannot be
 /// tapped and does not press.
+///
+/// The [AnswerTileShape.picture] shape draws [picture] instead of the
+/// label, and the label becomes what a screen reader reads.
 class AnswerTile extends StatefulWidget {
   const AnswerTile({
     super.key,
@@ -59,12 +66,20 @@ class AnswerTile extends StatefulWidget {
     this.state = AnswerTileState.idle,
     this.shape = AnswerTileShape.row,
     this.onTap,
-  });
+    this.picture,
+  }) : assert(
+         (shape == AnswerTileShape.picture) == (picture != null),
+         'A picture tile needs a picture, and only a picture tile takes one',
+       );
 
   final String label;
   final AnswerTileState state;
   final AnswerTileShape shape;
   final VoidCallback? onTap;
+
+  /// What a picture tile shows, fitted inside its square face. Any text it
+  /// shows (a picture that failed to load) takes the tile's text colour.
+  final Widget? picture;
 
   static const double borderWidth = 2;
 
@@ -81,6 +96,12 @@ class AnswerTile extends StatefulWidget {
   static const double shakeDistance = 8;
 
   static const TextStyle labelStyle = AppTypography.bodyLg;
+
+  /// How far a picture sits inside a picture tile's border.
+  static const double pictureInset = AppSpacing.spaceXs;
+
+  /// Text a picture tile shows in place of its picture.
+  static const TextStyle pictureTextStyle = AppTypography.bodyMd;
 
   /// A pill's outer height (face and rim) at the current text scale. Every
   /// pill is this tall, Latin or Fidel, so a row of them lines up and the
@@ -182,6 +203,7 @@ class _AnswerTileState extends State<AnswerTile>
           context,
           faded ? look.text.withValues(alpha: 0.6) : look.text,
           look,
+          faded: faded,
         ),
       ),
     );
@@ -215,7 +237,12 @@ class _AnswerTileState extends State<AnswerTile>
     );
   }
 
-  Widget _content(BuildContext context, Color textColor, _TileLook look) {
+  Widget _content(
+    BuildContext context,
+    Color textColor,
+    _TileLook look, {
+    required bool faded,
+  }) {
     final icon = switch (widget.state) {
       AnswerTileState.correct => Icons.check_circle,
       AnswerTileState.incorrect => Icons.cancel,
@@ -291,6 +318,46 @@ class _AnswerTileState extends State<AnswerTile>
           child: Center(
             widthFactor: 1,
             child: FittedBox(fit: BoxFit.scaleDown, child: text),
+          ),
+        );
+      case AnswerTileShape.picture:
+        // A square face with the picture inset, as LibreLingo's picture
+        // cards are. A faded tile fades its picture as a row fades its
+        // text. The grade sits in the top corner on the face colour, so it
+        // reads over any picture.
+        final picture = DefaultTextStyle(
+          style: AnswerTile.pictureTextStyle.copyWith(color: look.text),
+          textAlign: TextAlign.center,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadii.sm),
+            child: widget.picture,
+          ),
+        );
+        return AspectRatio(
+          aspectRatio: 1,
+          child: Padding(
+            padding: const EdgeInsets.all(AnswerTile.pictureInset),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                faded ? Opacity(opacity: 0.6, child: picture) : picture,
+                if (iconWidget != null)
+                  PositionedDirectional(
+                    top: 0,
+                    end: 0,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: look.face,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.space2xs / 2),
+                        child: iconWidget,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
     }

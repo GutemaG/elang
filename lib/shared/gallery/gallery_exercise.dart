@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_spacing.dart';
@@ -6,6 +7,7 @@ import '../widgets/exercise/answer_slot_line.dart';
 import '../widgets/exercise/answer_tile.dart';
 import '../widgets/exercise/audio_play_button.dart';
 import '../widgets/exercise/exercise_layout.dart';
+import '../widgets/exercise/picture_tile.dart';
 import 'component_gallery.dart';
 import 'gallery_surfaces.dart';
 
@@ -32,6 +34,7 @@ class ExerciseGallerySection extends StatelessWidget {
         ),
         _PromptCases(),
         _TileCases(),
+        _PictureCases(),
         _AudioCases(),
         _SlotLineCases(),
         _ActionBarCases(),
@@ -246,6 +249,153 @@ class _TileCasesState extends State<_TileCases> {
     );
   }
 }
+
+/// The picture tile and grid, with the bundled sample pictures.
+class _PictureCases extends StatefulWidget {
+  const _PictureCases();
+
+  @override
+  State<_PictureCases> createState() => _PictureCasesState();
+}
+
+class _PictureCasesState extends State<_PictureCases> {
+  static const _water = AssetImage('assets/pictures/water.webp');
+  static const _dog = AssetImage('assets/pictures/dog.webp');
+  static const _house = AssetImage('assets/pictures/house.webp');
+  static const _cat = AssetImage('assets/pictures/cat.webp');
+
+  /// Bytes that are not a picture, so the tile shows its description.
+  static final _broken = MemoryImage(Uint8List.fromList(const [0, 1, 2, 3]));
+
+  static const _three = [(_dog, 'A dog'), (_house, 'A house'), (_cat, 'A cat')];
+
+  int? _chosen;
+
+  AnswerTileState _stateOf(int i) {
+    if (_chosen != i) return AnswerTileState.idle;
+    return i == 1 ? AnswerTileState.correct : AnswerTileState.incorrect;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const GalleryCase(
+          label:
+              'PictureTile in a grid of four: idle, selected, correct, '
+              'incorrect',
+          child: PictureGrid(
+            children: [
+              PictureTile(image: _water, altText: 'Water', onTap: _noop),
+              PictureTile(
+                image: _dog,
+                altText: 'A dog',
+                state: AnswerTileState.selected,
+                onTap: _noop,
+              ),
+              PictureTile(
+                image: _house,
+                altText: 'A house',
+                state: AnswerTileState.correct,
+              ),
+              PictureTile(
+                image: _cat,
+                altText: 'A cat',
+                state: AnswerTileState.incorrect,
+              ),
+            ],
+          ),
+        ),
+        const GalleryCase(
+          label: 'two pictures: used, disabled',
+          child: PictureGrid(
+            children: [
+              PictureTile(
+                image: _water,
+                altText: 'Water',
+                state: AnswerTileState.used,
+              ),
+              PictureTile(
+                image: _dog,
+                altText: 'A dog',
+                state: AnswerTileState.disabled,
+              ),
+            ],
+          ),
+        ),
+        GalleryCase(
+          label:
+              'three pictures, the last centred: tap one (the house is '
+              'right)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PictureGrid(
+                children: [
+                  for (var i = 0; i < _three.length; i++)
+                    PictureTile(
+                      image: _three[i].$1,
+                      altText: _three[i].$2,
+                      state: _stateOf(i),
+                      onTap: _chosen == null
+                          ? () => setState(() => _chosen = i)
+                          : null,
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.spaceMd),
+              AnswerActionBar(
+                grade: switch (_chosen) {
+                  null => null,
+                  1 => AnswerGrade.correct,
+                  _ => AnswerGrade.incorrect,
+                },
+                onContinue: () => setState(() => _chosen = null),
+              ),
+            ],
+          ),
+        ),
+        GalleryCase(
+          label:
+              'loading, and failed: the description shows, and it can '
+              'still be chosen',
+          child: PictureGrid(
+            children: [
+              const PictureTile(
+                image: _NeverLoads(),
+                altText: 'A cup of coffee',
+                onTap: _noop,
+              ),
+              PictureTile(
+                image: _broken,
+                altText: 'A cup of coffee',
+                onTap: _noop,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A picture that is always still loading, to show the placeholder.
+class _NeverLoads extends ImageProvider<_NeverLoads> {
+  const _NeverLoads();
+
+  @override
+  Future<_NeverLoads> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _NeverLoads key,
+    ImageDecoderCallback decode,
+  ) => _Pending();
+}
+
+class _Pending extends ImageStreamCompleter {}
 
 class _AudioCases extends StatefulWidget {
   const _AudioCases();

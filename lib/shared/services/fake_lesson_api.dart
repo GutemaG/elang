@@ -108,6 +108,23 @@ class FakeLessonApi implements LessonApi {
     ),
   ];
 
+  static const _water = PictureChoice(
+    imageUrl: 'assets/pictures/water.webp',
+    altText: 'A drop of water',
+  );
+  static const _dog = PictureChoice(
+    imageUrl: 'assets/pictures/dog.webp',
+    altText: 'A dog',
+  );
+  static const _house = PictureChoice(
+    imageUrl: 'assets/pictures/house.webp',
+    altText: 'A house',
+  );
+  static const _cat = PictureChoice(
+    imageUrl: 'assets/pictures/cat.webp',
+    altText: 'A cat',
+  );
+
   static final Map<String, LessonContent> _lessonBank = {
     'lesson-alphabet': LessonContent(
       lessonId: 'lesson-alphabet',
@@ -207,6 +224,22 @@ class FakeLessonApi implements LessonApi {
           sentenceAfter: 'እፈልጋለሁ',
           options: ['ቡና', 'ሻይ', 'ውሃ'],
           correctOptionIndex: 0,
+        ),
+        // The pictures are bundled, so both picture questions show without
+        // a backend or the network. Four pictures here, three below: the
+        // grid's two layouts.
+        ImageChoiceExercise(
+          id: 'coffee-6',
+          prompt: "Choose the picture: 'ውሃ'",
+          choices: [_dog, _water, _cat, _house],
+          correctOptionIndex: 1,
+        ),
+        AudioImageChoiceExercise(
+          id: 'coffee-7',
+          audioUrl: 'https://cdn.buna.app/audio/wusha.mp3',
+          instruction: 'Tap the picture you hear',
+          choices: [_house, _cat, _dog],
+          correctOptionIndex: 2,
         ),
       ],
     ),
@@ -434,19 +467,35 @@ class FakeLessonApi implements LessonApi {
     return RefillSuccess(newBeans: _beans, newAmoleBalance: _amoleBalance);
   }
 
-  // Bolt 020-practice-ui: this fake predates Practice and has no vocab-item
-  // content to draw from -- no seeded content ever has anything due, same
-  // "nothing modeled" honesty as a fresh account would see for real.
+  // One word is due, asked as a picture question (bolt 053), so Practice
+  // can be tried without a backend. It stays due until a practice session
+  // reports it; nothing else is modelled.
+  final List<DueItem> _dueItems = [
+    DueItem(
+      vocabItemId: 'vocab-house',
+      word: 'ቤት',
+      translation: 'House',
+      exercise: const ImageChoiceExercise(
+        id: 'practice-house',
+        prompt: "Choose the picture: 'ቤት'",
+        choices: [_cat, _house, _water],
+        correctOptionIndex: 1,
+      ),
+      boxLevel: 1,
+      nextReviewAt: DateTime.utc(2026, 1, 1),
+    ),
+  ];
+
   @override
   Future<int> getDueCount() async {
     await Future<void>.delayed(latency);
-    return 0;
+    return _dueItems.length;
   }
 
   @override
   Future<List<DueItem>> getDueItems({int limit = 20}) async {
     await Future<void>.delayed(latency);
-    return const [];
+    return List.unmodifiable(_dueItems.take(limit));
   }
 
   @override
@@ -456,6 +505,8 @@ class FakeLessonApi implements LessonApi {
     required Duration timeSpent,
   }) async {
     await Future<void>.delayed(latency);
+    final reviewed = {for (final r in results) r.vocabItemId};
+    _dueItems.removeWhere((item) => reviewed.contains(item.vocabItemId));
     final correctCount = results.where((r) => r.correct).length;
     return PracticeCompletionResult(
       xpEarned: correctCount * _xpPerCorrectAnswer,

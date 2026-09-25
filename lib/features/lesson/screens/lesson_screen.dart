@@ -27,6 +27,8 @@ import '../../../shared/widgets/exercise/answer_slot_line.dart';
 import '../../../shared/widgets/exercise/answer_tile.dart';
 import '../../../shared/widgets/exercise/audio_play_button.dart';
 import '../../../shared/widgets/exercise/exercise_layout.dart';
+import '../../../shared/widgets/exercise/picture_tile.dart';
+import '../picture_source.dart';
 import '../prompt_parts.dart';
 import '../state/lesson_controller.dart';
 import '../widgets/answer_states.dart';
@@ -201,9 +203,9 @@ class _LessonScreenState extends State<LessonScreen> {
     final pack = await widget.lessonPackStore!.load(widget.lessonId);
     if (pack != null) return pack;
     // A cached copy streams its audio, which cannot play offline -- only a
-    // downloaded pack carries the clips. Without listening exercises the
-    // copy is as good as a pack.
-    if (copy != null && !copy.exercises.any((e) => e is ListeningExercise)) {
+    // downloaded pack carries the clips. Without a question that plays a
+    // clip the copy is as good as a pack.
+    if (copy != null && !copy.exercises.any((e) => _clipOf(e) != null)) {
       return _withCurrentBeans(copy);
     }
     throw const LessonNotDownloadedOfflineException();
@@ -535,6 +537,7 @@ class _MistakeReview extends StatelessWidget {
 /// plays it once by itself when it appears.
 String? _clipOf(Exercise exercise) => switch (exercise) {
   ListeningExercise e => e.audioUrl,
+  AudioImageChoiceExercise e => e.audioUrl,
   _ => null,
 };
 
@@ -634,26 +637,9 @@ class _LessonQuestionState extends State<_LessonQuestion> {
   Widget _promptFor(Exercise exercise) {
     return switch (exercise) {
       MultipleChoiceExercise e => _choicePrompt(e),
-      ListeningExercise e => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _questionPrompt(splitPrompt(e.instruction)),
-          const SizedBox(height: AppSpacing.spaceLg),
-          Center(
-            child: AudioPlayButton(
-              onPressed: () => _play(e.audioUrl),
-              playing: _starting > 0,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space2xs),
-          Text(
-            'Tap to play/replay',
-            textAlign: TextAlign.center,
-            style: AppTypography.bodySm.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-        ],
+      ListeningExercise e => _listenPrompt(
+        splitPrompt(e.instruction),
+        e.audioUrl,
       ),
       // The prompt already names the task ("Translate: 'I am fine'"); one
       // that does not gets a generic one, rather than a second
@@ -663,7 +649,40 @@ class _LessonQuestionState extends State<_LessonQuestion> {
       ),
       MatchPairsExercise e => _questionPrompt(splitPrompt(e.prompt)),
       GapFillExercise e => _questionPrompt(splitPrompt(e.prompt)),
+      ImageChoiceExercise e => _questionPrompt(splitPrompt(e.prompt)),
+      // Only what to do: the word is heard, never written, even when the
+      // prompt was written as "Instruction: 'word'".
+      AudioImageChoiceExercise e => _listenPrompt(
+        PromptParts(instruction: splitPrompt(e.instruction).instruction),
+        e.audioUrl,
+      ),
     };
+  }
+
+  /// The instruction above the large play button, for a question that is
+  /// heard.
+  Widget _listenPrompt(PromptParts parts, String audioUrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _questionPrompt(parts),
+        const SizedBox(height: AppSpacing.spaceLg),
+        Center(
+          child: AudioPlayButton(
+            onPressed: () => _play(audioUrl),
+            playing: _starting > 0,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.space2xs),
+        Text(
+          'Tap to play/replay',
+          textAlign: TextAlign.center,
+          style: AppTypography.bodySm.copyWith(
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _answersFor(Exercise exercise) {
@@ -705,6 +724,8 @@ class _LessonQuestionState extends State<_LessonQuestion> {
           _choices(e.options),
         ],
       ),
+      ImageChoiceExercise e => _pictures(e.choices),
+      AudioImageChoiceExercise e => _pictures(e.choices),
     };
   }
 
@@ -729,6 +750,29 @@ class _LessonQuestionState extends State<_LessonQuestion> {
                   ? null
                   : () => controller.chooseOption(i),
             ),
+          ),
+      ],
+    );
+  }
+
+  /// The picture grid, graded like [_choices]: only the chosen picture
+  /// shows the grade, and none takes a tap once the question is graded.
+  Widget _pictures(List<PictureChoice> choices) {
+    final controller = _controller;
+    final chosen = controller.selectedAnswer as int?;
+    return PictureGrid(
+      children: [
+        for (var i = 0; i < choices.length; i++)
+          PictureTile(
+            image: pictureImageFor(choices[i].imageUrl),
+            altText: choices[i].altText,
+            state: choiceStateOf(
+              chosen: chosen == i,
+              feedback: controller.feedback,
+            ),
+            onTap: controller.isChecked
+                ? null
+                : () => controller.chooseOption(i),
           ),
       ],
     );
