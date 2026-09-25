@@ -2,7 +2,7 @@
 unit: 003-image-choice-ui
 intent: 019-image-choice-exercise-types
 created: '2026-09-25T15:04:32Z'
-last_updated: '2026-09-25T20:00:46Z'
+last_updated: '2026-09-25T20:38:36Z'
 ---
 
 # Construction Log: image-choice-ui
@@ -28,3 +28,7 @@ last_updated: '2026-09-25T20:00:46Z'
 - **2026-09-25T18:35:00Z**: 053-picture-tile-and-lesson stage-complete - plan → implement
 - **2026-09-25T19:33:41Z**: 053-picture-tile-and-lesson stage-complete - implement → test
 - **2026-09-25T20:00:46Z**: 053-picture-tile-and-lesson completed - All 3 stages done
+- **2026-09-25T20:02:39Z**: 054-picture-offline-and-credits started - Stage 1: plan
+- **2026-09-25T20:06:25Z**: 054-picture-offline-and-credits stage-complete - plan → implement
+- **2026-09-25T20:18:07Z**: 054-picture-offline-and-credits stage-complete - implement → test
+- **2026-09-25T20:38:36Z**: 054-picture-offline-and-credits completed - All 3 stages done

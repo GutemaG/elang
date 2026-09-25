@@ -242,6 +242,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: _controller.soundEnabled,
               onChanged: _controller.updateSoundEnabled,
             ),
+            // Flutter's licence page: every package's licence, and the
+            // credits of the pictures the app ships (intent 019, story 005).
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Licences'),
+              subtitle: const Text('Open-source software and picture credits'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => showLicensePage(context: context, applicationName: 'Buna'),
+            ),
             const SizedBox(height: AppSpacing.spaceLg),
             TactileButton(label: 'Log out', onPressed: _confirmLogout),
           ],

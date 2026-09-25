@@ -5,6 +5,7 @@ import 'features/auth/auth_routes.dart';
 import 'features/lesson/lesson_dependencies.dart';
 import 'features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'features/settings/settings_dependencies.dart';
+import 'shared/licences/picture_credits.dart';
 import 'shared/services/sound_preference_repository.dart';
 import 'shared/theme/app_theme.dart';
 
@@ -13,6 +14,9 @@ void main() {
   // built (the sync engine asks connectivity_plus whether it is online), so
   // the binding has to exist before `runApp` would create it.
   WidgetsFlutterBinding.ensureInitialized();
+  // The bundled sample pictures' credits, on the licence page settings
+  // opens (019-image-choice-exercise-types, story 005).
+  registerPictureCredits();
   final authDependencies = AuthDependencies();
   // Shared with both LessonDependencies (gates AnswerFeedbackPlayer) and
   // SettingsDependencies (the toggle UI) -- same instance, so a flip is

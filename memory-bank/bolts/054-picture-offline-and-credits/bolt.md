@@ -3,16 +3,25 @@ id: 054-picture-offline-and-credits
 unit: 003-image-choice-ui
 intent: 019-image-choice-exercise-types
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 003-offline-packs-with-pictures
   - 004-pictures-ready-before-their-question
   - 005-picture-credits-in-the-app
 created: '2026-09-25T06:15:00Z'
-started: null
-completed: null
+started: '2026-09-25T20:02:39Z'
+completed: '2026-09-25T20:38:36Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-25T20:06:25Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-25T20:18:07Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-25T20:38:36Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 053-picture-tile-and-lesson
   - 051-image-choice-samples
@@ -34,9 +43,9 @@ Make downloaded lessons carry their pictures and clips, load a lesson's pictures
 
 ## Stories Included
 
-- [ ] **003-offline-packs-with-pictures** (Must)
-- [ ] **004-pictures-ready-before-their-question** (Should)
-- [ ] **005-picture-credits-in-the-app** (Must)
+- [x] **003-offline-packs-with-pictures** (Must)
+- [x] **004-pictures-ready-before-their-question** (Should)
+- [x] **005-picture-credits-in-the-app** (Must)
 
 ## Bolt Type
 
@@ -45,9 +54,9 @@ Make downloaded lessons carry their pictures and clips, load a lesson's pictures
 
 ## Stages
 
-- [ ] **1. Plan**: includes deciding where the credits file is bundled, and how the pack names local picture files
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**: includes deciding where the credits file is bundled, and how the pack names local picture files
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

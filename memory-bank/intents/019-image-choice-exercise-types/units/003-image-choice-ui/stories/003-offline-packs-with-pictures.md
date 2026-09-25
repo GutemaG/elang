@@ -2,11 +2,11 @@
 id: 003-offline-packs-with-pictures
 unit: 003-image-choice-ui
 intent: 019-image-choice-exercise-types
-status: draft
+status: complete
 priority: must
 created: '2026-09-25T06:15:00Z'
 assigned_bolt: 054-picture-offline-and-credits
-implemented: false
+implemented: true
 ---
 
 # Story: 003-offline-packs-with-pictures
@@ -19,13 +19,13 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** a lesson with both types, **When** downloaded, **Then** every picture and the audio question's clip are saved on the device, and the pack refers to them by local path
-- [ ] **Given** that pack with no network, **When** played, **Then** every picture shows and the clip plays
-- [ ] **Given** any picture or clip that fails to download, **When** downloading, **Then** no pack is saved and the download reports failure, as today
-- [ ] **Given** a cached copy (not a download) holding either type, **When** opened offline, **Then** the learner sees "download required"
-- [ ] **Given** a downloaded pack, **When** removed, **Then** its pictures and clips are deleted from the device
-- [ ] **Given** the downloads screen, **When** it shows a pack's size, **Then** the size includes its pictures
-- [ ] **Given** the pack store, **When** a pack with both types is saved and loaded, **Then** it round-trips unchanged
+- [x] **Given** a lesson with both types, **When** downloaded, **Then** every picture and the audio question's clip are saved on the device, and the pack refers to them by local path
+- [x] **Given** that pack with no network, **When** played, **Then** every picture shows and the clip plays
+- [x] **Given** any picture or clip that fails to download, **When** downloading, **Then** no pack is saved and the download reports failure, as today
+- [x] **Given** a cached copy (not a download) holding either type, **When** opened offline, **Then** the learner sees "download required"
+- [x] **Given** a downloaded pack, **When** removed, **Then** its pictures and clips are deleted from the device
+- [x] **Given** the downloads screen, **When** it shows a pack's size, **Then** the size includes its pictures
+- [x] **Given** the pack store, **When** a pack with both types is saved and loaded, **Then** it round-trips unchanged
 
 ## Technical Notes
 

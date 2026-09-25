@@ -172,8 +172,46 @@ class _LessonScreenState extends State<LessonScreen> {
       );
       controller.addListener(_onControllerChanged);
       _controller = controller;
+      _loadPicturesEarly(content);
       return content;
     });
+  }
+
+  /// Starts loading every picture in [content] now, at the size its tile
+  /// will ask for, so a picture question rarely shows one still arriving
+  /// (019-image-choice-exercise-types, story 004).
+  ///
+  /// Nothing waits on it, and a failure is dropped: Flutter forgets a
+  /// picture that failed, so its tile simply loads it again when shown. A
+  /// downloaded pack's pictures are files, so they load from the device.
+  void _loadPicturesEarly(LessonContent content) {
+    if (!mounted) return;
+    final sources = {
+      for (final exercise in content.exercises)
+        for (final picture in _picturesOf(exercise)) picture.imageUrl,
+    };
+    if (sources.isEmpty) return;
+    // The answers span the screen less the page's side margins; a wrong
+    // guess only means the tile loads its own copy, as it would anyway.
+    final answersWidth =
+        MediaQuery.sizeOf(context).width - AppSpacing.marginMobile * 2;
+    final pictureSide = PictureTile.pictureSideFor(
+      PictureGrid.tileWidthFor(answersWidth),
+    );
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    for (final source in sources) {
+      unawaited(
+        precacheImage(
+          PictureTile.decodedImage(
+            pictureImageFor(source),
+            pictureSide: pictureSide,
+            devicePixelRatio: devicePixelRatio,
+          ),
+          context,
+          onError: (_, _) {},
+        ),
+      );
+    }
   }
 
   /// Practice -> the pre-assembled [LessonScreen.practiceContent], no
@@ -202,10 +240,10 @@ class _LessonScreenState extends State<LessonScreen> {
     }
     final pack = await widget.lessonPackStore!.load(widget.lessonId);
     if (pack != null) return pack;
-    // A cached copy streams its audio, which cannot play offline -- only a
-    // downloaded pack carries the clips. Without a question that plays a
-    // clip the copy is as good as a pack.
-    if (copy != null && !copy.exercises.any((e) => _clipOf(e) != null)) {
+    // A cached copy streams its clips and pictures, which cannot load
+    // offline -- only a downloaded pack carries them. Without such a
+    // question the copy is as good as a pack.
+    if (copy != null && !copy.exercises.any(_needsItsFiles)) {
       return _withCurrentBeans(copy);
     }
     throw const LessonNotDownloadedOfflineException();
@@ -532,6 +570,19 @@ class _MistakeReview extends StatelessWidget {
     );
   }
 }
+
+/// Whether a question can only be played offline from a download: its clip
+/// or its pictures are otherwise on the network (story 003 of intent 019
+/// added both picture types).
+bool _needsItsFiles(Exercise exercise) =>
+    _clipOf(exercise) != null || _picturesOf(exercise).isNotEmpty;
+
+/// A picture question's pictures; none for any other question.
+List<PictureChoice> _picturesOf(Exercise exercise) => switch (exercise) {
+  ImageChoiceExercise e => e.choices,
+  AudioImageChoiceExercise e => e.choices,
+  _ => const [],
+};
 
 /// The audio a question plays, if it has any. Every question with a clip
 /// plays it once by itself when it appears.

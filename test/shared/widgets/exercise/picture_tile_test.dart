@@ -745,6 +745,24 @@ void main() {
       expect((left + right) / 2, closeTo(host.center.dx, 0.01));
     });
 
+    testWidgets('tileWidthFor gives the width the grid really lays a tile '
+        'out at, narrow and wide', (tester) async {
+      tester.view.physicalSize = const Size(1000, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      for (final width in [300.0, 412.0, 900.0]) {
+        await tester.pumpWidget(grid(2, width: width));
+        await tester.pumpAndSettle();
+        expect(
+          PictureGrid.tileWidthFor(width),
+          rectOf(tester, 0).width,
+          reason: '$width',
+        );
+      }
+      // Capped: past 400 px the tiles stop growing.
+      expect(PictureGrid.tileWidthFor(900), (400 - 12) / 2);
+    });
+
     for (final width in [320.0, 360.0]) {
       for (final scale in [1.0, 1.3]) {
         testWidgets('at ${width}px and ${scale}x: every tile is over the '

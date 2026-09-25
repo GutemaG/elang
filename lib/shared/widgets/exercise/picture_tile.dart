@@ -42,6 +42,32 @@ class PictureTile extends StatelessWidget {
   /// What shows in place of a picture that could not be loaded.
   static const failedKey = ValueKey('picture-tile-failed');
 
+  /// The side of the square picture inside a tile [tileWidth] wide: the
+  /// tile less its border and inset on each side.
+  static double pictureSideFor(double tileWidth) =>
+      tileWidth - (AnswerTile.borderWidth + AnswerTile.pictureInset) * 2;
+
+  /// [image] as a tile decodes it: to fit a square of [pictureSide]
+  /// logical pixels on a screen of [devicePixelRatio], and never enlarged.
+  ///
+  /// The tile and anything loading its picture early (the lesson screen)
+  /// both use this, so an early load is the very image the tile draws
+  /// rather than a second copy at another size.
+  static ImageProvider decodedImage(
+    ImageProvider image, {
+    required double pictureSide,
+    required double devicePixelRatio,
+  }) {
+    if (!pictureSide.isFinite || pictureSide <= 0) return image;
+    final pixels = (pictureSide * devicePixelRatio).ceil();
+    return ResizeImage(
+      image,
+      width: pixels,
+      height: pixels,
+      policy: ResizeImagePolicy.fit,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnswerTile(
@@ -67,6 +93,10 @@ class PictureGrid extends StatelessWidget {
   static const double gap = AppSpacing.spaceSm;
   static const double maxWidth = 400;
 
+  /// How wide each tile is in a grid given [availableWidth].
+  static double tileWidthFor(double availableWidth) =>
+      (math.min(availableWidth, maxWidth) - gap) / 2;
+
   @override
   Widget build(BuildContext context) {
     assert(
@@ -79,7 +109,7 @@ class PictureGrid extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: maxWidth),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final side = (constraints.maxWidth - gap) / 2;
+            final side = tileWidthFor(constraints.maxWidth);
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -118,18 +148,13 @@ class _FittedPicture extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final ratio = MediaQuery.maybeDevicePixelRatioOf(context) ?? 1;
-        final side = math.max(constraints.maxWidth, constraints.maxHeight);
         // Decoded no bigger than it is drawn: a 512 px picture in a 138 px
         // tile costs a 138 px bitmap's memory, not a 512 px one's.
-        final ImageProvider decoded = side.isFinite && side > 0
-            ? ResizeImage(
-                image,
-                width: (side * ratio).ceil(),
-                height: (side * ratio).ceil(),
-                policy: ResizeImagePolicy.fit,
-              )
-            : image;
+        final decoded = PictureTile.decodedImage(
+          image,
+          pictureSide: math.max(constraints.maxWidth, constraints.maxHeight),
+          devicePixelRatio: MediaQuery.maybeDevicePixelRatioOf(context) ?? 1,
+        );
         return Image(
           image: decoded,
           fit: BoxFit.contain,

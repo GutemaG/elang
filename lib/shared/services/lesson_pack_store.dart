@@ -13,9 +13,9 @@ import '../models/lesson_content.dart';
 ///
 /// Stores the fully-resolved [LessonContent] (same shape [LessonApi.startLesson]
 /// already returns), not raw backend JSON -- avoids a second parsing code
-/// path for the offline case. [save] expects any [ListeningExercise.audioUrl]
-/// values to already be local file paths, not remote URLs -- rewriting a
-/// remote URL to a local path after downloading the audio is
+/// path for the offline case. [save] expects every clip and picture (see
+/// [packLocalFiles]) to already be a local file path, not a remote URL --
+/// rewriting a remote URL to a local path after downloading the file is
 /// [LessonPackDownloader]'s job, not this store's.
 ///
 /// Kept as an interface (mirrors [ConnectivityMonitor]/[LessonAudioPlayer])
@@ -136,16 +136,15 @@ class SqfliteLessonPackStore implements LessonPackStore {
 
   @override
   Future<void> delete(String lessonId) async {
-    // Deletes each downloaded audio file *before* the DB row, not just the
-    // row -- fixes a leak from 009-offline-caching-and-sync-ui where
-    // deleting a pack never freed the audio it had downloaded to disk.
+    // Deletes each downloaded clip and picture *before* the DB row, not
+    // just the row -- fixes a leak from 009-offline-caching-and-sync-ui
+    // where deleting a pack never freed the audio it had downloaded to
+    // disk, and, since bolt 054, frees its pictures too.
     final cached = await load(lessonId);
     if (cached != null) {
-      for (final exercise in cached.exercises) {
-        if (exercise is ListeningExercise) {
-          final file = File(exercise.audioUrl);
-          if (await file.exists()) await file.delete();
-        }
+      for (final path in packLocalFiles(cached)) {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
       }
     }
     final db = await _database();
@@ -172,11 +171,9 @@ class SqfliteLessonPackStore implements LessonPackStore {
       final decoded = jsonDecode(contentJson) as Map<String, dynamic>;
       final content = packContentFromJson(decoded);
       var sizeBytes = contentJson.length;
-      for (final exercise in content.exercises) {
-        if (exercise is ListeningExercise) {
-          final file = File(exercise.audioUrl);
-          if (await file.exists()) sizeBytes += await file.length();
-        }
+      for (final path in packLocalFiles(content)) {
+        final file = File(path);
+        if (await file.exists()) sizeBytes += await file.length();
       }
       summaries.add(
         DownloadedPackSummary(
@@ -192,6 +189,43 @@ class SqfliteLessonPackStore implements LessonPackStore {
     return summaries;
   }
 }
+
+/// Every file on the device that [content] refers to: listening clips, the
+/// audio picture question's clip, and every picture -- each once, however
+/// many choices share it (bolt 054).
+///
+/// Web addresses and bundled `assets/` paths are left out: they are not
+/// the pack's to delete or to count. Deleting a pack and measuring it both
+/// use this, so the two can never disagree about what a pack holds, and it
+/// is a pure function so a `flutter test` can check it without `sqflite`.
+Set<String> packLocalFiles(LessonContent content) {
+  final paths = <String>{};
+  for (final exercise in content.exercises) {
+    switch (exercise) {
+      case ListeningExercise e:
+        paths.add(e.audioUrl);
+      case ImageChoiceExercise e:
+        paths.addAll(e.choices.map((p) => p.imageUrl));
+      case AudioImageChoiceExercise e:
+        paths.add(e.audioUrl);
+        paths.addAll(e.choices.map((p) => p.imageUrl));
+      case MultipleChoiceExercise() ||
+          SentenceConstructionExercise() ||
+          MatchPairsExercise() ||
+          GapFillExercise():
+        break;
+    }
+  }
+  return {
+    for (final path in paths)
+      if (!_isRemoteOrBundled(path)) path,
+  };
+}
+
+bool _isRemoteOrBundled(String path) =>
+    path.startsWith('http://') ||
+    path.startsWith('https://') ||
+    path.startsWith('assets/');
 
 /// The pack's JSON mapping, deliberately at the top level rather than
 /// private to [SqfliteLessonPackStore].

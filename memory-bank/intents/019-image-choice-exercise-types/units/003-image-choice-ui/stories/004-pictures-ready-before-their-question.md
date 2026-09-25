@@ -2,11 +2,11 @@
 id: 004-pictures-ready-before-their-question
 unit: 003-image-choice-ui
 intent: 019-image-choice-exercise-types
-status: draft
+status: complete
 priority: should
 created: '2026-09-25T06:15:00Z'
 assigned_bolt: 054-picture-offline-and-credits
-implemented: false
+implemented: true
 ---
 
 # Story: 004-pictures-ready-before-their-question
@@ -19,10 +19,10 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** a lesson starting online, **When** it loads, **Then** every picture it uses is requested for caching
-- [ ] **Given** a request that fails, **When** the lesson runs, **Then** nothing is blocked and the tile loads the picture again when shown
-- [ ] **Given** a downloaded pack, **When** it starts, **Then** its local pictures are warmed from the device, with no network request
-- [ ] **Given** a lesson with no pictures, **When** it starts, **Then** nothing extra happens
+- [x] **Given** a lesson starting online, **When** it loads, **Then** every picture it uses is requested for caching
+- [x] **Given** a request that fails, **When** the lesson runs, **Then** nothing is blocked and the tile loads the picture again when shown
+- [x] **Given** a downloaded pack, **When** it starts, **Then** its local pictures are warmed from the device, with no network request
+- [x] **Given** a lesson with no pictures, **When** it starts, **Then** nothing extra happens
 
 ## Technical Notes
 

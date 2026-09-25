@@ -2,11 +2,11 @@
 id: 005-picture-credits-in-the-app
 unit: 003-image-choice-ui
 intent: 019-image-choice-exercise-types
-status: draft
+status: complete
 priority: must
 created: '2026-09-25T06:15:00Z'
 assigned_bolt: 054-picture-offline-and-credits
-implemented: false
+implemented: true
 ---
 
 # Story: 005-picture-credits-in-the-app
@@ -19,10 +19,10 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** settings, **When** opened, **Then** there is a "Licences" entry
-- [ ] **Given** the entry, **When** tapped, **Then** Flutter's licence page opens, listing the package licences and the picture credits
-- [ ] **Given** each credited picture, **When** listed, **Then** it shows the author, the source and the licence, from the committed credits file
-- [ ] **Given** the credits file, **When** a picture is added to it, **Then** the app lists it with no code change
+- [x] **Given** settings, **When** opened, **Then** there is a "Licences" entry
+- [x] **Given** the entry, **When** tapped, **Then** Flutter's licence page opens, listing the package licences and the picture credits
+- [x] **Given** each credited picture, **When** listed, **Then** it shows the author, the source and the licence, from the committed credits file
+- [x] **Given** the credits file, **When** a picture is added to it, **Then** the app lists it with no code change
 
 ## Technical Notes
 

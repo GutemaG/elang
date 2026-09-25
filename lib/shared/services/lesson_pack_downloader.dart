@@ -15,8 +15,8 @@ import 'lesson_pack_store.dart';
 /// download affordance (009-offline-caching-and-sync-ui, story 001).
 enum LessonDownloadStatus { notDownloaded, downloading, downloaded, failed }
 
-/// Downloads a lesson's content and audio for offline use, then persists it
-/// via [LessonPackStore].
+/// Downloads a lesson's content, clips and pictures for offline use, then
+/// persists it via [LessonPackStore].
 ///
 /// A `ChangeNotifier` (same pattern as `LessonController`) so the dashboard
 /// can show live per-lesson download progress without polling.
@@ -52,8 +52,8 @@ class LessonPackDownloader extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Fetches [lessonId]'s content, downloads every listening exercise's
-  /// audio into local storage, and persists the result. Safe to call again
+  /// Fetches [lessonId]'s content, downloads every clip and picture into
+  /// local storage, and persists the result. Safe to call again
   /// for an already-downloaded lesson (re-downloads and overwrites, e.g. to
   /// pick up a content-version change -- no separate "update" method).
   Future<void> downloadLesson(String lessonId) async {
@@ -61,47 +61,97 @@ class LessonPackDownloader extends ChangeNotifier {
     notifyListeners();
     try {
       final content = await _lessonApi.startLesson(lessonId);
-      final withLocalAudio = await _downloadAudioAndRewrite(content);
+      final withLocalFiles = await _downloadFilesAndRewrite(content);
       await _packStore.save(
-        withLocalAudio,
+        withLocalFiles,
         courseId: currentCourse?.id,
         courseTitle: currentCourse?.title,
       );
       _statusByLessonId[lessonId] = LessonDownloadStatus.downloaded;
     } catch (e, stackTrace) {
       // A failed download leaves no partial pack behind -- `_packStore.save`
-      // is never reached unless every audio file downloaded successfully,
-      // so there's nothing half-written to clean up.
+      // is never reached unless every file downloaded successfully, and
+      // the files this attempt created are removed again (see
+      // `_downloadFilesAndRewrite`).
       debugPrint('LessonPackDownloader: download failed for $lessonId: $e\n$stackTrace');
       _statusByLessonId[lessonId] = LessonDownloadStatus.failed;
     }
     notifyListeners();
   }
 
-  Future<LessonContent> _downloadAudioAndRewrite(LessonContent content) async {
-    final hasAudio = content.exercises.any((e) => e is ListeningExercise);
-    if (!hasAudio) return content;
+  /// Downloads every clip and picture [content] uses into this lesson's
+  /// folder and points the exercises at the saved files (bolt 054 added
+  /// pictures and the audio picture question's clip).
+  ///
+  /// Files are named after their exercise: `{id}{ext}` for a clip and
+  /// `{id}-picture-{n}{ext}` for the picture in choice `n`. An address is
+  /// fetched once per pack, so choices sharing a picture share its file.
+  ///
+  /// If any file fails, those this attempt created are deleted before the
+  /// error goes on, so a download that runs out of space leaves nothing
+  /// behind. Files an earlier download of this lesson saved are only ever
+  /// overwritten, so that pack stays playable.
+  Future<LessonContent> _downloadFilesAndRewrite(LessonContent content) async {
+    if (!content.exercises.any(_hasFiles)) return content;
 
     final documentsDir = await getApplicationDocumentsDirectory();
     final packDir = Directory('${documentsDir.path}/lesson_packs/${content.lessonId}');
     await packDir.create(recursive: true);
 
+    final created = <File>[];
+    final savedByUrl = <String, String>{};
+    Future<String> fetch(String url, String name) async {
+      final saved = savedByUrl[url];
+      if (saved != null) return saved;
+      final path = await _downloadFile(url, packDir, name, created);
+      savedByUrl[url] = path;
+      return path;
+    }
+
+    Future<List<PictureChoice>> fetchPictures(String exerciseId, List<PictureChoice> choices) async => [
+      for (var n = 0; n < choices.length; n++)
+        PictureChoice(
+          imageUrl: await fetch(choices[n].imageUrl, '$exerciseId-picture-$n'),
+          altText: choices[n].altText,
+        ),
+    ];
+
     final rewrittenExercises = <Exercise>[];
-    for (final exercise in content.exercises) {
-      if (exercise is ListeningExercise) {
-        final localPath = await _downloadAudioFile(exercise.audioUrl, packDir, exercise.id);
-        rewrittenExercises.add(
-          ListeningExercise(
-            id: exercise.id,
-            audioUrl: localPath,
-            instruction: exercise.instruction,
-            options: exercise.options,
-            correctOptionIndex: exercise.correctOptionIndex,
+    try {
+      for (final exercise in content.exercises) {
+        rewrittenExercises.add(switch (exercise) {
+          ListeningExercise e => ListeningExercise(
+            id: e.id,
+            audioUrl: await fetch(e.audioUrl, e.id),
+            instruction: e.instruction,
+            options: e.options,
+            correctOptionIndex: e.correctOptionIndex,
           ),
-        );
-      } else {
-        rewrittenExercises.add(exercise);
+          ImageChoiceExercise e => ImageChoiceExercise(
+            id: e.id,
+            prompt: e.prompt,
+            choices: await fetchPictures(e.id, e.choices),
+            correctOptionIndex: e.correctOptionIndex,
+          ),
+          AudioImageChoiceExercise e => AudioImageChoiceExercise(
+            id: e.id,
+            audioUrl: await fetch(e.audioUrl, e.id),
+            instruction: e.instruction,
+            choices: await fetchPictures(e.id, e.choices),
+            correctOptionIndex: e.correctOptionIndex,
+          ),
+          _ => exercise,
+        });
       }
+    } catch (_) {
+      for (final file in created) {
+        try {
+          if (await file.exists()) await file.delete();
+        } on Object {
+          // Best effort: a file that can't be removed is only wasted space.
+        }
+      }
+      rethrow;
     }
 
     return LessonContent(
@@ -119,17 +169,32 @@ class LessonPackDownloader extends ChangeNotifier {
     );
   }
 
-  Future<String> _downloadAudioFile(String url, Directory packDir, String exerciseId) async {
+  /// Whether [exercise] has a clip or pictures to download.
+  static bool _hasFiles(Exercise exercise) =>
+      exercise is ListeningExercise || exercise is ImageChoiceExercise || exercise is AudioImageChoiceExercise;
+
+  /// Saves [url] as `{name}{ext}` in [packDir], adding it to [created] if it
+  /// was not there before.
+  Future<String> _downloadFile(String url, Directory packDir, String name, List<File> created) async {
     final response = await _httpClient.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      throw LessonPackDownloadException(
-        'Failed to download audio for exercise $exerciseId: HTTP ${response.statusCode}',
-      );
+      throw LessonPackDownloadException('Failed to download $url for $name: HTTP ${response.statusCode}');
     }
-    final extension = url.contains('.') ? url.substring(url.lastIndexOf('.')) : '.mp3';
-    final file = File('${packDir.path}/$exerciseId$extension');
+    final file = File('${packDir.path}/$name${_extensionOf(url)}');
+    final existed = await file.exists();
     await file.writeAsBytes(response.bodyBytes);
+    if (!existed) created.add(file);
     return file.path;
+  }
+
+  /// The extension of [url]'s last path segment, such as `.webp`; a query
+  /// string never ends up in a file name. Empty when there is none: the
+  /// app reads clips and pictures by their content, not their name.
+  static String _extensionOf(String url) {
+    final segments = Uri.parse(url).pathSegments;
+    final last = segments.isEmpty ? '' : segments.last;
+    final dot = last.lastIndexOf('.');
+    return dot <= 0 ? '' : last.substring(dot);
   }
 }
 

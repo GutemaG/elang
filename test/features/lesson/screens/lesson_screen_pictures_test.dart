@@ -390,7 +390,10 @@ void main() {
   });
 
   group('offline, a cached copy', () {
-    testWidgets('with only image choice plays like a pack', (tester) async {
+    // Bolt 054 (story 003) reversed this: until then the pictures showed
+    // their descriptions offline. Now only a download carries them.
+    testWidgets('with only image choice asks for a download: its pictures '
+        'are on the network', (tester) async {
       final cache = InMemoryCourseCacheStore();
       await cache.saveLesson(_lesson([_image]));
 
@@ -399,8 +402,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(PictureGrid), findsOneWidget);
-      expect(find.text('Choose the picture'), findsOneWidget);
+      expect(find.byType(PictureGrid), findsNothing);
+      expect(
+        find.text('Download this lesson while online to take it offline.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('with an audio image choice still asks for a download: its '

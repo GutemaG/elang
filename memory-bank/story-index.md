@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 99
 - **Generated**: 99
-- **Completed**: 85
+- **Completed**: 88
 - **Last updated**: 2026-09-25
 
 ---
@@ -229,16 +229,16 @@
 
 - [x] **001-picture-tile-in-the-kit** (image-choice-ui): A picture answer tile that looks and reacts like every other tile - Must - ✅ COMPLETED (bolt 053-picture-tile-and-lesson)
 - [x] **002-picture-questions-in-lessons-and-practice** (image-choice-ui): Both picture questions in lessons and practice - Must - ✅ COMPLETED (bolt 053-picture-tile-and-lesson)
-- [x] **003-offline-packs-with-pictures** (image-choice-ui): Downloaded lessons carry their pictures - Must - ✅ GENERATED (bolt 054-picture-offline-and-credits)
-- [x] **004-pictures-ready-before-their-question** (image-choice-ui): A lesson's pictures load before they are needed - Should - ✅ GENERATED (bolt 054-picture-offline-and-credits)
-- [x] **005-picture-credits-in-the-app** (image-choice-ui): Picture credits in the app's licences - Must - ✅ GENERATED (bolt 054-picture-offline-and-credits)
+- [x] **003-offline-packs-with-pictures** (image-choice-ui): Downloaded lessons carry their pictures - Must - ✅ COMPLETED (bolt 054-picture-offline-and-credits)
+- [x] **004-pictures-ready-before-their-question** (image-choice-ui): A lesson's pictures load before they are needed - Should - ✅ COMPLETED (bolt 054-picture-offline-and-credits)
+- [x] **005-picture-credits-in-the-app** (image-choice-ui): Picture credits in the app's licences - Must - ✅ COMPLETED (bolt 054-picture-offline-and-credits)
 
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 14
+- **Generated**: 11
 - **In Progress**: 0
-- **Completed**: 85
+- **Completed**: 88
 - **Retired**: 1

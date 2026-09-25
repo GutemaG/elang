@@ -138,12 +138,14 @@ flutter:
     - assets/sounds/incorrect.wav
     # Four of the credited sample pictures (019-image-choice-exercise-
     # types, bolt 053), for the fake API's picture questions and the
-    # component gallery. Copies of `backend/sample_pictures/`; their
-    # credits sit beside them in `assets/pictures/credits.json`.
+    # component gallery. Copies of `backend/sample_pictures/`, credited
+    # in the app from `assets/pictures/credits.json` (bolt 054).
     - assets/pictures/water.webp
     - assets/pictures/dog.webp
     - assets/pictures/house.webp
     - assets/pictures/cat.webp
+    # Their credits, listed on the licence page (bolt 054).
+    - assets/pictures/credits.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

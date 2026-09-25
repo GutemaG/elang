@@ -1,7 +1,7 @@
 ---
 intent: 019-image-choice-exercise-types
 phase: inception
-status: inception-complete
+status: complete
 created: '2026-09-24T21:22:18Z'
 updated: '2026-09-25T06:23:36Z'
 ---

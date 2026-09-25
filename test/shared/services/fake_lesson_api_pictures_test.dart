@@ -83,10 +83,12 @@ void main() {
       }
     });
 
-    test('are all listed in pubspec.yaml, and nothing else under '
-        'pictures is', () {
+    test('are all listed in pubspec.yaml with their credits, and nothing '
+        'else under pictures is', () {
       expect(_listedPictures(), [
         for (final name in _bundled) 'assets/pictures/$name',
+        // Bundled for the licence page (bolt 054).
+        'assets/pictures/credits.json',
       ]);
     });
 
