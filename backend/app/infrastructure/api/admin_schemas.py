@@ -36,8 +36,8 @@ class AdminTreeExercise(BaseModel):
     order_index: int
     type: str
     prompt: str
-    # Listening exercises only: the piano placeholder, a hosted https clip,
-    # or a local-backend `/media` clip.
+    # Listening and audio image choice exercises only: the piano
+    # placeholder, a hosted https clip, or a local-backend `/media` clip.
     audio: AudioStatus | None = None
 
 
@@ -158,3 +158,14 @@ class AudioLinkRequest(BaseModel):
 class AudioLinkResponse(BaseModel):
     url: str
     content_type: str
+
+
+# --- pictures (bolt 050) ------------------------------------------------------
+
+
+class ImageUploadRequest(AudioUploadRequest):
+    """The same request as audio's, so the admin site uploads both one way."""
+
+
+class ImageUploadResponse(AudioUploadResponse):
+    """The same response as audio's."""

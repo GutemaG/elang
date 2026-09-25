@@ -9,27 +9,39 @@ from __future__ import annotations
 
 from app.domain.lesson.entities import Exercise
 from app.domain.lesson.value_objects import (
+    AudioImageChoiceContent,
     ChoiceAnswerKey,
     ExerciseType,
     GapFillContent,
+    ImageChoiceContent,
     ListeningContent,
     MatchPairsContent,
     MultipleChoiceContent,
     PairAnswerKey,
+    PictureChoice,
     SentenceConstructionContent,
     SequenceAnswerKey,
     SpellTilesContent,
 )
 from app.infrastructure.api.lesson_schemas import (
+    AudioImageChoiceExerciseResponse,
     ChoiceResponse,
     ExerciseResponse,
     GapFillExerciseResponse,
+    ImageChoiceExerciseResponse,
     ListeningExerciseResponse,
     MatchPairsExerciseResponse,
     MultipleChoiceExerciseResponse,
+    PictureChoiceResponse,
     SentenceConstructionExerciseResponse,
     SpellTilesExerciseResponse,
 )
+
+
+def _pictures(choices: tuple[PictureChoice, ...]) -> list[PictureChoiceResponse]:
+    return [
+        PictureChoiceResponse(id=c.id, image_url=c.image_url, alt_text=c.alt_text) for c in choices
+    ]
 
 
 def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
@@ -108,5 +120,26 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             prompt=exercise.prompt,
             tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.tiles],
             correct_sequence=list(exercise.answer_key.correct_sequence),
+        )
+    if exercise.type is ExerciseType.IMAGE_CHOICE:
+        assert isinstance(exercise.content, ImageChoiceContent)
+        assert isinstance(exercise.answer_key, ChoiceAnswerKey)
+        return ImageChoiceExerciseResponse(
+            id=exercise.id,
+            order_index=exercise.order_index,
+            prompt=exercise.prompt,
+            choices=_pictures(exercise.content.choices),
+            correct_choice_id=exercise.answer_key.correct_choice_id,
+        )
+    if exercise.type is ExerciseType.AUDIO_IMAGE_CHOICE:
+        assert isinstance(exercise.content, AudioImageChoiceContent)
+        assert isinstance(exercise.answer_key, ChoiceAnswerKey)
+        return AudioImageChoiceExerciseResponse(
+            id=exercise.id,
+            order_index=exercise.order_index,
+            prompt=exercise.prompt,
+            audio_url=exercise.content.audio_url,
+            choices=_pictures(exercise.content.choices),
+            correct_choice_id=exercise.answer_key.correct_choice_id,
         )
     raise ValueError(f"No response mapping for exercise type {exercise.type}")

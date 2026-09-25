@@ -25,6 +25,14 @@ SEEDED = _exercises(CURRICULUM)
 LOCAL = _exercises(LOCAL_CURRICULUM)
 
 _TILES = [{"id": "a", "text": "A"}, {"id": "b", "text": "B"}, {"id": "c", "text": "C"}]
+_PICTURES = [
+    {"id": "a", "image_url": "https://cdn.example/a.webp", "alt_text": "A"},
+    {"id": "b", "image_url": "https://cdn.example/b.webp", "alt_text": "B"},
+    {"id": "c", "image_url": "https://cdn.example/c.jpg", "alt_text": "C"},
+]
+# Seeded only locally, by bolt 051's picture lab: production content waits
+# until its pictures are on R2, which needs the owner's go-ahead.
+_LOCAL_ONLY_TYPES = {"image_choice", "audio_image_choice"}
 
 VALID: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {
     "multiple_choice": ({"choices": _TILES}, {"correct_choice_id": "b"}),
@@ -45,6 +53,11 @@ VALID: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {
         {"correct_choice_id": "c"},
     ),
     "spell_tiles": ({"tiles": _TILES}, {"correct_sequence": ["c", "a"]}),
+    "image_choice": ({"choices": _PICTURES}, {"correct_choice_id": "b"}),
+    "audio_image_choice": (
+        {"audio_url": "https://cdn.example/a.m4a", "choices": _PICTURES},
+        {"correct_choice_id": "c"},
+    ),
 }
 
 
@@ -72,7 +85,7 @@ def test_every_seeded_exercise_passes(exercise: dict[str, Any]) -> None:
 
 
 def test_seeded_content_covers_every_type() -> None:
-    assert {e["type"] for e in SEEDED} == {t.value for t in ExerciseType}
+    assert {e["type"] for e in SEEDED} == {t.value for t in ExerciseType} - _LOCAL_ONLY_TYPES
 
 
 @pytest.mark.parametrize("exercise", LOCAL, ids=lambda e: e["slug"])

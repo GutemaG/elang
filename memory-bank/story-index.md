@@ -1,10 +1,10 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 89
-- **Generated**: 89
-- **Completed**: 78
-- **Last updated**: 2026-09-24
+- **Total stories**: 99
+- **Generated**: 99
+- **Completed**: 80
+- **Last updated**: 2026-09-25
 
 ---
 
@@ -212,12 +212,33 @@
 - [x] **004-settings-and-downloads-on-the-library** (screen-migration-ui): Settings and downloads to look like the rest of the app instead of stock system screens - Must - ✅ GENERATED (bolt 049-settings-downloads-and-sweep)
 - [x] **005-consistency-sweep** (screen-migration-ui): Every screen checked together against the same rules - Must - ✅ GENERATED (bolt 049-settings-downloads-and-sweep)
 
+### 019-image-choice-exercise-types
+
+#### Unit: 001-image-choice-service
+
+- [x] **001-picture-question-content-types** (image-choice-service): Store and serve both picture question types - Must - ✅ COMPLETED (bolt 050-image-choice-service)
+- [x] **002-picture-upload-links** (image-choice-service): Upload links and local storage for pictures - Must - ✅ COMPLETED (bolt 050-image-choice-service)
+- [x] **003-sample-picture-questions** (image-choice-service): Sample questions with free-licensed, credited pictures - Must - ✅ GENERATED (bolt 051-image-choice-samples)
+
+#### Unit: 002-image-choice-admin
+
+- [x] **001-picture-upload-with-shrinking** (image-choice-admin): Pick a picture and have it shrunk and uploaded - Must - ✅ GENERATED (bolt 052-image-choice-admin)
+- [x] **002-picture-question-editors-and-preview** (image-choice-admin): Build, check and preview both picture question types - Must - ✅ GENERATED (bolt 052-image-choice-admin)
+
+#### Unit: 003-image-choice-ui
+
+- [x] **001-picture-tile-in-the-kit** (image-choice-ui): A picture answer tile that looks and reacts like every other tile - Must - ✅ GENERATED (bolt 053-picture-tile-and-lesson)
+- [x] **002-picture-questions-in-lessons-and-practice** (image-choice-ui): Both picture questions in lessons and practice - Must - ✅ GENERATED (bolt 053-picture-tile-and-lesson)
+- [x] **003-offline-packs-with-pictures** (image-choice-ui): Downloaded lessons carry their pictures - Must - ✅ GENERATED (bolt 054-picture-offline-and-credits)
+- [x] **004-pictures-ready-before-their-question** (image-choice-ui): A lesson's pictures load before they are needed - Should - ✅ GENERATED (bolt 054-picture-offline-and-credits)
+- [x] **005-picture-credits-in-the-app** (image-choice-ui): Picture credits in the app's licences - Must - ✅ GENERATED (bolt 054-picture-offline-and-credits)
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 11
+- **Generated**: 19
 - **In Progress**: 0
-- **Completed**: 78
+- **Completed**: 80
 - **Retired**: 1

@@ -99,12 +99,12 @@ Backs the `Exercise` entity (member of the `Lesson` aggregate, not its own aggre
 | `id` | `UUID` (Postgres) / `TEXT` (SQLite) | `PRIMARY KEY` | Deterministic, same scheme as `skills.id`. |
 | `lesson_id` | `UUID` (Postgres) / `TEXT` (SQLite) | `NOT NULL`, `FOREIGN KEY REFERENCES lessons(id)` | |
 | `order_index` | `INTEGER` | `NOT NULL` | Position within `lesson_id`. |
-| `type` | `VARCHAR(32)` | `NOT NULL`, `CHECK (type IN ('multiple_choice', 'listening', 'sentence_construction', 'match_pairs', 'gap_fill', 'spell_tiles'))` | Discriminator; originally the 3 types fixed by `002-core-lesson-loop`'s `requirements.md` FR-2, widened to 4 by `004-match-pairs-exercise-type` (migration `c726efa81972`), to 5 by `015-gap-fill-exercise-type` (migration `d1b7e4f2a903`) and to 6 by `016-spell-from-tiles-exercise-type` (migration `f4c2a81e7b56`). All three use `batch_alter_table`, since SQLite can't modify a `CHECK` constraint in place. The constraint is declared twice — in the migration and on `ExerciseModel.__table_args__` — and neither widens on its own. |
-| `prompt` | `TEXT` | `NOT NULL` | The instruction/phrase-to-translate shown to the learner. |
+| `type` | `VARCHAR(32)` | `NOT NULL`, `CHECK (type IN ('multiple_choice', 'listening', 'sentence_construction', 'match_pairs', 'gap_fill', 'spell_tiles', 'image_choice', 'audio_image_choice'))` | Discriminator; originally the 3 types fixed by `002-core-lesson-loop`'s `requirements.md` FR-2, widened to 4 by `004-match-pairs-exercise-type` (migration `c726efa81972`), to 5 by `015-gap-fill-exercise-type` (migration `d1b7e4f2a903`) to 6 by `016-spell-from-tiles-exercise-type` (migration `f4c2a81e7b56`) and to 8 by `019-image-choice-exercise-types` (migration `b5e9d2c7a4f1`). All four use `batch_alter_table`, since SQLite can't modify a `CHECK` constraint in place. The constraint is declared twice — in the migration and on `ExerciseModel.__table_args__` — and neither widens on its own. |
+| `prompt` | `TEXT` | `NOT NULL` | The instruction/phrase-to-translate shown to the learner. For `image_choice` it is the word or question the pictures answer; for `listening` and `audio_image_choice` it is only the instruction. |
 | `content` | `JSON` | `NOT NULL` | Type-specific **renderable** data (`choices`, `word_bank`, `audio_url`, `tiles`) — this, and only this, is what the lesson-content API response serializes. |
 | `answer_key` | `JSON` | `NOT NULL` | Type-specific **correct-answer** data (`correct_choice_id`, `correct_sequence`, or `correct_pairs`). Originally never serialized to an API response (ADR-4); **as of `005-lesson-engagement-service`, it is included in the lesson-content response** (ADR-5, `memory-bank/bolts/005-lesson-engagement-service/adr-5-client-side-grading-with-bounded-server-ledger.md`, which supersedes ADR-4) — grading moved client-side to satisfy the "no network call per exercise" NFR; the account ledger stays server-bounded instead (see ADR-5). |
 
-**Per-type `content` / `answer_key` shapes.** Three answer-key shapes serve six types:
+**Per-type `content` / `answer_key` shapes.** Three answer-key shapes serve eight types:
 
 | `type` | `content` keys | `answer_key` key |
 |---|---|---|
@@ -114,8 +114,12 @@ Backs the `Exercise` entity (member of the `Lesson` aggregate, not its own aggre
 | `match_pairs` | `left_tiles`, `right_tiles` | `correct_pairs` |
 | `gap_fill` | `sentence_before`, `sentence_after`, `choices` | `correct_choice_id` |
 | `spell_tiles` | `tiles` | `correct_sequence` |
+| `image_choice` | `choices` (pictures) | `correct_choice_id` |
+| `audio_image_choice` | `audio_url`, `choices` (pictures) | `correct_choice_id` |
 
 `spell_tiles` is the only type whose tiles may repeat their `text` — `Maaloo` needs two `a` tiles — so its tiles are identified only by `id`, and its `correct_sequence` names *a* correct ordering rather than the only one. Clients grade it by comparing the spelled text, not the id list.
+
+In `image_choice` and `audio_image_choice`, each of the 2 to 4 `choices` is a picture, `{id, image_url, alt_text}`, not a text tile. `image_url` is an https address, or in local development a `/media/images/...` path. `alt_text` is required: it is read to screen readers and shown when a picture fails to load.
 | `created_at` | `TIMESTAMPTZ` (Postgres) / `TIMESTAMP` (SQLite) | `NOT NULL`, `DEFAULT now()` | |
 
 **Constraints**: `UNIQUE (lesson_id, order_index)`; `CHECK` on `type`.

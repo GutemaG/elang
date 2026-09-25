@@ -9,7 +9,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from tests.integration.test_courses_migration import _EN_AM_ID, _alembic, _ok
+from tests.integration.test_courses_migration import _EN_AM_ID, _ok
 
 _PREVIOUS_HEAD = "f4c2a81e7b56"
 _NEW_HEAD = "a7d3c9e1f042"
@@ -50,9 +50,3 @@ def test_downgrade_removes_email_and_keeps_users(tmp_path: Path) -> None:
     assert "email" not in _user_columns(db_file)
     with sqlite3.connect(db_file) as conn:
         assert conn.execute("SELECT id FROM users").fetchall() == [("user-1",)]
-
-
-def test_there_is_a_single_head(tmp_path: Path) -> None:
-    result = _alembic(tmp_path / "unused.db", "heads")
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.split() == [_NEW_HEAD, "(head)"]

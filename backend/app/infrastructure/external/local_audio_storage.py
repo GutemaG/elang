@@ -12,6 +12,12 @@ to R2 later is a copy under the same keys plus a rewrite of the stored
 
 Only ever used when `environment == "local"` and R2 is not configured; see
 `choose_audio_storage`.
+
+Bolt `050-image-choice-service` made the store serve one `MediaKind` each:
+`AUDIO` as before, or `IMAGES` -- pictures in `backend/media/images/`,
+loaded from `/media/images/{key}` and uploaded through their own route. The
+class keeps its name so audio code and tests are unchanged. The kind is
+part of every signature, so a link for one kind never uploads the other.
 """
 
 from __future__ import annotations
@@ -33,22 +39,47 @@ from app.domain.lesson.exceptions import (
     UploadLinkExpiredError,
 )
 from app.infrastructure.external.r2_storage import PresignedUpload, R2Storage
-from app.infrastructure.media import AUDIO_DIR, AUDIO_URL_PREFIX
+from app.infrastructure.media import AUDIO_DIR, AUDIO_URL_PREFIX, IMAGES_DIR, IMAGES_URL_PREFIX
 
 UPLOAD_ROUTE = "/api/v1/audio-files"
+IMAGE_UPLOAD_ROUTE = "/api/v1/image-files"
 
 # Exactly the keys `presign_upload` builds, and nothing else: no `..`, no
 # absolute paths, no separators beyond the two, so a key can only ever name
 # a file two folders below AUDIO_DIR.
 KEY_PATTERN = re.compile(r"[a-z]{2,3}/[A-Za-z0-9_-]{1,64}/[0-9a-f]{12}\.(?:m4a|mp3|webm|ogg)")
+# The same layout for pictures, with the two extensions
+# `presign_image_upload` builds.
+IMAGE_KEY_PATTERN = re.compile(r"[a-z]{2,3}/[A-Za-z0-9_-]{1,64}/[0-9a-f]{12}\.(?:webp|jpg)")
+
+
+@dataclass(frozen=True)
+class MediaKind:
+    """One kind of uploaded file: the URL it loads from, the route that
+    receives it, and the keys it may have. Its folder is looked up when a
+    store is made (`_root_of`), so tests can point it elsewhere."""
+
+    name: str
+    url_prefix: str
+    upload_route: str
+    key_pattern: re.Pattern[str]
+
+
+AUDIO = MediaKind("audio", AUDIO_URL_PREFIX, UPLOAD_ROUTE, KEY_PATTERN)
+IMAGES = MediaKind("images", IMAGES_URL_PREFIX, IMAGE_UPLOAD_ROUTE, IMAGE_KEY_PATTERN)
+
+
+def _root_of(kind: MediaKind) -> Path:
+    return IMAGES_DIR if kind is IMAGES else AUDIO_DIR
+
 
 # Links last minutes, so a secret that dies with the process only voids
 # links nobody is still using. Local development runs one process.
 _PROCESS_SECRET = secrets.token_bytes(32)
 
 
-def is_valid_key(key: str) -> bool:
-    return KEY_PATTERN.fullmatch(key) is not None
+def is_valid_key(key: str, kind: MediaKind = AUDIO) -> bool:
+    return kind.key_pattern.fullmatch(key) is not None
 
 
 @dataclass(frozen=True)
@@ -57,9 +88,10 @@ class LocalAudioStorage:
     # Where the browser reaches this backend, e.g. `http://localhost:8000`.
     upload_base_url: str
     secret: bytes
+    kind: MediaKind = AUDIO
 
     def _signature(self, key: str, content_type: str, size: int, expires: int) -> str:
-        message = f"{key}\n{content_type}\n{size}\n{expires}".encode()
+        message = f"{self.kind.name}\n{key}\n{content_type}\n{size}\n{expires}".encode()
         return hmac.new(self.secret, message, hashlib.sha256).hexdigest()
 
     def presign_put(
@@ -82,9 +114,9 @@ class LocalAudioStorage:
             }
         )
         return PresignedUpload(
-            url=f"{self.upload_base_url}{UPLOAD_ROUTE}/{key}?{query}",
+            url=f"{self.upload_base_url}{self.kind.upload_route}/{key}?{query}",
             headers={"Content-Type": content_type},
-            public_url=f"{AUDIO_URL_PREFIX}/{key}",
+            public_url=f"{self.kind.url_prefix}/{key}",
             expires_in=expires_in,
         )
 
@@ -108,7 +140,7 @@ class LocalAudioStorage:
             raise UploadLinkExpiredError("This upload link has expired; ask for a new one")
 
     def path_for(self, key: str) -> Path:
-        if not is_valid_key(key):
+        if not is_valid_key(key, self.kind):
             raise InvalidUploadLinkError("This upload link is not valid; ask for a new one")
         return self.root / key
 
@@ -132,15 +164,26 @@ class LocalAudioStorage:
 
 
 def choose_audio_storage(
-    settings: Settings, *, upload_base_url: str
+    settings: Settings, *, upload_base_url: str, kind: MediaKind = AUDIO
 ) -> R2Storage | LocalAudioStorage | None:
     """R2 whenever it is fully configured; otherwise, only in local
-    development, this backend; otherwise nothing (uploads answer 503)."""
+    development, this backend; otherwise nothing (uploads answer 503).
+    Pictures share the audio's R2 bucket, told apart by extension."""
     r2 = R2Storage.from_settings(settings)
     if r2 is not None:
         return r2
     if settings.environment == "local":
         return LocalAudioStorage(
-            root=AUDIO_DIR, upload_base_url=upload_base_url.rstrip("/"), secret=_PROCESS_SECRET
+            root=_root_of(kind),
+            upload_base_url=upload_base_url.rstrip("/"),
+            secret=_PROCESS_SECRET,
+            kind=kind,
         )
     return None
+
+
+def choose_image_storage(
+    settings: Settings, *, upload_base_url: str
+) -> R2Storage | LocalAudioStorage | None:
+    """`choose_audio_storage` for pictures (bolt 050)."""
+    return choose_audio_storage(settings, upload_base_url=upload_base_url, kind=IMAGES)

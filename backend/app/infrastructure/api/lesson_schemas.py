@@ -149,13 +149,48 @@ class SpellTilesExerciseResponse(BaseModel):
     correct_sequence: list[str]
 
 
+class PictureChoiceResponse(BaseModel):
+    id: str
+    # An https address, or in local development a `/media/images/...` path
+    # the client resolves against the API, as it does `audio_url`.
+    image_url: str
+    alt_text: str
+
+
+class ImageChoiceExerciseResponse(BaseModel):
+    """`image_choice` (bolt 050): read `prompt`, tap the matching picture.
+    Answered with `correct_choice_id`, like `multiple_choice`."""
+
+    id: str
+    order_index: int
+    type: Literal["image_choice"] = "image_choice"
+    prompt: str
+    choices: list[PictureChoiceResponse]
+    correct_choice_id: str
+
+
+class AudioImageChoiceExerciseResponse(BaseModel):
+    """`audio_image_choice` (bolt 050): hear `audio_url`, tap the matching
+    picture. `prompt` is only the instruction, as for `listening`."""
+
+    id: str
+    order_index: int
+    type: Literal["audio_image_choice"] = "audio_image_choice"
+    prompt: str
+    audio_url: str
+    choices: list[PictureChoiceResponse]
+    correct_choice_id: str
+
+
 ExerciseResponse = Annotated[
     MultipleChoiceExerciseResponse
     | ListeningExerciseResponse
     | SentenceConstructionExerciseResponse
     | MatchPairsExerciseResponse
     | GapFillExerciseResponse
-    | SpellTilesExerciseResponse,
+    | SpellTilesExerciseResponse
+    | ImageChoiceExerciseResponse
+    | AudioImageChoiceExerciseResponse,
     Field(discriminator="type"),
 ]
 

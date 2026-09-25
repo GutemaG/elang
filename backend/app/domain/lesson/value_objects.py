@@ -100,7 +100,10 @@ class ExerciseType(StrEnum):
     scope -- chosen because it needs no audio, no keyboard and no new
     answer key, reusing `ChoiceAnswerKey` as-is. `SPELL_TILES` was added
     by `016-spell-from-tiles-exercise-type` (bolt 032-spell-tiles-service)
-    on the same principle, reusing `SequenceAnswerKey`.
+    on the same principle, reusing `SequenceAnswerKey`. `IMAGE_CHOICE` and
+    `AUDIO_IMAGE_CHOICE` were added by `019-image-choice-exercise-types`
+    (bolt 050-image-choice-service): the first types whose answers are
+    pictures, again reusing `ChoiceAnswerKey`.
 
     Adding a value here is only ever half the change: `exercises.type`
     carries a `CHECK` constraint declared both in a migration and in
@@ -113,6 +116,8 @@ class ExerciseType(StrEnum):
     MATCH_PAIRS = "match_pairs"
     GAP_FILL = "gap_fill"
     SPELL_TILES = "spell_tiles"
+    IMAGE_CHOICE = "image_choice"
+    AUDIO_IMAGE_CHOICE = "audio_image_choice"
 
 
 class SkillState(StrEnum):
@@ -265,6 +270,64 @@ class SpellTilesContent:
             raise ValueError("SpellTilesContent requires at least 2 tiles")
 
 
+MIN_PICTURE_CHOICES = 2
+# Four fill the 2x2 grid the app lays pictures out in (bolt 053).
+MAX_PICTURE_CHOICES = 4
+
+
+@dataclass(frozen=True)
+class PictureChoice:
+    """A choice answered by picture rather than by text.
+
+    `alt_text` is never shown beside the picture; the app reads it to
+    screen readers and shows it in place of a picture that fails to load,
+    so it is required.
+    """
+
+    id: str
+    image_url: str
+    alt_text: str
+
+    def __post_init__(self) -> None:
+        if not self.id:
+            raise ValueError("PictureChoice.id must be a non-empty string")
+        if not self.image_url:
+            raise ValueError("PictureChoice.image_url must be a non-empty string")
+        if not self.alt_text.strip():
+            raise ValueError("PictureChoice.alt_text must be a non-empty string")
+
+
+def _check_picture_count(name: str, choices: tuple[PictureChoice, ...]) -> None:
+    if not MIN_PICTURE_CHOICES <= len(choices) <= MAX_PICTURE_CHOICES:
+        raise ValueError(f"{name} requires {MIN_PICTURE_CHOICES} to {MAX_PICTURE_CHOICES} choices")
+
+
+@dataclass(frozen=True)
+class ImageChoiceContent:
+    """Renderable content for an `image_choice` exercise: the learner reads
+    the exercise's `prompt` and taps the matching picture."""
+
+    choices: tuple[PictureChoice, ...]
+
+    def __post_init__(self) -> None:
+        _check_picture_count("ImageChoiceContent", self.choices)
+
+
+@dataclass(frozen=True)
+class AudioImageChoiceContent:
+    """Renderable content for an `audio_image_choice` exercise: the learner
+    hears `audio_url` and taps the matching picture. The exercise's
+    `prompt` is only the instruction, as for `listening`."""
+
+    audio_url: str
+    choices: tuple[PictureChoice, ...]
+
+    def __post_init__(self) -> None:
+        if not self.audio_url:
+            raise ValueError("AudioImageChoiceContent.audio_url must be a non-empty string")
+        _check_picture_count("AudioImageChoiceContent", self.choices)
+
+
 ExerciseContent = (
     MultipleChoiceContent
     | ListeningContent
@@ -272,12 +335,15 @@ ExerciseContent = (
     | MatchPairsContent
     | GapFillContent
     | SpellTilesContent
+    | ImageChoiceContent
+    | AudioImageChoiceContent
 )
 
 
 @dataclass(frozen=True)
 class ChoiceAnswerKey:
-    """Correct-answer data for `multiple_choice`/`listening` exercises.
+    """Correct-answer data for `multiple_choice`/`listening` exercises, and
+    for `gap_fill`, `image_choice` and `audio_image_choice`.
 
     `correct_choice_id` must reference a `Choice.id` from the sibling
     `content.choices` -- validated by the infrastructure layer when
@@ -331,9 +397,10 @@ class PairAnswerKey:
             raise ValueError("PairAnswerKey requires at least 2 pairs")
 
 
-# Deliberately three members for six exercise types. `gap_fill` reuses
-# `ChoiceAnswerKey` exactly as `multiple_choice`/`listening` do, since
-# "which one of these is right" is the same question however it is asked;
+# Deliberately three members for eight exercise types. `gap_fill`,
+# `image_choice` and `audio_image_choice` reuse `ChoiceAnswerKey` exactly
+# as `multiple_choice`/`listening` do, since "which one of these is right"
+# is the same question however it is asked, in words or in pictures;
 # `spell_tiles` reuses `SequenceAnswerKey` exactly as
 # `sentence_construction` does, since "put these tiles in order" is the
 # same question whether the tiles are words or characters. Keeping it

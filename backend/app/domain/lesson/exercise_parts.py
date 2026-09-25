@@ -18,16 +18,21 @@ from typing import Any
 
 from app.domain.lesson.exceptions import InvalidExerciseError
 from app.domain.lesson.value_objects import (
+    MAX_PICTURE_CHOICES,
+    MIN_PICTURE_CHOICES,
     AnswerKey,
+    AudioImageChoiceContent,
     Choice,
     ChoiceAnswerKey,
     ExerciseContent,
     ExerciseType,
     GapFillContent,
+    ImageChoiceContent,
     ListeningContent,
     MatchPairsContent,
     MultipleChoiceContent,
     PairAnswerKey,
+    PictureChoice,
     SentenceConstructionContent,
     SequenceAnswerKey,
     SpellTilesContent,
@@ -36,6 +41,13 @@ from app.domain.lesson.value_objects import (
 
 def choices_from_json(raw: list[dict[str, Any]]) -> tuple[Choice, ...]:
     return tuple(Choice(id=item["id"], text=item["text"]) for item in raw)
+
+
+def pictures_from_json(raw: list[dict[str, Any]]) -> tuple[PictureChoice, ...]:
+    return tuple(
+        PictureChoice(id=item["id"], image_url=item["image_url"], alt_text=item["alt_text"])
+        for item in raw
+    )
 
 
 def content_from_json(exercise_type: ExerciseType, content: dict[str, Any]) -> ExerciseContent:
@@ -64,6 +76,12 @@ def content_from_json(exercise_type: ExerciseType, content: dict[str, Any]) -> E
         )
     if exercise_type is ExerciseType.SPELL_TILES:
         return SpellTilesContent(tiles=choices_from_json(content["tiles"]))
+    if exercise_type is ExerciseType.IMAGE_CHOICE:
+        return ImageChoiceContent(choices=pictures_from_json(content["choices"]))
+    if exercise_type is ExerciseType.AUDIO_IMAGE_CHOICE:
+        return AudioImageChoiceContent(
+            audio_url=content["audio_url"], choices=pictures_from_json(content["choices"])
+        )
     raise ValueError(f"No content mapping for exercise type {exercise_type}")
 
 
@@ -74,9 +92,9 @@ def answer_key_from_json(exercise_type: ExerciseType, answer_key: dict[str, Any]
         return PairAnswerKey(
             correct_pairs=tuple(tuple(pair) for pair in answer_key["correct_pairs"])
         )
-    # `multiple_choice`, `listening` and `gap_fill` all answer the same
-    # question -- which one of these is right -- so they share
-    # `ChoiceAnswerKey`.
+    # `multiple_choice`, `listening`, `gap_fill`, `image_choice` and
+    # `audio_image_choice` all answer the same question -- which one of
+    # these is right -- so they share `ChoiceAnswerKey`.
     #
     # Note this is a fall-through, not an explicit list, which makes it the
     # one place in this module where a new type is absorbed rather than
@@ -98,9 +116,16 @@ _CONTENT_KEYS: dict[ExerciseType, frozenset[str]] = {
     ExerciseType.MATCH_PAIRS: frozenset({"left_tiles", "right_tiles"}),
     ExerciseType.GAP_FILL: frozenset({"sentence_before", "sentence_after", "choices"}),
     ExerciseType.SPELL_TILES: frozenset({"tiles"}),
+    ExerciseType.IMAGE_CHOICE: frozenset({"choices"}),
+    ExerciseType.AUDIO_IMAGE_CHOICE: frozenset({"audio_url", "choices"}),
 }
 _TILE_LIST_KEYS = frozenset({"choices", "word_bank", "left_tiles", "right_tiles", "tiles"})
 _TEXT_KEYS = frozenset({"audio_url", "sentence_before", "sentence_after"})
+# For these types `choices` holds pictures, not text tiles.
+_PICTURE_TYPES = frozenset({ExerciseType.IMAGE_CHOICE, ExerciseType.AUDIO_IMAGE_CHOICE})
+_AUDIO_TYPES = frozenset({ExerciseType.LISTENING, ExerciseType.AUDIO_IMAGE_CHOICE})
+_PICTURE_KEYS = frozenset({"id", "image_url", "alt_text"})
+MAX_ALT_TEXT_LENGTH = 200
 
 
 def _answer_keys_for(exercise_type: ExerciseType) -> frozenset[str]:
@@ -145,10 +170,58 @@ def _is_allowed_audio_url(url: str, *, allow_local_media: bool) -> bool:
     return allow_local_media and url.startswith("/media/")
 
 
+def _is_allowed_image_url(url: str, *, allow_local_media: bool) -> bool:
+    if url.startswith("https://") and len(url) > len("https://"):
+        return True
+    # Pictures the local backend stores and serves (bolt 050); like the
+    # Audio Lab's clips, nothing but that backend can show them.
+    return (
+        allow_local_media and url.startswith("/media/images/") and len(url) > len("/media/images/")
+    )
+
+
+def _check_pictures(field: str, pictures: Any, *, allow_local_media: bool) -> None:
+    if not isinstance(pictures, list):
+        raise InvalidExerciseError(field, f"{field} must be a list")
+    if not MIN_PICTURE_CHOICES <= len(pictures) <= MAX_PICTURE_CHOICES:
+        raise InvalidExerciseError(
+            field, f"{field} must have {MIN_PICTURE_CHOICES} to {MAX_PICTURE_CHOICES} pictures"
+        )
+    seen: set[str] = set()
+    for i, picture in enumerate(pictures):
+        where = f"{field}[{i}]"
+        _check_keys(where, picture, _PICTURE_KEYS)
+        for key in ("id", "image_url", "alt_text"):
+            value = picture[key]
+            if not isinstance(value, str) or not value.strip():
+                raise InvalidExerciseError(
+                    f"{where}.{key}", f"{where}.{key} must be a non-empty string"
+                )
+        if len(picture["alt_text"]) > MAX_ALT_TEXT_LENGTH:
+            raise InvalidExerciseError(
+                f"{where}.alt_text",
+                f"{where}.alt_text must be at most {MAX_ALT_TEXT_LENGTH} characters",
+            )
+        if not _is_allowed_image_url(picture["image_url"], allow_local_media=allow_local_media):
+            raise InvalidExerciseError(
+                f"{where}.image_url", f"{where}.image_url must be a full https:// address"
+            )
+        if picture["id"] in seen:
+            raise InvalidExerciseError(f"{where}.id", f"{where}.id repeats {picture['id']!r}")
+        seen.add(picture["id"])
+
+
 def _cross_check(content: ExerciseContent, answer_key: AnswerKey) -> None:
     """The answer key may only name ids that exist in the content."""
     if isinstance(answer_key, ChoiceAnswerKey):
-        assert isinstance(content, MultipleChoiceContent | ListeningContent | GapFillContent)
+        assert isinstance(
+            content,
+            MultipleChoiceContent
+            | ListeningContent
+            | GapFillContent
+            | ImageChoiceContent
+            | AudioImageChoiceContent,
+        )
         ids = {c.id for c in content.choices}
         if answer_key.correct_choice_id not in ids:
             raise InvalidExerciseError(
@@ -214,13 +287,15 @@ def validate_exercise(
 
     _check_keys("content", content, _CONTENT_KEYS[parsed_type])
     for key, value in content.items():
-        if key in _TILE_LIST_KEYS:
+        if key == "choices" and parsed_type in _PICTURE_TYPES:
+            _check_pictures(f"content.{key}", value, allow_local_media=allow_local_media)
+        elif key in _TILE_LIST_KEYS:
             _check_tiles(f"content.{key}", value)
         elif key in _TEXT_KEYS and not isinstance(value, str):
             raise InvalidExerciseError(f"content.{key}", f"content.{key} must be text")
     _check_keys("answer_key", answer_key, _answer_keys_for(parsed_type))
 
-    if parsed_type is ExerciseType.LISTENING and not _is_allowed_audio_url(
+    if parsed_type in _AUDIO_TYPES and not _is_allowed_audio_url(
         content["audio_url"], allow_local_media=allow_local_media
     ):
         raise InvalidExerciseError(

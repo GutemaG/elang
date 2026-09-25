@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application import admin_audio_use_cases as audio_uc
 from app.application import admin_content_use_cases as uc
+from app.application import admin_image_use_cases as image_uc
 from app.config import get_settings
 from app.domain.entities import User
 from app.domain.lesson.exceptions import ContentNotFoundError
@@ -39,6 +40,8 @@ from app.infrastructure.api.admin_schemas import (
     AudioUploadResponse,
     CreateSectionRequest,
     ExerciseRequest,
+    ImageUploadRequest,
+    ImageUploadResponse,
     ReorderRequest,
     TitleRequest,
     UpdateSectionRequest,
@@ -59,6 +62,7 @@ from app.infrastructure.external.audio_link_checker import AudioLinkChecker
 from app.infrastructure.external.local_audio_storage import (
     LocalAudioStorage,
     choose_audio_storage,
+    choose_image_storage,
 )
 from app.infrastructure.external.r2_storage import R2Storage
 
@@ -81,6 +85,11 @@ def get_audio_storage(request: Request) -> R2Storage | LocalAudioStorage | None:
     """Overridable in tests. R2 when configured; in local development
     without R2, this backend (bolt 041); otherwise `None` (503)."""
     return choose_audio_storage(get_settings(), upload_base_url=str(request.base_url))
+
+
+def get_image_storage(request: Request) -> R2Storage | LocalAudioStorage | None:
+    """Overridable in tests. As `get_audio_storage`, for pictures (bolt 050)."""
+    return choose_image_storage(get_settings(), upload_base_url=str(request.base_url))
 
 
 def get_audio_link_checker() -> AudioLinkChecker:
@@ -122,7 +131,7 @@ def _exercise(row: ExerciseModel) -> AdminExercise:
 
 
 def _audio_status(exercise_type: str, content: dict[str, Any]) -> AudioStatus | None:
-    if exercise_type != "listening":
+    if exercise_type not in ("listening", "audio_image_choice"):
         return None
     url = content.get("audio_url", "")
     if url == PLACEHOLDER_AUDIO_URL:
@@ -457,3 +466,27 @@ async def check_audio_link(
     """Checks a pasted link answers with audio before the admin saves it."""
     url, content_type = await audio_uc.check_audio_link(checker, body.url)
     return AudioLinkResponse(url=url, content_type=content_type)
+
+
+# --- pictures (bolt 050) ------------------------------------------------------
+
+
+@router.post("/images/uploads", response_model=ImageUploadResponse, status_code=201)
+async def create_image_upload(
+    body: ImageUploadRequest,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+    storage: R2Storage | LocalAudioStorage | None = Depends(get_image_storage),
+) -> ImageUploadResponse:
+    """A short-lived PUT link for one picture: straight to R2, or to this
+    backend in local development without R2."""
+    key, upload = await image_uc.presign_image_upload(
+        repo, ctx, storage, lesson_id=body.lesson_id, content_type=body.content_type, size=body.size
+    )
+    return ImageUploadResponse(
+        upload_url=upload.url,
+        headers=upload.headers,
+        key=key,
+        public_url=upload.public_url,
+        expires_in=upload.expires_in,
+    )

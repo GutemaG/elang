@@ -18,9 +18,11 @@ from sqlalchemy import CheckConstraint
 
 from app.domain.lesson.entities import Exercise
 from app.domain.lesson.value_objects import (
+    AudioImageChoiceContent,
     ChoiceAnswerKey,
     ExerciseType,
     GapFillContent,
+    ImageChoiceContent,
     ListeningContent,
     MatchPairsContent,
     MultipleChoiceContent,
@@ -31,7 +33,9 @@ from app.domain.lesson.value_objects import (
 )
 from app.infrastructure.api.exercise_mapping import to_exercise_response
 from app.infrastructure.api.lesson_schemas import (
+    AudioImageChoiceExerciseResponse,
     GapFillExerciseResponse,
+    ImageChoiceExerciseResponse,
     ListeningExerciseResponse,
     MatchPairsExerciseResponse,
     MultipleChoiceExerciseResponse,
@@ -54,6 +58,11 @@ _SPELL_TILES = [
     {"id": "t4", "text": "o"},
     {"id": "t5", "text": "a"},
     {"id": "t6", "text": "o"},
+]
+
+_PICTURES = [
+    {"id": "a", "image_url": "https://example.test/coffee.webp", "alt_text": "A cup of coffee"},
+    {"id": "b", "image_url": "https://example.test/tea.webp", "alt_text": "A glass of tea"},
 ]
 
 # One stored row per type: the JSON a repository would read back, and the
@@ -104,6 +113,20 @@ _SAMPLES: dict[ExerciseType, dict[str, Any]] = {
         "content_class": SpellTilesContent,
         "answer_class": SequenceAnswerKey,
         "response_class": SpellTilesExerciseResponse,
+    },
+    ExerciseType.IMAGE_CHOICE: {
+        "content": {"choices": _PICTURES},
+        "answer_key": {"correct_choice_id": "a"},
+        "content_class": ImageChoiceContent,
+        "answer_class": ChoiceAnswerKey,
+        "response_class": ImageChoiceExerciseResponse,
+    },
+    ExerciseType.AUDIO_IMAGE_CHOICE: {
+        "content": {"audio_url": "https://example.test/buna.m4a", "choices": _PICTURES},
+        "answer_key": {"correct_choice_id": "a"},
+        "content_class": AudioImageChoiceContent,
+        "answer_class": ChoiceAnswerKey,
+        "response_class": AudioImageChoiceExerciseResponse,
     },
 }
 

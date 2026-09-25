@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings, get_settings
 from app.infrastructure.api.admin_routers import router as admin_router
+from app.infrastructure.api.audio_file_routers import image_router as image_file_router
 from app.infrastructure.api.audio_file_routers import router as audio_file_router
 from app.infrastructure.api.course_routers import router as course_router
 from app.infrastructure.api.error_handlers import register_exception_handlers
@@ -89,6 +90,7 @@ def create_app() -> FastAPI:
     app.include_router(course_router)
     app.include_router(admin_router)
     app.include_router(audio_file_router)
+    app.include_router(image_file_router)
 
     @app.get("/health", tags=["ops"])
     async def health() -> dict[str, str]:
