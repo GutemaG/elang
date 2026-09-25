@@ -4,9 +4,9 @@ intent: 019-image-choice-exercise-types
 unit_type: backend
 default_bolt_type: simple-construction-bolt
 phase: inception
-status: in-progress
+status: complete
 created: '2026-09-25T06:15:00Z'
-updated: '2026-09-25T09:45:33Z'
+updated: '2026-09-25T13:43:28Z'
 ---
 
 # Unit Brief: Image Choice Service
@@ -74,7 +74,7 @@ Performance, security and compatibility NFRs apply.
 |----------|-------|----------|--------|
 | 001-picture-question-content-types | Store and serve both picture question types | Must | Complete (bolt 050) |
 | 002-picture-upload-links | Upload links and local storage for pictures | Must | Complete (bolt 050) |
-| 003-sample-picture-questions | Sample questions with free-licensed, credited pictures | Must | Planned |
+| 003-sample-picture-questions | Sample questions with free-licensed, credited pictures | Must | Complete (bolt 051) |
 
 ---
 

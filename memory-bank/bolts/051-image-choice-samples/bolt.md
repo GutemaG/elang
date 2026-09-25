@@ -3,14 +3,23 @@ id: 051-image-choice-samples
 unit: 001-image-choice-service
 intent: 019-image-choice-exercise-types
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 003-sample-picture-questions
 created: '2026-09-25T06:15:00Z'
-started: null
-completed: null
+started: '2026-09-25T11:37:52Z'
+completed: '2026-09-25T13:43:28Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-25T12:09:24Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-25T12:27:15Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-25T13:43:27Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 050-image-choice-service
 enables_bolts:
@@ -32,7 +41,7 @@ Choose and download free-licensed pictures, shrink them, commit them with a cred
 
 ## Stories Included
 
-- [ ] **003-sample-picture-questions** (Must)
+- [x] **003-sample-picture-questions** (Must)
 
 ## Bolt Type
 
@@ -41,9 +50,9 @@ Choose and download free-licensed pictures, shrink them, commit them with a cred
 
 ## Stages
 
-- [ ] **1. Plan**: includes deciding the picture set (OpenMoji, Twemoji or Wikimedia Commons), the sample words, and the credits file's format
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**: includes deciding the picture set (OpenMoji, Twemoji or Wikimedia Commons), the sample words, and the credits file's format
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

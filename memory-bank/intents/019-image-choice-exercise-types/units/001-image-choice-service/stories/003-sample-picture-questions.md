@@ -2,11 +2,11 @@
 id: 003-sample-picture-questions
 unit: 001-image-choice-service
 intent: 019-image-choice-exercise-types
-status: draft
+status: complete
 priority: must
 created: '2026-09-25T06:15:00Z'
 assigned_bolt: 051-image-choice-samples
-implemented: false
+implemented: true
 ---
 
 # Story: 003-sample-picture-questions
@@ -19,13 +19,13 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** the sample words, **When** pictures are chosen, **Then** each is CC0, CC BY or CC BY-SA, and its source URL, author and licence are recorded in a committed credits file
-- [ ] **Given** each chosen picture, **When** processed, **Then** it is at most 512 px on its longest side, WebP or JPEG, and at most 300 KB
-- [ ] **Given** the pictures, **When** committed, **Then** they live in a tracked folder, since `backend/media` is git-ignored
-- [ ] **Given** a local SQLite database, **When** the sample seed runs, **Then** it adds at least 3 `image_choice` and 2 `audio_image_choice` questions to the English to Amharic course, copying the pictures into `backend/media/images/`
-- [ ] **Given** each sample question, **When** seeded, **Then** it is linked to a vocabulary word that has no other question, so practice shows it
-- [ ] **Given** the seed, **When** re-run, **Then** it adds nothing twice; **When** pointed at any database but SQLite, **Then** it refuses
-- [ ] **Given** production, **When** this story is done, **Then** nothing has been uploaded to R2 or written to Neon; both wait for the owner's go-ahead
+- [x] **Given** the sample words, **When** pictures are chosen, **Then** each is CC0, CC BY or CC BY-SA, and its source URL, author and licence are recorded in a committed credits file
+- [x] **Given** each chosen picture, **When** processed, **Then** it is at most 512 px on its longest side, WebP or JPEG, and at most 300 KB
+- [x] **Given** the pictures, **When** committed, **Then** they live in a tracked folder, since `backend/media` is git-ignored
+- [x] **Given** a local SQLite database, **When** the sample seed runs, **Then** it adds at least 3 `image_choice` and 2 `audio_image_choice` questions to the English to Amharic course, copying the pictures into `backend/media/images/`
+- [x] **Given** each sample question, **When** seeded, **Then** it is linked to a vocabulary word that has no other question, so practice shows it
+- [x] **Given** the seed, **When** re-run, **Then** it adds nothing twice; **When** pointed at any database but SQLite, **Then** it refuses
+- [x] **Given** production, **When** this story is done, **Then** nothing has been uploaded to R2 or written to Neon; both wait for the owner's go-ahead
 
 ## Technical Notes
 
