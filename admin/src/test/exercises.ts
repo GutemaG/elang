@@ -96,6 +96,36 @@ export const PAIRS = {
   },
 } satisfies ExerciseBody
 
+/** Hosted pictures, the correct one not first. */
+export const IMAGE = {
+  type: 'image_choice',
+  prompt: "Choose the picture: 'ውሻ'",
+  content: {
+    choices: [
+      { id: 'a', image_url: 'https://pub.example/am/lesson-1/water.webp', alt_text: 'A drop of water' },
+      { id: 'b', image_url: 'https://pub.example/am/lesson-1/dog.webp', alt_text: 'A dog' },
+      { id: 'c', image_url: 'https://pub.example/am/lesson-1/house.webp', alt_text: 'A house' },
+    ],
+  },
+  answer_key: { correct_choice_id: 'b' },
+} satisfies ExerciseBody
+
+/** Local-backend pictures and clip, as the Picture Lab seed stores them. */
+export const AUDIO_IMAGE = {
+  type: 'audio_image_choice',
+  prompt: 'Tap the picture you hear',
+  content: {
+    audio_url: '/media/audio/am/one.m4a',
+    choices: [
+      { id: 'a', image_url: '/media/images/samples/number-1.webp', alt_text: 'The number 1' },
+      { id: 'b', image_url: '/media/images/samples/number-2.webp', alt_text: 'The number 2' },
+      { id: 'c', image_url: '/media/images/samples/number-5.webp', alt_text: 'The number 5' },
+      { id: 'd', image_url: '/media/images/samples/number-10.webp', alt_text: 'The number 10' },
+    ],
+  },
+  answer_key: { correct_choice_id: 'a' },
+} satisfies ExerciseBody
+
 /** Stored exercises for lesson-1 of `courseTree()`, as the list endpoint
  * returns them: ex-mc, ex-listening, ex-gap, ex-sentence, ex-spell, ex-pairs. */
 export function lessonExercises(): AdminExercise[] {

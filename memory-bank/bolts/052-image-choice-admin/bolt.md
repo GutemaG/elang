@@ -3,15 +3,24 @@ id: 052-image-choice-admin
 unit: 002-image-choice-admin
 intent: 019-image-choice-exercise-types
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-picture-upload-with-shrinking
   - 002-picture-question-editors-and-preview
 created: '2026-09-25T06:15:00Z'
-started: null
-completed: null
+started: '2026-09-25T11:37:52Z'
+completed: '2026-09-25T13:43:29Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-25T12:09:24Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-25T12:27:15Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-25T13:43:27Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 050-image-choice-service
 enables_bolts: []
@@ -32,8 +41,8 @@ Let admins build both picture question types: pick a picture, have it shrunk and
 
 ## Stories Included
 
-- [ ] **001-picture-upload-with-shrinking** (Must)
-- [ ] **002-picture-question-editors-and-preview** (Must)
+- [x] **001-picture-upload-with-shrinking** (Must)
+- [x] **002-picture-question-editors-and-preview** (Must)
 
 ## Bolt Type
 
@@ -42,9 +51,9 @@ Let admins build both picture question types: pick a picture, have it shrunk and
 
 ## Stages
 
-- [ ] **1. Plan**: includes deciding how WebP support is detected, and the slot layout
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**: includes deciding how WebP support is detected, and the slot layout
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

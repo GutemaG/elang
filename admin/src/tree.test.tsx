@@ -444,6 +444,8 @@ describe('exercises in the tree', () => {
       'Sentence',
       'Spell tiles',
       'Match pairs',
+      'Image choice',
+      'Audio image choice',
     ])
 
     await userEvent.click(menu.getByRole('link', { name: /Gap fill/ }))

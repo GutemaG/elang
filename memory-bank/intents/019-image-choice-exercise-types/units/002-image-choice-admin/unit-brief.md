@@ -4,9 +4,9 @@ intent: 019-image-choice-exercise-types
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
 phase: inception
-status: stories-defined
+status: complete
 created: '2026-09-25T06:15:00Z'
-updated: '2026-09-25T06:15:00Z'
+updated: '2026-09-25T13:43:28Z'
 ---
 
 # Unit Brief: Image Choice Admin
@@ -56,8 +56,8 @@ browsers) NFRs apply.
 
 | Story ID | Title | Priority | Status |
 |----------|-------|----------|--------|
-| 001-picture-upload-with-shrinking | Pick a picture and have it shrunk and uploaded | Must | Planned |
-| 002-picture-question-editors-and-preview | Build, check and preview both picture question types | Must | Planned |
+| 001-picture-upload-with-shrinking | Pick a picture and have it shrunk and uploaded | Must | Complete (bolt 052) |
+| 002-picture-question-editors-and-preview | Build, check and preview both picture question types | Must | Complete (bolt 052) |
 
 ---
 

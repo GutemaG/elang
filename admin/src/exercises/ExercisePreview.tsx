@@ -1,4 +1,5 @@
-import type { ExerciseBody, Tile } from '../types'
+import { PictureImage } from '../pictures/PictureImage'
+import type { ExerciseBody, PictureTile, Tile } from '../types'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 import { TYPE_INFO, pairRows, playableUrl, tilesOf } from './model'
@@ -53,23 +54,17 @@ function Body({ body }: { body: ExerciseBody }) {
     case 'listening':
       return (
         <>
-          {body.content.audio_url.trim() ? (
-            <div className="flex items-center gap-3 rounded-lg bg-inset p-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-forest text-white">
-                <Icon name="volume_up" className="text-2xl" filled />
-              </span>
-              <audio
-                controls
-                preload="none"
-                src={playableUrl(body.content.audio_url.trim())}
-                aria-label="Clip the learner hears"
-                className="h-9 min-w-0 flex-1"
-              />
-            </div>
-          ) : (
-            <p className="rounded-lg bg-terracotta-tint p-3 text-sm text-terracotta">No audio yet.</p>
-          )}
+          <Clip url={body.content.audio_url} />
           <Choices choices={body.content.choices} correct={body.answer_key.correct_choice_id} />
+        </>
+      )
+    case 'image_choice':
+      return <Pictures pictures={body.content.choices} correct={body.answer_key.correct_choice_id} />
+    case 'audio_image_choice':
+      return (
+        <>
+          <Clip url={body.content.audio_url} />
+          <Pictures pictures={body.content.choices} correct={body.answer_key.correct_choice_id} />
         </>
       )
     case 'gap_fill': {
@@ -162,6 +157,52 @@ function Body({ body }: { body: ExerciseBody }) {
       )
     }
   }
+}
+
+function Clip({ url }: { url: string }) {
+  if (!url.trim()) return <p className="rounded-lg bg-terracotta-tint p-3 text-sm text-terracotta">No audio yet.</p>
+  return (
+    <div className="flex items-center gap-3 rounded-lg bg-inset p-3">
+      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-forest text-white">
+        <Icon name="volume_up" className="text-2xl" filled />
+      </span>
+      <audio
+        controls
+        preload="none"
+        src={playableUrl(url.trim())}
+        aria-label="Clip the learner hears"
+        className="h-9 min-w-0 flex-1"
+      />
+    </div>
+  )
+}
+
+/** Picture choices in a 2×2 grid, as the app lays them out. */
+function Pictures({ pictures, correct }: { pictures: PictureTile[]; correct: string }) {
+  return (
+    <ul aria-label="Pictures" className="grid grid-cols-2 gap-2">
+      {pictures.map((p) => {
+        const isCorrect = p.id === correct
+        return (
+          <li
+            key={p.id}
+            className={cx(
+              'relative aspect-square rounded-lg border-2 bg-surface p-2',
+              isCorrect ? 'border-forest bg-forest-tint' : 'border-line',
+            )}
+          >
+            <PictureImage url={p.image_url} alt={p.alt_text} className="size-full" />
+            {isCorrect && (
+              <>
+                <Icon name="check_circle" className="absolute top-1.5 right-1.5 text-lg text-forest" filled />
+                <span className="sr-only">(correct)</span>
+              </>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 function Choices({ choices, correct, inline }: { choices: Tile[]; correct: string; inline?: boolean }) {

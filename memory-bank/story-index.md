@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 99
 - **Generated**: 99
-- **Completed**: 80
+- **Completed**: 83
 - **Last updated**: 2026-09-25
 
 ---
@@ -218,12 +218,12 @@
 
 - [x] **001-picture-question-content-types** (image-choice-service): Store and serve both picture question types - Must - ✅ COMPLETED (bolt 050-image-choice-service)
 - [x] **002-picture-upload-links** (image-choice-service): Upload links and local storage for pictures - Must - ✅ COMPLETED (bolt 050-image-choice-service)
-- [x] **003-sample-picture-questions** (image-choice-service): Sample questions with free-licensed, credited pictures - Must - ✅ GENERATED (bolt 051-image-choice-samples)
+- [x] **003-sample-picture-questions** (image-choice-service): Sample questions with free-licensed, credited pictures - Must - ✅ COMPLETED (bolt 051-image-choice-samples)
 
 #### Unit: 002-image-choice-admin
 
-- [x] **001-picture-upload-with-shrinking** (image-choice-admin): Pick a picture and have it shrunk and uploaded - Must - ✅ GENERATED (bolt 052-image-choice-admin)
-- [x] **002-picture-question-editors-and-preview** (image-choice-admin): Build, check and preview both picture question types - Must - ✅ GENERATED (bolt 052-image-choice-admin)
+- [x] **001-picture-upload-with-shrinking** (image-choice-admin): Pick a picture and have it shrunk and uploaded - Must - ✅ COMPLETED (bolt 052-image-choice-admin)
+- [x] **002-picture-question-editors-and-preview** (image-choice-admin): Build, check and preview both picture question types - Must - ✅ COMPLETED (bolt 052-image-choice-admin)
 
 #### Unit: 003-image-choice-ui
 
@@ -238,7 +238,7 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 19
+- **Generated**: 16
 - **In Progress**: 0
-- **Completed**: 80
+- **Completed**: 83
 - **Retired**: 1

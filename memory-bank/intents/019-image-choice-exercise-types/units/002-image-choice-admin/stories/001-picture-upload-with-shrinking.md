@@ -2,11 +2,11 @@
 id: 001-picture-upload-with-shrinking
 unit: 002-image-choice-admin
 intent: 019-image-choice-exercise-types
-status: draft
+status: complete
 priority: must
 created: '2026-09-25T06:15:00Z'
 assigned_bolt: 052-image-choice-admin
-implemented: false
+implemented: true
 ---
 
 # Story: 001-picture-upload-with-shrinking
@@ -19,12 +19,12 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** a JPEG, PNG or WebP file up to 10 MB, **When** picked, **Then** it is scaled so its longest side is at most 512 px, never scaled up, and encoded as WebP, or as JPEG where the browser cannot encode WebP
-- [ ] **Given** a 4000×3000 JPEG, **When** picked, **Then** the upload is at most 512×384 and at most 300 KB
-- [ ] **Given** an encoding over 300 KB, **When** shrinking, **Then** quality is lowered step by step until it fits
-- [ ] **Given** a file that is not a picture, or is over 10 MB, **When** picked, **Then** it is refused with a message and nothing is uploaded
-- [ ] **Given** a shrunk picture, **When** uploaded, **Then** the site asks for a link, PUTs the bytes, and returns the picture's URL; a failure shows a message and keeps the slot's previous picture
-- [ ] **Given** the site's tests, **When** run, **Then** shrinking, the limits and the upload call are covered
+- [x] **Given** a JPEG, PNG or WebP file up to 10 MB, **When** picked, **Then** it is scaled so its longest side is at most 512 px, never scaled up, and encoded as WebP, or as JPEG where the browser cannot encode WebP
+- [x] **Given** a 4000×3000 JPEG, **When** picked, **Then** the upload is at most 512×384 and at most 300 KB
+- [x] **Given** an encoding over 300 KB, **When** shrinking, **Then** quality is lowered step by step until it fits
+- [x] **Given** a file that is not a picture, or is over 10 MB, **When** picked, **Then** it is refused with a message and nothing is uploaded
+- [x] **Given** a shrunk picture, **When** uploaded, **Then** the site asks for a link, PUTs the bytes, and returns the picture's URL; a failure shows a message and keeps the slot's previous picture
+- [x] **Given** the site's tests, **When** run, **Then** shrinking, the limits and the upload call are covered
 
 ## Technical Notes
 

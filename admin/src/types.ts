@@ -23,8 +23,8 @@ export interface AdminCourseList {
   courses: AdminCourse[]
 }
 
-/** Listening exercises only: the piano placeholder, a hosted https clip,
- * or a local-backend `/media` clip. */
+/** Exercises with a clip only (listening and audio image choice): the
+ * piano placeholder, a hosted https clip, or a local-backend `/media` clip. */
 export type AudioStatus = 'placeholder' | 'hosted' | 'local'
 
 export interface AdminTreeExercise {
@@ -90,6 +90,15 @@ export interface Tile {
   text: string
 }
 
+/** One picture of a picture question (bolt 050): `image_url` is an https
+ * address, or a local-backend `/media/images/...` path; `alt_text` says
+ * what it shows, for learners who can't see it. */
+export interface PictureTile {
+  id: string
+  image_url: string
+  alt_text: string
+}
+
 export type ExerciseType =
   | 'multiple_choice'
   | 'listening'
@@ -97,6 +106,8 @@ export type ExerciseType =
   | 'match_pairs'
   | 'gap_fill'
   | 'spell_tiles'
+  | 'image_choice'
+  | 'audio_image_choice'
 
 export const EXERCISE_TYPES: readonly ExerciseType[] = [
   'multiple_choice',
@@ -105,6 +116,8 @@ export const EXERCISE_TYPES: readonly ExerciseType[] = [
   'sentence_construction',
   'spell_tiles',
   'match_pairs',
+  'image_choice',
+  'audio_image_choice',
 ]
 
 interface ChoiceKey {
@@ -144,6 +157,13 @@ export type ExerciseBody =
       content: { left_tiles: Tile[]; right_tiles: Tile[] }
       answer_key: { correct_pairs: [string, string][] }
     }
+  | { type: 'image_choice'; prompt: string; content: { choices: PictureTile[] }; answer_key: ChoiceKey }
+  | {
+      type: 'audio_image_choice'
+      prompt: string
+      content: { audio_url: string; choices: PictureTile[] }
+      answer_key: ChoiceKey
+    }
 
 export type AdminExercise = ExerciseBody & {
   id: string
@@ -168,6 +188,10 @@ export interface AudioUploadResponse {
   public_url: string
   expires_in: number
 }
+
+/** A short-lived link for uploading one picture (bolt 050): the same shape
+ * as a clip's, with `public_url` saved as a choice's `image_url`. */
+export type ImageUploadResponse = AudioUploadResponse
 
 /** A pasted link the server has checked answers with audio. */
 export interface AudioLinkResponse {

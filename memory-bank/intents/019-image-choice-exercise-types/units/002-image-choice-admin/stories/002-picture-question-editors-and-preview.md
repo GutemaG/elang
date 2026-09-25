@@ -2,11 +2,11 @@
 id: 002-picture-question-editors-and-preview
 unit: 002-image-choice-admin
 intent: 019-image-choice-exercise-types
-status: draft
+status: complete
 priority: must
 created: '2026-09-25T06:15:00Z'
 assigned_bolt: 052-image-choice-admin
-implemented: false
+implemented: true
 ---
 
 # Story: 002-picture-question-editors-and-preview
@@ -19,14 +19,14 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** "add exercise", **When** opened, **Then** it offers "Image choice" and "Audio image choice"
-- [ ] **Given** the image choice editor, **When** opened, **Then** it has the prompt and 2 to 4 picture slots, each with a picture, its alt text and a "correct" marker
-- [ ] **Given** the audio image choice editor, **When** opened, **Then** it has the instruction, the existing audio field (record, upload or link) and the same picture slots
-- [ ] **Given** 4 slots, **When** the editor is shown, **Then** adding another is not offered; **Given** 2 slots, removing one is not offered
-- [ ] **Given** a slot with no picture or no alt text, no slot marked correct, or no audio on the audio type, **When** saving, **Then** save is blocked and the reason shows beside the field
-- [ ] **Given** a valid question of either type, **When** saved and reopened, **Then** it round-trips through the API unchanged
-- [ ] **Given** the preview, **When** shown, **Then** it has the prompt, or the instruction and play button, above the pictures in a 2×2 grid
-- [ ] **Given** the site's tests, **When** run, **Then** both editors, their blocking rules and the round trip are covered
+- [x] **Given** "add exercise", **When** opened, **Then** it offers "Image choice" and "Audio image choice"
+- [x] **Given** the image choice editor, **When** opened, **Then** it has the prompt and 2 to 4 picture slots, each with a picture, its alt text and a "correct" marker
+- [x] **Given** the audio image choice editor, **When** opened, **Then** it has the instruction, the existing audio field (record, upload or link) and the same picture slots
+- [x] **Given** 4 slots, **When** the editor is shown, **Then** adding another is not offered; **Given** 2 slots, removing one is not offered
+- [x] **Given** a slot with no picture or no alt text, no slot marked correct, or no audio on the audio type, **When** saving, **Then** save is blocked and the reason shows beside the field
+- [x] **Given** a valid question of either type, **When** saved and reopened, **Then** it round-trips through the API unchanged
+- [x] **Given** the preview, **When** shown, **Then** it has the prompt, or the instruction and play button, above the pictures in a 2×2 grid
+- [x] **Given** the site's tests, **When** run, **Then** both editors, their blocking rules and the round trip are covered
 
 ## Technical Notes
 

@@ -62,6 +62,8 @@ function ExerciseEditorPage() {
   )
   const [errors, setErrors] = useState<Partial<Record<Slot, string>>>({})
   const [saving, setSaving] = useState(false)
+  // A picture still uploading: saving now would store the old one.
+  const [uploading, setUploading] = useState(false)
   // Arriving from a create, the exercise was saved one page ago.
   const [justSaved, setJustSaved] = useState(Boolean((location.state as { saved?: boolean } | null)?.saved))
 
@@ -169,7 +171,7 @@ function ExerciseEditorPage() {
   }
 
   const info = TYPE_INFO[draft.type]
-  const missing = missingAnswer(draft)
+  const missing = missingAnswer(draft) ?? (uploading ? 'Wait for the picture to finish uploading.' : null)
 
   return (
     <Page>
@@ -234,7 +236,7 @@ function ExerciseEditorPage() {
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <SlotErrors.Provider value={errors}>
-          <ExerciseForm body={draft} saved={saved} lessonId={lessonId} onChange={change} />
+          <ExerciseForm body={draft} saved={saved} lessonId={lessonId} onChange={change} onBusy={setUploading} />
         </SlotErrors.Provider>
         <div className="lg:sticky lg:top-6">
           <ExercisePreview body={draft} />

@@ -12,5 +12,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // Most tests render the whole site. With every file running in
+    // parallel, a slow machine can pass the 5 s default (bolt 052).
+    testTimeout: 15_000,
   },
 })

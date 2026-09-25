@@ -39,6 +39,8 @@ export const routes = {
   // Audio (bolt 039): an upload link for a clip, and a check of a pasted link.
   audioUploads: `${ADMIN}/audio/uploads`,
   audioLinks: `${ADMIN}/audio/links`,
+  // Pictures (bolt 050): an upload link for a picture.
+  imageUploads: `${ADMIN}/images/uploads`,
 }
 
 /** `ids` with the item at `index` swapped with its neighbour, or null when

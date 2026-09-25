@@ -7,11 +7,13 @@
 // server sent it (story 003's first criterion). Pure functions, no React.
 
 import { API_BASE_URL } from '../config'
-import type { AdminExercise, ExerciseBody, ExerciseType, Tile } from '../types'
+import type { AdminExercise, ExerciseBody, ExerciseType, PictureTile, Tile } from '../types'
 
 export type ChoiceBody = Extract<ExerciseBody, { content: { choices: Tile[] } }>
 export type SequenceBody = Extract<ExerciseBody, { answer_key: { correct_sequence: string[] } }>
 export type PairsBody = Extract<ExerciseBody, { type: 'match_pairs' }>
+export type PictureBody = Extract<ExerciseBody, { type: 'image_choice' | 'audio_image_choice' }>
+export type AudioBody = Extract<ExerciseBody, { type: 'listening' | 'audio_image_choice' }>
 
 export const TYPE_INFO: Record<ExerciseType, { name: string; icon: string; description: string }> = {
   multiple_choice: {
@@ -44,10 +46,24 @@ export const TYPE_INFO: Record<ExerciseType, { name: string; icon: string; descr
     icon: 'join',
     description: 'Match each word to its partner.',
   },
+  image_choice: {
+    name: 'Image choice',
+    icon: 'image',
+    description: 'Read the question, then pick the right picture.',
+  },
+  audio_image_choice: {
+    name: 'Audio image choice',
+    icon: 'hearing',
+    description: 'Play a clip, then pick the picture of what was heard.',
+  },
 }
 
 export function isChoiceBody(body: ExerciseBody): body is ChoiceBody {
   return body.type === 'multiple_choice' || body.type === 'listening' || body.type === 'gap_fill'
+}
+
+export function isPictureBody(body: ExerciseBody): body is PictureBody {
+  return body.type === 'image_choice' || body.type === 'audio_image_choice'
 }
 
 export function isSequenceBody(body: ExerciseBody): body is SequenceBody {
@@ -70,6 +86,10 @@ export function blank(type: ExerciseType): ExerciseBody {
   const choices = (): Tile[] => [
     { id: 'a', text: '' },
     { id: 'b', text: '' },
+  ]
+  const pictures = (): PictureTile[] => [
+    { id: 'a', image_url: '', alt_text: '' },
+    { id: 'b', image_url: '', alt_text: '' },
   ]
   switch (type) {
     case 'multiple_choice':
@@ -128,6 +148,15 @@ export function blank(type: ExerciseType): ExerciseBody {
           ],
         },
       }
+    case 'image_choice':
+      return { type, prompt: '', content: { choices: pictures() }, answer_key: { correct_choice_id: '' } }
+    case 'audio_image_choice':
+      return {
+        type,
+        prompt: '',
+        content: { audio_url: '', choices: pictures() },
+        answer_key: { correct_choice_id: '' },
+      }
   }
 }
 
@@ -161,7 +190,7 @@ export function setPrompt<B extends ExerciseBody>(body: B, prompt: string): B {
   return { ...body, prompt }
 }
 
-export function setAudioUrl(body: Extract<ExerciseBody, { type: 'listening' }>, audio_url: string) {
+export function setAudioUrl<B extends AudioBody>(body: B, audio_url: string): B {
   return { ...body, content: { ...body.content, audio_url } }
 }
 
@@ -345,12 +374,91 @@ export function removePair(body: PairsBody, row: number): PairsBody {
   }
 }
 
+// --- pictures (image choice, audio image choice) ------------------------------
+//
+// Slots are found by id, not position: a picture finishes uploading after
+// a wait, by which time the list may have changed.
+
+/** The server's limits (MIN_PICTURE_CHOICES, MAX_PICTURE_CHOICES and
+ * MAX_ALT_TEXT_LENGTH in backend/app/domain/lesson/). */
+export const MIN_PICTURES = 2
+export const MAX_PICTURES = 4
+export const MAX_ALT_TEXT = 200
+
+function withPictures<B extends PictureBody>(body: B, choices: PictureTile[], correct?: string): B {
+  return {
+    ...body,
+    content: { ...body.content, choices },
+    answer_key: correct === undefined ? body.answer_key : { ...body.answer_key, correct_choice_id: correct },
+  }
+}
+
+function editPicture<B extends PictureBody>(body: B, id: string, change: Partial<PictureTile>): B {
+  return withPictures(
+    body,
+    body.content.choices.map((p) => (p.id === id ? { ...p, ...change } : p)),
+  )
+}
+
+export function addPicture<B extends PictureBody>(body: B): B {
+  if (body.content.choices.length >= MAX_PICTURES) return body
+  const ids = body.content.choices.map((p) => p.id)
+  return withPictures(body, [...body.content.choices, { id: nextId(ids, 'letter'), image_url: '', alt_text: '' }])
+}
+
+/** Removing the correct picture clears the answer, as for choices. */
+export function removePicture<B extends PictureBody>(body: B, id: string): B {
+  if (body.content.choices.length <= MIN_PICTURES) return body
+  const choices = body.content.choices.filter((p) => p.id !== id)
+  return withPictures(body, choices, id === body.answer_key.correct_choice_id ? '' : undefined)
+}
+
+export function setPictureUrl<B extends PictureBody>(body: B, id: string, image_url: string): B {
+  return editPicture(body, id, { image_url })
+}
+
+export function setAltText<B extends PictureBody>(body: B, id: string, alt_text: string): B {
+  return editPicture(body, id, { alt_text })
+}
+
+export function markPictureCorrect<B extends PictureBody>(body: B, id: string): B {
+  return withPictures(body, body.content.choices, id)
+}
+
+export interface PictureProblems {
+  /** What each slot still needs, by position; null when it is complete. */
+  slots: (string | null)[]
+  audio: string | null
+  answer: string | null
+}
+
+/** What a picture question still needs before it can be saved, each part
+ * shown beside its own field. */
+export function pictureProblems(body: PictureBody): PictureProblems {
+  return {
+    slots: body.content.choices.map((p) => {
+      if (!p.image_url.trim()) return 'Choose a picture.'
+      if (!p.alt_text.trim()) return 'Describe the picture for learners who can’t see it.'
+      return null
+    }),
+    audio: body.type === 'audio_image_choice' && !body.content.audio_url.trim() ? 'Add the clip the learner hears.' : null,
+    answer: body.content.choices.some((p) => p.id === body.answer_key.correct_choice_id)
+      ? null
+      : 'Mark which picture is correct.',
+  }
+}
+
 // --- before saving ----------------------------------------------------------
 
 /** What the form itself can see is missing. Everything else -- empty text,
  * too few tiles, bad audio -- is left to the server, whose answer names the
- * field and is shown beside it. */
+ * field and is shown beside it. Picture questions are checked more fully,
+ * since an empty slot has nothing to type in: the first thing missing. */
 export function missingAnswer(body: ExerciseBody): string | null {
+  if (isPictureBody(body)) {
+    const problems = pictureProblems(body)
+    return problems.slots.find((p) => p !== null) ?? problems.audio ?? problems.answer
+  }
   if (isChoiceBody(body)) {
     const ok = body.content.choices.some((c) => c.id === body.answer_key.correct_choice_id)
     return ok ? null : 'Mark which choice is correct.'
@@ -403,7 +511,7 @@ export function placeError(field: string, message: string, body: ExerciseBody): 
   // ("requires at least 2 choices"): the list that rule is about.
   if (field.startsWith('content') || field.startsWith('answer_key')) {
     if (body.type === 'gap_fill' && /side of the gap/.test(message)) return 'sentence'
-    if (isChoiceBody(body)) return 'choices'
+    if (isChoiceBody(body) || isPictureBody(body)) return 'choices'
     if (isSequenceBody(body)) return field.startsWith('answer_key') ? 'answer' : 'tiles'
     return 'pairs'
   }
@@ -423,7 +531,7 @@ export function plainMessage(message: string): string {
   return rest === message ? message : rest.charAt(0).toUpperCase() + rest.slice(1)
 }
 
-/** Where a listening clip can be played from: hosted clips as they are,
+/** Where a clip or picture is loaded from: hosted files as they are,
  * local `/media/...` paths from the backend the site talks to. */
 export function playableUrl(url: string): string {
   return url.startsWith('/') ? `${API_BASE_URL}${url}` : url

@@ -5,31 +5,39 @@ import type { AdminExercise, ExerciseBody } from '../types'
 import {
   addChoice,
   addPair,
+  addPicture,
   addTile,
   appendToAnswer,
   blank,
   bodyOf,
   markCorrect,
+  markPictureCorrect,
   missingAnswer,
   moveChoice,
   moveInAnswer,
   nextId,
   pairRows,
+  pictureProblems,
   placeError,
   plainMessage,
   playableUrl,
   removeChoice,
   removeFromAnswer,
   removePair,
+  removePicture,
   removeTile,
+  setAltText,
+  setAudioUrl,
   setChoiceText,
   setPairText,
+  setPictureUrl,
   setTileText,
   type ChoiceBody,
   type PairsBody,
+  type PictureBody,
   type SequenceBody,
 } from './model'
-import { GAP, MC, PAIRS, SENTENCE, SPELL } from '../test/exercises'
+import { AUDIO_IMAGE, GAP, IMAGE, MC, PAIRS, SENTENCE, SPELL } from '../test/exercises'
 
 /** Deep-frozen, so any change made in place instead of copied throws. */
 function frozen<T>(value: T): T {
@@ -268,5 +276,141 @@ describe('audio addresses', () => {
   it('local paths play from the backend; hosted ones as they are', () => {
     expect(playableUrl('/media/audio/am/hello.m4a')).toBe(`${API_BASE_URL}/media/audio/am/hello.m4a`)
     expect(playableUrl('https://cdn.example/a.mp3')).toBe('https://cdn.example/a.mp3')
+  })
+})
+
+// --- pictures (bolt 052) ------------------------------------------------------------
+
+const image = () => frozen(structuredClone(IMAGE)) as PictureBody
+const audioImage = () => frozen(structuredClone(AUDIO_IMAGE)) as PictureBody
+
+describe('pictures', () => {
+  it('a new picture question starts with two empty slots and no answer', () => {
+    for (const type of ['image_choice', 'audio_image_choice'] as const) {
+      const body = blank(type) as PictureBody
+      expect(body.content.choices).toEqual([
+        { id: 'a', image_url: '', alt_text: '' },
+        { id: 'b', image_url: '', alt_text: '' },
+      ])
+      expect(body.answer_key.correct_choice_id).toBe('')
+    }
+    expect(blank('audio_image_choice')).toMatchObject({ content: { audio_url: '' } })
+    expect(blank('image_choice').content).not.toHaveProperty('audio_url')
+  })
+
+  it('a new slot gets the next free letter, up to 4 slots', () => {
+    const four = addPicture(image())
+    expect(four.content.choices.map((p) => p.id)).toEqual(['a', 'b', 'c', 'd'])
+    expect(four.content.choices[3]).toEqual({ id: 'd', image_url: '', alt_text: '' })
+    expect(addPicture(four)).toBe(four)
+  })
+
+  it('removing stops at 2 slots', () => {
+    const two = removePicture(image(), 'c')
+    expect(two.content.choices.map((p) => p.id)).toEqual(['a', 'b'])
+    expect(removePicture(two, 'a')).toBe(two)
+  })
+
+  it('removing the correct picture clears the answer; removing another keeps it', () => {
+    expect(removePicture(image(), 'b').answer_key.correct_choice_id).toBe('')
+    expect(removePicture(image(), 'a').answer_key.correct_choice_id).toBe('b')
+  })
+
+  it('pictures and descriptions are set by id, touching nothing else', () => {
+    const body = setAltText(setPictureUrl(image(), 'c', 'https://pub.example/new.webp'), 'a', 'Water')
+    expect(body.content.choices).toEqual([
+      { id: 'a', image_url: IMAGE.content.choices[0]!.image_url, alt_text: 'Water' },
+      IMAGE.content.choices[1],
+      { id: 'c', image_url: 'https://pub.example/new.webp', alt_text: 'A house' },
+    ])
+    expect(body.answer_key).toEqual(IMAGE.answer_key)
+  })
+
+  it('an id no longer in the list changes nothing', () => {
+    expect(setPictureUrl(image(), 'z', 'https://pub.example/x.webp').content).toEqual(IMAGE.content)
+  })
+
+  it('marking a picture sets the answer to its id', () => {
+    expect(markPictureCorrect(image(), 'c').answer_key).toEqual({ correct_choice_id: 'c' })
+  })
+
+  it('the audio question keeps its clip through every change, and can change it', () => {
+    const body = markPictureCorrect(addPicture(audioImage()), 'b')
+    expect(body).toMatchObject({ content: { audio_url: '/media/audio/am/one.m4a' } })
+    expect(setAudioUrl(audioImage() as typeof AUDIO_IMAGE, 'https://cdn.example/one.m4a').content.audio_url).toBe(
+      'https://cdn.example/one.m4a',
+    )
+  })
+})
+
+describe('what a picture question still needs', () => {
+  it('nothing, when complete', () => {
+    expect(pictureProblems(image())).toEqual({ slots: [null, null, null], audio: null, answer: null })
+    expect(pictureProblems(audioImage())).toEqual({ slots: [null, null, null, null], audio: null, answer: null })
+    expect(missingAnswer(image())).toBeNull()
+  })
+
+  it('a picture first, then its description', () => {
+    const body = setAltText(setPictureUrl(image(), 'a', ''), 'b', '   ')
+    expect(pictureProblems(body).slots).toEqual([
+      'Choose a picture.',
+      'Describe the picture for learners who can’t see it.',
+      null,
+    ])
+  })
+
+  it('a clip, for the audio type only', () => {
+    const silent = setAudioUrl(audioImage() as typeof AUDIO_IMAGE, ' ') as PictureBody
+    expect(pictureProblems(silent).audio).toBe('Add the clip the learner hears.')
+    expect(missingAnswer(silent)).toBe('Add the clip the learner hears.')
+  })
+
+  it('an answer that names a picture', () => {
+    const body = removePicture(image(), 'b')
+    expect(pictureProblems(body).answer).toBe('Mark which picture is correct.')
+    expect(missingAnswer(body)).toBe('Mark which picture is correct.')
+  })
+
+  it('Save names the slots first, then the clip, then the answer', () => {
+    // Empty slots, no clip and no answer: the slots come first.
+    const empty = blank('audio_image_choice') as PictureBody
+    expect(missingAnswer(empty)).toBe('Choose a picture.')
+    const pictured = setAltText(setAltText(setPictureUrl(setPictureUrl(empty, 'a', 'https://p/a.webp'), 'b', 'https://p/b.webp'), 'a', 'A'), 'b', 'B')
+    expect(missingAnswer(pictured)).toBe('Add the clip the learner hears.')
+  })
+})
+
+describe('where a server error about a picture goes', () => {
+  it.each([
+    ['content.choices[2].alt_text', 'choice:2'],
+    ['content.choices[0].image_url', 'choice:0'],
+    ['content.choices', 'choices'],
+    ['answer_key.correct_choice_id', 'choices'],
+    ['content.audio_url', 'audio_url'],
+    ['prompt', 'prompt'],
+  ] as const)('%s → %s', (field, slot) => {
+    expect(placeError(field, 'x', AUDIO_IMAGE as ExerciseBody)).toBe(slot)
+    if (field !== 'content.audio_url') expect(placeError(field, 'x', IMAGE as ExerciseBody)).toBe(slot)
+  })
+
+  it('reads the picture messages plainly', () => {
+    expect(plainMessage('content.choices[2].alt_text must be at most 200 characters')).toBe(
+      'Must be at most 200 characters',
+    )
+    expect(plainMessage('ImageChoiceContent requires 2 to 4 choices')).toBe('Needs 2 to 4 choices')
+  })
+
+  it('local pictures load from the backend', () => {
+    expect(playableUrl('/media/images/samples/dog.webp')).toBe(`${API_BASE_URL}/media/images/samples/dog.webp`)
+  })
+})
+
+describe('an exercise opened and saved unchanged', () => {
+  it.each([
+    ['image choice', IMAGE],
+    ['audio image choice', AUDIO_IMAGE],
+  ] as const)('%s is copied exactly', (_, body) => {
+    const stored = { ...structuredClone(body), id: 'x', lesson_id: 'l', order_index: 1, vocab_item_id: null }
+    expect(bodyOf(stored as AdminExercise)).toEqual(body)
   })
 })
