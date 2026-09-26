@@ -4,9 +4,9 @@ intent: 018-mobile-design-system
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
 phase: inception
-status: stories-defined
+status: complete
 created: '2026-09-24T12:55:00Z'
-updated: '2026-09-26T05:28:36Z'
+updated: '2026-09-26T06:30:22Z'
 ---
 
 # Unit Brief: Screen Migration UI
@@ -57,8 +57,8 @@ NFR-1 to NFR-5 apply to every story.
 | 001-onboarding-and-sign-in-on-the-library | Splash, onboarding, language, daily goal and sign-in on the library | Must | Complete (bolt 046) |
 | 002-dashboard-and-course-picker-on-the-library | Dashboard, header, banners, path nodes and course picker on the library | Must | Complete (bolt 047) |
 | 003-lesson-complete-and-lesson-sheets-on-the-library | Lesson complete and the lesson sheets on the library | Must | Complete (bolt 048) |
-| 004-settings-and-downloads-on-the-library | Settings and download management on the library | Must | Planned |
-| 005-consistency-sweep | App-wide consistency sweep | Must | Planned |
+| 004-settings-and-downloads-on-the-library | Settings and download management on the library | Must | Complete (bolt 049) |
+| 005-consistency-sweep | App-wide consistency sweep | Must | Complete (bolt 049) |
 
 ---
 

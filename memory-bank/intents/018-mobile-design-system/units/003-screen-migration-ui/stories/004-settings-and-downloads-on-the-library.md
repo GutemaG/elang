@@ -2,11 +2,11 @@
 id: 004-settings-and-downloads-on-the-library
 unit: 003-screen-migration-ui
 intent: 018-mobile-design-system
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T12:55:00Z'
 assigned_bolt: 049-settings-downloads-and-sweep
-implemented: false
+implemented: true
 ---
 
 # Story: 004-settings-and-downloads-on-the-library
@@ -19,10 +19,10 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** settings, **When** shown, **Then** it uses `AppPage` with a top bar, `SectionHeader`s and `ListRow`s in `AppCard`s; switches and values keep their behaviour
-- [ ] **Given** the daily-goal sheet and the sign-out and delete confirmations, **When** opened, **Then** they use `showAppSheet` / `showAppDialog`, with a destructive primary for deleting
-- [ ] **Given** download management, **When** shown, **Then** each pack is a `ListRow` in an `AppCard`, the empty list is an `EmptyState` and removal asks through `showAppDialog`
-- [ ] **Given** the settings and downloads tests, **When** run, **Then** all pass, changed only for replaced types (e.g. `SwitchListTile` and `TextButton` finders)
+- [x] **Given** settings, **When** shown, **Then** it uses `AppPage` with a top bar, `SectionHeader`s and `ListRow`s in `AppCard`s; switches and values keep their behaviour
+- [x] **Given** the daily-goal sheet and the sign-out and delete confirmations, **When** opened, **Then** they use `showAppSheet` / `showAppDialog`, with a destructive primary for deleting (log-out uses a plain primary, since signing out deletes nothing)
+- [x] **Given** download management, **When** shown, **Then** each pack is a `ListRow` in an `AppCard`, the empty list is an `EmptyState` and removal asks through `showAppDialog`
+- [x] **Given** the settings and downloads tests, **When** run, **Then** all pass, changed only for replaced types (e.g. `SwitchListTile` and `TextButton` finders)
 
 ## Reference Design (FR-11)
 

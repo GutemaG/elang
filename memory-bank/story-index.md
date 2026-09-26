@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 99
 - **Generated**: 99
-- **Completed**: 91
+- **Completed**: 93
 - **Last updated**: 2026-09-26
 
 ---
@@ -209,8 +209,8 @@
 - [x] **001-onboarding-and-sign-in-on-the-library** (screen-migration-ui): The first screens I see to look polished and consistent with each other - Must - ✅ COMPLETED (bolt 046-onboarding-screens-on-kit)
 - [x] **002-dashboard-and-course-picker-on-the-library** (screen-migration-ui): The home screen to look like the mockup, with the same cards, pills and sheets as the rest of the app - Must - ✅ COMPLETED (bolt 047-dashboard-on-kit)
 - [x] **003-lesson-complete-and-lesson-sheets-on-the-library** (screen-migration-ui): The end of a lesson and every lesson pop-up to look celebratory and consistent - Must - ✅ COMPLETED (bolt 048-lesson-complete-and-sheets-on-kit)
-- [x] **004-settings-and-downloads-on-the-library** (screen-migration-ui): Settings and downloads to look like the rest of the app instead of stock system screens - Must - ✅ GENERATED (bolt 049-settings-downloads-and-sweep)
-- [x] **005-consistency-sweep** (screen-migration-ui): Every screen checked together against the same rules - Must - ✅ GENERATED (bolt 049-settings-downloads-and-sweep)
+- [x] **004-settings-and-downloads-on-the-library** (screen-migration-ui): Settings and downloads to look like the rest of the app instead of stock system screens - Must - ✅ COMPLETED (bolt 049-settings-downloads-and-sweep)
+- [x] **005-consistency-sweep** (screen-migration-ui): Every screen checked together against the same rules - Must - ✅ COMPLETED (bolt 049-settings-downloads-and-sweep)
 
 ### 019-image-choice-exercise-types
 
@@ -238,7 +238,7 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 8
+- **Generated**: 6
 - **In Progress**: 0
-- **Completed**: 91
+- **Completed**: 93
 - **Retired**: 1

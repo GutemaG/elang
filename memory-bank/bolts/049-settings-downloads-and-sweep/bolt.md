@@ -3,14 +3,14 @@ id: 049-settings-downloads-and-sweep
 unit: 003-screen-migration-ui
 intent: 018-mobile-design-system
 type: simple-construction-bolt
-status: in-progress
+status: complete
 stories:
   - 004-settings-and-downloads-on-the-library
   - 005-consistency-sweep
 created: '2026-09-24T12:55:00Z'
 started: '2026-09-26T05:34:17Z'
-completed: null
-current_stage: test
+completed: '2026-09-26T06:30:22Z'
+current_stage: null
 stages_completed:
   - name: plan
     completed: '2026-09-26T05:36:05Z'
@@ -18,6 +18,9 @@ stages_completed:
   - name: implement
     completed: '2026-09-26T05:59:46Z'
     artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-26T06:30:22Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 045-lesson-screen-on-kit
   - 046-onboarding-screens-on-kit
@@ -41,8 +44,8 @@ Move settings and downloads onto the library, then run the app-wide sweep: empty
 
 ## Stories Included
 
-- [ ] **004-settings-and-downloads-on-the-library** (Must)
-- [ ] **005-consistency-sweep** (Must)
+- [x] **004-settings-and-downloads-on-the-library** (Must)
+- [x] **005-consistency-sweep** (Must)
 
 ## Bolt Type
 
@@ -53,7 +56,7 @@ Move settings and downloads onto the library, then run the app-wide sweep: empty
 
 - [x] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
 - [x] **2. Implement**
-- [ ] **3. Test**
+- [x] **3. Test**
 
 ## Expected Outputs
 

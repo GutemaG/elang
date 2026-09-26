@@ -2,11 +2,11 @@
 id: 005-consistency-sweep
 unit: 003-screen-migration-ui
 intent: 018-mobile-design-system
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T12:55:00Z'
 assigned_bolt: 049-settings-downloads-and-sweep
-implemented: false
+implemented: true
 ---
 
 # Story: 005-consistency-sweep
@@ -19,12 +19,12 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** the rules test, **When** run, **Then** its allow-list is empty and it passes (NFR-1)
-- [ ] **Given** every screen, **When** rendered in tests at 360×640 and 430×932 at 1.0× and 1.3× text, **Then** nothing overflows (NFR-2, NFR-4)
-- [ ] **Given** reduced motion, **When** buttons are pressed and wrong answers given, **Then** no press movement or shake happens (NFR-2)
-- [ ] **Given** a real Android phone and an iPhone (or the iOS simulator), **When** the main flows are walked (onboarding, sign-in, dashboard, a lesson with each question type, lesson complete, settings, downloads), **Then** the fonts are the bundled ones and each screen matches its reference; findings are recorded in the test walkthrough
-- [ ] **Given** `flutter analyze` and the full test suite, **When** run, **Then** 0 issues and 100% pass (NFR-5)
-- [ ] **Given** `TactileButton`, **When** the sweep ends, **Then** it is either deleted or a documented thin alias, with no unused shared widget left behind
+- [x] **Given** the rules test, **When** run, **Then** its allow-list is empty and it passes (NFR-1)
+- [x] **Given** every screen, **When** rendered in tests at 360×640 and 430×932 at 1.0× and 1.3× text, **Then** nothing overflows (NFR-2, NFR-4)
+- [x] **Given** reduced motion, **When** buttons are pressed and wrong answers given, **Then** no press movement or shake happens (NFR-2)
+- [ ] **Given** a real Android phone and an iPhone (or the iOS simulator), **When** the main flows are walked (onboarding, sign-in, dashboard, a lesson with each question type, lesson complete, settings, downloads), **Then** the fonts are the bundled ones and each screen matches its reference; findings are recorded in the test walkthrough (still to check by hand: no phone, Android emulator or iOS simulator on the build machine; the checklist is in bolt 049's test walkthrough)
+- [x] **Given** `flutter analyze` and the full test suite, **When** run, **Then** 0 issues and 100% pass (NFR-5)
+- [x] **Given** `TactileButton`, **When** the sweep ends, **Then** it is either deleted or a documented thin alias, with no unused shared widget left behind
 
 ## Reference Design (FR-11)
 

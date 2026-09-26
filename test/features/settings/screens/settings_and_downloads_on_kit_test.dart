@@ -489,7 +489,23 @@ void main() {
         ),
       );
       expect(find.byType(LoadingState), findsOneWidget);
+      expect(tester.widget<AppPage>(find.byType(AppPage)).scrollable, isFalse);
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('has no back arrow when it is the first page', (tester) async {
+      await _pumpDownloads(tester);
+      expect(find.byTooltip('Back'), findsNothing);
+    });
+
+    testWidgets('the list scrolls', (tester) async {
+      await _pumpDownloads(tester);
+      expect(tester.widget<AppPage>(find.byType(AppPage)).scrollable, isTrue);
+    });
+
+    testWidgets('the empty state sits still in the middle', (tester) async {
+      await _pumpDownloads(tester, empty: true);
+      expect(tester.widget<AppPage>(find.byType(AppPage)).scrollable, isFalse);
     });
 
     testWidgets('an empty list is an EmptyState that says how it fills', (
