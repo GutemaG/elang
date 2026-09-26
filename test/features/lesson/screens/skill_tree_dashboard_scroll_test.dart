@@ -1,8 +1,10 @@
 // Dashboard scroll shell (011-dashboard-ui-polish, bolt 028).
 //
 // Covers: the header stays put at every scroll position and owns the stats;
-// each category's banner pins beneath it and is displaced by the next; a
-// single-category course keeps its banner pinned; a course shorter than the
+// the one section header is pinned beneath it from the start and shows the
+// next category once scrolled into it (020-dashboard-section-header, which
+// replaced 011's banner per category); a single-category course keeps its
+// header pinned; a course shorter than the
 // viewport is still draggable and settles back; and a course change returns to
 // the top while a reload from a lesson does not.
 
@@ -99,7 +101,8 @@ SkillTreeResponse _tallTree({
   categories: categories,
   nodes: [
     for (final category in categories)
-      for (int i = 0; i < 5; i++) _node('$prefix${category.id}-$i', category.id),
+      for (int i = 0; i < 5; i++)
+        _node('$prefix${category.id}-$i', category.id),
   ],
 );
 
@@ -197,18 +200,19 @@ void main() {
     );
   });
 
-  testWidgets("a category's banner pins beneath the header while its nodes "
-      'scroll past', (tester) async {
+  testWidgets('the section header is pinned beneath the stats bar from the '
+      'start, and stays there while the nodes scroll past', (tester) async {
     _viewport(tester);
     await tester.pumpWidget(
       _dashboard(_lessonApi(_tallTree(categories: const [_foundations]))),
     );
     await tester.pumpAndSettle();
 
-    // It starts where it falls, below the Practice card.
+    // Pinned from the first frame (020-dashboard-section-header, FR-1);
+    // intent 011's banner started below the Practice card instead.
     expect(
       tester.getTopLeft(_banner('Foundations & Greetings')).dy,
-      greaterThan(_headerBottom(tester)),
+      closeTo(_headerBottom(tester), 1),
     );
 
     await _scrollBy(tester, -400);
@@ -219,12 +223,10 @@ void main() {
     );
   });
 
-  testWidgets("the next category's banner takes the previous one's place", (
-    tester,
-  ) async {
+  testWidgets("the next category's title takes the previous one's place in "
+      'the section header', (tester) async {
     _viewport(tester);
-    // The second category is long, so scrolling into it really does push the
-    // first category's banner off rather than merely stacking the two.
+    // The second category is long, so the view really is inside it.
     final tree = _tree(
       categories: const [_foundations, _family],
       nodes: [
@@ -240,11 +242,12 @@ void main() {
     final second = _banner('Family & People');
     expect(second, findsOneWidget);
     expect(tester.getTopLeft(second).dy, closeTo(_headerBottom(tester), 1));
-    // The first category's banner has been pushed out of the way entirely.
+    // One header, now naming the second category.
+    expect(find.byType(CategoryBanner), findsOneWidget);
     expect(_banner('Foundations & Greetings'), findsNothing);
   });
 
-  testWidgets('a course with one category keeps its banner pinned throughout', (
+  testWidgets('a course with one category keeps its header pinned throughout', (
     tester,
   ) async {
     _viewport(tester);
@@ -261,35 +264,33 @@ void main() {
     );
   });
 
-  testWidgets('a course shorter than the viewport still drags and settles back', (
-    tester,
-  ) async {
-    _viewport(tester, height: 1600);
-    await tester.pumpWidget(
-      _dashboard(
-        _lessonApi(
-          _tree(
-            categories: const [_foundations],
-            nodes: [_node('a', 'c1')],
+  testWidgets(
+    'a course shorter than the viewport still drags and settles back',
+    (tester) async {
+      _viewport(tester, height: 1600);
+      await tester.pumpWidget(
+        _dashboard(
+          _lessonApi(
+            _tree(categories: const [_foundations], nodes: [_node('a', 'c1')]),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    final gesture = await tester.startGesture(tester.getCenter(_scrollView));
-    await gesture.moveBy(const Offset(0, 160));
-    await tester.pump();
+      final gesture = await tester.startGesture(tester.getCenter(_scrollView));
+      await gesture.moveBy(const Offset(0, 160));
+      await tester.pump();
 
-    // Overscrolled: the page responded even though there is nothing to scroll.
-    expect(_offset(tester), lessThan(0));
+      // Overscrolled: the page responded even though there is nothing to scroll.
+      expect(_offset(tester), lessThan(0));
 
-    await gesture.up();
-    await tester.pumpAndSettle();
+      await gesture.up();
+      await tester.pumpAndSettle();
 
-    expect(_offset(tester), 0);
-    expect(tester.takeException(), isNull);
-  });
+      expect(_offset(tester), 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('changing course returns the learner to the top', (tester) async {
     _viewport(tester);
@@ -303,6 +304,10 @@ void main() {
 
     await _scrollBy(tester, -1200);
     expect(_offset(tester), greaterThan(0));
+    expect(
+      tester.widget<CategoryBanner>(find.byType(CategoryBanner)).category.title,
+      'Family & People',
+    );
 
     lessonApi.skillTree = _tallTree(course: _oromo, prefix: 'om-');
     await tester.tap(find.text('Amharic'));
@@ -314,6 +319,12 @@ void main() {
 
     expect(courseApi.switchCalls, ['c-en-om']);
     expect(_offset(tester), 0);
+    // And the section header is back on the first section
+    // (020-dashboard-section-header, FR-2).
+    expect(
+      tester.widget<CategoryBanner>(find.byType(CategoryBanner)).category.title,
+      'Foundations & Greetings',
+    );
   });
 
   testWidgets('coming back from a lesson keeps the scroll position', (

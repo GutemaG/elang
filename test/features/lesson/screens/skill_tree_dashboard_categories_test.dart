@@ -1,8 +1,9 @@
 // Dashboard grouping by course category (009-course-categories, bolt 023).
 //
-// Covers: N categories render N banners in order with correct "x/y
-// Completed" counts; each category's skills sit under its own banner; an
-// empty category does not crash; existing node behaviours (locked not
+// Covers: the first category is named in the one section header and every
+// later one by a divider in the path, in order, each category's skills
+// under its own divider (020-dashboard-section-header); an empty category
+// does not crash; existing node behaviours (locked not
 // tappable, download badge on unlocked nodes) hold in every category; and
 // nothing overflows at narrow widths with long titles and large text.
 
@@ -21,6 +22,7 @@ import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/sync_engine.dart';
 import 'package:elang/shared/theme/app_tone.dart';
 import 'package:elang/shared/widgets/app_card.dart';
+import 'package:elang/shared/widgets/app_status.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
 import '../../../helpers/fake_answer_feedback_player.dart';
@@ -118,9 +120,8 @@ const _numbers = SkillCategory(
 );
 
 void main() {
-  testWidgets('N categories render N banners in order with their own counts', (
-    tester,
-  ) async {
+  testWidgets('the header names the first category, and a divider in the '
+      'path each later one, in order', (tester) async {
     final api = _api(
       _tree(
         categories: [_foundations, _family, _numbers],
@@ -139,19 +140,29 @@ void main() {
     await tester.pumpWidget(_dashboard(api));
     await tester.pumpAndSettle();
 
-    expect(find.text('Foundations & Greetings'), findsOneWidget);
-    expect(find.text('Family & People'), findsOneWidget);
-    expect(find.text('Numbers & Time'), findsOneWidget);
-    expect(find.text('ቤተሰብ'), findsOneWidget);
+    final header = find.byType(CategoryBanner);
+    expect(header, findsOneWidget);
+    expect(
+      find.descendant(
+        of: header,
+        matching: find.text('Foundations & Greetings'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('2/2 Completed'), findsOneWidget);
-    expect(find.text('1/2 Completed'), findsOneWidget);
-    expect(find.text('0/2 Completed'), findsOneWidget);
+    final dividers = tester
+        .widgetList<PathSectionDivider>(find.byType(PathSectionDivider))
+        .map((d) => d.title)
+        .toList();
+    expect(dividers, ['Family & People', 'Numbers & Time']);
 
-    double y(String t) => tester.getTopLeft(find.text(t)).dy;
-    expect(y('Foundations & Greetings'), lessThan(y('Skill a')));
-    expect(y('Skill b'), lessThan(y('Family & People')));
-    expect(y('Skill d'), lessThan(y('Numbers & Time')));
-    expect(y('Numbers & Time'), lessThan(y('Skill e')));
+    double y(Finder f) => tester.getTopLeft(f).dy;
+    Finder divider(String t) => find.widgetWithText(PathSectionDivider, t);
+    expect(y(header), lessThan(y(find.text('Skill a'))));
+    expect(y(find.text('Skill b')), lessThan(y(divider('Family & People'))));
+    expect(y(divider('Family & People')), lessThan(y(find.text('Skill c'))));
+    expect(y(find.text('Skill d')), lessThan(y(divider('Numbers & Time'))));
+    expect(y(divider('Numbers & Time')), lessThan(y(find.text('Skill e'))));
   });
 
   testWidgets('the zig-zag restarts at the top of every category', (
@@ -184,9 +195,8 @@ void main() {
     expect(centreF, greaterThan(centreE));
   });
 
-  testWidgets('a category with no skills renders 0/0 without crashing', (
-    tester,
-  ) async {
+  testWidgets('a category with no skills gets its divider, and its header '
+      'reads 0/0 without crashing', (tester) async {
     final api = _api(
       _tree(
         categories: [_foundations, _family],
@@ -196,9 +206,21 @@ void main() {
 
     await tester.pumpWidget(_dashboard(api));
     await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(PathSectionDivider, 'Family & People'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
 
-    expect(find.text('Family & People'), findsOneWidget);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: CategoryBanner(category: _family, completed: 0, total: 0),
+        ),
+      ),
+    );
     expect(find.text('0/0 Completed'), findsOneWidget);
+    expect(tester.widget<AppProgressBar>(find.byType(AppProgressBar)).value, 0);
     expect(tester.takeException(), isNull);
   });
 
@@ -265,53 +287,43 @@ void main() {
       },
     );
   }
-  testWidgets('consecutive categories take different banner colours', (
+  testWidgets('consecutive categories give the header different colours', (
     tester,
   ) async {
-    final api = _api(
-      _tree(
-        categories: [_foundations, _family, _numbers],
-        nodes: [
-          _node('a', 'c1', SkillNodeState.active),
-          _node('b', 'c2', SkillNodeState.active),
-          _node('c', 'c3', SkillNodeState.active),
-        ],
-      ),
-    );
-    _size(tester, const Size(400, 4000));
+    // The header takes each category's tone in turn (020): checked on the
+    // header itself, one category at a time.
+    AppTone toneOf(int index) {
+      return CategoryBanner.toneAt(index);
+    }
 
-    await tester.pumpWidget(_dashboard(api));
-    await tester.pumpAndSettle();
-
-    // Each banner is a white card; its tone colours the border, shelf and
-    // bar (018-mobile-design-system, bolt 047).
-    AppTone tone(String title) => tester
-        .widget<AppCard>(
-          find.descendant(
-            of: find.ancestor(
-              of: find.text(title),
-              matching: find.byType(CategoryBanner),
-            ),
-            matching: find.byType(AppCard),
-          ),
-        )
-        .tone;
-
-    final tones = {
-      tone('Foundations & Greetings'),
-      tone('Family & People'),
-      tone('Numbers & Time'),
-    };
+    final tones = {toneOf(0), toneOf(1), toneOf(2)};
     expect(tones, hasLength(3));
+    for (var i = 0; i < 3; i++) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CategoryBanner(
+              category: _foundations,
+              completed: 0,
+              total: 1,
+              colorIndex: i,
+            ),
+          ),
+        ),
+      );
+      final card = tester.widget<AppCard>(find.byType(AppCard));
+      expect(card.tone, toneOf(i));
+      expect(card.filled, isTrue);
+    }
   });
 
-  // The pinned banner reserves its height before it lays out, so an awkward
+  // The pinned header reserves its height before it lays out, so an awkward
   // text scale is where it breaks: 1.15x and 1.3x both produce line heights
   // that the layout rounds up. This overflowed by a pixel on device.
   for (final scale in [1.0, 1.15, 1.3, 1.5]) {
     for (final width in [360.0, 320.0]) {
       testWidgets(
-        'the pinned banner fits its reserved height at ${scale}x on ${width}dp',
+        'the pinned header fits its reserved height at ${scale}x on ${width}dp',
         (tester) async {
           final api = _api(
             _tree(
@@ -341,5 +353,4 @@ void main() {
       );
     }
   }
-
 }

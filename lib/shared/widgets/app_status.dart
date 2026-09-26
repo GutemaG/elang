@@ -259,6 +259,7 @@ class AppProgressBar extends StatelessWidget {
     this.endLabel,
     this.semanticLabel,
     this.animate = true,
+    this.onFilled = false,
   });
 
   /// From 0 (empty) to 1 (full); values outside are clamped.
@@ -281,6 +282,12 @@ class AppProgressBar extends StatelessWidget {
   /// animation (the splash screen's brewing bar) passes `false`, so it
   /// shows each value at once instead of trailing behind it.
   final bool animate;
+
+  /// The bar sits on a card filled with its [tone] (the dashboard's section
+  /// header, 020-dashboard-section-header): the fill takes the tone's
+  /// `onFill` and the track a faint wash of it, since the tone's own fill
+  /// would vanish into the card.
+  final bool onFilled;
 
   static const double _inset = 2;
 
@@ -322,10 +329,14 @@ class AppProgressBar extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(_inset),
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainerHigh,
+          color: onFilled
+              ? tone.onFill.withValues(alpha: 0.25)
+              : AppColors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(AppRadii.full),
           border: Border.all(
-            color: AppColors.outlineVariant.withValues(alpha: 0.3),
+            color: onFilled
+                ? tone.onFill.withValues(alpha: 0)
+                : AppColors.outlineVariant.withValues(alpha: 0.3),
           ),
         ),
         child: TweenAnimationBuilder<double>(
@@ -344,8 +355,8 @@ class AppProgressBar extends StatelessWidget {
                   width: math.max(fillHeight, constraints.maxWidth * shown),
                   height: fillHeight,
                   child: _Fill(
-                    color: tone.fill,
-                    gradient: gradient ? _gradientColors : null,
+                    color: onFilled ? tone.onFill : tone.fill,
+                    gradient: gradient && !onFilled ? _gradientColors : null,
                   ),
                 ),
               ),

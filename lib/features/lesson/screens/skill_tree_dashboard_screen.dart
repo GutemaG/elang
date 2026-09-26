@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../shared/models/beans_status.dart';
 import '../../../shared/models/course.dart';
@@ -22,11 +23,13 @@ import '../../../shared/services/course_cache_store.dart';
 import '../../../shared/services/sync_engine.dart';
 import '../../../shared/services/user_preferences_api.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_motion.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_icon_button.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_status.dart';
 import '../../auth/auth_routes.dart';
@@ -168,6 +171,33 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   int _pendingSeen = 0;
 
   bool _prefetching = false;
+
+  /// The section the fixed header shows: the last one whose divider has
+  /// scrolled under the header (020-dashboard-section-header, FR-2).
+  int _section = 0;
+
+  /// Which way the jump button points, or `null` while the learner's
+  /// current lesson is in view and the button is hidden (FR-4).
+  AxisDirection? _jumpTo;
+
+  /// Everything pinned at the top: the stats bar plus the section header.
+  /// A path element under this is hidden behind them.
+  double _pinnedExtent = 0;
+
+  /// One key per section divider (sections 1 onwards), for finding where
+  /// each section begins in the scroll.
+  final Map<int, GlobalKey> _dividerKeys = {};
+
+  /// The section holding the active node, and the node itself, for the
+  /// jump button.
+  final GlobalKey _activeSectionKey = GlobalKey();
+  final GlobalKey _activeNodeKey = GlobalKey();
+
+  /// The index of the section holding the active node; -1 when none.
+  int _activeSection = -1;
+
+  GlobalKey _dividerKey(int index) =>
+      _dividerKeys.putIfAbsent(index, GlobalKey.new);
 
   @override
   void initState() {
@@ -440,6 +470,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     setState(() {
       _future = _load();
     });
+    if (scrollToTop) _section = 0;
     if (scrollToTop && _scrollController.hasClients) {
       _scrollController.animateTo(
         0,
@@ -555,9 +586,31 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     // The panel floats over the path rather than pushing it down, so opening
     // it never reflows the tree. It hangs from the header, whose height the
     // header itself is the authority on.
+    final jumpTo = _jumpTo;
     return Stack(
       children: [
         _scrollView(context, data),
+        // Back to the learner's current lesson (FR-4). Hidden while the
+        // course panel is open, so it never sits on top of it.
+        Positioned(
+          right: AppSpacing.marginMobile,
+          bottom: AppSpacing.spaceMd,
+          child: AnimatedSwitcher(
+            duration: AppMotion.reduced(context)
+                ? Duration.zero
+                : AppMotion.feedback,
+            child: jumpTo == null || _panelOpen
+                ? const SizedBox.shrink()
+                : AppIconButton(
+                    key: ValueKey(jumpTo),
+                    icon: jumpTo == AxisDirection.up
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
+                    tooltip: 'Jump to your current lesson',
+                    onPressed: _jumpToCurrent,
+                  ),
+          ),
+        ),
         if (_panelMounted)
           Positioned(
             top: DashboardHeader.extentOf(context),
@@ -642,110 +695,274 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
 
   Widget _scrollView(BuildContext context, _DashboardData data) {
     final tree = data.tree;
-    return CustomScrollView(
-      controller: _scrollController,
-      // Always scrollable so a course shorter than the viewport still drags
-      // and settles instead of refusing to move.
-      physics: const AlwaysScrollableScrollPhysics(
-        parent: BouncingScrollPhysics(),
-      ),
-      slivers: [
-        pinnedHeader(
-          extent: DashboardHeader.extentOf(context),
-          child: DashboardHeader(
-            leading: CourseBadge(
-              course: tree.course,
-              expanded: _panelOpen,
-              onTap: _togglePanel,
-            ),
-            hud: LessonHud(
-              streakCount: tree.streakCount,
-              beans: tree.beans,
-              beansMax: tree.beansMax,
-              totalXp: tree.totalXp,
-              amoleBalance: data.beansStatus.amoleBalance,
-            ),
+    final categories = tree.categories;
+    final sectionExtent = categories.isEmpty
+        ? 0.0
+        : CategoryBanner.extentOfAll(context, categories);
+    _pinnedExtent = DashboardHeader.extentOf(context) + sectionExtent;
+    final section = categories.isEmpty
+        ? 0
+        : _section.clamp(0, categories.length - 1);
+    final active = tree.nodes
+        .where((n) => n.state == SkillNodeState.active)
+        .firstOrNull;
+    final activeSection = active == null
+        ? -1
+        : categories.indexWhere((c) => c.id == active.categoryId);
+    _activeSection = activeSection;
+    // Where things are only settles after layout, so the header and the
+    // jump button are brought up to date once this frame is drawn too.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _trackScroll());
+
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: (_) {
+        _trackScroll();
+        return false;
+      },
+      child: NotificationListener<ScrollUpdateNotification>(
+        onNotification: (_) {
+          _trackScroll();
+          return false;
+        },
+        child: CustomScrollView(
+          controller: _scrollController,
+          // Always scrollable so a course shorter than the viewport still
+          // drags and settles instead of refusing to move.
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              children: [
-                SyncStatusBanner(
-                  syncEngine: widget.syncEngine,
-                  lessonPackStore: widget.lessonPackStore,
-                  lessonPackDownloader: widget.lessonPackDownloader,
+          slivers: [
+            pinnedHeader(
+              extent: DashboardHeader.extentOf(context),
+              child: DashboardHeader(
+                leading: CourseBadge(
+                  course: tree.course,
+                  expanded: _panelOpen,
+                  onTap: _togglePanel,
                 ),
-                if (data.fromCache) const _OfflineNote(),
-              ],
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-            vertical: AppSpacing.spaceSm,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: _PracticeEntryCard(
-              dueCount: data.dueCount,
-              syncEngine: widget.syncEngine,
-              onTap: _openPractice,
-            ),
-          ),
-        ),
-        for (int i = 0; i < tree.categories.length; i++)
-          // The group is what makes the banner a *section* header: pinned
-          // slivers otherwise accumulate at the top, each one stopping below
-          // the last, so every category the learner scrolled past would still
-          // be sitting there. Grouped, a banner is pinned only while its own
-          // nodes are on screen and is pushed off by the next category's.
-          SliverMainAxisGroup(
-            slivers: [
-              pinnedHeader(
-                extent: CategoryBanner.extentOf(context, tree.categories[i]),
-                child: CategoryBanner(
-                  category: tree.categories[i],
-                  // Consecutive sections take consecutive colours, so one is
-                  // never mistaken for the next while scrolling.
-                  colorIndex: i,
-                  completed: tree
-                      .nodesIn(tree.categories[i])
-                      .where((n) => n.state == SkillNodeState.completed)
-                      .length,
-                  total: tree.nodesIn(tree.categories[i]).length,
+                hud: LessonHud(
+                  streakCount: tree.streakCount,
+                  beans: tree.beans,
+                  beansMax: tree.beansMax,
+                  totalXp: tree.totalXp,
+                  amoleBalance: data.beansStatus.amoleBalance,
                 ),
               ),
+            ),
+            // The one section header (020-dashboard-section-header, FR-1):
+            // always pinned, one height for every section, and cross-fading
+            // to the section scrolled to.
+            if (categories.isNotEmpty)
+              pinnedHeader(
+                extent: sectionExtent,
+                // An opaque band, so the path scrolls cleanly under the
+                // header instead of peeking through the gaps around the card.
+                child: ColoredBox(
+                  color: AppColors.background,
+                  child: AnimatedSwitcher(
+                    duration: AppMotion.reduced(context)
+                        ? Duration.zero
+                        : AppMotion.feedback,
+                    child: CategoryBanner(
+                      key: ValueKey('section-header-$section'),
+                      category: categories[section],
+                      colorIndex: section,
+                      completed: tree
+                          .nodesIn(categories[section])
+                          .where((n) => n.state == SkillNodeState.completed)
+                          .length,
+                      total: tree.nodesIn(categories[section]).length,
+                    ),
+                  ),
+                ),
+              ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.marginMobile,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    SyncStatusBanner(
+                      syncEngine: widget.syncEngine,
+                      lessonPackStore: widget.lessonPackStore,
+                      lessonPackDownloader: widget.lessonPackDownloader,
+                    ),
+                    if (data.fromCache) const _OfflineNote(),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.marginMobile,
+                vertical: AppSpacing.spaceSm,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: _PracticeEntryCard(
+                  dueCount: data.dueCount,
+                  syncEngine: widget.syncEngine,
+                  onTap: _openPractice,
+                ),
+              ),
+            ),
+            for (int i = 0; i < categories.length; i++) ...[
+              // A quiet divider instead of a banner (FR-3). The first
+              // section has none: the header names it at the top.
+              if (i > 0)
+                SliverToBoxAdapter(
+                  key: _dividerKey(i),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.marginMobile,
+                    ),
+                    child: PathSectionDivider(title: categories[i].title),
+                  ),
+                ),
               SliverToBoxAdapter(
+                key: i == activeSection ? _activeSectionKey : null,
                 child: _CategoryNodes(
-                  nodes: tree.nodesIn(tree.categories[i]),
+                  nodes: tree.nodesIn(categories[i]),
                   onNodeTap: _onNodeTap,
                   downloader: widget.lessonPackDownloader,
+                  activeNodeId: i == activeSection ? active?.id : null,
+                  activeNodeKey: _activeNodeKey,
                 ),
               ),
             ],
-          ),
-      ],
+          ],
+        ),
+      ),
     );
+  }
+
+  /// Where the active node's top and bottom sit in the scroll, or `null`
+  /// when there is none or it is not laid out.
+  ({double top, double bottom})? _activeNodeSpan() {
+    final node = _activeNodeKey.currentContext?.findRenderObject();
+    final sliver = _activeSectionKey.currentContext?.findRenderObject();
+    if (node is! RenderBox || !node.hasSize) return null;
+    if (sliver is! RenderSliverToBoxAdapter || sliver.geometry == null) {
+      return null;
+    }
+    final box = sliver.child;
+    if (box == null) return null;
+    final within = node.localToGlobal(Offset.zero, ancestor: box).dy;
+    final top = sliver.constraints.precedingScrollExtent + within;
+    return (top: top, bottom: top + node.size.height);
+  }
+
+  /// Where the line of the divider under [key] sits in the scroll: the
+  /// middle of the divider, past its padding. `null` if not laid out.
+  double? _dividerLine(GlobalKey? key) {
+    final sliver = key?.currentContext?.findRenderObject();
+    if (sliver is! RenderSliver) return null;
+    final geometry = sliver.geometry;
+    if (geometry == null) return null;
+    return sliver.constraints.precedingScrollExtent + geometry.scrollExtent / 2;
+  }
+
+  /// Where the divider of section [index] begins in the scroll.
+  double _dividerStart(int index) {
+    final sliver = _dividerKeys[index]?.currentContext?.findRenderObject();
+    return sliver is RenderSliver
+        ? sliver.constraints.precedingScrollExtent
+        : 0;
+  }
+
+  /// Works out which section the header shows and where the jump button
+  /// points, from where things sit in the scroll. Rebuilds only when either
+  /// changes, so scrolling within a section costs no rebuild (NFR-1).
+  void _trackScroll() {
+    if (!mounted || !_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (!position.hasPixels || !position.hasViewportDimension) return;
+    final offset = position.pixels;
+
+    // A section is current once its divider's line -- the middle of the
+    // divider -- has gone under the header's bottom edge. Sliver scroll
+    // positions are known for every section, on screen or not.
+    var section = 0;
+    for (final MapEntry(key: index, value: key) in _dividerKeys.entries) {
+      final line = _dividerLine(key);
+      if (line == null) continue;
+      if (line - offset <= _pinnedExtent && index > section) {
+        section = index;
+      }
+    }
+
+    AxisDirection? jumpTo;
+    final span = _activeNodeSpan();
+    if (span != null) {
+      // Judged by the node's middle: a node whose circle is hidden under
+      // the header, with only its label showing, is out of view.
+      final middle = (span.top + span.bottom) / 2;
+      if (middle <= offset + _pinnedExtent) {
+        jumpTo = AxisDirection.up;
+      } else if (middle >= offset + position.viewportDimension) {
+        jumpTo = AxisDirection.down;
+      }
+    }
+
+    if (section != _section || jumpTo != _jumpTo) {
+      setState(() {
+        _section = section;
+        _jumpTo = jumpTo;
+      });
+    }
+  }
+
+  /// Scrolls the active node to the middle of the space below the pinned
+  /// header -- and, if that leaves its section's divider still in view, on
+  /// until the divider is tucked under the header, so the header names the
+  /// node's section. Smooth, or at once with reduced motion (FR-4).
+  void _jumpToCurrent() {
+    final span = _activeNodeSpan();
+    if (span == null || !_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    final visible = position.viewportDimension - _pinnedExtent;
+    var target = (span.top + span.bottom) / 2 - _pinnedExtent - visible / 2;
+    // The whole divider, not just its line, so no half-cut title is left
+    // at the header's edge.
+    final line = _dividerLine(_dividerKeys[_activeSection]);
+    if (line != null) {
+      final tucked =
+          line + (line - _dividerStart(_activeSection)) - _pinnedExtent;
+      if (tucked > target) target = tucked;
+    }
+    target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
+    if (AppMotion.reduced(context)) {
+      _scrollController.jumpTo(target);
+    } else {
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 }
 
 /// One category's skill path. The zig-zag offset restarts at the top of every
-/// category; the category's banner is a pinned sliver above this, not part of
-/// it (011-dashboard-ui-polish, story 002).
+/// category; the section's divider is a sliver above this, not part of it
+/// (011-dashboard-ui-polish, story 002; 020-dashboard-section-header).
 class _CategoryNodes extends StatelessWidget {
   const _CategoryNodes({
     required this.nodes,
     required this.onNodeTap,
     required this.downloader,
+    required this.activeNodeKey,
+    this.activeNodeId,
   });
 
   final List<SkillTreeNode> nodes;
   final ValueChanged<SkillTreeNode> onNodeTap;
   final LessonPackDownloader downloader;
+
+  /// The learner's current node in this section, if it is here; it gets
+  /// [activeNodeKey] so the jump button can find it.
+  final String? activeNodeId;
+  final GlobalKey activeNodeKey;
 
   @override
   Widget build(BuildContext context) {
@@ -765,6 +982,7 @@ class _CategoryNodes extends StatelessWidget {
                   clipBehavior: Clip.none,
                   children: [
                     SkillPathNode(
+                      key: nodes[i].id == activeNodeId ? activeNodeKey : null,
                       node: nodes[i],
                       onTap: nodes[i].state == SkillNodeState.locked
                           ? null

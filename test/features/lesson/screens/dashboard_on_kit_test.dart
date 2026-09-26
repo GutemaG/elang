@@ -256,68 +256,61 @@ void main() {
     });
   });
 
-  group('section banners', () {
-    AppCard cardOf(WidgetTester tester, String title) => tester.widget<AppCard>(
-      find.descendant(
-        of: find.ancestor(
-          of: find.text(title),
-          matching: find.byType(CategoryBanner),
+  group('the section header', () {
+    // 020-dashboard-section-header replaced the white banner per section
+    // with one solid header in the section's tone.
+    Future<void> header(
+      WidgetTester tester, {
+      int index = 0,
+      int completed = 1,
+      int total = 3,
+    }) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CategoryBanner(
+            category: SkillCategory(
+              id: 'c',
+              title: 'Category $index',
+              subtitle: 'ምድብ',
+            ),
+            completed: completed,
+            total: total,
+            colorIndex: index,
+          ),
         ),
-        matching: find.byType(AppCard),
       ),
     );
 
-    testWidgets('each is a compact white card with the Tibeb stripe', (
-      tester,
-    ) async {
-      await _pump(tester, _Rig(_api()));
+    testWidgets('is a compact card filled with its tone, text in the '
+        "tone's onFill", (tester) async {
+      await header(tester);
 
-      final card = cardOf(tester, 'Category 1');
-      expect(card.topStripe, isTrue);
+      final card = tester.widget<AppCard>(find.byType(AppCard));
+      expect(card.filled, isTrue);
+      expect(card.topStripe, isFalse);
       expect(card.padding, AppCardPadding.compact);
       expect(card.selected, isNull);
+      Color colourOf(String text) =>
+          tester.widget<Text>(find.text(text)).style!.color!;
+      expect(colourOf('Category 0'), AppTone.primary.onFill);
+      expect(colourOf('ምድብ'), AppTone.primary.onFill);
     });
 
     testWidgets('consecutive sections take primary, secondary and tertiary in '
         'turn, the bar in the same tone', (tester) async {
-      _size(tester, const Size(400, 6000));
-      await _pump(
-        tester,
-        _Rig(
-          _api(
-            tree: _tree(
-              categories: 4,
-              nodes: [
-                for (var i = 1; i <= 4; i++)
-                  _node('n$i', 'c$i', SkillNodeState.active),
-              ],
-            ),
-          ),
-        ),
-      );
-
-      final tones = [
-        for (var i = 1; i <= 4; i++) cardOf(tester, 'Category $i').tone,
-      ];
+      final tones = <AppTone>[];
+      for (var i = 0; i < 4; i++) {
+        await header(tester, index: i);
+        tones.add(tester.widget<AppCard>(find.byType(AppCard)).tone);
+        final bar = tester.widget<AppProgressBar>(find.byType(AppProgressBar));
+        expect(bar.tone, tones.last);
+      }
       expect(tones, [
         AppTone.primary,
         AppTone.secondary,
         AppTone.tertiary,
         AppTone.primary,
       ]);
-      for (var i = 1; i <= 4; i++) {
-        final bar = tester.widget<AppProgressBar>(
-          find.descendant(
-            of: find.ancestor(
-              of: find.text('Category $i'),
-              matching: find.byType(CategoryBanner),
-            ),
-            matching: find.byType(AppProgressBar),
-          ),
-        );
-        expect(bar.tone, tones[i - 1]);
-        expect(bar.gradient, isTrue);
-      }
     });
 
     testWidgets('the count is a badge and the bar shows it', (tester) async {
@@ -336,45 +329,60 @@ void main() {
     testWidgets('a section with no skills shows an empty bar, not an error', (
       tester,
     ) async {
-      await _pump(
-        tester,
-        _Rig(
-          _api(
-            tree: _tree(
-              categories: 2,
-              nodes: [_node('a', 'c1', SkillNodeState.active)],
-            ),
-          ),
-        ),
-      );
+      await header(tester, completed: 0, total: 0);
 
       expect(find.widgetWithText(CountBadge, '0/0 Completed'), findsOneWidget);
+      expect(
+        tester.widget<AppProgressBar>(find.byType(AppProgressBar)).value,
+        0,
+      );
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('extentOf is the card and its content, and nothing more', (
-      tester,
-    ) async {
+    testWidgets('a screen reader hears one heading with the title, subtitle '
+        'and progress', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await header(tester);
+      expect(
+        // The card sits inside the header's one merged node.
+        tester.getSemantics(find.byType(AppCard)),
+        isSemantics(isHeader: true, label: 'Category 0, ምድብ, 1 of 3 completed'),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('extentOf is the card and its content, and nothing more; '
+        'extentOfAll is the tallest section', (tester) async {
       late double reserved;
+      late double all;
+      late double tall;
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              reserved = CategoryBanner.extentOf(
-                context,
-                const SkillCategory(id: 'c', title: 'Title', subtitle: 'Sub'),
+              const short = SkillCategory(
+                id: 'c',
+                title: 'Title',
+                subtitle: 'Sub',
               );
+              const fidel = SkillCategory(
+                id: 'd',
+                title: 'Title',
+                subtitle: 'ሰላምታ',
+              );
+              reserved = CategoryBanner.extentOf(context, short);
+              tall = CategoryBanner.extentOf(context, fidel);
+              all = CategoryBanner.extentOfAll(context, const [short, fidel]);
               return const SizedBox.shrink();
             },
           ),
         ),
       );
-      // Gaps, then the card: shelf, border, stripe and compact padding.
+      // Gaps, then the card: shelf, border and compact padding.
       const chrome =
           2 * AppSpacing.spaceXs +
           AppShadows.shelfDepth +
           2 * AppCard.borderWidth +
-          TibebStripe.gradientHeight +
           2 * AppSpacing.spaceSm;
       // Content: at least a title and subtitle, a gap and the bar.
       expect(
@@ -384,6 +392,7 @@ void main() {
         ),
       );
       expect(reserved, lessThan(chrome + AppSpacing.space2xs + 12 + 48));
+      expect(all, tall >= reserved ? tall : reserved);
     });
   });
 

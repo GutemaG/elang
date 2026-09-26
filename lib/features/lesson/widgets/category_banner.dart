@@ -1,34 +1,32 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/skill_tree.dart';
-import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_shadows.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_status.dart';
 
-/// The tones a section banner takes in turn, so consecutive sections are
-/// always told apart at a glance: the card's border, shelf and bar take the
-/// tone, and the face stays white.
+/// The tones the section header takes in turn, so the learner can see the
+/// header change as they scroll from one section into the next.
 const List<AppTone> _tones = [
   AppTone.primary,
   AppTone.secondary,
   AppTone.tertiary,
 ];
 
-/// One category's banner, pinned beneath the dashboard header while that
-/// category's own nodes scroll past (011-dashboard-ui-polish, story 002).
+/// The dashboard's one section header, pinned beneath the stats bar and
+/// showing whichever section the learner is scrolled to
+/// (020-dashboard-section-header, after Duolingo's unit card). It replaced
+/// intent 011's banner per section, which put several coloured blocks on
+/// one screen.
 ///
-/// Carries exactly what the scrolling card carried before -- title, subtitle,
-/// completed count and progress -- as the dashboard mockup's milestone card
-/// (018-mobile-design-system, bolt 047): a white [AppCard] with the Tibeb
-/// stripe, a "3/5 Completed" [CountBadge] and an [AppProgressBar]. The line count
+/// A solid [AppCard] in the section's tone, carrying the title, subtitle,
+/// a "3/5 Completed" [CountBadge] and an [AppProgressBar]. The line count
 /// is fixed (one each for title and subtitle, ellipsised) so [extentOf] is
-/// exact at any text scale; a variable-height banner could not be pinned,
-/// because a pinned sliver must declare its extent before it lays out.
+/// exact at any text scale; the header is a pinned sliver, which must
+/// declare its extent before it lays out.
 class CategoryBanner extends StatelessWidget {
   const CategoryBanner({
     super.key,
@@ -48,13 +46,10 @@ class CategoryBanner extends StatelessWidget {
   /// Breathing room above and below the card, inside the pinned area.
   static const double _gap = AppSpacing.spaceXs;
 
-  /// Everything the card adds around its content: its shelf, its border, the
-  /// Tibeb stripe and its compact padding.
+  /// Everything the card adds around its content: its shelf, its border and
+  /// its compact padding.
   static const double _cardChrome =
-      AppShadows.shelfDepth +
-      2 * AppCard.borderWidth +
-      TibebStripe.gradientHeight +
-      2 * AppSpacing.spaceSm;
+      AppShadows.shelfDepth + 2 * AppCard.borderWidth + 2 * AppSpacing.spaceSm;
 
   /// Kept narrower than the screen margin so the banner reads as a wide card
   /// rather than a full-bleed bar, while still being wider than the content
@@ -83,6 +78,23 @@ class CategoryBanner extends StatelessWidget {
         AppProgressBar.regularHeight;
     return (_gap * 2 + _cardChrome + content).ceilToDouble();
   }
+
+  /// The one height that fits every section of [categories], so the header
+  /// keeps its size as it changes from section to section.
+  static double extentOfAll(
+    BuildContext context,
+    List<SkillCategory> categories,
+  ) {
+    var extent = 0.0;
+    for (final category in categories) {
+      final e = extentOf(context, category);
+      if (e > extent) extent = e;
+    }
+    return extent;
+  }
+
+  /// The tone of the section at [index].
+  static AppTone toneAt(int index) => _tones[index % _tones.length];
 
   /// Digits are the only part of the count that can vary in height, and every
   /// digit shares a line box, so any two will do.
@@ -116,71 +128,79 @@ class CategoryBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tone = _tones[colorIndex % _tones.length];
+    final tone = toneAt(colorIndex);
+    final value = total == 0 ? 0.0 : completed / total;
     return Padding(
       padding: const EdgeInsets.fromLTRB(_margin, _gap, _margin, _gap),
-      child: AppCard(
-        tone: tone,
-        topStripe: true,
-        padding: AppCardPadding.compact,
-        child: Column(
-          // Hugs its content, so the banner's natural height is measurable
-          // and can be checked against what [extentOf] reserved.
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        category.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.labelLg.copyWith(
-                          color: AppColors.onSurface,
+      child: Semantics(
+        header: true,
+        container: true,
+        excludeSemantics: true,
+        label:
+            '${category.title}, ${category.subtitle}, '
+            '$completed of $total completed',
+        child: AppCard(
+          tone: tone,
+          filled: true,
+          padding: AppCardPadding.compact,
+          child: Column(
+            // Hugs its content, so the banner's natural height is measurable
+            // and can be checked against what [extentOf] reserved.
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  // The title gets two thirds of the row, so a name like
+                  // "Foundations & Greetings" is not cut at half width.
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          category.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.labelLg.copyWith(
+                            color: tone.onFill,
+                          ),
                         ),
-                      ),
-                      Text(
-                        category.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodySm.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                        Text(
+                          category.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodySm.copyWith(
+                            color: tone.onFill,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.spaceSm),
-                // Scales down rather than pushing the row past the card's
-                // edge at a very large text setting.
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: CountBadge(label: '$completed/$total Completed'),
+                  const SizedBox(width: AppSpacing.spaceSm),
+                  // Scales down rather than pushing the row past the card's
+                  // edge at a very large text setting.
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: CountBadge(label: '$completed/$total Completed'),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.space2xs),
-            // The bar takes whatever vertical space is left. [extentOf]
-            // measures the text and should leave it its full height, but a
-            // pinned sliver has to commit to a height *before* laying out,
-            // and a prediction that is a fraction short would otherwise
-            // overflow. Here it just draws a slightly thinner bar, which
-            // nobody can see.
-            Flexible(
-              child: AppProgressBar(
-                value: total == 0 ? 0 : completed / total,
-                tone: tone,
-                gradient: true,
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.space2xs),
+              // The bar takes whatever vertical space is left. [extentOf]
+              // measures the text and should leave it its full height, but a
+              // pinned sliver has to commit to a height *before* laying out,
+              // and a prediction that is a fraction short would otherwise
+              // overflow. Here it just draws a slightly thinner bar, which
+              // nobody can see.
+              Flexible(
+                child: AppProgressBar(value: value, tone: tone, onFilled: true),
+              ),
+            ],
+          ),
         ),
       ),
     );

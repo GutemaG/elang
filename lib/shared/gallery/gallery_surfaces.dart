@@ -369,6 +369,29 @@ class _CardsGallerySectionState extends State<CardsGallerySection> {
             message: 'Daily Buna brew ritual complete! Goal 100% met',
           ),
         ),
+        // 020-dashboard-section-header: the dashboard's one coloured block,
+        // and the quiet divider between sections in the path.
+        for (final tone in [
+          AppTone.primary,
+          AppTone.secondary,
+          AppTone.tertiary,
+        ])
+          GalleryCase(
+            label: 'AppCard filled: ${tone.name} (the section header)',
+            child: AppCard(
+              tone: tone,
+              filled: true,
+              padding: AppCardPadding.compact,
+              child: Text(
+                'Family & People',
+                style: AppTypography.labelLg.copyWith(color: tone.onFill),
+              ),
+            ),
+          ),
+        const GalleryCase(
+          label: 'PathSectionDivider: where the next section begins',
+          child: PathSectionDivider(title: 'Family & People'),
+        ),
         GalleryCase(
           label: 'SectionHeader with an eyebrow and a text link',
           child: SectionHeader(

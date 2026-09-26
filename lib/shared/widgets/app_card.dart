@@ -27,7 +27,10 @@ enum AppCardPadding {
 /// A [tone] tints the border and shelf only; the face stays white. With
 /// [onTap] the card presses like a button and is one button for a screen
 /// reader. [selected] marks a chosen option: the border takes the tone's
-/// strong colour and the face its selected tint.
+/// strong colour and the face its selected tint. [filled] paints the whole
+/// card in the tone, for the one coloured block on a page (the dashboard's
+/// section header, 020-dashboard-section-header); its content then uses
+/// the tone's `onFill` for text.
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
@@ -37,10 +40,15 @@ class AppCard extends StatelessWidget {
     this.onTap,
     this.selected,
     this.padding = AppCardPadding.regular,
+    this.filled = false,
   });
 
   final Widget child;
   final AppTone tone;
+
+  /// A solid face, border and shelf in the tone: its `fill`, and its
+  /// `fillShelf` underneath.
+  final bool filled;
 
   /// The green-gold-terracotta band along the top edge, as on the milestone
   /// and refill-timer cards.
@@ -63,10 +71,17 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = selected ?? false;
-    final border = isSelected ? tone.icon : tone.border;
-    final face = isSelected
+    final border = filled
+        ? tone.fill
+        : isSelected
+        ? tone.icon
+        : tone.border;
+    final face = filled
+        ? tone.fill
+        : isSelected
         ? tone.selectedFace
         : AppColors.surfaceContainerLowest;
+    final shelf = filled ? tone.fillShelf : tone.shelf;
     final radius = BorderRadius.circular(AppRadii.card);
 
     // The content is clipped to the inside of the border, so a stripe or a
@@ -98,7 +113,7 @@ class AppCard extends StatelessWidget {
             color: face,
             borderRadius: radius,
             border: Border.all(color: border, width: borderWidth),
-            boxShadow: AppShadows.raised(tone.shelf),
+            boxShadow: AppShadows.raised(shelf),
           ),
           // A DecoratedBox, unlike the pressable's Container, does not inset
           // its child by the border.
@@ -116,7 +131,7 @@ class AppCard extends StatelessWidget {
         borderWidth: borderWidth,
         borderRadius: radius,
         shelfDepth: AppShadows.shelfDepth,
-        shadows: (visible) => AppShadows.raised(tone.shelf, visible: visible),
+        shadows: (visible) => AppShadows.raised(shelf, visible: visible),
         child: inner,
       );
     }
@@ -530,6 +545,68 @@ class ListRowGroup extends StatelessWidget {
             children[i],
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Where one section of the skill path ends and the next begins: the
+/// section's title, grey and in italics, centred between two hairlines
+/// (020-dashboard-section-header, after Duolingo's path).
+///
+/// Deliberately quiet -- no card, colour or progress -- so the fixed
+/// section header stays the only coloured block on the path. A long title
+/// wraps to two lines; the hairlines shrink but always keep [minLine] each.
+class PathSectionDivider extends StatelessWidget {
+  const PathSectionDivider({super.key, required this.title});
+
+  final String title;
+
+  /// The shortest each hairline gets beside a long title.
+  static const double minLine = AppSpacing.spaceLg;
+
+  @override
+  Widget build(BuildContext context) {
+    const line = Expanded(
+      child: SizedBox(
+        height: 1,
+        child: ColoredBox(color: AppColors.outlineVariant),
+      ),
+    );
+    return Semantics(
+      header: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceLg),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxText =
+                constraints.maxWidth - 2 * (minLine + AppSpacing.spaceSm);
+            return Row(
+              children: [
+                line,
+                const SizedBox(width: AppSpacing.spaceSm),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxText),
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.forText(
+                      AppTypography.bodyMd.copyWith(
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      title,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.spaceSm),
+                line,
+              ],
+            );
+          },
+        ),
       ),
     );
   }

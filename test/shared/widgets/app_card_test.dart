@@ -75,6 +75,152 @@ void main() {
     });
   });
 
+  group('a filled card (020-dashboard-section-header)', () {
+    test("every tone's fill shelf is darker than its fill", () {
+      for (final tone in AppTone.values) {
+        expect(
+          _luminance(tone.fillShelf),
+          lessThan(_luminance(tone.fill)),
+          reason: tone.name,
+        );
+      }
+    });
+
+    testWidgets('face and border take the fill, and the shelf the fill '
+        'shelf', (tester) async {
+      for (final tone in [
+        AppTone.primary,
+        AppTone.secondary,
+        AppTone.tertiary,
+      ]) {
+        await tester.pumpWidget(
+          _host(AppCard(tone: tone, filled: true, child: const Text('x'))),
+        );
+        final face = _face(tester);
+        expect(face.color, tone.fill, reason: tone.name);
+        expect((face.border! as Border).top.color, tone.fill);
+        expect(face.boxShadow!.first.color, tone.fillShelf);
+      }
+    });
+
+    testWidgets("a progress bar on a filled card fills with the tone's "
+        'onFill over a faint wash of it, so a full bar still shows', (
+      tester,
+    ) async {
+      for (final tone in [
+        AppTone.primary,
+        AppTone.secondary,
+        AppTone.tertiary,
+      ]) {
+        await tester.pumpWidget(
+          _host(AppProgressBar(value: 1, tone: tone, onFilled: true)),
+        );
+        await tester.pumpAndSettle();
+        final boxes = tester
+            .widgetList<DecoratedBox>(
+              find.descendant(
+                of: find.byType(AppProgressBar),
+                matching: find.byType(DecoratedBox),
+              ),
+            )
+            .map((b) => (b.decoration as BoxDecoration).color)
+            .toList();
+        expect(boxes, contains(tone.onFill), reason: tone.name);
+        expect(boxes, isNot(contains(tone.fill)), reason: tone.name);
+        final track = tester.widget<Container>(
+          find
+              .descendant(
+                of: find.byType(AppProgressBar),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        expect(
+          (track.decoration! as BoxDecoration).color,
+          tone.onFill.withValues(alpha: 0.25),
+        );
+      }
+    });
+
+    testWidgets('a pressable filled card is filled too', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          AppCard(
+            tone: AppTone.secondary,
+            filled: true,
+            onTap: () {},
+            child: const Text('x'),
+          ),
+        ),
+      );
+      expect(_face(tester).color, AppTone.secondary.fill);
+    });
+  });
+
+  group('PathSectionDivider', () {
+    testWidgets('is the title, grey and in italics, between two hairlines', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(const PathSectionDivider(title: 'Family & People')),
+      );
+      final text = tester.widget<Text>(find.text('Family & People'));
+      expect(text.style!.color, AppColors.textMuted);
+      expect(text.style!.fontStyle, FontStyle.italic);
+      expect(text.textAlign, TextAlign.center);
+      final lines = find.descendant(
+        of: find.byType(PathSectionDivider),
+        matching: find.byWidgetPredicate(
+          (w) => w is ColoredBox && w.color == AppColors.outlineVariant,
+        ),
+      );
+      expect(lines, findsNWidgets(2));
+      final title = tester.getRect(find.text('Family & People'));
+      expect(tester.getRect(lines.first).right, lessThan(title.left));
+      expect(tester.getRect(lines.last).left, greaterThan(title.right));
+      // No card, no colour.
+      expect(find.byType(AppCard), findsNothing);
+    });
+
+    testWidgets('a long title wraps to two lines, and each hairline keeps '
+        'its minimum', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          const PathSectionDivider(
+            title:
+                'Colours, Body & Health and other very long section names '
+                'that go on and on and on',
+          ),
+        ),
+      );
+      final text = tester.widget<Text>(find.byType(Text));
+      expect(text.maxLines, 2);
+      final lines = find.byWidgetPredicate(
+        (w) => w is ColoredBox && w.color == AppColors.outlineVariant,
+      );
+      // Both hairlines are the same const widget, so each is measured
+      // through its own element.
+      expect(lines, findsNWidgets(2));
+      for (final line in lines.evaluate()) {
+        expect(
+          (line.renderObject! as RenderBox).size.width,
+          greaterThanOrEqualTo(PathSectionDivider.minLine - 0.5),
+        );
+      }
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a screen reader hears it as a heading', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(_host(const PathSectionDivider(title: 'Food')));
+      expect(
+        tester.getSemantics(find.text('Food')),
+        isSemantics(label: 'Food', isHeader: true),
+      );
+      semantics.dispose();
+    });
+  });
+
   group('AppCard', () {
     testWidgets('should be a white face, 2 px border, 24 px radius and the '
         'card shadow', (tester) async {

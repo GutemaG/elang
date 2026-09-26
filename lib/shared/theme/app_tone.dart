@@ -19,6 +19,7 @@ enum AppTone {
     ink: AppColors.onSurface,
     fill: AppColors.inverseSurface,
     onFill: AppColors.inverseOnSurface,
+    fillShelf: AppColors.shadowInk,
     selectedFace: AppColors.surfaceContainerLow,
   ),
 
@@ -31,6 +32,7 @@ enum AppTone {
     ink: AppColors.primary,
     fill: AppColors.primaryContainer,
     onFill: AppColors.onPrimary,
+    fillShelf: AppColors.primaryBevel,
     selectedFace: AppColors.optionChosen,
   ),
 
@@ -43,6 +45,7 @@ enum AppTone {
     ink: AppColors.secondary,
     fill: AppColors.secondaryContainer,
     onFill: AppColors.onSecondaryContainer,
+    fillShelf: AppColors.secondaryBevel,
     selectedFace: AppColors.answerSelected,
   ),
 
@@ -55,6 +58,7 @@ enum AppTone {
     ink: AppColors.tertiaryContainer,
     fill: AppColors.tertiaryContainer,
     onFill: AppColors.onTertiary,
+    fillShelf: AppColors.tertiary,
     selectedFace: AppColors.answerIncorrect,
   );
 
@@ -66,6 +70,7 @@ enum AppTone {
     required this.ink,
     required this.fill,
     required this.onFill,
+    required this.fillShelf,
     required this.selectedFace,
   });
 
@@ -89,6 +94,10 @@ enum AppTone {
 
   /// Text on [fill].
   final Color onFill;
+
+  /// The shelf under a card filled with [fill]: the tone's darker bevel
+  /// (the dashboard's section header, 020-dashboard-section-header).
+  final Color fillShelf;
 
   /// A selected card's face.
   final Color selectedFace;
