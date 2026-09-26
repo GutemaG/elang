@@ -378,6 +378,19 @@ class _CardsGallerySectionState extends State<CardsGallerySection> {
           ),
         ),
         GalleryCase(
+          label: 'SnackBar: a short message, from the theme',
+          child: Builder(
+            builder: (context) => AppButton.secondary(
+              label: 'Show a message',
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Couldn't switch course. Please try again."),
+                ),
+              ),
+            ),
+          ),
+        ),
+        GalleryCase(
           label: 'ListRowGroup: chevron, switch, value and plain rows',
           child: ListRowGroup(
             children: [
@@ -388,15 +401,18 @@ class _CardsGallerySectionState extends State<CardsGallerySection> {
                 subtitle: 'Name, photo and email',
                 onTap: _noop,
               ),
-              ListRow(
+              SwitchRow(
                 icon: Icons.volume_up,
                 tone: AppTone.secondary,
                 title: 'Sound effects',
-                trailing: Switch(
-                  value: _sound,
-                  onChanged: (v) => setState(() => _sound = v),
-                ),
-                onTap: () => setState(() => _sound = !_sound),
+                value: _sound,
+                onChanged: (v) => setState(() => _sound = v),
+              ),
+              const SwitchRow(
+                icon: Icons.notifications,
+                title: 'Notifications (disabled)',
+                value: false,
+                onChanged: null,
               ),
               const ListRow(
                 icon: Icons.download_done,

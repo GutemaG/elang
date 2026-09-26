@@ -162,8 +162,9 @@ class ControllableLessonApi implements LessonApi {
         timeSpent: timeSpent,
       ),
     );
-    if (completePracticeSessionError != null)
+    if (completePracticeSessionError != null) {
       throw completePracticeSessionError!;
+    }
     return practiceCompletionResult!;
   }
 }

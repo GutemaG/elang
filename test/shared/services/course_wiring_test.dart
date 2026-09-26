@@ -43,7 +43,7 @@ Map<String, dynamic> _treeBody({Map<String, dynamic>? course}) => {
   'categories': [
     {'id': 'cat', 'title': 'Foundations', 'subtitle': 's', 'order_index': 1},
   ],
-  if (course != null) 'course': course,
+  'course': ?course,
   'skills': [
     {
       'id': 'skill',

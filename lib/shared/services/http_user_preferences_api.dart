@@ -16,11 +16,10 @@ import 'user_preferences_api_exception.dart';
 /// bodies, or response bodies -- only, at most, an HTTP status code.
 class HttpUserPreferencesApi implements UserPreferencesApi {
   HttpUserPreferencesApi({
-    required SessionRepository sessionRepository,
+    required this._sessionRepository,
     http.Client? client,
     String? baseUrl,
-  }) : _sessionRepository = sessionRepository,
-       _client = client ?? http.Client(),
+  }) : _client = client ?? http.Client(),
        _baseUrl = baseUrl ?? AuthConfig.apiBaseUrl;
 
   final SessionRepository _sessionRepository;
@@ -53,9 +52,9 @@ class HttpUserPreferencesApi implements UserPreferencesApi {
   }) async {
     final headers = await _authHeaders();
     final body = <String, dynamic>{
-      if (language != null) 'language': language,
-      if (dailyGoalMinutes != null) 'daily_goal_minutes': dailyGoalMinutes,
-      if (notificationEnabled != null) 'notification_enabled': notificationEnabled,
+      'language': ?language,
+      'daily_goal_minutes': ?dailyGoalMinutes,
+      'notification_enabled': ?notificationEnabled,
     };
 
     http.Response response;
@@ -98,13 +97,17 @@ class HttpUserPreferencesApi implements UserPreferencesApi {
         final errorCode = decoded['error_code'];
         final message = decoded['message'];
         return UserPreferencesApiException(
-          message is String ? message : 'Request failed (${response.statusCode})',
+          message is String
+              ? message
+              : 'Request failed (${response.statusCode})',
           errorCode: errorCode is String ? errorCode : null,
         );
       }
     } on FormatException {
       // Fall through to the generic exception below.
     }
-    return UserPreferencesApiException('Request failed (${response.statusCode})');
+    return UserPreferencesApiException(
+      'Request failed (${response.statusCode})',
+    );
   }
 }

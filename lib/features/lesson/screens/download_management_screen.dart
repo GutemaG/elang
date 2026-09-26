@@ -3,15 +3,20 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/downloaded_pack_summary.dart';
 import '../../../shared/services/lesson_pack_store.dart';
 import '../../../shared/services/sync_engine.dart';
-import '../../../shared/theme/app_colors.dart';
-import '../../../shared/theme/app_spacing.dart';
-import '../../../shared/theme/app_typography.dart';
+import '../../../shared/theme/app_tone.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_icon_button.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/app_status.dart';
 
 /// Story 005's download-management screen: lists downloaded lesson packs
 /// with an approximate storage size and lets the user delete them.
 ///
-/// Each pack is a card with an icon, title, size, and a quiet destructive
-/// "Delete" action (confirmed via dialog before anything is removed).
+/// Drawn on the design library (018-mobile-design-system, bolt 049): each
+/// pack is a row on one card with a delete button, deleting is confirmed in
+/// the library dialog with a destructive primary, and an empty list is an
+/// [EmptyState].
 class DownloadManagementScreen extends StatefulWidget {
   const DownloadManagementScreen({
     super.key,
@@ -47,29 +52,17 @@ class _DownloadManagementScreenState extends State<DownloadManagementScreen> {
       pack.lessonId,
     );
     if (!mounted) return;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete "${pack.title}"?'),
-        content: Text(
-          hasPending
-              ? "This lesson has progress that hasn't synced yet. "
-                    'Deleting the download won\'t affect that pending '
-                    'sync -- it only removes the offline copy.'
-              : 'This removes the downloaded content and audio from your '
-                    'device. Your synced progress is not affected.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      title: 'Delete "${pack.title}"?',
+      message: hasPending
+          ? "This lesson has progress that hasn't synced yet. "
+                'Deleting the download won\'t affect that pending '
+                'sync -- it only removes the offline copy.'
+          : 'This removes the downloaded content and audio from your '
+                'device. Your synced progress is not affected.',
+      confirmLabel: 'Delete',
+      destructive: true,
     );
     if (confirmed != true) return;
     await widget.lessonPackStore.delete(pack.lessonId);
@@ -79,43 +72,50 @@ class _DownloadManagementScreenState extends State<DownloadManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Manage Downloads')),
-      body: SafeArea(
-        child: FutureBuilder<List<DownloadedPackSummary>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final packs = snapshot.data ?? const [];
-            if (packs.isEmpty) {
-              return Center(
-                child: Text(
-                  'No downloaded lessons yet.',
-                  style: AppTypography.bodyMd.copyWith(
-                    color: AppColors.onSurfaceVariant,
+    return FutureBuilder<List<DownloadedPackSummary>>(
+      future: _future,
+      builder: (context, snapshot) {
+        final done = snapshot.connectionState == ConnectionState.done;
+        final packs = snapshot.data ?? const <DownloadedPackSummary>[];
+        return AppPage(
+          topBar: AppTopBar(
+            leading: Navigator.of(context).canPop()
+                ? AppIconButton(
+                    icon: Icons.arrow_back,
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  )
+                : null,
+            title: 'Manage Downloads',
+          ),
+          // Loading and the empty state sit in the middle of the page; the
+          // list scrolls.
+          scrollable: done && packs.isNotEmpty,
+          body: !done
+              ? const Center(child: LoadingState())
+              : packs.isEmpty
+              ? const Center(
+                  child: SingleChildScrollView(
+                    child: EmptyState(
+                      icon: Icons.download_for_offline_outlined,
+                      title: 'No downloaded lessons yet.',
+                      message:
+                          'Lessons you download from the path show up '
+                          'here, ready to play offline.',
+                    ),
                   ),
+                )
+              : ListRowGroup(
+                  children: [
+                    for (final pack in packs)
+                      _PackRow(
+                        pack: pack,
+                        onDelete: () => _confirmAndDelete(pack),
+                      ),
+                  ],
                 ),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.marginMobile),
-              itemCount: packs.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.spaceSm),
-              itemBuilder: (context, index) {
-                final pack = packs[index];
-                return _PackRow(
-                  pack: pack,
-                  onDelete: () => _confirmAndDelete(pack),
-                );
-              },
-            );
-          },
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -134,71 +134,16 @@ class _PackRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.spaceMd,
-        vertical: AppSpacing.spaceSm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(color: AppColors.outlineVariant),
-        boxShadow: const [
-          BoxShadow(color: AppColors.cardBorderDefault, offset: Offset(0, 3)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryFixed,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.download_done_rounded,
-              color: AppColors.primaryContainer,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.spaceSm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  pack.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.labelLg.copyWith(
-                    color: AppColors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  pack.courseTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySm.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-                Text(
-                  _formatSize(pack.approximateSizeBytes),
-                  style: AppTypography.bodySm.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton.icon(
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline_rounded, size: 20),
-            label: const Text('Delete'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-          ),
-        ],
+    return ListRow(
+      icon: Icons.download_done_rounded,
+      tone: AppTone.primary,
+      title: pack.title,
+      subtitle:
+          '${pack.courseTitle} · ${_formatSize(pack.approximateSizeBytes)}',
+      trailing: AppIconButton(
+        icon: Icons.delete_outline_rounded,
+        tooltip: 'Delete "${pack.title}"',
+        onPressed: onDelete,
       ),
     );
   }

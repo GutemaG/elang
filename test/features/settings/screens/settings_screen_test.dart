@@ -17,6 +17,8 @@ import 'package:elang/shared/services/session_api.dart';
 import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/user_preferences_api.dart';
+import 'package:elang/shared/widgets/app_button.dart';
+import 'package:elang/shared/widgets/app_card.dart';
 
 import '../../../helpers/fake_user_preferences_api.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
@@ -150,12 +152,12 @@ void main() {
       expect(find.text('Serious · 15 min/day'), findsOneWidget);
       expect(find.text('Course'), findsOneWidget);
       expect(find.text('English to Amharic'), findsOneWidget);
-      final notificationSwitch = tester.widget<SwitchListTile>(
-        find.widgetWithText(SwitchListTile, 'Notifications'),
+      final notificationSwitch = tester.widget<SwitchRow>(
+        find.widgetWithText(SwitchRow, 'Notifications'),
       );
       expect(notificationSwitch.value, false);
-      final soundSwitch = tester.widget<SwitchListTile>(
-        find.widgetWithText(SwitchListTile, 'Sound'),
+      final soundSwitch = tester.widget<SwitchRow>(
+        find.widgetWithText(SwitchRow, 'Sound'),
       );
       expect(soundSwitch.value, true);
     },
@@ -179,12 +181,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(SwitchListTile, 'Notifications'));
+    await tester.tap(find.widgetWithText(SwitchRow, 'Notifications'));
     await tester.pumpAndSettle();
 
     expect(userPreferencesApi.calls.single.notificationEnabled, false);
-    final notificationSwitch = tester.widget<SwitchListTile>(
-      find.widgetWithText(SwitchListTile, 'Notifications'),
+    final notificationSwitch = tester.widget<SwitchRow>(
+      find.widgetWithText(SwitchRow, 'Notifications'),
     );
     expect(notificationSwitch.value, false);
   });
@@ -206,7 +208,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(SwitchListTile, 'Sound'));
+      await tester.tap(find.widgetWithText(SwitchRow, 'Sound'));
       await tester.pumpAndSettle();
 
       expect(await soundPreferenceRepository.getSoundEnabled(), false);
@@ -226,6 +228,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.text('Log out'));
       await tester.tap(find.text('Log out'));
       await tester.pumpAndSettle();
       // Confirmation dialog.
@@ -234,7 +237,7 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.widgetWithText(TextButton, 'Log out'));
+      await tester.tap(find.widgetWithText(AppButton, 'Log out').last);
       await tester.pumpAndSettle();
 
       expect(find.text('Sign In Placeholder'), findsOneWidget);
@@ -255,9 +258,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Log out'));
     await tester.tap(find.text('Log out'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.tap(find.widgetWithText(AppButton, 'Cancel'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sign In Placeholder'), findsNothing);

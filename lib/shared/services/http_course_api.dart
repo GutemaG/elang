@@ -15,11 +15,10 @@ import 'session_repository.dart';
 /// tokens, request bodies, or response bodies.
 class HttpCourseApi implements CourseApi {
   HttpCourseApi({
-    required SessionRepository sessionRepository,
+    required this._sessionRepository,
     http.Client? client,
     String? baseUrl,
-  }) : _sessionRepository = sessionRepository,
-       _client = client ?? http.Client(),
+  }) : _client = client ?? http.Client(),
        _baseUrl = baseUrl ?? AuthConfig.apiBaseUrl;
 
   final SessionRepository _sessionRepository;

@@ -30,11 +30,10 @@ import 'session_repository.dart';
 /// an HTTP status code -- per `coding-standards.md`'s logging discipline.
 class HttpLessonApi implements LessonApi {
   HttpLessonApi({
-    required SessionRepository sessionRepository,
+    required this._sessionRepository,
     http.Client? client,
     String? baseUrl,
-  }) : _sessionRepository = sessionRepository,
-       _client = client ?? http.Client(),
+  }) : _client = client ?? http.Client(),
        _baseUrl = baseUrl ?? AuthConfig.apiBaseUrl;
 
   final SessionRepository _sessionRepository;

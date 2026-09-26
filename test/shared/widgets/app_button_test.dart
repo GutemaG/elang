@@ -2,7 +2,6 @@ import 'package:elang/shared/theme/app_colors.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/widgets/app_button.dart';
 import 'package:elang/shared/widgets/app_icon_button.dart';
-import 'package:elang/shared/widgets/tactile_button.dart';
 import 'package:elang/shared/widgets/tactile_pressable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -455,42 +454,6 @@ void main() {
         ),
       );
       expect(_face(tester).a, 0);
-    });
-  });
-
-  group('TactileButton (legacy)', () {
-    testWidgets('should keep its 56px face on a 4px shelf', (tester) async {
-      await tester.pumpWidget(
-        _host(TactileButton(label: 'Continue', onPressed: () {})),
-      );
-      expect(tester.getSize(find.byType(TactileButton)).height, 60);
-    });
-
-    testWidgets('should press like AppButton', (tester) async {
-      await tester.pumpWidget(
-        _host(TactileButton(label: 'Continue', onPressed: () {})),
-      );
-      final gesture = await _hold(tester, find.text('Continue'));
-      expect(_sink(tester), closeTo(4, 0.01));
-      await gesture.up();
-      await tester.pumpAndSettle();
-      expect(_sink(tester), 0);
-    });
-
-    testWidgets('should still take the colours a screen passes', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _host(
-          TactileButton(
-            label: 'Continue',
-            onPressed: () {},
-            backgroundColor: AppColors.tertiaryBrand,
-            bevelColor: AppColors.tertiaryBevel,
-          ),
-        ),
-      );
-      expect(_face(tester), AppColors.tertiaryBrand);
     });
   });
 }

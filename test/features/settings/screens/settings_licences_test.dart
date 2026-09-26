@@ -17,6 +17,7 @@ import 'package:elang/shared/services/fake_course_api.dart';
 import 'package:elang/shared/services/session_api.dart';
 import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
+import 'package:elang/shared/widgets/app_card.dart';
 
 import '../../../helpers/fake_user_preferences_api.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
@@ -66,7 +67,7 @@ void main() {
     await tester.pumpWidget(await _settings());
     await tester.pumpAndSettle();
 
-    final licences = find.widgetWithText(ListTile, 'Licences');
+    final licences = find.widgetWithText(ListRow, 'Licences');
     expect(licences, findsOneWidget);
     expect(
       find.descendant(

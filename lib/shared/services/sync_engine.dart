@@ -34,16 +34,13 @@ const permanentRejectionCodes = {
 /// `LessonPackDownloader`) so the dashboard's indicator can react live.
 class SyncEngine extends ChangeNotifier {
   SyncEngine({
-    required LessonApi lessonApi,
+    required this._lessonApi,
     required ConnectivityMonitor connectivityMonitor,
     PendingSyncQueueStore? queueStore,
-    Duration baseRetryDelay = const Duration(seconds: 5),
-    Duration maxRetryDelay = const Duration(seconds: 60),
-  }) : _lessonApi = lessonApi,
-       _connectivityMonitor = connectivityMonitor,
-       _queueStore = queueStore ?? SqflitePendingSyncQueueStore(),
-       _baseRetryDelay = baseRetryDelay,
-       _maxRetryDelay = maxRetryDelay {
+    this._baseRetryDelay = const Duration(seconds: 5),
+    this._maxRetryDelay = const Duration(seconds: 60),
+  }) : _connectivityMonitor = connectivityMonitor,
+       _queueStore = queueStore ?? SqflitePendingSyncQueueStore() {
     _connectivitySubscription = connectivityMonitor.onConnectivityChanged
         .listen(_onConnectivityChanged);
     unawaited(_initializeIsOnline());
@@ -170,11 +167,8 @@ class SyncEngine extends ChangeNotifier {
   }
 
   void _scheduleRetry() {
-    final delayMs =
-        (_baseRetryDelay.inMilliseconds * (1 << _retryAttempt)).clamp(
-          _baseRetryDelay.inMilliseconds,
-          _maxRetryDelay.inMilliseconds,
-        );
+    final delayMs = (_baseRetryDelay.inMilliseconds * (1 << _retryAttempt))
+        .clamp(_baseRetryDelay.inMilliseconds, _maxRetryDelay.inMilliseconds);
     _retryAttempt++;
     _retryTimer?.cancel();
     _retryTimer = Timer(Duration(milliseconds: delayMs), () {

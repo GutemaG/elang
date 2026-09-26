@@ -9,7 +9,6 @@ import '../theme/app_typography.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_icon_button.dart';
 import '../widgets/app_page.dart';
-import '../widgets/tactile_button.dart';
 import 'gallery_exercise.dart';
 import 'gallery_sheets.dart';
 import 'gallery_status.dart';
@@ -53,7 +52,6 @@ class ComponentGallery extends StatelessWidget {
           _TypeSection(),
           _ButtonsSection(),
           _IconButtonsSection(),
-          _LegacyButtonSection(),
           PageShellGallerySection(),
           CardsGallerySection(),
           SheetsGallerySection(),
@@ -622,37 +620,6 @@ class _IconButtonsSection extends StatelessWidget {
               onPressed: null,
             ),
           ],
-        ),
-      ],
-    );
-  }
-}
-
-class _LegacyButtonSection extends StatelessWidget {
-  const _LegacyButtonSection();
-
-  static void _noop() {}
-
-  @override
-  Widget build(BuildContext context) {
-    return const GallerySection(
-      title: 'TactileButton (legacy)',
-      note:
-          'Still used by screens that have not moved to AppButton yet. It '
-          'presses exactly like AppButton.',
-      children: [
-        GalleryCase(
-          label: 'default',
-          child: TactileButton(label: 'Continue', onPressed: _noop),
-        ),
-        GalleryCase(
-          label: 'terracotta, as the lesson passes it after a wrong answer',
-          child: TactileButton(
-            label: 'Continue',
-            onPressed: _noop,
-            backgroundColor: AppColors.tertiaryBrand,
-            bevelColor: AppColors.tertiaryBevel,
-          ),
         ),
       ],
     );

@@ -125,10 +125,9 @@ class SystemAnswerFeedbackPlayer implements AnswerFeedbackPlayer {
 /// (`LessonDependencies`), long before any toggle could be flipped.
 class SoundGatedAnswerFeedbackPlayer implements AnswerFeedbackPlayer {
   SoundGatedAnswerFeedbackPlayer({
-    required AnswerFeedbackPlayer player,
-    required SoundPreferenceRepository soundPreferenceRepository,
-  }) : _player = player,
-       _soundPreferenceRepository = soundPreferenceRepository;
+    required this._player,
+    required this._soundPreferenceRepository,
+  });
 
   final AnswerFeedbackPlayer _player;
   final SoundPreferenceRepository _soundPreferenceRepository;

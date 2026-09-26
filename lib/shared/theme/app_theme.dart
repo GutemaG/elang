@@ -68,6 +68,8 @@ abstract final class AppTheme {
         elevation: 0,
       ),
       chipTheme: chipTheme,
+      switchTheme: switchTheme,
+      snackBarTheme: snackBarTheme,
     );
   }
 
@@ -105,6 +107,55 @@ abstract final class AppTheme {
       elevation: 0,
       pressElevation: 0,
       showCheckmark: true,
+    );
+  }
+
+  /// Settings switches (Notifications, Sound): on is a green track with a
+  /// white thumb, as in Duolingo's settings; off is a grey outlined track.
+  /// Disabled keeps the same colours, faded.
+  static SwitchThemeData get switchTheme {
+    Color faded(Set<WidgetState> states, Color color) =>
+        states.contains(WidgetState.disabled)
+        ? color.withValues(alpha: 0.4)
+        : color;
+    bool on(Set<WidgetState> states) => states.contains(WidgetState.selected);
+    return SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) =>
+            faded(states, on(states) ? AppColors.onPrimary : AppColors.outline),
+      ),
+      trackColor: WidgetStateProperty.resolveWith(
+        (states) => faded(
+          states,
+          on(states)
+              ? AppColors.primaryContainer
+              : AppColors.surfaceContainerHighest,
+        ),
+      ),
+      trackOutlineColor: WidgetStateProperty.resolveWith(
+        (states) => faded(
+          states,
+          on(states) ? AppColors.primaryContainer : AppColors.outline,
+        ),
+      ),
+      trackOutlineWidth: const WidgetStatePropertyAll(2),
+    );
+  }
+
+  /// Short messages ("Couldn't switch course"): a floating dark card with
+  /// the base radius, clear of the page's docked buttons.
+  static SnackBarThemeData get snackBarTheme {
+    return SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.inverseSurface,
+      contentTextStyle: AppTypography.bodyMd.copyWith(
+        color: AppColors.inverseOnSurface,
+      ),
+      actionTextColor: AppColors.primaryFixedDim,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.base),
+      ),
+      elevation: 0,
     );
   }
 }

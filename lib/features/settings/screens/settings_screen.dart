@@ -8,9 +8,15 @@ import '../../../shared/services/sound_preference_repository.dart';
 import '../../../shared/services/user_preferences_api.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
+import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_icon_button.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/app_status.dart';
 import '../../../shared/widgets/selectable_option_card.dart';
-import '../../../shared/widgets/tactile_button.dart';
 import '../../auth/auth_routes.dart';
 import '../../courses/course_picker.dart';
 import '../state/settings_controller.dart';
@@ -20,23 +26,59 @@ import '../state/settings_controller.dart';
 /// shared/extracted, matching this codebase's existing convention of each
 /// screen keeping its own private option list.
 class _GoalOption {
-  const _GoalOption({required this.minutes, required this.title, required this.icon});
+  const _GoalOption({
+    required this.minutes,
+    required this.title,
+    required this.description,
+    required this.xpPerDay,
+    required this.icon,
+  });
 
   final int minutes;
   final String title;
+  final String description;
+  final int xpPerDay;
   final IconData icon;
 }
 
 const List<_GoalOption> _goalOptions = [
-  _GoalOption(minutes: 5, title: 'Casual', icon: Icons.eco),
-  _GoalOption(minutes: 10, title: 'Regular', icon: Icons.local_cafe),
-  _GoalOption(minutes: 15, title: 'Serious', icon: Icons.coffee),
-  _GoalOption(minutes: 20, title: 'Intense', icon: Icons.local_fire_department),
+  _GoalOption(
+    minutes: 5,
+    title: 'Casual',
+    description: 'Gentle warm up',
+    xpPerDay: 10,
+    icon: Icons.eco,
+  ),
+  _GoalOption(
+    minutes: 10,
+    title: 'Regular',
+    description: 'Steady progress',
+    xpPerDay: 20,
+    icon: Icons.local_cafe,
+  ),
+  _GoalOption(
+    minutes: 15,
+    title: 'Serious',
+    description: 'Fast retention',
+    xpPerDay: 30,
+    icon: Icons.coffee,
+  ),
+  _GoalOption(
+    minutes: 20,
+    title: 'Intense',
+    description: 'Speed fluency',
+    xpPerDay: 50,
+    icon: Icons.local_fire_department,
+  ),
 ];
 
 /// Story 001 (`005-profile-and-settings`): view/edit language, daily goal,
 /// and notification preference (real, via `013-user-preferences-service`),
 /// toggle sound (local, gates `AnswerFeedbackPlayer`), and log out.
+///
+/// Drawn on the design library (018-mobile-design-system, bolt 049): grouped
+/// rows under section headings, green switches and a full-width "Log out"
+/// at the end, after Material 3 lists and Duolingo's settings.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     super.key,
@@ -81,7 +123,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final error = _controller.errorMessage;
     if (error != null && error != _lastShownError) {
       _lastShownError = error;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
     }
   }
 
@@ -93,21 +136,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _pickGoal() async {
-    final minutes = await showModalBottomSheet<int>(
+    final minutes = await showAppSheet<int>(
       context: context,
-      builder: (context) => _OptionSheet(
-        title: 'Daily goal',
-        children: [
-          for (final option in _goalOptions)
-            SelectableOptionCard(
-              leading: Icon(option.icon, color: AppColors.primaryContainer),
-              title: '${option.title} · ${option.minutes} min/day',
-              subtitle: '',
-              selected: _controller.dailyGoalMinutes == option.minutes,
-              onTap: () => Navigator.of(context).pop(option.minutes),
-            ),
-        ],
-      ),
+      builder: (context) => _GoalSheet(selected: _controller.dailyGoalMinutes),
     );
     if (minutes != null) {
       await _controller.updateDailyGoalMinutes(minutes);
@@ -125,22 +156,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _confirmLogout() async {
-    final confirmed = await showDialog<bool>(
+    // Signing out deletes nothing, so the confirm is a plain primary.
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Log out?'),
-        content: const Text("You'll need to sign in again to continue learning."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Log out'),
-          ),
-        ],
-      ),
+      title: 'Log out?',
+      message: "You'll need to sign in again to continue learning.",
+      confirmLabel: 'Log out',
+      icon: Icons.logout,
     );
     if (confirmed != true) return;
 
@@ -149,12 +171,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Clears the *entire* stack, not just a replace -- Settings sits on
     // top of the `home` route via `Navigator.push`, unlike every onboarding
     // screen (which only ever needed `pushReplacementNamed`).
-    Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.signIn, (route) => false);
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AuthRoutes.signIn, (route) => false);
   }
 
   String _goalLabel(int? minutes) {
     final option = _goalOptions.where((o) => o.minutes == minutes).firstOrNull;
-    return option == null ? 'Unknown' : '${option.title} · ${option.minutes} min/day';
+    return option == null
+        ? 'Unknown'
+        : '${option.title} · ${option.minutes} min/day';
   }
 
   String _courseLabel() {
@@ -177,110 +202,161 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Settings')),
-      body: SafeArea(child: _buildBody()),
+    final loaded = _controller.loadStatus == SettingsLoadStatus.loaded;
+    return AppPage(
+      topBar: AppTopBar(
+        leading: Navigator.of(context).canPop()
+            ? AppIconButton(
+                icon: Icons.arrow_back,
+                tooltip: 'Back',
+                onPressed: () => Navigator.of(context).maybePop(),
+              )
+            : null,
+        title: 'Settings',
+      ),
+      // Loading and errors sit in the middle of the page; the list scrolls.
+      scrollable: loaded,
+      body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     switch (_controller.loadStatus) {
       case SettingsLoadStatus.loading:
-        return const Center(child: CircularProgressIndicator());
+        return const Center(child: LoadingState());
       case SettingsLoadStatus.error:
         return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.spaceLg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "Couldn't load your settings",
-                  style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
-                ),
-                const SizedBox(height: AppSpacing.spaceMd),
-                TactileButton(label: 'Retry', onPressed: _controller.load),
-              ],
+          child: SingleChildScrollView(
+            child: ErrorState(
+              title: "Couldn't load your settings",
+              onRetry: _controller.load,
+              retryLabel: 'Retry',
             ),
           ),
         );
       case SettingsLoadStatus.loaded:
-        return ListView(
-          padding: const EdgeInsets.all(AppSpacing.marginMobile),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _ProfileHeader(
-              name: _controller.displayName,
-              email: _controller.email,
-              photoUrl: _controller.photoUrl,
-              providerLabel: _providerLabel(_controller.authProvider),
+            AppCard(
+              child: _ProfileHeader(
+                name: _controller.displayName,
+                email: _controller.email,
+                photoUrl: _controller.photoUrl,
+                providerLabel: _providerLabel(_controller.authProvider),
+              ),
+            ),
+            const SectionHeader(title: 'Learning'),
+            ListRowGroup(
+              children: [
+                ListRow(
+                  icon: Icons.flag,
+                  tone: AppTone.secondary,
+                  title: 'Daily goal',
+                  subtitle: _goalLabel(_controller.dailyGoalMinutes),
+                  onTap: _pickGoal,
+                ),
+                ListRow(
+                  icon: Icons.translate,
+                  tone: AppTone.primary,
+                  title: 'Course',
+                  subtitle: _courseLabel(),
+                  onTap: _pickCourse,
+                ),
+              ],
+            ),
+            const SectionHeader(title: 'Preferences'),
+            ListRowGroup(
+              children: [
+                SwitchRow(
+                  icon: Icons.notifications,
+                  title: 'Notifications',
+                  value: _controller.notificationEnabled,
+                  onChanged: _controller.updateNotificationEnabled,
+                ),
+                SwitchRow(
+                  icon: Icons.volume_up,
+                  title: 'Sound',
+                  value: _controller.soundEnabled,
+                  onChanged: _controller.updateSoundEnabled,
+                ),
+              ],
+            ),
+            const SectionHeader(title: 'About'),
+            ListRowGroup(
+              children: [
+                // Flutter's licence page: every package's licence, and the
+                // credits of the pictures the app ships (intent 019, story
+                // 005).
+                ListRow(
+                  icon: Icons.info_outline,
+                  title: 'Licences',
+                  subtitle: 'Open-source software and picture credits',
+                  onTap: () => showLicensePage(
+                    context: context,
+                    applicationName: 'Buna',
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.spaceLg),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Daily goal'),
-              subtitle: Text(_goalLabel(_controller.dailyGoalMinutes)),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _pickGoal,
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Course'),
-              subtitle: Text(_courseLabel()),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _pickCourse,
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Notifications'),
-              value: _controller.notificationEnabled,
-              onChanged: _controller.updateNotificationEnabled,
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Sound'),
-              value: _controller.soundEnabled,
-              onChanged: _controller.updateSoundEnabled,
-            ),
-            // Flutter's licence page: every package's licence, and the
-            // credits of the pictures the app ships (intent 019, story 005).
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Licences'),
-              subtitle: const Text('Open-source software and picture credits'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => showLicensePage(context: context, applicationName: 'Buna'),
-            ),
-            const SizedBox(height: AppSpacing.spaceLg),
-            TactileButton(label: 'Log out', onPressed: _confirmLogout),
+            AppButton.secondary(label: 'Log out', onPressed: _confirmLogout),
           ],
         );
     }
   }
 }
 
-class _OptionSheet extends StatelessWidget {
-  const _OptionSheet({required this.title, required this.children});
+/// The daily-goal picker: the onboarding screen's four goal cards in the
+/// library sheet. Pops with the chosen minutes; a dismiss pops `null`.
+class _GoalSheet extends StatelessWidget {
+  const _GoalSheet({required this.selected});
 
-  final String title;
-  final List<Widget> children;
+  final int? selected;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.marginMobile),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
-            Text(title, style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface)),
-            const SizedBox(height: AppSpacing.spaceMd),
-            for (final child in children)
-              Padding(padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm), child: child),
+            Expanded(
+              child: Text(
+                'Daily goal',
+                style: AppTypography.headlineSm.copyWith(
+                  color: AppColors.onSurface,
+                ),
+              ),
+            ),
+            AppIconButton(
+              icon: Icons.close,
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ],
         ),
-      ),
+        const SizedBox(height: AppSpacing.spaceXs),
+        for (final option in _goalOptions)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
+            child: SelectableOptionCard(
+              leading: IconBadge(
+                icon: option.icon,
+                tone: selected == option.minutes
+                    ? AppTone.primary
+                    : AppTone.secondary,
+                size: 48,
+                square: true,
+              ),
+              title: '${option.title} · ${option.minutes} min/day',
+              subtitle: '${option.description} · +${option.xpPerDay} XP/day',
+              selected: selected == option.minutes,
+              onTap: () => Navigator.of(context).pop(option.minutes),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -323,7 +399,9 @@ class _ProfileHeader extends StatelessWidget {
           onForegroundImageError: url == null ? null : (_, _) {},
           child: Text(
             _initials,
-            style: AppTypography.headlineSm.copyWith(color: AppColors.onPrimary),
+            style: AppTypography.headlineSm.copyWith(
+              color: AppColors.onPrimary,
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.spaceMd),
@@ -336,18 +414,24 @@ class _ProfileHeader extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+                  style: AppTypography.headlineSm.copyWith(
+                    color: AppColors.onSurface,
+                  ),
                 ),
               if (name != null && email != null)
                 Text(
                   email!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySm.copyWith(color: AppColors.onSurfaceVariant),
+                  style: AppTypography.bodySm.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
                 ),
               Text(
                 providerLabel,
-                style: AppTypography.bodySm.copyWith(color: AppColors.onSurfaceVariant),
+                style: AppTypography.bodySm.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                ),
               ),
             ],
           ),

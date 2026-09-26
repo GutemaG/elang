@@ -2,7 +2,7 @@
 unit: 003-screen-migration-ui
 intent: 018-mobile-design-system
 created: '2026-09-25T20:50:30Z'
-last_updated: '2026-09-26T05:28:36Z'
+last_updated: '2026-09-26T05:59:46Z'
 ---
 
 # Construction Log: screen-migration-ui
@@ -38,3 +38,6 @@ last_updated: '2026-09-26T05:28:36Z'
 - **2026-09-26T05:28:36Z**: 046-onboarding-screens-on-kit completed - All 3 stages done
 - **2026-09-26T05:28:36Z**: 047-dashboard-on-kit completed - All 3 stages done
 - **2026-09-26T05:28:36Z**: 048-lesson-complete-and-sheets-on-kit completed - All 3 stages done
+- **2026-09-26T05:34:17Z**: 049-settings-downloads-and-sweep started - Stage 1: plan
+- **2026-09-26T05:36:05Z**: 049-settings-downloads-and-sweep stage-complete - plan → implement
+- **2026-09-26T05:59:46Z**: 049-settings-downloads-and-sweep stage-complete - implement → test

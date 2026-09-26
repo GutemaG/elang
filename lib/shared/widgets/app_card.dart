@@ -335,6 +335,7 @@ class ListRow extends StatefulWidget {
     this.tone = AppTone.neutral,
     this.trailing,
     this.onTap,
+    this.toggled,
   });
 
   final String title;
@@ -343,6 +344,10 @@ class ListRow extends StatefulWidget {
   final AppTone tone;
   final Widget? trailing;
   final VoidCallback? onTap;
+
+  /// Set by [SwitchRow]: the row is read as a switch that is on or off
+  /// instead of as a button.
+  final bool? toggled;
 
   static const double oneLineHeight = 56;
   static const double twoLineHeight = 72;
@@ -429,10 +434,17 @@ class _ListRowState extends State<ListRow> {
         ),
       ),
     );
-    if (widget.onTap == null) return MergeSemantics(child: row);
+    if (widget.onTap == null) {
+      return MergeSemantics(
+        child: widget.toggled == null
+            ? row
+            : Semantics(toggled: widget.toggled, enabled: false, child: row),
+      );
+    }
     return MergeSemantics(
       child: Semantics(
-        button: true,
+        button: widget.toggled == null,
+        toggled: widget.toggled,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTapDown: (_) => _setPressed(true),
@@ -441,6 +453,48 @@ class _ListRowState extends State<ListRow> {
           onTap: widget.onTap,
           child: row,
         ),
+      ),
+    );
+  }
+}
+
+/// A settings row with a switch (Notifications, Sound). Tapping anywhere
+/// on the row flips it, and a screen reader hears one node: the title,
+/// then on or off (Material 3 switch guidance).
+class SwitchRow extends StatelessWidget {
+  const SwitchRow({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+    this.icon,
+    this.tone = AppTone.neutral,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData? icon;
+  final AppTone tone;
+  final bool value;
+
+  /// `null` disables the row.
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final onChanged = this.onChanged;
+    return ListRow(
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      tone: tone,
+      toggled: value,
+      onTap: onChanged == null ? null : () => onChanged(!value),
+      // The row carries the switch's meaning; the switch itself would be a
+      // second node saying the same thing.
+      trailing: ExcludeSemantics(
+        child: Switch(value: value, onChanged: onChanged),
       ),
     );
   }
