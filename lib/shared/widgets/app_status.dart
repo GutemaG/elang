@@ -144,6 +144,14 @@ class CountBadge extends StatelessWidget {
   final IconData? icon;
   final AppTone tone;
 
+  static const double _verticalPadding = 2;
+
+  /// What a badge adds above and below its label: padding and border. A
+  /// pinned header adds its label's line height to this to know the
+  /// badge's height before layout.
+  static double verticalChrome({AppTone tone = AppTone.neutral}) =>
+      2 * _verticalPadding + 2 * (tone == AppTone.neutral ? 1 : 2);
+
   @override
   Widget build(BuildContext context) {
     final neutral = tone == AppTone.neutral;
@@ -155,7 +163,7 @@ class CountBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.spaceXs,
-          vertical: 2,
+          vertical: _verticalPadding,
         ),
         decoration: BoxDecoration(
           color: neutral
@@ -250,6 +258,7 @@ class AppProgressBar extends StatelessWidget {
     this.startLabel,
     this.endLabel,
     this.semanticLabel,
+    this.animate = true,
   });
 
   /// From 0 (empty) to 1 (full); values outside are clamped.
@@ -268,7 +277,16 @@ class AppProgressBar extends StatelessWidget {
   /// What the bar measures, read before its percentage.
   final String? semanticLabel;
 
+  /// Ease to a new value. A bar whose [value] already comes from its own
+  /// animation (the splash screen's brewing bar) passes `false`, so it
+  /// shows each value at once instead of trailing behind it.
+  final bool animate;
+
   static const double _inset = 2;
+
+  /// The track's height at each size.
+  static const double regularHeight = 12;
+  static const double largeHeight = 14;
 
   List<Color> get _gradientColors => switch (tone) {
     AppTone.primary => const [
@@ -290,7 +308,9 @@ class AppProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final target = value.clamp(0.0, 1.0);
-    final height = size == AppProgressBarSize.regular ? 12.0 : 14.0;
+    final height = size == AppProgressBarSize.regular
+        ? regularHeight
+        : largeHeight;
     final fillHeight = height - 2 * _inset - 2;
 
     final bar = Semantics(
@@ -310,7 +330,7 @@ class AppProgressBar extends StatelessWidget {
         ),
         child: TweenAnimationBuilder<double>(
           tween: Tween(end: target),
-          duration: AppMotion.reduced(context)
+          duration: !animate || AppMotion.reduced(context)
               ? Duration.zero
               : AppMotion.progress,
           curve: AppMotion.progressCurve,
@@ -447,6 +467,54 @@ class IconBadge extends StatelessWidget {
   }
 }
 
+/// Which page of a carousel is showing: a dot per page, the current one a
+/// wide green pill (the onboarding mockup). A screen reader hears "Page 2
+/// of 3".
+class PageDots extends StatelessWidget {
+  const PageDots({super.key, required this.count, required this.index});
+
+  final int count;
+
+  /// The current page, from 0.
+  final int index;
+
+  static const double dotSize = 10;
+  static const double activeWidth = 28;
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = AppMotion.reduced(context)
+        ? Duration.zero
+        : AppMotion.state;
+    return Semantics(
+      container: true,
+      label: 'Page ${index + 1} of $count',
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < count; i++)
+            AnimatedContainer(
+              duration: duration,
+              curve: AppMotion.stateCurve,
+              margin: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.space2xs,
+              ),
+              width: i == index ? activeWidth : dotSize,
+              height: dotSize,
+              decoration: BoxDecoration(
+                color: i == index
+                    ? AppColors.primaryContainer
+                    : AppColors.outlineVariant,
+                borderRadius: BorderRadius.circular(AppRadii.full),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 /// The one spinner, in a token colour. Indeterminate spinners never
 /// settle, so a place a test pumps to rest shows [LoadingState.still]
 /// instead.
@@ -518,7 +586,7 @@ class ErrorState extends StatelessWidget {
   const ErrorState({
     super.key,
     required this.title,
-    required this.message,
+    this.message,
     this.icon = Icons.cloud_off,
     this.onRetry,
     this.retryLabel = 'Try again',
@@ -526,7 +594,9 @@ class ErrorState extends StatelessWidget {
   });
 
   final String title;
-  final String message;
+
+  /// More about what happened, when the title alone does not say it.
+  final String? message;
   final IconData icon;
 
   /// Shows a primary "Try again" button.

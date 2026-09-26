@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
-import '../../../shared/widgets/tactile_button.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_status.dart';
 import '../auth_flow_controller.dart';
 import '../auth_routes.dart';
 
@@ -84,50 +87,56 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-          ),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
-              _Mascot(),
-              const SizedBox(height: AppSpacing.spaceLg),
-              Text(
-                'Buna',
-                style: AppTypography.displayLgMobile.copyWith(
-                  color: AppColors.primaryContainer,
+    return AppPage(
+      background: AppPageBackground.celebration,
+      scrollable: false,
+      bottomDock: [
+        AppButton.primary(
+          label: 'Get Started',
+          onPressed: _onGetStartedPressed,
+          trailing: const Icon(Icons.arrow_forward, size: 20),
+        ),
+      ],
+      body: LayoutBuilder(
+        // The mascot and wordmark sit in the middle of the room left above
+        // the brewing card; on a short screen the whole column scrolls.
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(height: AppSpacing.spaceLg),
+                Column(
+                  children: [
+                    const _Mascot(),
+                    const SizedBox(height: AppSpacing.spaceLg),
+                    Text(
+                      'Buna',
+                      style: AppTypography.displayLgMobile.copyWith(
+                        color: AppColors.primaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.space2xs),
+                    Text(
+                      'Learn Amharic, One Sip at a Time.',
+                      style: AppTypography.bodyMd.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: AppSpacing.space2xs),
-              Text(
-                'Learn Amharic, One Sip at a Time.',
-                style: AppTypography.bodyMd.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.spaceXl),
+                  child: AnimatedBuilder(
+                    animation: _progressController,
+                    builder: (context, _) =>
+                        _BrewingProgress(value: _progressController.value),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const Spacer(flex: 3),
-              AnimatedBuilder(
-                animation: _progressController,
-                builder: (context, _) =>
-                    _BrewingProgress(value: _progressController.value),
-              ),
-              const SizedBox(height: AppSpacing.spaceMd),
-              TactileButton(
-                label: 'Get Started',
-                onPressed: _onGetStartedPressed,
-                trailing: const Icon(
-                  Icons.arrow_forward,
-                  color: AppColors.onPrimary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.spaceXl),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -135,22 +144,26 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
+/// The mockup's mascot tile, with the cup standing in for the mascot art.
 class _Mascot extends StatelessWidget {
+  const _Mascot();
+
+  static const double size = 140;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 140,
-      height: 140,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-        border: Border.all(color: AppColors.surfaceContainerHighest, width: 4),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.local_cafe,
-          size: 64,
-          color: AppColors.secondaryContainer,
+    return const SizedBox(
+      width: size,
+      child: AppCard(
+        child: SizedBox(
+          height: size - 2 * (AppSpacing.spaceMd + AppCard.borderWidth),
+          child: Center(
+            child: Icon(
+              Icons.local_cafe,
+              size: 64,
+              color: AppColors.secondaryContainer,
+            ),
+          ),
         ),
       ),
     );
@@ -165,44 +178,32 @@ class _BrewingProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percent = (value * 100).clamp(0, 100).toInt();
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.spaceMd),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(color: AppColors.surfaceContainerHighest, width: 2),
-      ),
+    return AppCard(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Brewing your lessons...',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.onSurface,
+              Expanded(
+                child: Text(
+                  'Brewing your lessons...',
+                  style: AppTypography.labelMd.copyWith(
+                    color: AppColors.onSurface,
+                  ),
                 ),
               ),
-              Text(
-                '$percent%',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.primaryContainer,
-                ),
-              ),
+              const SizedBox(width: AppSpacing.spaceXs),
+              CountBadge(label: '$percent%'),
             ],
           ),
           const SizedBox(height: AppSpacing.spaceSm),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadii.full),
-            child: LinearProgressIndicator(
-              value: value,
-              minHeight: 12,
-              backgroundColor: AppColors.surfaceContainer,
-              valueColor: const AlwaysStoppedAnimation(
-                AppColors.primaryContainer,
-              ),
-            ),
+          // Driven frame by frame by the brewing animation, so it does not
+          // ease on its own.
+          AppProgressBar(
+            value: value,
+            gradient: true,
+            animate: false,
+            semanticLabel: 'Brewing your lessons',
           ),
         ],
       ),

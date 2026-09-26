@@ -2,11 +2,11 @@
 id: 001-onboarding-and-sign-in-on-the-library
 unit: 003-screen-migration-ui
 intent: 018-mobile-design-system
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T12:55:00Z'
 assigned_bolt: 046-onboarding-screens-on-kit
-implemented: false
+implemented: true
 ---
 
 # Story: 001-onboarding-and-sign-in-on-the-library
@@ -19,11 +19,11 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** splash, onboarding carousel, language selection, daily goal and sign-in, **When** shown, **Then** each is built on `AppPage`, `AppButton`, `AppCard`/`SelectableOptionCard` and the status pieces, and matches its Stitch mockup
-- [ ] **Given** Skip, "I'll do it later" and similar actions, **When** shown, **Then** they are `AppButton.text` links (Checkpoint 1: 2a)
-- [ ] **Given** the Google and Apple sign-in buttons, **When** shown, **Then** they keep equal prominence and their provider-required look, sitting inside the shared layout (the web Google button keeps Google's own rendering)
-- [ ] **Given** the auth and onboarding tests, **When** run, **Then** all pass, changed only where a replaced widget type was found
-- [ ] **Given** the rules test, **When** run, **Then** these five screens are off the allow-list and pass
+- [x] **Given** splash, onboarding carousel, language selection, daily goal and sign-in, **When** shown, **Then** each is built on `AppPage`, `AppButton`, `AppCard`/`SelectableOptionCard` and the status pieces, and matches its Stitch mockup
+- [x] **Given** Skip, "I'll do it later" and similar actions, **When** shown, **Then** they are `AppButton.text` links (Checkpoint 1: 2a)
+- [x] **Given** the Google and Apple sign-in buttons, **When** shown, **Then** they keep equal prominence and their provider-required look, sitting inside the shared layout (the web Google button keeps Google's own rendering)
+- [x] **Given** the auth and onboarding tests, **When** run, **Then** all pass, changed only where a replaced widget type was found
+- [x] **Given** the rules test, **When** run, **Then** these five screens are off the allow-list and pass
 
 ## Reference Design (FR-11)
 

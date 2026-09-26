@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../shared/services/lesson_pack_downloader.dart';
 import '../../../shared/services/lesson_pack_store.dart';
 import '../../../shared/services/sync_engine.dart';
-import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
-import '../../../shared/theme/app_typography.dart';
+import '../../../shared/theme/app_tone.dart';
+import '../../../shared/widgets/app_card.dart';
 
 /// Connectivity/sync status indicator (010-offline-caching-and-sync-ui,
 /// story 004) -- shown only on the skill-tree dashboard, never on
@@ -14,10 +14,9 @@ import '../../../shared/theme/app_typography.dart';
 ///
 /// Purely presentational over state [SyncEngine] already tracks plus
 /// whether any pack is downloaded (needed to distinguish "offline, lessons
-/// available" from "offline, nothing downloaded" per FR-5). Deliberately
-/// plain (a single-line banner, not a new Highland Pulse component) --
-/// this bolt prioritizes the underlying sync capability over indicator
-/// polish, same call bolt 009 made for its download affordance.
+/// available" from "offline, nothing downloaded" per FR-5). Each message is
+/// the library's [InfoBanner] (018-mobile-design-system, bolt 047), toned by
+/// how much it matters, with emphasis once the queue is 30+ days old.
 class SyncStatusBanner extends StatelessWidget {
   const SyncStatusBanner({
     super.key,
@@ -49,8 +48,7 @@ class SyncStatusBanner extends StatelessWidget {
               return const SizedBox.shrink();
             }
             final escalated =
-                (syncEngine.oldestPendingAge ?? Duration.zero) >=
-                _thirtyDays;
+                (syncEngine.oldestPendingAge ?? Duration.zero) >= _thirtyDays;
             return _Banner(state: state, escalated: escalated);
           },
         );
@@ -93,63 +91,43 @@ class _Banner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (icon, label, color) = switch (state) {
+    final (icon, label, tone) = switch (state) {
       _IndicatorState.onlineSynced => (
         Icons.cloud_done,
         'Synced',
-        AppColors.primaryContainer,
+        AppTone.primary,
       ),
       _IndicatorState.offlinePacksAvailable => (
         Icons.cloud_off,
         'Offline -- downloaded lessons available',
-        AppColors.onSurfaceVariant,
+        AppTone.neutral,
       ),
       _IndicatorState.offlineNothingDownloaded => (
         Icons.cloud_off,
         'Offline -- nothing downloaded',
-        AppColors.tertiaryBrand,
+        AppTone.tertiary,
       ),
       _IndicatorState.syncing => (
         Icons.sync,
         'Syncing your offline progress...',
-        AppColors.primaryContainer,
+        AppTone.primary,
       ),
       _IndicatorState.syncFailedRetrying => (
         Icons.sync_problem,
         'Sync failed -- retrying...',
-        AppColors.tertiaryBrand,
+        AppTone.tertiary,
       ),
     };
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.spaceSm,
-        vertical: AppSpacing.space2xs,
-      ),
-      decoration: BoxDecoration(
-        color: escalated
-            ? AppColors.tertiaryContainer
-            : AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadii.base),
-        border: Border.all(
-          color: escalated ? AppColors.tertiaryBrand : AppColors.outlineVariant,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: AppSpacing.space2xs),
-          Expanded(
-            child: Text(
-              escalated
-                  ? "$label (unsynced for 30+ days -- please reconnect soon)"
-                  : label,
-              style: AppTypography.labelSm.copyWith(color: AppColors.onSurface),
-            ),
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
+      child: InfoBanner(
+        icon: icon,
+        tone: escalated ? AppTone.tertiary : tone,
+        emphasis: escalated,
+        message: escalated
+            ? '$label (unsynced for 30+ days -- please reconnect soon)'
+            : label,
       ),
     );
   }

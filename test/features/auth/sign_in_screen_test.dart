@@ -20,7 +20,7 @@ import 'package:elang/features/auth/screens/sign_in_screen.dart';
 import 'package:elang/shared/services/auth_api.dart';
 import 'package:elang/shared/services/onboarding_repository.dart';
 import 'package:elang/shared/services/session_repository.dart';
-import 'package:elang/shared/widgets/tactile_button.dart';
+import 'package:elang/shared/widgets/app_button.dart';
 
 import '../../helpers/controllable_auth_api.dart';
 import '../../helpers/fake_native_sign_in.dart';
@@ -71,10 +71,10 @@ void main() {
     await tester.pumpWidget(_wrapped(deps));
 
     final googleSize = tester.getSize(
-      find.widgetWithText(TactileButton, 'Continue with Google'),
+      find.widgetWithText(AppButton, 'Continue with Google'),
     );
     final appleSize = tester.getSize(
-      find.widgetWithText(TactileButton, 'Continue with Apple'),
+      find.widgetWithText(AppButton, 'Continue with Apple'),
     );
 
     expect(googleSize, appleSize);
@@ -89,11 +89,11 @@ void main() {
     await tester.tap(find.text('Continue with Google'));
     await tester.pump();
 
-    final googleButton = tester.widget<TactileButton>(
-      find.widgetWithText(TactileButton, 'Continue with Google'),
+    final googleButton = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Continue with Google'),
     );
-    final appleButton = tester.widget<TactileButton>(
-      find.widgetWithText(TactileButton, 'Continue with Apple'),
+    final appleButton = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'Continue with Apple'),
     );
     expect(googleButton.onPressed, isNull);
     expect(appleButton.onPressed, isNull);
@@ -154,8 +154,8 @@ void main() {
       expect(deps.storage.values[_pendingSelectionStorageKey], before);
 
       // Buttons are re-enabled again after the failure (not stuck disabled).
-      final googleButton = tester.widget<TactileButton>(
-        find.widgetWithText(TactileButton, 'Continue with Google'),
+      final googleButton = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, 'Continue with Google'),
       );
       expect(googleButton.onPressed, isNotNull);
     },

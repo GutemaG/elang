@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/beans_status.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
+import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
-import '../../../shared/widgets/tactile_button.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/widgets/app_status.dart';
 
 /// Story 003's out-of-beans modal — maps to `out_of_beans_refill_modal/`.
 ///
@@ -14,6 +18,11 @@ import '../../../shared/widgets/tactile_button.dart';
 /// caller via the two callbacks rather than navigating itself, so
 /// `LessonScreen` stays in charge of what "resume" vs. "return to
 /// dashboard" actually does.
+///
+/// Laid out as the mockup with [SheetHero] (018-mobile-design-system, bolt
+/// 048): the beans count on the illustration, a refill-timer card, the
+/// Amole refill with its price, and "Not now". Opened by
+/// [showOutOfBeansSheet], which cannot be dismissed any other way.
 class OutOfBeansSheet extends StatelessWidget {
   const OutOfBeansSheet({
     super.key,
@@ -32,116 +41,102 @@ class OutOfBeansSheet extends StatelessWidget {
     final String countdown = remaining == null
         ? '--:--'
         : _formatDuration(remaining);
+    final period = Duration(minutes: status.regenMinutesPerBean);
+    // How far the next bean has come: the part of its period already gone.
+    final brewed = remaining == null || period.inSeconds == 0
+        ? 0.0
+        : 1 - remaining.inSeconds / period.inSeconds;
+    final every = status.regenMinutesPerBean;
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spaceLg),
+    return SheetHero(
+      illustration: const Icon(Icons.local_cafe_outlined),
+      illustrationBadge: CountBadge(
+        label: '${status.beans} / ${status.beansMax}',
+        icon: Icons.local_cafe,
+        tone: AppTone.tertiary,
+      ),
+      tone: AppTone.tertiary,
+      title: 'Out of Beans!',
+      body:
+          "Don't worry, mistakes help you brew fluency! Beans refill "
+          'automatically over time so you can continue your lessons.',
+      content: AppCard(
+        topStripe: true,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 96,
-                height: 96,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.surfaceContainerLow,
+            Row(
+              children: [
+                const IconBadge(
+                  icon: Icons.hourglass_top,
+                  tone: AppTone.tertiary,
+                  square: true,
                 ),
-                child: const Icon(
-                  Icons.local_cafe_outlined,
-                  size: 48,
-                  color: AppColors.tertiaryBrand,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceSm),
-            Text(
-              'Out of Beans!',
-              textAlign: TextAlign.center,
-              style: AppTypography.headlineLg.copyWith(
-                color: AppColors.tertiaryBrand,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.space2xs),
-            Text(
-              "Don't worry, mistakes help you brew fluency! Beans refill "
-              'automatically over time so you can continue your lessons.',
-              textAlign: TextAlign.center,
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceMd),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.spaceMd),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.outlineVariant),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.hourglass_top, color: AppColors.tertiaryBrand),
-                  const SizedBox(width: AppSpacing.spaceXs),
-                  Expanded(
-                    child: Text(
-                      'Next bean in',
-                      style: AppTypography.labelMd.copyWith(
-                        color: AppColors.onSurface,
-                      ),
+                const SizedBox(width: AppSpacing.spaceXs),
+                Expanded(
+                  child: Text(
+                    'Next bean in',
+                    style: AppTypography.labelMd.copyWith(
+                      color: AppColors.onSurface,
                     ),
                   ),
-                  Text(
-                    countdown,
-                    semanticsLabel: 'Next bean in $countdown',
-                    style: AppTypography.headlineSm.copyWith(
-                      color: AppColors.tertiaryBrand,
-                    ),
+                ),
+                Text(
+                  countdown,
+                  semanticsLabel: 'Next bean in $countdown',
+                  style: AppTypography.headlineSm.copyWith(
+                    color: AppColors.tertiaryBrand,
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceLg),
-            TactileButton(
-              label: status.canAffordRefill
-                  ? 'Refill with ${status.refillCostAmole} Amole'
-                  : 'Not enough Amole',
-              onPressed: status.canAffordRefill ? onRefill : null,
-              backgroundColor: AppColors.secondaryContainer,
-              bevelColor: AppColors.secondaryBevel,
-              foregroundColor: AppColors.onSecondaryContainer,
-              leading: const Icon(
-                Icons.bolt,
-                color: AppColors.onSecondaryContainer,
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.spaceSm),
-            TextButton(
-              onPressed: onDismiss,
-              child: Text(
-                'Not now',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
+            AppProgressBar(
+              value: brewed,
+              tone: AppTone.secondary,
+              gradient: true,
+              startLabel: every > 0
+                  ? 'Refills 1 bean every $every '
+                        '${every == 1 ? 'minute' : 'minutes'}'
+                  : null,
+              semanticLabel: 'Next bean',
             ),
           ],
         ),
       ),
+      primaryAction: AppButton.accent(
+        label: status.canAffordRefill
+            ? 'Refill with Amole'
+            : 'Not enough Amole',
+        onPressed: status.canAffordRefill ? onRefill : null,
+        leading: const Icon(Icons.bolt),
+        badge: AppButtonBadge(
+          label: '${status.refillCostAmole} Amole',
+          icon: Icons.diamond,
+        ),
+      ),
+      textAction: AppButton.text(label: 'Not now', onPressed: onDismiss),
     );
   }
 
   static String _formatDuration(Duration d) {
     final clamped = d.isNegative ? Duration.zero : d;
-    final minutes = clamped.inMinutes.remainder(60).toString().padLeft(
-      2,
-      '0',
-    );
-    final seconds = clamped.inSeconds.remainder(60).toString().padLeft(
-      2,
-      '0',
-    );
+    final minutes = clamped.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = clamped.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
+}
+
+/// Opens [OutOfBeansSheet]. It cannot be dismissed by a tap outside or a
+/// drag; only its own two actions close it.
+Future<void> showOutOfBeansSheet(
+  BuildContext context, {
+  required WidgetBuilder builder,
+}) {
+  return showAppSheet<void>(
+    context: context,
+    isDismissible: false,
+    enableDrag: false,
+    builder: builder,
+  );
 }

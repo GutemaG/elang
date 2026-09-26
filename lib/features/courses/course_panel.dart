@@ -5,8 +5,10 @@ import '../../shared/models/language_names.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../shared/theme/app_spacing.dart';
 import '../../shared/theme/app_typography.dart';
-import '../../shared/widgets/tactile_button.dart';
-import 'course_badge.dart';
+import '../../shared/widgets/app_button.dart';
+import '../../shared/widgets/app_card.dart';
+import '../../shared/widgets/app_status.dart';
+import '../../shared/widgets/course_glyph.dart';
 
 /// The panel that drops from the dashboard's course badge
 /// (011-dashboard-ui-polish, stories 003 and 004).
@@ -14,6 +16,9 @@ import 'course_badge.dart';
 /// Holds everything to do with courses in one place: the rail of courses the
 /// learner has opened, a tile to add another, and the two screens that used to
 /// be icon buttons competing with the skill path.
+///
+/// Its surface is an [AppCard] and its entries are [ListRow]s
+/// (018-mobile-design-system, bolt 047).
 class CoursePanel extends StatelessWidget {
   const CoursePanel({
     super.key,
@@ -41,35 +46,34 @@ class CoursePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surfaceContainerLowest,
-      elevation: 8,
-      shadowColor: AppColors.cardBevelDefault,
-      borderRadius: const BorderRadius.vertical(
-        bottom: Radius.circular(AppRadii.base),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.spaceSm,
+        AppSpacing.spaceXs,
+        AppSpacing.spaceSm,
+        0,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceSm),
+      child: AppCard(
+        padding: AppCardPadding.none,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: AppSpacing.spaceSm),
             _rail(context),
-            const Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSpacing.marginMobile,
-                vertical: AppSpacing.spaceXs,
-              ),
-              child: Divider(height: 1, color: AppColors.cardBorderDefault),
+            const SizedBox(height: AppSpacing.spaceXs),
+            const SizedBox(
+              height: 1,
+              child: ColoredBox(color: AppColors.cardBorderDefault),
             ),
-            _PanelRow(
+            ListRow(
               icon: Icons.settings_outlined,
-              label: 'Course settings',
+              title: 'Course settings',
               onTap: onSettings,
             ),
-            _PanelRow(
+            ListRow(
               icon: Icons.folder_outlined,
-              label: 'Manage downloads',
+              title: 'Manage downloads',
               onTap: onDownloads,
             ),
           ],
@@ -82,25 +86,29 @@ class CoursePanel extends StatelessWidget {
     if (loading) {
       return const SizedBox(
         height: _CourseTile.height,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: AppSpinner()),
       );
     }
     if (onRetry != null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.marginMobile,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.spaceMd),
+        child: Row(
           children: [
-            Text(
-              "Couldn't load your courses",
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
+            Expanded(
+              child: Text(
+                "Couldn't load your courses",
+                style: AppTypography.bodySm.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                ),
               ),
             ),
-            const SizedBox(height: AppSpacing.spaceXs),
-            TactileButton(label: 'Retry', onPressed: onRetry!),
+            const SizedBox(width: AppSpacing.spaceXs),
+            AppButton.secondary(
+              label: 'Retry',
+              onPressed: onRetry,
+              expand: false,
+              size: AppButtonSize.compact,
+            ),
           ],
         ),
       );
@@ -109,9 +117,7 @@ class CoursePanel extends StatelessWidget {
       height: _CourseTile.height,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.marginMobile,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.spaceXs),
         children: [
           for (final course in courses)
             _CourseTile(
@@ -157,7 +163,6 @@ class _CourseTile extends StatelessWidget {
                 '${languageName(course.fromLanguage)}',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
         child: SizedBox(
           width: width,
           child: Column(
@@ -209,28 +214,12 @@ class _AddCourseTile extends StatelessWidget {
       label: 'Add a course',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
         child: SizedBox(
           width: _CourseTile.width,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadii.sm),
-                  border: Border.all(
-                    color: AppColors.outlineVariant,
-                    width: 2,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
+              const IconBadge(icon: Icons.add, size: 44, square: true),
               const SizedBox(height: AppSpacing.space2xs),
               Text(
                 'Course',
@@ -238,57 +227,6 @@ class _AddCourseTile extends StatelessWidget {
                 style: AppTypography.labelSm.copyWith(
                   color: AppColors.onSurfaceVariant,
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PanelRow extends StatelessWidget {
-  const _PanelRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-            vertical: AppSpacing.spaceXs,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: AppColors.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.spaceSm),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodyMd.copyWith(
-                    color: AppColors.onSurface,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: AppColors.onSurfaceVariant,
               ),
             ],
           ),

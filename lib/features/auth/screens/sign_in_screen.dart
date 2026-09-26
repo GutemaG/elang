@@ -7,7 +7,10 @@ import '../../../shared/services/session_repository.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
-import '../../../shared/widgets/tactile_button.dart';
+import '../../../shared/theme/app_tone.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_page.dart';
 import '../auth_routes.dart';
 import '../state/native_sign_in.dart';
 import '../state/sign_in_controller.dart';
@@ -82,15 +85,11 @@ class _SignInScreenState extends State<SignInScreen> {
             .completeWithExternallyAcquiredToken(AuthProvider.google, token),
       );
     }
-    return TactileButton(
+    return AppButton.secondary(
       label: 'Continue with Google',
       onPressed: _controller.isInFlight
           ? null
           : () => _controller.signIn(AuthProvider.google),
-      backgroundColor: AppColors.surfaceContainerLowest,
-      bevelColor: AppColors.cardBevelDefault,
-      foregroundColor: AppColors.onSurface,
-      borderColor: AppColors.cardBorderDefault,
       leading: const _GoogleGlyph(),
     );
   }
@@ -114,80 +113,60 @@ class _SignInScreenState extends State<SignInScreen> {
         status == SignInStatus.errorCancelled ||
         status == SignInStatus.errorFailed;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-            vertical: AppSpacing.spaceMd,
+    return AppPage(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Create your free account',
+            style: AppTypography.headlineLg.copyWith(
+              color: AppColors.onSurface,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Create your free account',
-                style: AppTypography.headlineLg.copyWith(
-                  color: AppColors.onSurface,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.spaceXs),
-              Text(
-                'Save your streak, sync your progress across devices, and '
-                'start speaking Amharic today.',
-                style: AppTypography.bodyMd.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.spaceXl),
-              _buildGoogleButton(),
-              const SizedBox(height: AppSpacing.spaceSm),
-              TactileButton(
-                label: 'Continue with Apple',
-                onPressed: _controller.isInFlight
-                    ? null
-                    : () => _controller.signIn(AuthProvider.apple),
-                backgroundColor: AppColors.surfaceContainerLowest,
-                bevelColor: AppColors.cardBevelDefault,
-                foregroundColor: AppColors.onSurface,
-                borderColor: AppColors.cardBorderDefault,
-                leading: const Icon(
-                  Icons.apple,
-                  size: 22,
-                  color: AppColors.onSurface,
-                ),
-              ),
-              if (showError) ...[
-                const SizedBox(height: AppSpacing.spaceMd),
-                _InlineErrorBanner(status: status, onRetry: _controller.retry),
-              ],
-              const SizedBox(height: AppSpacing.spaceXl),
-              Center(
-                child: Text.rich(
-                  TextSpan(
-                    style: AppTypography.labelSm.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                    children: const [
-                      TextSpan(
-                        text:
-                            'By continuing you agree to our Terms of '
-                            'Service & Privacy Policy.',
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.spaceMd),
-            ],
+          const SizedBox(height: AppSpacing.spaceXs),
+          Text(
+            'Save your streak, sync your progress across devices, and '
+            'start speaking Amharic today.',
+            style: AppTypography.bodyMd.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
-        ),
+          const SizedBox(height: AppSpacing.spaceXl),
+          _buildGoogleButton(),
+          const SizedBox(height: AppSpacing.spaceSm),
+          AppButton.secondary(
+            label: 'Continue with Apple',
+            onPressed: _controller.isInFlight
+                ? null
+                : () => _controller.signIn(AuthProvider.apple),
+            leading: const Icon(
+              Icons.apple,
+              size: 22,
+              color: AppColors.onSurface,
+            ),
+          ),
+          if (showError) ...[
+            const SizedBox(height: AppSpacing.spaceMd),
+            _InlineErrorBanner(status: status, onRetry: _controller.retry),
+          ],
+          const SizedBox(height: AppSpacing.spaceXl),
+          Center(
+            child: Text(
+              'By continuing you agree to our Terms of Service & Privacy '
+              'Policy.',
+              style: AppTypography.labelSm.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+/// The mockup's "quiet inline error": a warm banner with Retry inside it.
 class _InlineErrorBanner extends StatelessWidget {
   const _InlineErrorBanner({required this.status, required this.onRetry});
 
@@ -202,53 +181,16 @@ class _InlineErrorBanner extends StatelessWidget {
         ? 'Sign-in was cancelled'
         : 'Something went wrong — try again';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.spaceSm,
-        vertical: AppSpacing.spaceSm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(
-          color: AppColors.secondaryFixedDim.withValues(alpha: 0.6),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: const BoxDecoration(
-              color: AppColors.secondaryFixed,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.info_outline,
-              size: 16,
-              color: AppColors.secondary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.spaceXs),
-          Expanded(
-            child: Text(
-              message,
-              style: AppTypography.bodySm.copyWith(color: AppColors.onSurface),
-            ),
-          ),
-          TextButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(
-              Icons.refresh,
-              size: 16,
-              color: AppColors.secondary,
-            ),
-            label: Text(
-              'Retry',
-              style: AppTypography.labelSm.copyWith(color: AppColors.secondary),
-            ),
-          ),
-        ],
+    return InfoBanner(
+      icon: Icons.info_outline,
+      message: message,
+      tone: AppTone.secondary,
+      action: AppButton.secondary(
+        label: 'Retry',
+        onPressed: onRetry,
+        leading: const Icon(Icons.refresh, size: 18),
+        expand: false,
+        size: AppButtonSize.compact,
       ),
     );
   }

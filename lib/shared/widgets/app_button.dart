@@ -131,6 +131,9 @@ class AppButton extends StatelessWidget {
 
   static const double _borderWidth = 2;
 
+  /// The most of a button's inner width its [badge] may take.
+  static const double badgeShare = 0.5;
+
   bool get _interactive => onPressed != null && !loading;
 
   @override
@@ -143,10 +146,12 @@ class AppButton extends StatelessWidget {
             trailing: trailing,
           )
         : _buildTactile();
+    // The badge is part of what the button says ("Refill with Amole, 350
+    // Amole"), since the price is the point of it.
     return Semantics(
       button: true,
       enabled: _interactive,
-      label: label,
+      label: badge == null ? label : '$label, ${badge!.label}',
       excludeSemantics: true,
       onTap: _interactive ? onPressed : null,
       child: Opacity(opacity: onPressed == null ? 0.6 : 1, child: button),
@@ -160,7 +165,7 @@ class AppButton extends StatelessWidget {
         : compactHeight;
     final labelStyle = AppTypography.labelLg.copyWith(color: style.foreground);
 
-    Widget content = Row(
+    Widget row({double? maxWidth}) => Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: badge == null
           ? MainAxisAlignment.center
@@ -192,10 +197,31 @@ class AppButton extends StatelessWidget {
         ),
         if (badge != null) ...[
           const SizedBox(width: AppSpacing.spaceSm),
-          badge!,
+          if (maxWidth == null)
+            badge!
+          else
+            // At most half the button, shrinking to fit, so a long price
+            // or large text never crowds the label out.
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth * badgeShare),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: badge!,
+              ),
+            ),
         ],
       ],
     );
+    Widget content = badge == null
+        ? row()
+        : LayoutBuilder(
+            builder: (context, constraints) => row(
+              maxWidth: constraints.maxWidth.isFinite
+                  ? constraints.maxWidth
+                  : null,
+            ),
+          );
     if (loading) {
       // The label stays laid out (invisibly) so the button keeps its size.
       content = Stack(

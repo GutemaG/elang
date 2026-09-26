@@ -5,12 +5,15 @@ import '../theme/app_tone.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_status.dart';
+import '../widgets/course_glyph.dart';
+import '../widgets/path_node.dart';
 import 'component_gallery.dart';
 
 void _noop() {}
 
 /// Pills, badges, progress, icon badges, the spinner, the empty, error and
-/// loading states, and the sync messages on `InfoBanner`.
+/// loading states, the sync messages on `InfoBanner`, carousel dots, choice
+/// chips, path nodes and course glyphs.
 class StatusGallerySection extends StatefulWidget {
   const StatusGallerySection({super.key});
 
@@ -20,6 +23,8 @@ class StatusGallerySection extends StatefulWidget {
 
 class _StatusGallerySectionState extends State<StatusGallerySection> {
   double _progress = 0.3;
+  int _page = 0;
+  String _speak = 'English';
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +156,90 @@ class _StatusGallerySectionState extends State<StatusGallerySection> {
                     'Sync failed -- retrying... (unsynced for 30+ days -- '
                     'please reconnect soon)',
               ),
+            ],
+          ),
+        ),
+        const GalleryCase(
+          label: 'InfoBanner with an action (sign-in error and Retry)',
+          child: InfoBanner(
+            icon: Icons.info_outline,
+            message: 'Something went wrong — try again',
+            action: AppButton.secondary(
+              label: 'Retry',
+              onPressed: _noop,
+              leading: Icon(Icons.refresh, size: 18),
+              expand: false,
+              size: AppButtonSize.compact,
+            ),
+          ),
+        ),
+        GalleryCase(
+          label: 'PageDots: tap to move to the next page',
+          child: GestureDetector(
+            onTap: () => setState(() => _page = (_page + 1) % 3),
+            child: Center(child: PageDots(count: 3, index: _page)),
+          ),
+        ),
+        GalleryCase(
+          label: 'ChoiceChip, styled by the theme ("I speak")',
+          child: Wrap(
+            spacing: AppSpacing.spaceXs,
+            runSpacing: AppSpacing.spaceXs,
+            children: [
+              for (final name in const ['English', 'አማርኛ', 'Afaan Oromoo'])
+                ChoiceChip(
+                  label: Text(name),
+                  selected: _speak == name,
+                  onSelected: (_) => setState(() => _speak = name),
+                ),
+            ],
+          ),
+        ),
+        const GalleryCase(
+          label: 'PathNode: locked, active, part-way, completed with a crown',
+          child: Wrap(
+            spacing: AppSpacing.spaceXs,
+            runSpacing: AppSpacing.spaceMd,
+            crossAxisAlignment: WrapCrossAlignment.end,
+            children: [
+              PathNode(
+                state: PathNodeState.locked,
+                label: 'Numbers',
+                semanticLabel: 'Numbers, locked',
+              ),
+              PathNode(
+                state: PathNodeState.active,
+                label: 'Family',
+                semanticLabel: 'Family, active, tap to start',
+                onTap: _noop,
+              ),
+              PathNode(
+                state: PathNodeState.active,
+                label: 'Food · 1/2',
+                semanticLabel:
+                    'Food, active, tap to start, 1 of 2 lessons done',
+                progress: 0.5,
+                onTap: _noop,
+              ),
+              PathNode(
+                state: PathNodeState.completed,
+                label: 'Greetings',
+                semanticLabel: 'Greetings, completed, tap to replay',
+                crownLevel: 2,
+                onTap: _noop,
+              ),
+            ],
+          ),
+        ),
+        const GalleryCase(
+          label: 'CourseGlyph: Amharic, Afaan Oromo, and the active ring',
+          child: Row(
+            children: [
+              CourseGlyph(languageCode: 'am', size: 44),
+              SizedBox(width: AppSpacing.spaceSm),
+              CourseGlyph(languageCode: 'om', size: 44),
+              SizedBox(width: AppSpacing.spaceSm),
+              CourseGlyph(languageCode: 'am', size: 44, selected: true),
             ],
           ),
         ),

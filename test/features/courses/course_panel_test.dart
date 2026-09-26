@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/courses/course_panel.dart';
 import 'package:elang/shared/models/course.dart';
+import 'package:elang/shared/widgets/app_card.dart';
 
 const _amharic = Course(
   id: 'c-en-am',
@@ -159,7 +160,7 @@ void main() {
     }
     for (final label in ['Course settings', 'Manage downloads']) {
       final size = tester.getSize(
-        find.ancestor(of: find.text(label), matching: find.byType(InkWell)).first,
+        find.ancestor(of: find.text(label), matching: find.byType(ListRow)),
       );
       expect(size.height, greaterThanOrEqualTo(48), reason: label);
     }

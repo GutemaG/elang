@@ -129,7 +129,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('500'), findsOneWidget);
-      expect(find.byIcon(Icons.paid), findsOneWidget);
+      expect(find.byIcon(Icons.diamond), findsOneWidget);
     },
   );
 

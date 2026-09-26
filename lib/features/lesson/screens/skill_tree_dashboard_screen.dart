@@ -23,8 +23,12 @@ import '../../../shared/services/sync_engine.dart';
 import '../../../shared/services/user_preferences_api.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
+import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
-import '../../../shared/widgets/tactile_button.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_status.dart';
 import '../../auth/auth_routes.dart';
 import '../../courses/course_badge.dart';
 import '../../courses/course_panel.dart';
@@ -451,16 +455,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   Future<void> _onNodeTap(SkillTreeNode node) async {
     final isReview = node.state == SkillNodeState.completed;
     if (isReview) {
-      final review = await showModalBottomSheet<bool>(
-        context: context,
-        backgroundColor: AppColors.background,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadii.lg),
-          ),
-        ),
-        builder: (_) => ReviewSkillSheet(skillTitle: node.title),
-      );
+      final review = await showReviewSkillSheet(context, node.title);
       if (review != true || !mounted) return;
     }
     await Navigator.of(context).push<void>(
@@ -522,30 +517,32 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: FutureBuilder<_DashboardData>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              // A reload keeps the tree on screen: swapping in a spinner
-              // would tear down the scroll view and lose the learner's place.
-              final previous = _lastData;
-              if (previous == null) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              return _dashboard(context, previous);
+    // The lattice page from the dashboard mockup. The scroll view below owns
+    // its scrolling and margins, because its header and banners are pinned.
+    return AppPage(
+      background: AppPageBackground.patterned,
+      scrollable: false,
+      padded: false,
+      body: FutureBuilder<_DashboardData>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            // A reload keeps the tree on screen: swapping in a spinner
+            // would tear down the scroll view and lose the learner's place.
+            final previous = _lastData;
+            if (previous == null) {
+              return const LoadingState();
             }
-            if (snapshot.hasError) {
-              if (_isSignedOut(snapshot.error)) {
-                return _SignedOutState(onSignIn: _signInAgain);
-              }
-              return _ErrorState(onRetry: _reload);
+            return _dashboard(context, previous);
+          }
+          if (snapshot.hasError) {
+            if (_isSignedOut(snapshot.error)) {
+              return _SignedOutState(onSignIn: _signInAgain);
             }
-            return _dashboard(context, snapshot.data!);
-          },
-        ),
+            return _LoadFailedState(onRetry: _reload);
+          }
+          return _dashboard(context, snapshot.data!);
+        },
       ),
     );
   }
@@ -600,9 +597,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
             key: const ValueKey('course-panel-scrim'),
             onTap: _closePanel,
             behavior: HitTestBehavior.opaque,
-            child: ColoredBox(
-              color: AppColors.inverseSurface.withValues(alpha: 0.32),
-            ),
+            child: const ColoredBox(color: AppColors.scrim),
           ),
         ),
         Positioned(
@@ -835,52 +830,37 @@ class _PracticeEntryCard extends StatelessWidget {
             : "You're all caught up -- nothing due today";
         return Opacity(
           opacity: enabled ? 1.0 : 0.5,
-          child: Material(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(AppRadii.base),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadii.base),
-              onTap: enabled ? onTap : null,
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.spaceMd),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadii.base),
-                  border: Border.all(color: AppColors.outlineVariant),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.refresh,
-                      color: AppColors.primaryContainer,
-                    ),
-                    const SizedBox(width: AppSpacing.spaceSm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Practice',
-                            style: AppTypography.headlineSm.copyWith(
-                              color: AppColors.onSurface,
-                            ),
-                          ),
-                          Text(
-                            subtitle,
-                            style: AppTypography.bodySm.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+          child: AppCard(
+            onTap: enabled ? onTap : null,
+            child: Row(
+              children: [
+                const IconBadge(icon: Icons.refresh, tone: AppTone.primary),
+                const SizedBox(width: AppSpacing.spaceSm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Practice',
+                        style: AppTypography.headlineSm.copyWith(
+                          color: AppColors.onSurface,
+                        ),
                       ),
-                    ),
-                    if (enabled)
-                      const Icon(
-                        Icons.chevron_right,
-                        color: AppColors.onSurfaceVariant,
+                      Text(
+                        subtitle,
+                        style: AppTypography.bodySm.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+                if (enabled)
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+              ],
             ),
           ),
         );
@@ -891,9 +871,8 @@ class _PracticeEntryCard extends StatelessWidget {
 
 /// A small icon-button overlay on a skill-tree node letting the user
 /// download that lesson for offline use (009-offline-caching-and-sync-ui,
-/// story 001). Deliberately plain (not a new Highland Pulse component) --
-/// this bolt prioritizes the underlying offline capability over visual
-/// polish.
+/// story 001): an [IconBadge] per state, or a spinner while downloading,
+/// in a 48dp tap target (018-mobile-design-system, bolt 047).
 class _DownloadAffordance extends StatelessWidget {
   const _DownloadAffordance({required this.lessonId, required this.downloader});
 
@@ -918,60 +897,74 @@ class _DownloadAffordance extends StatelessWidget {
     switch (status) {
       case LessonDownloadStatus.downloaded:
         return const _AffordanceBadge(
-          icon: Icons.download_done,
-          color: AppColors.primaryContainer,
+          label: 'Downloaded for offline use',
+          child: IconBadge(
+            icon: Icons.download_done,
+            tone: AppTone.primary,
+            size: _AffordanceBadge.badgeSize,
+          ),
         );
       case LessonDownloadStatus.downloading:
         return const _AffordanceBadge(
-          icon: null,
-          color: AppColors.secondaryContainer,
-          child: SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(strokeWidth: 2),
+          label: 'Downloading',
+          child: SizedBox.square(
+            dimension: _AffordanceBadge.badgeSize,
+            child: Center(
+              child: AppSpinner.small(color: AppColors.secondaryContainer),
+            ),
           ),
         );
       case LessonDownloadStatus.failed:
         return _AffordanceBadge(
-          icon: Icons.error_outline,
-          color: AppColors.tertiaryBrand,
+          label: 'Download failed, tap to try again',
           onTap: onTap,
+          child: const IconBadge(
+            icon: Icons.error_outline,
+            tone: AppTone.tertiary,
+            size: _AffordanceBadge.badgeSize,
+          ),
         );
       case LessonDownloadStatus.notDownloaded:
         return _AffordanceBadge(
-          icon: Icons.download_outlined,
-          color: AppColors.outlineVariant,
+          label: 'Download for offline use',
           onTap: onTap,
+          child: const IconBadge(
+            icon: Icons.download_outlined,
+            size: _AffordanceBadge.badgeSize,
+          ),
         );
     }
   }
 }
 
+/// The badge sits in the tap target's top-right corner, where the node's
+/// corner is, and the rest of the 48dp square extends into the node.
 class _AffordanceBadge extends StatelessWidget {
   const _AffordanceBadge({
-    required this.icon,
-    required this.color,
+    required this.label,
+    required this.child,
     this.onTap,
-    this.child,
   });
 
-  final IconData? icon;
-  final Color color;
+  final String label;
+  final Widget child;
   final VoidCallback? onTap;
-  final Widget? child;
+
+  static const double badgeSize = 28;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surfaceContainerLowest,
-      shape: const CircleBorder(),
-      elevation: 1,
-      child: InkWell(
+    return Semantics(
+      button: onTap != null,
+      label: label,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: child ?? Icon(icon, size: 16, color: color),
+        child: SizedBox.square(
+          dimension: AppButton.minTapTarget,
+          child: Align(alignment: Alignment.topRight, child: child),
         ),
       ),
     );
@@ -985,25 +978,12 @@ class _OfflineNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.spaceSm),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.cloud_off_outlined,
-            size: 16,
-            color: AppColors.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.spaceXs),
-          Expanded(
-            child: Text(
-              'Offline, showing saved progress',
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
+    return const Padding(
+      padding: EdgeInsets.only(top: AppSpacing.spaceSm),
+      child: InfoBanner(
+        icon: Icons.cloud_off_outlined,
+        tone: AppTone.neutral,
+        message: 'Offline, showing saved progress',
       ),
     );
   }
@@ -1017,7 +997,7 @@ bool _isSignedOut(Object? error) =>
     (error.errorCode == 'invalid_session' ||
         error.errorCode == 'missing_credentials');
 
-/// Shown instead of [_ErrorState] when the session is no longer valid.
+/// Shown instead of [_LoadFailedState] when the session is no longer valid.
 /// Retrying can never help there, and "check your connection" would be
 /// wrong, so this says what happened and leads back to sign-in.
 class _SignedOutState extends StatelessWidget {
@@ -1027,79 +1007,35 @@ class _SignedOutState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spaceLg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.lock_clock,
-              size: 40,
-              color: AppColors.tertiaryBrand,
-            ),
-            const SizedBox(height: AppSpacing.spaceSm),
-            Text(
-              'Please sign in again',
-              style: AppTypography.headlineSm.copyWith(
-                color: AppColors.onSurface,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.space2xs),
-            Text(
-              'Your session has ended. Your progress is saved to your '
-              'account and will be back once you sign in.',
-              textAlign: TextAlign.center,
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceMd),
-            TactileButton(label: 'Sign in', onPressed: onSignIn),
-          ],
-        ),
+    return EmptyState(
+      icon: Icons.lock_clock,
+      tone: AppTone.tertiary,
+      title: 'Please sign in again',
+      message:
+          'Your session has ended. Your progress is saved to your '
+          'account and will be back once you sign in.',
+      action: AppButton.primary(
+        label: 'Sign in',
+        onPressed: onSignIn,
+        expand: false,
       ),
     );
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.onRetry});
+class _LoadFailedState extends StatelessWidget {
+  const _LoadFailedState({required this.onRetry});
 
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spaceLg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.wifi_off,
-              size: 40,
-              color: AppColors.tertiaryBrand,
-            ),
-            const SizedBox(height: AppSpacing.spaceSm),
-            Text(
-              "Couldn't load your skill tree",
-              style: AppTypography.headlineSm.copyWith(
-                color: AppColors.onSurface,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.space2xs),
-            Text(
-              'Check your connection and try again.',
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceMd),
-            TactileButton(label: 'Retry', onPressed: onRetry),
-          ],
-        ),
-      ),
+    return ErrorState(
+      icon: Icons.wifi_off,
+      title: "Couldn't load your skill tree",
+      message: 'Check your connection and try again.',
+      onRetry: onRetry,
+      retryLabel: 'Retry',
     );
   }
 }

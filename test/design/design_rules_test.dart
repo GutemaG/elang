@@ -53,42 +53,6 @@ bool _exempt(String path, _Rule rule) {
 /// Files not yet on the library, and the rules each still breaks. Each
 /// bolt that migrates a screen removes it here (bolts 045 to 049).
 const _notYetMigrated = <String, Set<_Rule>>{
-  'lib/features/auth/screens/daily_goal_selection_screen.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.pageScaffold,
-  },
-  'lib/features/auth/screens/language_selection_screen.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.materialButton,
-    _Rule.pageScaffold,
-    _Rule.progressIndicator,
-  },
-  'lib/features/auth/screens/onboarding_carousel_screen.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.materialButton,
-    _Rule.pageScaffold,
-  },
-  'lib/features/auth/screens/sign_in_screen.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.materialButton,
-    _Rule.pageScaffold,
-  },
-  'lib/features/auth/screens/splash_screen.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.pageScaffold,
-    _Rule.progressIndicator,
-  },
-  'lib/features/courses/course_badge.dart': {_Rule.radiusOrBorder},
-  'lib/features/courses/course_panel.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.progressIndicator,
-  },
-  'lib/features/courses/course_picker.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.materialButton,
-    _Rule.rawSheetOrDialog,
-    _Rule.progressIndicator,
-  },
   'lib/features/lesson/screens/download_management_screen.dart': {
     _Rule.boxShadow,
     _Rule.radiusOrBorder,
@@ -97,44 +61,12 @@ const _notYetMigrated = <String, Set<_Rule>>{
     _Rule.pageScaffold,
     _Rule.progressIndicator,
   },
-  'lib/features/lesson/screens/lesson_complete_screen.dart': {
-    _Rule.boxShadow,
-    _Rule.radiusOrBorder,
-    _Rule.rawSheetOrDialog,
-    _Rule.pageScaffold,
-    _Rule.progressIndicator,
-  },
-  // The exit and out-of-beans sheets move to showAppSheet in bolt 048.
-  'lib/features/lesson/screens/lesson_screen.dart': {_Rule.rawSheetOrDialog},
-  'lib/features/lesson/screens/skill_tree_dashboard_screen.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.rawSheetOrDialog,
-    _Rule.pageScaffold,
-    _Rule.progressIndicator,
-  },
-  'lib/features/lesson/widgets/category_banner.dart': {
-    _Rule.boxShadow,
-    _Rule.radiusOrBorder,
-    _Rule.progressIndicator,
-  },
-  'lib/features/lesson/widgets/exit_lesson_sheet.dart': {_Rule.materialButton},
-  'lib/features/lesson/widgets/lesson_hud.dart': {_Rule.radiusOrBorder},
-  'lib/features/lesson/widgets/out_of_beans_sheet.dart': {
-    _Rule.radiusOrBorder,
-    _Rule.materialButton,
-  },
-  'lib/features/lesson/widgets/skill_path_node.dart': {
-    _Rule.boxShadow,
-    _Rule.radiusOrBorder,
-  },
-  'lib/features/lesson/widgets/sync_status_banner.dart': {_Rule.radiusOrBorder},
   'lib/features/settings/screens/settings_screen.dart': {
     _Rule.materialButton,
     _Rule.rawSheetOrDialog,
     _Rule.pageScaffold,
     _Rule.progressIndicator,
   },
-  'lib/shared/screens/home_placeholder_screen.dart': {_Rule.pageScaffold},
 };
 
 /// [source] without comments, so doc comments that name a widget do not

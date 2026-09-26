@@ -7,8 +7,11 @@ import '../../../shared/services/onboarding_repository.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
+import '../../../shared/theme/app_tone.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_status.dart';
 import '../../../shared/widgets/selectable_option_card.dart';
-import '../../../shared/widgets/tactile_button.dart';
 import '../auth_routes.dart';
 
 /// Language-selection screen — maps to
@@ -128,169 +131,115 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(child: _buildBody()),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.marginMobile,
-                AppSpacing.spaceSm,
-                AppSpacing.marginMobile,
-                AppSpacing.spaceLg,
-              ),
-              child: TactileButton(
-                label: 'Continue',
-                onPressed: _learningCode == null ? null : _onContinuePressed,
-                trailing: const Icon(
-                  Icons.arrow_forward,
-                  color: AppColors.onPrimary,
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
+    final catalog = _catalog;
+    final ready =
+        !_loading && catalog != null && _fromOptions(catalog).isNotEmpty;
+    return AppPage(
+      // Loading and errors fill the page themselves; the choices scroll.
+      scrollable: ready,
+      bottomDock: [
+        AppButton.primary(
+          label: 'Continue',
+          onPressed: _learningCode == null ? null : _onContinuePressed,
+          trailing: const Icon(Icons.arrow_forward, size: 20),
         ),
-      ),
+      ],
+      body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingState();
     }
     final catalog = _catalog;
     if (catalog == null || _fromOptions(catalog).isEmpty) {
-      return _LoadError(
-        message: catalog == null
+      return ErrorState(
+        title: catalog == null
             ? "Couldn't load the courses."
             : 'No courses are available yet.',
         onRetry: _load,
+        retryLabel: 'Retry',
       );
     }
     final coursesFromHere = [
       for (final course in catalog)
         if (course.fromLanguage == _fromCode) course,
     ];
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.marginMobile),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: AppSpacing.spaceMd),
-          Text(
-            'I speak',
-            style: AppTypography.headlineSm.copyWith(
-              color: AppColors.onSurface,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.spaceXs),
-          Wrap(
-            spacing: AppSpacing.spaceXs,
-            runSpacing: AppSpacing.spaceXs,
-            children: [
-              for (final code in _fromOptions(catalog))
-                ChoiceChip(
-                  label: Text(languageNativeName(code)),
-                  selected: _fromCode == code,
-                  onSelected: (_) => _selectFrom(catalog, code),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.spaceLg),
-          Text(
-            'What do you want to learn?',
-            style: AppTypography.headlineSm.copyWith(
-              color: AppColors.onSurface,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space2xs),
-          Text(
-            'Choose your journey to connect with heritage & family.',
-            style: AppTypography.bodySm.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.spaceMd),
-          for (final course in coursesFromHere)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.spaceMd),
-              child: SelectableOptionCard(
-                leading: _FlagBadge(available: course.isAvailable),
-                title:
-                    '${languageName(course.learningLanguage)} · '
-                    '${languageNativeName(course.learningLanguage)}',
-                subtitle: course.title,
-                badgeLabel: course.isAvailable ? null : 'COMING SOON',
-                selected: _learningCode == course.learningLanguage,
-                enabled: course.isAvailable,
-                onTap: course.isAvailable
-                    ? () => setState(
-                        () => _learningCode = course.learningLanguage,
-                      )
-                    : null,
-                trailingAction: course.isAvailable
-                    ? null
-                    : Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () => _onJoinWaitlistPressed(course),
-                          child: Text(
-                            'Join Waitlist',
-                            style: AppTypography.labelSm.copyWith(
-                              color: AppColors.secondaryContainer,
-                            ),
-                          ),
-                        ),
-                      ),
-              ),
-            ),
-          Text(
-            'You can always switch courses anytime from the home screen or '
-            'your settings.',
-            style: AppTypography.bodySm.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LoadError extends StatelessWidget {
-  const _LoadError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spaceLg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'I speak',
+          style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+        ),
+        const SizedBox(height: AppSpacing.spaceXs),
+        Wrap(
+          spacing: AppSpacing.spaceXs,
+          runSpacing: AppSpacing.spaceXs,
           children: [
-            Text(
-              message,
-              style: AppTypography.headlineSm.copyWith(
-                color: AppColors.onSurface,
+            for (final code in _fromOptions(catalog))
+              ChoiceChip(
+                label: Text(languageNativeName(code)),
+                selected: _fromCode == code,
+                onSelected: (_) => _selectFrom(catalog, code),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.spaceMd),
-            TactileButton(label: 'Retry', onPressed: onRetry),
           ],
         ),
-      ),
+        const SizedBox(height: AppSpacing.spaceLg),
+        Text(
+          'What do you want to learn?',
+          style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+        ),
+        const SizedBox(height: AppSpacing.space2xs),
+        Text(
+          'Choose your journey to connect with heritage & family.',
+          style: AppTypography.bodySm.copyWith(
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.spaceMd),
+        for (final course in coursesFromHere)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.spaceMd),
+            child: SelectableOptionCard(
+              leading: _FlagBadge(available: course.isAvailable),
+              title:
+                  '${languageName(course.learningLanguage)} · '
+                  '${languageNativeName(course.learningLanguage)}',
+              subtitle: course.title,
+              badgeLabel: course.isAvailable ? null : 'COMING SOON',
+              selected: _learningCode == course.learningLanguage,
+              enabled: course.isAvailable,
+              onTap: course.isAvailable
+                  ? () =>
+                        setState(() => _learningCode = course.learningLanguage)
+                  : null,
+              trailingAction: course.isAvailable
+                  ? null
+                  : Align(
+                      alignment: Alignment.centerRight,
+                      child: AppButton.text(
+                        label: 'Join Waitlist',
+                        onPressed: () => _onJoinWaitlistPressed(course),
+                      ),
+                    ),
+            ),
+          ),
+        Text(
+          'You can always switch courses anytime from the home screen or '
+          'your settings.',
+          style: AppTypography.bodySm.copyWith(
+            color: AppColors.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
 
+/// The course's flag, in the rounded-square badge.
 class _FlagBadge extends StatelessWidget {
   const _FlagBadge({required this.available});
 
@@ -298,22 +247,10 @@ class _FlagBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 28,
-      decoration: BoxDecoration(
-        color: available
-            ? AppColors.primaryContainer.withValues(alpha: 0.15)
-            : AppColors.surfaceContainer,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
-      ),
-      child: Icon(
-        available ? Icons.flag : Icons.park,
-        size: 18,
-        color: available
-            ? AppColors.primaryContainer
-            : AppColors.onSurfaceVariant,
-      ),
+    return IconBadge(
+      icon: available ? Icons.flag : Icons.park,
+      tone: available ? AppTone.primary : AppTone.neutral,
+      square: true,
     );
   }
 }

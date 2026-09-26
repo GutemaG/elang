@@ -3,8 +3,8 @@
 ## Overview
 - **Total stories**: 99
 - **Generated**: 99
-- **Completed**: 88
-- **Last updated**: 2026-09-25
+- **Completed**: 91
+- **Last updated**: 2026-09-26
 
 ---
 
@@ -206,9 +206,9 @@
 
 #### Unit: 003-screen-migration-ui
 
-- [x] **001-onboarding-and-sign-in-on-the-library** (screen-migration-ui): The first screens I see to look polished and consistent with each other - Must - ✅ GENERATED (bolt 046-onboarding-screens-on-kit)
-- [x] **002-dashboard-and-course-picker-on-the-library** (screen-migration-ui): The home screen to look like the mockup, with the same cards, pills and sheets as the rest of the app - Must - ✅ GENERATED (bolt 047-dashboard-on-kit)
-- [x] **003-lesson-complete-and-lesson-sheets-on-the-library** (screen-migration-ui): The end of a lesson and every lesson pop-up to look celebratory and consistent - Must - ✅ GENERATED (bolt 048-lesson-complete-and-sheets-on-kit)
+- [x] **001-onboarding-and-sign-in-on-the-library** (screen-migration-ui): The first screens I see to look polished and consistent with each other - Must - ✅ COMPLETED (bolt 046-onboarding-screens-on-kit)
+- [x] **002-dashboard-and-course-picker-on-the-library** (screen-migration-ui): The home screen to look like the mockup, with the same cards, pills and sheets as the rest of the app - Must - ✅ COMPLETED (bolt 047-dashboard-on-kit)
+- [x] **003-lesson-complete-and-lesson-sheets-on-the-library** (screen-migration-ui): The end of a lesson and every lesson pop-up to look celebratory and consistent - Must - ✅ COMPLETED (bolt 048-lesson-complete-and-sheets-on-kit)
 - [x] **004-settings-and-downloads-on-the-library** (screen-migration-ui): Settings and downloads to look like the rest of the app instead of stock system screens - Must - ✅ GENERATED (bolt 049-settings-downloads-and-sweep)
 - [x] **005-consistency-sweep** (screen-migration-ui): Every screen checked together against the same rules - Must - ✅ GENERATED (bolt 049-settings-downloads-and-sweep)
 
@@ -238,7 +238,7 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 11
+- **Generated**: 8
 - **In Progress**: 0
-- **Completed**: 88
+- **Completed**: 91
 - **Retired**: 1

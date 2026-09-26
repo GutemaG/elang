@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
+import '../widgets/app_page.dart';
+import '../widgets/app_status.dart';
 
 /// Stand-in destination for "the user is signed in / has a valid session."
 ///
@@ -15,13 +15,12 @@ class HomePlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Text(
-          'Home (out of scope for this bolt)',
-          style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
-        ),
+    return const AppPage(
+      scrollable: false,
+      body: EmptyState(
+        icon: Icons.home_outlined,
+        title: 'Home',
+        message: 'Out of scope for this bolt.',
       ),
     );
   }

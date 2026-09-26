@@ -19,6 +19,8 @@ import 'package:elang/shared/services/lesson_pack_downloader.dart';
 import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/sync_engine.dart';
+import 'package:elang/shared/theme/app_tone.dart';
+import 'package:elang/shared/widgets/app_card.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
 import '../../../helpers/fake_answer_feedback_player.dart';
@@ -281,27 +283,26 @@ void main() {
     await tester.pumpWidget(_dashboard(api));
     await tester.pumpAndSettle();
 
-    Color background(String title) {
-      final container = tester.widget<Container>(
-        find
-            .descendant(
-              of: find.ancestor(
-                of: find.text(title),
-                matching: find.byType(CategoryBanner),
-              ),
-              matching: find.byType(Container),
-            )
-            .first,
-      );
-      return ((container.decoration! as BoxDecoration).color)!;
-    }
+    // Each banner is a white card; its tone colours the border, shelf and
+    // bar (018-mobile-design-system, bolt 047).
+    AppTone tone(String title) => tester
+        .widget<AppCard>(
+          find.descendant(
+            of: find.ancestor(
+              of: find.text(title),
+              matching: find.byType(CategoryBanner),
+            ),
+            matching: find.byType(AppCard),
+          ),
+        )
+        .tone;
 
-    final colours = {
-      background('Foundations & Greetings'),
-      background('Family & People'),
-      background('Numbers & Time'),
+    final tones = {
+      tone('Foundations & Greetings'),
+      tone('Family & People'),
+      tone('Numbers & Time'),
     };
-    expect(colours, hasLength(3));
+    expect(tones, hasLength(3));
   });
 
   // The pinned banner reserves its height before it lays out, so an awkward

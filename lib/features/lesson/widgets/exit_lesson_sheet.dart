@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/theme/app_colors.dart';
-import '../../../shared/theme/app_spacing.dart';
-import '../../../shared/theme/app_typography.dart';
-import '../../../shared/widgets/tactile_button.dart';
+import '../../../shared/theme/app_tone.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_sheet.dart';
 
 /// Asked when the learner backs out of a lesson part-way through: nothing
 /// is saved until the last exercise, so leaving loses this lesson's
 /// progress. Pops `true` for Leave; Keep learning, a tap on the scrim or a
 /// swipe down all stay in the lesson.
+///
+/// Laid out with [SheetHero] (018-mobile-design-system, bolt 048): Keep
+/// learning is the main action and Leave the real alternative. Opened by
+/// [showExitLessonSheet].
 class ExitLessonSheet extends StatelessWidget {
   const ExitLessonSheet({super.key, this.isPractice = false});
 
@@ -17,62 +20,31 @@ class ExitLessonSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final what = isPractice ? 'practice' : 'lesson';
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spaceLg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 88,
-                height: 88,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.surfaceContainerLow,
-                ),
-                child: const Icon(
-                  Icons.logout,
-                  size: 40,
-                  color: AppColors.tertiaryBrand,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceSm),
-            Text(
-              'Leave this $what?',
-              textAlign: TextAlign.center,
-              style: AppTypography.headlineLg.copyWith(
-                color: AppColors.primaryContainer,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.space2xs),
-            Text(
-              "Your progress in this $what won't be saved.",
-              textAlign: TextAlign.center,
-              style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spaceLg),
-            TactileButton(
-              label: 'Keep learning',
-              onPressed: () => Navigator.of(context).pop(false),
-            ),
-            const SizedBox(height: AppSpacing.spaceSm),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(
-                'Leave',
-                style: AppTypography.labelMd.copyWith(
-                  color: AppColors.tertiaryBrand,
-                ),
-              ),
-            ),
-          ],
-        ),
+    return SheetHero(
+      illustration: const Icon(Icons.logout),
+      illustrationSize: 96,
+      tone: AppTone.tertiary,
+      title: 'Leave this $what?',
+      body: "Your progress in this $what won't be saved.",
+      primaryAction: AppButton.primary(
+        label: 'Keep learning',
+        onPressed: () => Navigator.of(context).pop(false),
+      ),
+      secondaryAction: AppButton.secondary(
+        label: 'Leave',
+        onPressed: () => Navigator.of(context).pop(true),
       ),
     );
   }
+}
+
+/// `true` for Leave; `false` for Keep learning; `null` if dismissed.
+Future<bool?> showExitLessonSheet(
+  BuildContext context, {
+  bool isPractice = false,
+}) {
+  return showAppSheet<bool>(
+    context: context,
+    builder: (_) => ExitLessonSheet(isPractice: isPractice),
+  );
 }

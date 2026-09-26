@@ -3,14 +3,23 @@ id: 047-dashboard-on-kit
 unit: 003-screen-migration-ui
 intent: 018-mobile-design-system
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 002-dashboard-and-course-picker-on-the-library
 created: '2026-09-24T12:55:00Z'
-started: null
-completed: null
+started: '2026-09-25T20:50:30Z'
+completed: '2026-09-26T05:28:36Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-25T20:54:39Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-26T04:33:47Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-26T05:28:35Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 043-design-surfaces
 enables_bolts:
@@ -32,7 +41,7 @@ Move the dashboard, its header, banners, path nodes, practice card, sync banner,
 
 ## Stories Included
 
-- [ ] **002-dashboard-and-course-picker-on-the-library** (Must)
+- [x] **002-dashboard-and-course-picker-on-the-library** (Must)
 
 ## Bolt Type
 
@@ -41,9 +50,9 @@ Move the dashboard, its header, banners, path nodes, practice card, sync banner,
 
 ## Stages
 
-- [ ] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**: includes choosing and recording each story's reference design (FR-11): the Stitch mockup, or fetched external designs
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

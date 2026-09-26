@@ -309,15 +309,8 @@ class _LessonScreenState extends State<LessonScreen> {
     if (!mounted) return;
     final status = await widget.lessonApi.getBeansStatus();
     if (!mounted) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.lg)),
-      ),
+    await showOutOfBeansSheet(
+      context,
       builder: (sheetContext) => OutOfBeansSheet(
         status: status,
         onRefill: () => _handleRefill(sheetContext),
@@ -377,16 +370,9 @@ class _LessonScreenState extends State<LessonScreen> {
   /// Back gesture, back button or the close button, part-way through:
   /// asks first, because nothing is saved until the lesson is finished.
   Future<void> _confirmExit() async {
-    final leave = await showModalBottomSheet<bool>(
-      context: context,
-      // Sized to its content, not capped at the default 9/16 of the screen,
-      // so it fits on a short phone.
-      isScrollControlled: true,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.lg)),
-      ),
-      builder: (_) => ExitLessonSheet(isPractice: widget.isPractice),
+    final leave = await showExitLessonSheet(
+      context,
+      isPractice: widget.isPractice,
     );
     if (leave == true && mounted) Navigator.of(context).pop();
   }

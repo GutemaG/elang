@@ -79,7 +79,11 @@ class AppCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const TibebStripe(style: TibebStyle.gradient),
-                Padding(padding: _insets, child: child),
+                // Flexible, so a card held to a fixed height (a pinned
+                // banner) squeezes its content instead of overflowing.
+                Flexible(
+                  child: Padding(padding: _insets, child: child),
+                ),
               ],
             )
           : Padding(padding: _insets, child: child),
@@ -215,6 +219,10 @@ class StatCard extends StatelessWidget {
 /// A tinted stadium with an icon and a message, e.g. "Daily goal complete!"
 /// or a sync status. [emphasis] strengthens the border for a message that
 /// needs attention (unsynced for 30+ days).
+///
+/// An [action] (usually a compact [AppButton], such as sign-in's "Retry")
+/// sits at the end, and the banner becomes a rounded card so a two-line
+/// message still fits beside it.
 class InfoBanner extends StatelessWidget {
   const InfoBanner({
     super.key,
@@ -222,51 +230,90 @@ class InfoBanner extends StatelessWidget {
     required this.message,
     this.tone = AppTone.secondary,
     this.emphasis = false,
+    this.action,
   });
 
   final IconData icon;
   final String message;
   final AppTone tone;
   final bool emphasis;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
     final ink = tone == AppTone.neutral ? AppColors.onSurfaceVariant : tone.ink;
-    return Semantics(
-      container: true,
-      label: message,
-      excludeSemantics: true,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.spaceMd,
-          vertical: AppSpacing.spaceXs,
-        ),
-        decoration: BoxDecoration(
-          color: tone.surface,
-          borderRadius: BorderRadius.circular(AppRadii.full),
-          border: Border.all(
-            color: emphasis ? tone.icon : ink.withValues(alpha: 0.2),
-            width: emphasis ? 2 : 1,
+    final text = Text(
+      message,
+      style: AppTypography.forText(
+        AppTypography.bodySm.copyWith(color: ink, fontWeight: FontWeight.w600),
+        message,
+      ),
+    );
+    final iconWidget = Icon(icon, size: 20, color: emphasis ? tone.icon : ink);
+    final decoration = BoxDecoration(
+      color: tone.surface,
+      borderRadius: BorderRadius.circular(
+        action == null ? AppRadii.full : AppRadii.base,
+      ),
+      border: Border.all(
+        color: emphasis ? tone.icon : ink.withValues(alpha: 0.2),
+        width: emphasis ? 2 : 1,
+      ),
+    );
+
+    if (action == null) {
+      return Semantics(
+        container: true,
+        label: message,
+        excludeSemantics: true,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.spaceMd,
+            vertical: AppSpacing.spaceXs,
+          ),
+          decoration: decoration,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              iconWidget,
+              const SizedBox(width: AppSpacing.spaceXs),
+              Flexible(child: text),
+            ],
           ),
         ),
+      );
+    }
+    // The message is read as one phrase; the action stays its own button.
+    return Semantics(
+      container: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.spaceMd,
+          AppSpacing.spaceXs,
+          AppSpacing.spaceXs,
+          AppSpacing.spaceXs,
+        ),
+        decoration: decoration,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: emphasis ? tone.icon : ink),
-            const SizedBox(width: AppSpacing.spaceXs),
-            Flexible(
-              child: Text(
-                message,
-                style: AppTypography.forText(
-                  AppTypography.bodySm.copyWith(
-                    color: ink,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  message,
+            Expanded(
+              child: Semantics(
+                container: true,
+                label: message,
+                excludeSemantics: true,
+                child: Row(
+                  children: [
+                    iconWidget,
+                    const SizedBox(width: AppSpacing.spaceXs),
+                    Expanded(child: text),
+                  ],
                 ),
               ),
             ),
+            const SizedBox(width: AppSpacing.spaceXs),
+            action!,
           ],
         ),
       ),

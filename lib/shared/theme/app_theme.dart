@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_spacing.dart';
 import 'app_typography.dart';
 
 /// Builds the app-wide [ThemeData] from the Highland Pulse tokens in
@@ -66,6 +67,44 @@ abstract final class AppTheme {
         foregroundColor: AppColors.onSurface,
         elevation: 0,
       ),
+      chipTheme: chipTheme,
+    );
+  }
+
+  /// Choice chips ("I speak"): white stadiums with a 2 px border; a chosen
+  /// one takes the chosen-option face, a green border and a check, like a
+  /// selected option card.
+  static ChipThemeData get chipTheme {
+    return ChipThemeData(
+      color: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? AppColors.optionChosen
+            : AppColors.surfaceContainerLowest,
+      ),
+      checkmarkColor: AppColors.primaryContainer,
+      side: WidgetStateBorderSide.resolveWith(
+        (states) => BorderSide(
+          color: states.contains(WidgetState.selected)
+              ? AppColors.primaryContainer
+              : AppColors.cardBorderDefault,
+          width: 2,
+        ),
+      ),
+      shape: const StadiumBorder(),
+      labelStyle: WidgetStateTextStyle.resolveWith(
+        (states) => AppTypography.labelMd.copyWith(
+          color: states.contains(WidgetState.selected)
+              ? AppColors.primary
+              : AppColors.onSurface,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceXs,
+        vertical: AppSpacing.space2xs,
+      ),
+      elevation: 0,
+      pressElevation: 0,
+      showCheckmark: true,
     );
   }
 }

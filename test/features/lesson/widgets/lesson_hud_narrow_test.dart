@@ -34,7 +34,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('100'), findsOneWidget);
-    expect(find.text('10300'), findsOneWidget);
+    expect(find.text('10,300'), findsOneWidget);
   });
 
   testWidgets('every pill carries the label a screen reader reads', (

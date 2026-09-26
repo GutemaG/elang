@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
-import '../../../shared/widgets/tactile_button.dart';
+import '../../../shared/theme/app_tone.dart';
+import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_page.dart';
+import '../../../shared/widgets/app_status.dart';
 import '../auth_routes.dart';
 
 class _CarouselSlide {
@@ -95,213 +99,119 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.marginMobile,
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppColors.secondaryContainer,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.spaceXs),
-                      Text(
-                        'Buna',
-                        style: AppTypography.headlineMd.copyWith(
-                          color: AppColors.primaryContainer,
-                        ),
-                      ),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: _goToLanguageSelection,
-                    child: Text(
-                      'Skip',
-                      style: AppTypography.labelMd.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: _slides.length,
-                  onPageChanged: (index) =>
-                      setState(() => _currentIndex = index),
-                  itemBuilder: (context, index) =>
-                      _SlideCard(slide: _slides[index]),
-                ),
-              ),
-              _DotIndicator(count: _slides.length, activeIndex: _currentIndex),
-              const SizedBox(height: AppSpacing.spaceMd),
-              TactileButton(
-                label: _isLastSlide ? 'Get Started' : 'Continue',
-                onPressed: _onContinuePressed,
-                trailing: const Icon(
-                  Icons.arrow_forward,
-                  color: AppColors.onPrimary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.spaceSm),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Already have an account?',
-                    style: AppTypography.bodySm.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _goToSignIn,
-                    child: Text(
-                      'Log In',
-                      style: AppTypography.labelMd.copyWith(
-                        color: AppColors.primaryContainer,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.spaceSm),
-            ],
-          ),
+    return AppPage(
+      topBar: AppTopBar.brand(
+        trailing: [
+          AppButton.text(label: 'Skip', onPressed: _goToLanguageSelection),
+        ],
+      ),
+      scrollable: false,
+      bottomDock: [
+        AppButton.primary(
+          label: _isLastSlide ? 'Get Started' : 'Continue',
+          onPressed: _onContinuePressed,
+          trailing: const Icon(Icons.arrow_forward, size: 20),
         ),
-      ),
-    );
-  }
-}
-
-class _SlideCard extends StatelessWidget {
-  const _SlideCard({required this.slide});
-
-  final _CarouselSlide slide;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.spaceSm),
-      padding: const EdgeInsets.all(AppSpacing.spaceMd),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadii.base),
-        border: Border.all(color: AppColors.surfaceDim, width: 2),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              'Already have an account?',
+              style: AppTypography.bodySm.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+            AppButton.text(label: 'Log In', onPressed: _goToSignIn),
+          ],
+        ),
+      ],
+      body: Column(
         children: [
-          Container(
-            width: double.infinity,
-            height: 180,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(AppRadii.md),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    slide.icon,
-                    size: 72,
-                    color: AppColors.secondaryContainer,
-                  ),
-                ),
-                Positioned(
-                  top: AppSpacing.spaceSm,
-                  left: AppSpacing.spaceSm,
-                  child: _Chip(label: slide.chipLabel),
-                ),
-              ],
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _slides.length,
+              onPageChanged: (index) => setState(() => _currentIndex = index),
+              itemBuilder: (context, index) =>
+                  _SlideCard(slide: _slides[index]),
             ),
           ),
-          const SizedBox(height: AppSpacing.spaceMd),
-          Text(
-            slide.title,
-            style: AppTypography.headlineSm.copyWith(
-              color: AppColors.onSurface,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.space2xs),
-          Text(
-            slide.body,
-            style: AppTypography.bodyMd.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          const SizedBox(height: AppSpacing.spaceSm),
+          PageDots(count: _slides.length, index: _currentIndex),
+          const SizedBox(height: AppSpacing.spaceSm),
         ],
       ),
     );
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label});
+/// One slide: the mockup's raised card with the Tibeb stripe, the
+/// illustration (an icon in place of the art) with its letter chip, the
+/// title and the body. A slide taller than the room scrolls.
+class _SlideCard extends StatelessWidget {
+  const _SlideCard({required this.slide});
 
-  final String label;
+  final _CarouselSlide slide;
+
+  static const double illustrationSize = 160;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.spaceXs,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(AppRadii.full),
-        border: Border.all(color: AppColors.surfaceDim),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.labelMd.copyWith(
-          color: AppColors.primaryContainer,
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceSm),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: constraints.maxHeight - 2 * AppSpacing.spaceSm,
+          ),
+          child: Center(
+            child: AppCard(
+              topStripe: true,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: illustrationSize,
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: IconBadge(
+                            icon: slide.icon,
+                            tone: AppTone.secondary,
+                            size: illustrationSize,
+                          ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          child: CountBadge(label: slide.chipLabel),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.spaceMd),
+                  Text(
+                    slide.title,
+                    style: AppTypography.headlineSm.copyWith(
+                      color: AppColors.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.space2xs),
+                  Text(
+                    slide.body,
+                    style: AppTypography.bodyMd.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-    );
-  }
-}
-
-class _DotIndicator extends StatelessWidget {
-  const _DotIndicator({required this.count, required this.activeIndex});
-
-  final int count;
-  final int activeIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(count, (index) {
-        final bool active = index == activeIndex;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: active ? 28 : 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: active ? AppColors.primaryContainer : AppColors.surfaceDim,
-            borderRadius: BorderRadius.circular(AppRadii.full),
-          ),
-        );
-      }),
     );
   }
 }

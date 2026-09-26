@@ -6,9 +6,13 @@ import '../../shared/services/caching_course_api.dart';
 import '../../shared/services/course_api.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../shared/theme/app_spacing.dart';
+import '../../shared/theme/app_tone.dart';
 import '../../shared/theme/app_typography.dart';
-import '../../shared/widgets/tactile_button.dart';
-import 'course_badge.dart';
+import '../../shared/widgets/app_card.dart';
+import '../../shared/widgets/app_icon_button.dart';
+import '../../shared/widgets/app_sheet.dart';
+import '../../shared/widgets/app_status.dart';
+import '../../shared/widgets/course_glyph.dart';
 
 /// Tells the learner why a switch did not happen. Shared by the catalog and
 /// the dashboard's course rail so the two never drift apart.
@@ -35,9 +39,8 @@ Future<Course?> pickAndSwitchCourse(
   BuildContext context, {
   required CourseApi courseApi,
 }) async {
-  final picked = await showModalBottomSheet<Course>(
+  final picked = await showAppSheet<Course>(
     context: context,
-    isScrollControlled: true,
     builder: (_) => CoursePickerSheet(courseApi: courseApi),
   );
   if (picked == null || picked.isActive) return null;
@@ -55,7 +58,8 @@ Future<Course?> pickAndSwitchCourse(
 /// learn. The active course is marked and coming-soon courses are disabled.
 ///
 /// Pops with the tapped [Course] (not yet switched to); see
-/// [pickAndSwitchCourse].
+/// [pickAndSwitchCourse]. Drawn inside the library's sheet, with a card per
+/// course (018-mobile-design-system, bolt 047).
 class CoursePickerSheet extends StatefulWidget {
   const CoursePickerSheet({super.key, required this.courseApi});
 
@@ -82,77 +86,49 @@ class _CoursePickerSheetState extends State<CoursePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.marginMobile),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Choose a course',
-                      style: AppTypography.headlineSm.copyWith(
-                        color: AppColors.onSurface,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    color: AppColors.onSurfaceVariant,
-                    tooltip: 'Close',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.spaceXs),
-              Flexible(
-                child: FutureBuilder<CourseList>(
-                  future: _future,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const Padding(
-                        padding: EdgeInsets.all(AppSpacing.spaceLg),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return _LoadError(onRetry: _retry);
-                    }
-                    return _CourseGroups(courses: snapshot.data!.courses);
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadError extends StatelessWidget {
-  const _LoadError({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
+    // The sheet scrolls when the catalog is taller than the screen, so the
+    // content here only needs to lay out at its natural height.
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          "Couldn't load your courses",
-          style: AppTypography.bodyMd.copyWith(color: AppColors.onSurface),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Choose a course',
+                style: AppTypography.headlineSm.copyWith(
+                  color: AppColors.onSurface,
+                ),
+              ),
+            ),
+            AppIconButton(
+              icon: Icons.close,
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.spaceMd),
-        TactileButton(label: 'Retry', onPressed: onRetry),
+        const SizedBox(height: AppSpacing.spaceXs),
+        FutureBuilder<CourseList>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Padding(
+                padding: EdgeInsets.all(AppSpacing.spaceLg),
+                child: Center(child: AppSpinner()),
+              );
+            }
+            if (snapshot.hasError) {
+              return ErrorState(
+                title: "Couldn't load your courses",
+                onRetry: _retry,
+                retryLabel: 'Retry',
+              );
+            }
+            return _CourseGroups(courses: snapshot.data!.courses);
+          },
+        ),
       ],
     );
   }
@@ -171,36 +147,35 @@ class _CourseGroups extends StatelessWidget {
     for (final course in courses) {
       groups.putIfAbsent(course.fromLanguage, () => []).add(course);
     }
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final entry in groups.entries) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.spaceXs),
-              child: Text(
-                'For ${languageName(entry.key)} speakers',
-                style: AppTypography.labelSm.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final entry in groups.entries) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.spaceXs),
+            child: Text(
+              'For ${languageName(entry.key)} speakers',
+              style: AppTypography.labelSm.copyWith(
+                color: AppColors.onSurfaceVariant,
               ),
             ),
-            for (final course in entry.value)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.spaceXs),
-                child: _CatalogRow(course: course),
-              ),
-            const SizedBox(height: AppSpacing.spaceMd),
-          ],
+          ),
+          for (final course in entry.value)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.spaceXs),
+              child: _CatalogRow(course: course),
+            ),
+          const SizedBox(height: AppSpacing.spaceMd),
         ],
-      ),
+      ],
     );
   }
 }
 
-/// One catalog entry. Deliberately leaner than `SelectableOptionCard`: the
-/// catalog can be long, and progress reads better as a bar than as a count in
-/// a sentence.
+/// One catalog entry, an [AppCard]: chosen for the active course, faded when
+/// coming soon. Deliberately leaner than `SelectableOptionCard`: the catalog
+/// can be long, and progress reads better as a bar than as a count in a
+/// sentence.
 class _CatalogRow extends StatelessWidget {
   const _CatalogRow({required this.course});
 
@@ -209,70 +184,55 @@ class _CatalogRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = course.isAvailable;
-    return Semantics(
-      button: true,
-      selected: course.isActive,
-      enabled: enabled,
-      child: InkWell(
+    return Opacity(
+      opacity: enabled ? 1 : 0.6,
+      child: AppCard(
+        tone: course.isActive ? AppTone.primary : AppTone.neutral,
+        selected: course.isActive,
+        padding: AppCardPadding.compact,
         onTap: enabled ? () => Navigator.of(context).pop(course) : null,
-        borderRadius: BorderRadius.circular(AppRadii.base),
-        child: Opacity(
-          opacity: enabled ? 1 : 0.6,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
-            padding: const EdgeInsets.all(AppSpacing.spaceSm),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(AppRadii.base),
-              border: Border.all(
-                color: course.isActive
-                    ? AppColors.primaryContainer
-                    : AppColors.cardBorderDefault,
-                width: 2,
+        child: Row(
+          children: [
+            CourseGlyph(languageCode: course.learningLanguage, size: 36),
+            const SizedBox(width: AppSpacing.spaceSm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    languageName(course.learningLanguage),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelLg.copyWith(
+                      color: course.isActive
+                          ? AppColors.primaryContainer
+                          : AppColors.onSurface,
+                    ),
+                  ),
+                  Text(
+                    enabled ? course.title : '${course.title} · Coming soon',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySm.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                  if (enabled && course.totalSkills > 0) ...[
+                    const SizedBox(height: AppSpacing.space2xs),
+                    AppProgressBar(
+                      value: course.completedSkills / course.totalSkills,
+                      semanticLabel:
+                          '${course.completedSkills} of '
+                          '${course.totalSkills} skills',
+                    ),
+                  ],
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                CourseGlyph(languageCode: course.learningLanguage, size: 36),
-                const SizedBox(width: AppSpacing.spaceSm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        languageName(course.learningLanguage),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.labelLg.copyWith(
-                          color: course.isActive
-                              ? AppColors.primaryContainer
-                              : AppColors.onSurface,
-                        ),
-                      ),
-                      Text(
-                        enabled ? course.title : '${course.title} · Coming soon',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodySm.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      if (enabled && course.totalSkills > 0) ...[
-                        const SizedBox(height: AppSpacing.space2xs),
-                        _ProgressBar(
-                          completed: course.completedSkills,
-                          total: course.totalSkills,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.spaceXs),
-                _indicator(),
-              ],
-            ),
-          ),
+            const SizedBox(width: AppSpacing.spaceXs),
+            _indicator(),
+          ],
         ),
       ),
     );
@@ -301,35 +261,6 @@ class _CatalogRow extends StatelessWidget {
       Icons.chevron_right,
       size: 20,
       color: AppColors.onSurfaceVariant,
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({required this.completed, required this.total});
-
-  final int completed;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    // One node: a bare progress value means nothing without the count, and
-    // `LinearProgressIndicator` would otherwise announce itself separately.
-    return Semantics(
-      label: '$completed of $total skills',
-      container: true,
-      excludeSemantics: true,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadii.full),
-        child: LinearProgressIndicator(
-          value: total == 0 ? 0 : completed / total,
-          minHeight: 6,
-          backgroundColor: AppColors.surfaceContainer,
-          valueColor: const AlwaysStoppedAnimation(
-            AppColors.primaryContainer,
-          ),
-        ),
-      ),
     );
   }
 }
