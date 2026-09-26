@@ -517,10 +517,10 @@ void main() {
     test(
       'an exercise type this build does not know is skipped, not fatal',
       () async {
-        // Forward compatibility. A `spell_tiles` exercise seeded by bolt
-        // 032, with client support still pending in bolt 033, previously
-        // threw here and made every lesson in every course unloadable --
-        // observed on a real device, not in a test.
+        // Forward compatibility. A `spell_tiles` exercise, seeded by bolt
+        // 032 before the client could show it (bolt 033), once threw here
+        // and made every lesson in every course unloadable -- observed on a
+        // real device, not in a test.
         final client = MockClient((request) async {
           if (request.url.path == '/api/v1/lessons/lesson-a1') {
             return http.Response(

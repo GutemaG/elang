@@ -35,6 +35,7 @@ import '../widgets/answer_states.dart';
 import '../widgets/exit_lesson_sheet.dart';
 import '../widgets/match_pairs_builder.dart';
 import '../widgets/out_of_beans_sheet.dart';
+import '../widgets/spell_tiles_builder.dart';
 import '../widgets/word_bank_builder.dart';
 import 'lesson_complete_screen.dart';
 
@@ -644,9 +645,12 @@ class _LessonQuestionState extends State<_LessonQuestion> {
     final controller = _controller;
     final exercise = controller.currentExercise;
     final topBar = _topBarFor(context, controller);
-    final built = exercise is SentenceConstructionExercise
-        ? controller.selectedAnswer as List<String>?
-        : null;
+    // A sentence or a spelling is built a tile at a time, so it has no
+    // single tap that means "done" and needs Check.
+    final builds =
+        exercise is SentenceConstructionExercise ||
+        exercise is SpellTilesExercise;
+    final built = builds ? controller.selectedAnswer as List<String>? : null;
     return ExerciseLayout(
       onClose: topBar.onClose,
       progress: topBar.progress,
@@ -656,12 +660,10 @@ class _LessonQuestionState extends State<_LessonQuestion> {
       answers: _answersFor(exercise),
       actionBar: AnswerActionBar(
         grade: gradeOf(controller.feedback),
-        // Only a built sentence needs Check: it has no single tap that
-        // means "done". Every other type grades itself as it is answered
-        // -- a choice on its tap, a match pair on its second tile.
-        onCheck: exercise is SentenceConstructionExercise
-            ? controller.check
-            : null,
+        // Only a built sentence or spelling needs Check. Every other type
+        // grades itself as it is answered -- a choice on its tap, a match
+        // pair on its second tile.
+        onCheck: builds ? controller.check : null,
         canCheck: built != null && built.isNotEmpty,
         onContinue: _continue,
         notice: controller.completionError == null
@@ -693,6 +695,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
         PromptParts(instruction: splitPrompt(e.instruction).instruction),
         e.audioUrl,
       ),
+      SpellTilesExercise e => _questionPrompt(splitPrompt(e.prompt)),
     };
   }
 
@@ -763,6 +766,13 @@ class _LessonQuestionState extends State<_LessonQuestion> {
       ),
       ImageChoiceExercise e => _pictures(e.choices),
       AudioImageChoiceExercise e => _pictures(e.choices),
+      // Placed and toggled by tile id, never by text (bolt 033).
+      SpellTilesExercise e => SpellTilesBuilder(
+        tiles: e.tiles,
+        placed: (controller.selectedAnswer as List<String>?) ?? const [],
+        feedback: controller.feedback,
+        onToggle: controller.toggleWordBankToken,
+      ),
     };
   }
 

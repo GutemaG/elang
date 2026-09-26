@@ -191,13 +191,69 @@ class AudioImageChoiceExercise extends Exercise {
   final int correctOptionIndex;
 }
 
+/// One character tile in a [SpellTilesExercise] (016-spell-from-tiles-
+/// exercise-type, bolt 033).
+///
+/// The same shape as [MatchPairsTile], deliberately not the same class:
+/// here [text] is **expected to repeat** (`ፍራፍሬ` needs two `ፍ` tiles,
+/// `Maaloo` two `a` and two `o`), so a tile is only ever identified by
+/// [id]. Anything that looks a tile up by its text silently collapses such
+/// a word -- the one bug this type exists not to have.
+class SpellTile {
+  const SpellTile({required this.id, required this.text});
+
+  final String id;
+  final String text;
+}
+
+/// Spell a word by tapping its characters in order (016-spell-from-tiles-
+/// exercise-type, bolt 033).
+///
+/// Answered with the tapped tile ids, in order, and toggled through the
+/// same `LessonController.toggleWordBankToken` a built sentence uses: ids
+/// are unique within an exercise, so toggling one adds or removes exactly
+/// that tile, twin or not.
+class SpellTilesExercise extends Exercise {
+  const SpellTilesExercise({
+    required super.id,
+    required this.prompt,
+    required this.tiles,
+    required this.correctSequence,
+  });
+
+  /// What to spell, in the learner's own language, e.g. "Spell 'Hello'".
+  final String prompt;
+
+  /// The word's characters, shuffled, plus distractors, in display order.
+  final List<SpellTile> tiles;
+
+  /// Tile ids in **a** correct order, as served -- not the only one. Twin
+  /// tiles are interchangeable, so grading compares the spelled text (see
+  /// [spelled]), not this list (bolt 032, decision D3).
+  final List<String> correctSequence;
+
+  /// The characters [tileIds] spell, in order; `null` if any id is not one
+  /// of this exercise's tiles.
+  List<String>? spelled(List<String> tileIds) {
+    final textById = {for (final tile in tiles) tile.id: tile.text};
+    final texts = <String>[];
+    for (final id in tileIds) {
+      final text = textById[id];
+      if (text == null) return null;
+      texts.add(text);
+    }
+    return texts;
+  }
+}
+
 /// Grades a submitted answer against [exercise], client-side.
 ///
 /// [answer] must be an `int` (the selected option index) for
 /// [MultipleChoiceExercise]/[ListeningExercise]/[GapFillExercise] and both
 /// picture types, a
 /// `List<String>` (the learner's built token order) for
-/// [SentenceConstructionExercise], or a `Map<String, String>`
+/// [SentenceConstructionExercise], a `List<String>` of tapped tile ids for
+/// [SpellTilesExercise], or a `Map<String, String>`
 /// (`leftTileId -> rightTileId`) for [MatchPairsExercise].
 bool isAnswerCorrect(Exercise exercise, Object answer) {
   return switch (exercise) {
@@ -211,5 +267,13 @@ bool isAnswerCorrect(Exercise exercise, Object answer) {
     GapFillExercise e => answer == e.correctOptionIndex,
     ImageChoiceExercise e => answer == e.correctOptionIndex,
     AudioImageChoiceExercise e => answer == e.correctOptionIndex,
+    // By the spelled text, not the ids: a twin tapped in the other order
+    // spells the same word (bolt 032, decision D3).
+    SpellTilesExercise e =>
+      answer is List<String> &&
+          switch (e.spelled(answer)) {
+            final built? => listEquals(built, e.spelled(e.correctSequence)),
+            null => false,
+          },
   };
 }

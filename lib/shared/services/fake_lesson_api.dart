@@ -225,6 +225,23 @@ class FakeLessonApi implements LessonApi {
           options: ['ቡና', 'ሻይ', 'ውሃ'],
           correctOptionIndex: 0,
         ),
+        // A word with a repeated character (two ፍ tiles), so everything run
+        // against the fake meets the case a text-keyed tile would get
+        // wrong. The served order uses f1 first; tapping f2 first spells
+        // the same word and is just as right.
+        SpellTilesExercise(
+          id: 'coffee-8',
+          prompt: "Spell 'Fruit'",
+          tiles: [
+            SpellTile(id: 'f2', text: 'ፍ'),
+            SpellTile(id: 'r2', text: 'ሬ'),
+            SpellTile(id: 'd1', text: 'ቡ'),
+            SpellTile(id: 'f1', text: 'ፍ'),
+            SpellTile(id: 'd2', text: 'ና'),
+            SpellTile(id: 'r1', text: 'ራ'),
+          ],
+          correctSequence: ['f1', 'r1', 'f2', 'r2'],
+        ),
         // The pictures are bundled, so both picture questions show without
         // a backend or the network. Four pictures here, three below: the
         // grid's two layouts.

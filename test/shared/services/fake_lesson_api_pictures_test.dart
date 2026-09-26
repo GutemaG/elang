@@ -107,7 +107,7 @@ void main() {
 
   group('the coffee lesson', () {
     test('ends with one question of each picture type, after the other '
-        'five', () async {
+        'six', () async {
       final api = FakeLessonApi(latency: Duration.zero);
       final lesson = await api.startLesson('lesson-coffee');
 
@@ -117,6 +117,7 @@ void main() {
         'SentenceConstructionExercise',
         'MatchPairsExercise',
         'GapFillExercise',
+        'SpellTilesExercise',
         'ImageChoiceExercise',
         'AudioImageChoiceExercise',
       ]);

@@ -302,6 +302,26 @@ const _exercises = <String, Exercise>{
     ],
     correctOptionIndex: 0,
   ),
+  // Twelve tiles with a twin (two ፍ), the most the client lays out for.
+  'spell tiles': SpellTilesExercise(
+    id: 'st',
+    prompt: "Spell 'Fruit'",
+    tiles: [
+      SpellTile(id: 't1', text: 'ፍ'),
+      SpellTile(id: 't2', text: 'ሬ'),
+      SpellTile(id: 't3', text: 'ቡ'),
+      SpellTile(id: 't4', text: 'ፍ'),
+      SpellTile(id: 't5', text: 'ና'),
+      SpellTile(id: 't6', text: 'ራ'),
+      SpellTile(id: 't7', text: 'ሻ'),
+      SpellTile(id: 't8', text: 'ይ'),
+      SpellTile(id: 't9', text: 'ው'),
+      SpellTile(id: 't10', text: 'ሃ'),
+      SpellTile(id: 't11', text: 'ዳ'),
+      SpellTile(id: 't12', text: 'ቦ'),
+    ],
+    correctSequence: ['t1', 't6', 't4', 't2'],
+  ),
   'audio image choice': AudioImageChoiceExercise(
     id: 'aic',
     audioUrl: _clip,
@@ -394,6 +414,11 @@ Future<void> _answerRight(WidgetTester tester, Exercise exercise) async {
       await _tap(tester, _tile(e.choices[e.correctOptionIndex].altText));
     case AudioImageChoiceExercise e:
       await _tap(tester, _tile(e.choices[e.correctOptionIndex].altText));
+    case SpellTilesExercise e:
+      for (final id in e.correctSequence) {
+        await _tap(tester, find.byKey(ValueKey('bank-$id')));
+      }
+      await _tap(tester, find.text('Check'));
   }
 }
 

@@ -2,11 +2,11 @@
 id: 001-spell-tiles-exercise-screen
 unit: 002-spell-tiles-ui
 intent: 016-spell-from-tiles-exercise-type
-status: generated
+status: complete
 priority: must
 created: '2026-09-20T18:10:00Z'
 assigned_bolt: 033-spell-tiles-ui
-implemented: false
+implemented: true
 ---
 
 # Story: 001-spell-tiles-exercise-screen
@@ -19,15 +19,15 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** a `spell_tiles` exercise, **When** it renders, **Then** the from-language word shows as the prompt, with an empty spelling tray and the shuffled character tiles beneath it
-- [ ] **Given** the exercise, **When** the learner taps a tile, **Then** its character is appended to the tray and that tile dims
-- [ ] **Given** a word with two identical characters, **When** the learner taps one of them, **Then** **only that tile** dims and the other stays tappable
-- [ ] **Given** a partly built spelling containing two identical characters, **When** the learner removes one, **Then** the tile that was tapped for it becomes available again — not its twin
-- [ ] **Given** an empty tray, **When** the learner looks at Check, **Then** it is disabled; it enables as soon as one tile is placed
-- [ ] **Given** a built spelling, **When** the learner taps Check, **Then** the exercise is graded locally against `correct_sequence` with no network call, and `LessonController`'s existing grade/advance/Beans/XP flow runs unchanged
-- [ ] **Given** a graded exercise, **When** the result shows, **Then** correct and incorrect states reuse the existing tile colour language rather than new states
-- [ ] **Given** an eleven-tile Afaan Oromo word and a Fidel word, **When** each renders at a large text scale, **Then** neither overflows
-- [ ] **Given** this story is complete, **When** `git diff` is inspected, **Then** `word_bank_builder.dart`, `SentenceConstructionExercise` and the `sentence_construction` parse path are unchanged
+- [x] **Given** a `spell_tiles` exercise, **When** it renders, **Then** the from-language word shows as the prompt, with an empty spelling tray and the shuffled character tiles beneath it
+- [x] **Given** the exercise, **When** the learner taps a tile, **Then** its character is appended to the tray and that tile dims
+- [x] **Given** a word with two identical characters, **When** the learner taps one of them, **Then** **only that tile** dims and the other stays tappable
+- [x] **Given** a partly built spelling containing two identical characters, **When** the learner removes one, **Then** the tile that was tapped for it becomes available again — not its twin
+- [x] **Given** an empty tray, **When** the learner looks at Check, **Then** it is disabled; it enables as soon as one tile is placed
+- [x] **Given** a built spelling, **When** the learner taps Check, **Then** the exercise is graded locally against `correct_sequence` with no network call, and `LessonController`'s existing grade/advance/Beans/XP flow runs unchanged (graded by the spelled text, not the id list, per bolt 032's decision D3: twin tiles are interchangeable)
+- [x] **Given** a graded exercise, **When** the result shows, **Then** correct and incorrect states reuse the existing tile colour language rather than new states
+- [x] **Given** an eleven-tile Afaan Oromo word and a Fidel word, **When** each renders at a large text scale, **Then** neither overflows
+- [x] **Given** this story is complete, **When** `git diff` is inspected, **Then** `word_bank_builder.dart`, `SentenceConstructionExercise` and the `sentence_construction` parse path are unchanged
 
 ## Technical Notes
 

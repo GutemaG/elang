@@ -2,11 +2,11 @@
 id: 002-offline-spell-tiles-verification
 unit: 002-spell-tiles-ui
 intent: 016-spell-from-tiles-exercise-type
-status: generated
+status: complete
 priority: must
 created: '2026-09-20T18:10:00Z'
 assigned_bolt: 033-spell-tiles-ui
-implemented: false
+implemented: true
 ---
 
 # Story: 002-offline-spell-tiles-verification
@@ -19,11 +19,11 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** a lesson containing a `spell_tiles` exercise, **When** it is downloaded, **Then** the download succeeds and the pack contains the exercise
-- [ ] **Given** a downloaded pack, **When** the learner takes the lesson offline, **Then** the `spell_tiles` exercise renders and grades with zero network calls
-- [ ] **Given** a `spell_tiles` exercise **whose word has repeated characters**, **When** it is serialized to the pack and read back, **Then** every tile survives with its own id and the built-spelling comparison still works
-- [ ] **Given** the completion, **When** the device is offline, **Then** it queues and syncs on reconnect through the existing `SyncEngine` path, unchanged
-- [ ] **Given** the deserialize case for `spell_tiles` is removed, **When** the project is built, **Then** it still compiles and fails only at runtime — confirming the asymmetry is real and that this test is what guards it
+- [x] **Given** a lesson containing a `spell_tiles` exercise, **When** it is downloaded, **Then** the download succeeds and the pack contains the exercise
+- [x] **Given** a downloaded pack, **When** the learner takes the lesson offline, **Then** the `spell_tiles` exercise renders and grades with zero network calls
+- [x] **Given** a `spell_tiles` exercise **whose word has repeated characters**, **When** it is serialized to the pack and read back, **Then** every tile survives with its own id and the built-spelling comparison still works
+- [x] **Given** the completion, **When** the device is offline, **Then** it queues and syncs on reconnect through the existing `SyncEngine` path, unchanged
+- [x] **Given** the deserialize case for `spell_tiles` is removed, **When** the project is built, **Then** it still compiles and fails only at runtime — confirming the asymmetry is real and that this test is what guards it
 
 ## Technical Notes
 

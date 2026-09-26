@@ -108,6 +108,20 @@ const _audioImage = AudioImageChoiceExercise(
   correctOptionIndex: 3,
 );
 
+// ፍራፍሬ: two ፍ tiles (bolt 033).
+const _spell = SpellTilesExercise(
+  id: 'sp',
+  prompt: "Spell 'Fruit'",
+  tiles: [
+    SpellTile(id: 'f2', text: 'ፍ'),
+    SpellTile(id: 'r2', text: 'ሬ'),
+    SpellTile(id: 'd1', text: 'ቡ'),
+    SpellTile(id: 'f1', text: 'ፍ'),
+    SpellTile(id: 'r1', text: 'ራ'),
+  ],
+  correctSequence: ['f1', 'r1', 'f2', 'r2'],
+);
+
 LessonContent _lesson(List<Exercise> exercises, {int beans = 5}) =>
     LessonContent(
       lessonId: 'lesson-kit',
@@ -214,6 +228,11 @@ Future<void> _answerRight(WidgetTester tester, Exercise exercise) async {
       await _tap(tester, _picture(e.choices[e.correctOptionIndex].altText));
     case AudioImageChoiceExercise e:
       await _tap(tester, _picture(e.choices[e.correctOptionIndex].altText));
+    case SpellTilesExercise e:
+      for (final id in e.correctSequence) {
+        await _tap(tester, find.byKey(ValueKey('bank-$id')));
+      }
+      await _tap(tester, find.text('Check'));
   }
 }
 
@@ -271,7 +290,7 @@ class _SlowStartApi extends ControllableLessonApi {
 void main() {
   group('one frame for every question type', () {
     testWidgets('the top bar, prompt, answers and action bar sit in the same '
-        'place for all seven types', (tester) async {
+        'place for all eight types', (tester) async {
       _phone(tester);
       const exercises = [
         _mc,
@@ -281,6 +300,7 @@ void main() {
         _gap,
         _image,
         _audioImage,
+        _spell,
       ];
       await tester.pumpWidget(_app(_api(_lesson(exercises))));
       await tester.pumpAndSettle();
@@ -488,6 +508,7 @@ void main() {
             _gap,
             _image,
             _audioImage,
+            _spell,
           ];
           await tester.pumpWidget(_app(_api(_lesson(exercises)), scale: scale));
           await tester.pumpAndSettle();

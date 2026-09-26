@@ -267,6 +267,7 @@ class HttpLessonApi implements LessonApi {
       'gap_fill',
       'image_choice',
       'audio_image_choice',
+      'spell_tiles',
     };
     if (!known.contains(json['type'] as String)) return null;
     return _toExercise(json);
@@ -394,6 +395,23 @@ class HttpLessonApi implements LessonApi {
           correctOptionIndex: choices.indexWhere(
             (c) => c['id'] == correctChoiceId,
           ),
+        );
+      case 'spell_tiles':
+        // Keyed by id all the way through. Not the `sentence_construction`
+        // branch above, which maps tiles to text and drops the ids: here
+        // text repeats (`Maaloo` has two `a` tiles), so a text-keyed map
+        // would collapse the word (bolt 033).
+        final tiles = (json['tiles'] as List).cast<Map<String, dynamic>>();
+        return SpellTilesExercise(
+          id: id,
+          prompt: json['prompt'] as String,
+          tiles: tiles
+              .map(
+                (t) =>
+                    SpellTile(id: t['id'] as String, text: t['text'] as String),
+              )
+              .toList(),
+          correctSequence: (json['correct_sequence'] as List).cast<String>(),
         );
       default:
         throw LessonApiException('Unknown exercise type: $type');

@@ -2,9 +2,9 @@
 unit: 002-spell-tiles-ui
 intent: 016-spell-from-tiles-exercise-type
 phase: inception
-status: stories-defined
+status: complete
 created: '2026-09-20T18:10:00Z'
-updated: '2026-09-20T18:10:00Z'
+updated: '2026-09-26T07:02:12Z'
 ---
 
 # Unit Brief: Spell-Tiles UI
@@ -71,8 +71,8 @@ A tile type carrying `(id, text)` is needed. `MatchPairsTile` already exists wit
 
 | Story ID | Title | Priority | Status |
 |----------|-------|----------|--------|
-| 001-spell-tiles-exercise-screen | Spell a word by tapping character tiles | Must | Generated |
-| 002-offline-spell-tiles-verification | Spell-tiles works inside a downloaded pack | Must | Generated |
+| 001-spell-tiles-exercise-screen | Spell a word by tapping character tiles | Must | Complete (bolt 033) |
+| 002-offline-spell-tiles-verification | Spell-tiles works inside a downloaded pack | Must | Complete (bolt 033) |
 
 ---
 

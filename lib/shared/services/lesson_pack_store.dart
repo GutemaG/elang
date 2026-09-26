@@ -130,7 +130,8 @@ class SqfliteLessonPackStore implements LessonPackStore {
       limit: 1,
     );
     if (rows.isEmpty) return null;
-    final json = jsonDecode(rows.first['content'] as String) as Map<String, dynamic>;
+    final json =
+        jsonDecode(rows.first['content'] as String) as Map<String, dynamic>;
     return packContentFromJson(json);
   }
 
@@ -212,7 +213,8 @@ Set<String> packLocalFiles(LessonContent content) {
       case MultipleChoiceExercise() ||
           SentenceConstructionExercise() ||
           MatchPairsExercise() ||
-          GapFillExercise():
+          GapFillExercise() ||
+          SpellTilesExercise():
         break;
     }
   }
@@ -271,7 +273,9 @@ LessonContent packContentFromJson(Map<String, dynamic> json) {
   );
 }
 
-Map<String, dynamic> packExerciseToJson(Exercise exercise) => switch (exercise) {
+Map<String, dynamic> packExerciseToJson(
+  Exercise exercise,
+) => switch (exercise) {
   MultipleChoiceExercise e => {
     'type': 'multiple_choice',
     'id': e.id,
@@ -300,7 +304,9 @@ Map<String, dynamic> packExerciseToJson(Exercise exercise) => switch (exercise) 
     'id': e.id,
     'prompt': e.prompt,
     'leftTiles': e.leftTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
-    'rightTiles': e.rightTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
+    'rightTiles': e.rightTiles
+        .map((t) => {'id': t.id, 'text': t.text})
+        .toList(),
     'correctPairs': e.correctPairs,
   },
   // Unlike every other seam a new exercise type touches, this map and its
@@ -333,6 +339,16 @@ Map<String, dynamic> packExerciseToJson(Exercise exercise) => switch (exercise) 
     'instruction': e.instruction,
     'choices': e.choices.map(_pictureToJson).toList(),
     'correctOptionIndex': e.correctOptionIndex,
+  },
+  // Every tile keeps its own id: text repeats in a spelled word, so the
+  // ids are what tell twins apart after the round trip (bolt 033). As with
+  // gap fill above, the read `case` below is not compiler-checked.
+  SpellTilesExercise e => {
+    'type': 'spell_tiles',
+    'id': e.id,
+    'prompt': e.prompt,
+    'tiles': e.tiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
+    'correctSequence': e.correctSequence,
   },
 };
 
@@ -377,16 +393,28 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         correctSentence: (json['correctSentence'] as List).cast<String>(),
       );
     case 'match_pairs':
-      final leftTiles = (json['leftTiles'] as List).cast<Map<String, dynamic>>();
-      final rightTiles = (json['rightTiles'] as List).cast<Map<String, dynamic>>();
+      final leftTiles = (json['leftTiles'] as List)
+          .cast<Map<String, dynamic>>();
+      final rightTiles = (json['rightTiles'] as List)
+          .cast<Map<String, dynamic>>();
       return MatchPairsExercise(
         id: json['id'] as String,
         prompt: json['prompt'] as String,
         leftTiles: leftTiles
-            .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+            .map(
+              (t) => MatchPairsTile(
+                id: t['id'] as String,
+                text: t['text'] as String,
+              ),
+            )
             .toList(),
         rightTiles: rightTiles
-            .map((t) => MatchPairsTile(id: t['id'] as String, text: t['text'] as String))
+            .map(
+              (t) => MatchPairsTile(
+                id: t['id'] as String,
+                text: t['text'] as String,
+              ),
+            )
             .toList(),
         correctPairs: (json['correctPairs'] as Map).cast<String, String>(),
       );
@@ -413,6 +441,19 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         instruction: json['instruction'] as String,
         choices: _picturesFromJson(json['choices']),
         correctOptionIndex: json['correctOptionIndex'] as int,
+      );
+    case 'spell_tiles':
+      final tiles = (json['tiles'] as List).cast<Map<String, dynamic>>();
+      return SpellTilesExercise(
+        id: json['id'] as String,
+        prompt: json['prompt'] as String,
+        tiles: tiles
+            .map(
+              (t) =>
+                  SpellTile(id: t['id'] as String, text: t['text'] as String),
+            )
+            .toList(),
+        correctSequence: (json['correctSequence'] as List).cast<String>(),
       );
     default:
       throw StateError('Unknown exercise type in cached pack: ${json['type']}');

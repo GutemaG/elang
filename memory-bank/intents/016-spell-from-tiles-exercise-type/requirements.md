@@ -1,7 +1,7 @@
 ---
 intent: 016-spell-from-tiles-exercise-type
 phase: inception
-status: units-defined
+status: complete
 created: '2026-09-20T17:30:00Z'
 updated: '2026-09-20T17:55:00Z'
 ---

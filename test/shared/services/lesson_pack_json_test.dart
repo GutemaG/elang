@@ -44,6 +44,25 @@ const _audioImage = AudioImageChoiceExercise(
   correctOptionIndex: 1,
 );
 
+// `Maaloo` ("please"): two `a` tiles and two `o` tiles, plus distractors.
+// A round trip of a word with no repeats would pass even if the ids were
+// dropped and tiles looked up by text -- the failure this is here to catch.
+const _spell = SpellTilesExercise(
+  id: 'st-1',
+  prompt: "Spell 'Please'",
+  tiles: [
+    SpellTile(id: 't1', text: 'a'),
+    SpellTile(id: 't2', text: 'l'),
+    SpellTile(id: 't3', text: 'M'),
+    SpellTile(id: 't4', text: 'e'),
+    SpellTile(id: 't5', text: 'o'),
+    SpellTile(id: 't6', text: 'i'),
+    SpellTile(id: 't7', text: 'a'),
+    SpellTile(id: 't8', text: 'o'),
+  ],
+  correctSequence: ['t3', 't1', 't7', 't2', 't5', 't8'],
+);
+
 const _exercises = <Exercise>[
   MultipleChoiceExercise(
     id: 'mc-1',
@@ -80,6 +99,7 @@ const _exercises = <Exercise>[
   ),
   _image,
   _audioImage,
+  _spell,
   // Last: the gap-fill tests below read `_exercises.last`.
   GapFillExercise(
     id: 'gf-1',
@@ -124,6 +144,7 @@ void main() {
         'GapFillExercise',
         'ImageChoiceExercise',
         'AudioImageChoiceExercise',
+        'SpellTilesExercise',
       ]),
     );
   });
@@ -231,6 +252,67 @@ void main() {
         'imageUrl': 'https://pub.r2.dev/cat.webp',
         'altText': 'A cat',
       });
+    });
+  });
+
+  group('spell tiles', () {
+    SpellTilesExercise restored() =>
+        _roundTrip(_packOf([_spell])).exercises.single as SpellTilesExercise;
+
+    test('a word with repeated characters keeps every tile, each with its '
+        'own id, in order', () {
+      final back = restored();
+      expect(back.id, 'st-1');
+      expect(back.prompt, "Spell 'Please'");
+      expect(
+        back.tiles.map((t) => (t.id, t.text)),
+        _spell.tiles.map((t) => (t.id, t.text)),
+      );
+      // Both twins survive as themselves, not collapsed into one.
+      expect(back.tiles.where((t) => t.text == 'a').map((t) => t.id), [
+        't1',
+        't7',
+      ]);
+      expect(back.correctSequence, ['t3', 't1', 't7', 't2', 't5', 't8']);
+    });
+
+    test('it still grades after the round trip, twins either way round', () {
+      final back = restored();
+      expect(isAnswerCorrect(back, ['t3', 't1', 't7', 't2', 't5', 't8']), true);
+      // The other `a` first and the other `o` first: the same word.
+      expect(isAnswerCorrect(back, ['t3', 't7', 't1', 't2', 't8', 't5']), true);
+      expect(
+        isAnswerCorrect(back, ['t3', 't1', 't2', 't7', 't5', 't8']),
+        false,
+      );
+    });
+
+    test('is stored under its own type name, with the ids beside the text', () {
+      final json = packExerciseToJson(_spell);
+      expect(json['type'], 'spell_tiles');
+      expect((json['tiles'] as List).first, {'id': 't1', 'text': 'a'});
+      expect(json['correctSequence'], _spell.correctSequence);
+    });
+
+    test('tile ids belong to their own exercise: two spellings in one pack '
+        'that reuse the same ids both round-trip and grade', () {
+      const other = SpellTilesExercise(
+        id: 'st-2',
+        prompt: "Spell 'Coffee'",
+        tiles: [
+          SpellTile(id: 't1', text: 'n'),
+          SpellTile(id: 't2', text: 'B'),
+          SpellTile(id: 't3', text: 'a'),
+          SpellTile(id: 't4', text: 'u'),
+        ],
+        correctSequence: ['t2', 't4', 't1', 't3'],
+      );
+      final back = _roundTrip(_packOf([_spell, other])).exercises;
+      expect(
+        isAnswerCorrect(back[0], ['t3', 't1', 't7', 't2', 't5', 't8']),
+        true,
+      );
+      expect(isAnswerCorrect(back[1], ['t2', 't4', 't1', 't3']), true);
     });
   });
 

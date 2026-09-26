@@ -200,8 +200,9 @@ class LessonController extends ChangeNotifier {
     check();
   }
 
-  /// Toggles a sentence-construction word-bank token in or out of the
-  /// built answer, in tap order.
+  /// Toggles a sentence-construction word-bank token, or a spell-tiles tile
+  /// id, in or out of the built answer, in tap order. Tile ids are unique,
+  /// so a spelled word's twin tiles toggle independently (bolt 033).
   void toggleWordBankToken(String token) {
     if (isChecked || _lessonInterrupted) return;
     final built = List<String>.of(

@@ -3,7 +3,7 @@
 ## Overview
 - **Total stories**: 99
 - **Generated**: 99
-- **Completed**: 93
+- **Completed**: 95
 - **Last updated**: 2026-09-26
 
 ---
@@ -181,8 +181,8 @@
 
 #### Unit: 002-spell-tiles-ui
 
-- [x] **001-spell-tiles-exercise-screen** (spell-tiles-ui): Spell a word by tapping character tiles - Must - ✅ GENERATED
-- [x] **002-offline-spell-tiles-verification** (spell-tiles-ui): Spell-tiles works inside a downloaded pack - Must - ✅ GENERATED
+- [x] **001-spell-tiles-exercise-screen** (spell-tiles-ui): Spell a word by tapping character tiles - Must - ✅ COMPLETED (bolt 033-spell-tiles-ui)
+- [x] **002-offline-spell-tiles-verification** (spell-tiles-ui): Spell-tiles works inside a downloaded pack - Must - ✅ COMPLETED (bolt 033-spell-tiles-ui)
 
 ### 018-mobile-design-system
 
@@ -238,7 +238,7 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 6
+- **Generated**: 4
 - **In Progress**: 0
-- **Completed**: 93
+- **Completed**: 95
 - **Retired**: 1

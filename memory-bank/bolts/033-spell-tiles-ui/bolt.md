@@ -3,15 +3,24 @@ id: 033-spell-tiles-ui
 unit: 002-spell-tiles-ui
 intent: 016-spell-from-tiles-exercise-type
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-spell-tiles-exercise-screen
   - 002-offline-spell-tiles-verification
 created: '2026-09-20T18:10:00Z'
-started: null
-completed: null
+started: '2026-09-26T06:35:14Z'
+completed: '2026-09-26T07:02:13Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-26T06:36:53Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-26T06:50:08Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-26T07:02:12Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 032-spell-tiles-service
 enables_bolts: []
@@ -38,8 +47,8 @@ and the five existing exercise types behave exactly as before.
 
 ## Stories Included
 
-- **001-spell-tiles-exercise-screen** (Must)
-- **002-offline-spell-tiles-verification** (Must)
+- [x] **001-spell-tiles-exercise-screen** (Must)
+- [x] **002-offline-spell-tiles-verification** (Must)
 
 ## Bolt Type
 
@@ -48,9 +57,9 @@ and the five existing exercise types behave exactly as before.
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Dependencies
 
@@ -62,15 +71,15 @@ and the five existing exercise types behave exactly as before.
 
 ## Success Criteria
 
-- [ ] Tapping a tile places its character; Check is disabled until one is placed
-- [ ] A word with repeated characters behaves correctly — tapping one twin affects only it
-- [ ] Grading is local against `correct_sequence`, with no network call on Check
-- [ ] `LessonController`'s grade/advance/Beans/XP flow is reused unchanged
-- [ ] Both halves of `lesson_pack_store.dart` handle `spell_tiles`, round-tripped with a repeating word
-- [ ] A pack containing a `spell_tiles` exercise downloads, plays offline and syncs
-- [ ] Renders without overflow at up to 12 tiles, in Fidel and Latin, at more than one text scale
-- [ ] `word_bank_builder.dart`, `SentenceConstructionExercise` and the `sentence_construction` parse path are unchanged in the diff
-- [ ] Full Flutter suite green, `flutter analyze` clean, no backend file touched
+- [x] Tapping a tile places its character; Check is disabled until one is placed
+- [x] A word with repeated characters behaves correctly — tapping one twin affects only it
+- [x] Grading is local against `correct_sequence`, with no network call on Check
+- [x] `LessonController`'s grade/advance/Beans/XP flow is reused unchanged
+- [x] Both halves of `lesson_pack_store.dart` handle `spell_tiles`, round-tripped with a repeating word
+- [x] A pack containing a `spell_tiles` exercise downloads, plays offline and syncs
+- [x] Renders without overflow at up to 12 tiles, in Fidel and Latin, at more than one text scale
+- [x] `word_bank_builder.dart`, `SentenceConstructionExercise` and the `sentence_construction` parse path are unchanged in the diff
+- [x] Full Flutter suite green, `flutter analyze` clean, no backend file touched
 
 ## Notes
 
