@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { ApiError } from '../api'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { AddExerciseMenu } from '../exercises/AddExerciseMenu'
 import { courseStatus, languageName, plural } from '../format'
+import { LessonTools } from '../import/LessonTools'
 import { StatCard, StatRow } from '../shell/Page'
 import type { AdminCourseTree, DeleteDetails } from '../types'
 import { Badge } from '../ui/Badge'
@@ -77,6 +78,14 @@ function CoursePage({ courseId }: { courseId: string }) {
   const [tree, setTree] = useState<AdminCourseTree | null>(null)
   const [loadError, setLoadError] = useState<ApiError | Error | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
+  // Arriving from an import (bolt 056): how many exercises it added.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [imported, setImported] = useState(() => (location.state as { imported?: number } | null)?.imported ?? null)
+  // Said once: a reload, or Back to this page later, doesn't say it again.
+  useEffect(() => {
+    if (location.state) navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: null })
+  }, [location, navigate])
   const [busy, setBusy] = useState(false)
   const [deletePrompt, setDeletePrompt] = useState<DeletePrompt | null>(null)
   const [editing, setEditing] = useState<'course' | 'section' | null>(null)
@@ -372,6 +381,18 @@ function CoursePage({ courseId }: { courseId: string }) {
             </Button>
           </div>
         )}
+        {imported !== null && (
+          <div
+            role="status"
+            className="mt-5 flex items-start gap-3 rounded-md border border-forest/25 bg-forest-tint px-4 py-3 text-sm font-semibold text-forest"
+          >
+            <Icon name="check_circle" className="mt-px text-lg" />
+            <span className="flex-1">Added {plural(imported, 'exercise')}.</span>
+            <Button size="icon" variant="ghost" aria-label="Dismiss" onClick={() => setImported(null)}>
+              <Icon name="close" className="text-lg" />
+            </Button>
+          </div>
+        )}
         {loadError && (
           <p className="mt-5 flex items-center gap-2 text-sm text-danger">
             <Icon name="sync_problem" className="text-lg" />
@@ -466,6 +487,12 @@ function CoursePage({ courseId }: { courseId: string }) {
                                     number={`${s + 1}.${k + 1}.${l + 1}`}
                                     countLabel={plural(lesson.exercise_count, 'exercise')}
                                   >
+                                    <LessonTools
+                                      courseId={tree.course.id}
+                                      lessonId={lesson.id}
+                                      lessonTitle={lesson.title}
+                                      exerciseCount={lesson.exercise_count}
+                                    />
                                     <ExerciseList
                                       courseId={tree.course.id}
                                       lessonId={lesson.id}

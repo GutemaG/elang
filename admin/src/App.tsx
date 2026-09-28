@@ -4,6 +4,7 @@ import { NotAuthorisedScreen } from './auth/NotAuthorisedScreen'
 import { useSession } from './auth/SessionContext'
 import { SignInScreen } from './auth/SignInScreen'
 import { ExerciseEditorRoute } from './exercises/ExerciseEditorPage'
+import { ImportPage } from './import/ImportPage'
 import { AppShell } from './shell/AppShell'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
@@ -43,6 +44,7 @@ export function App() {
               path="/courses/:courseId/lessons/:lessonId/exercises/:exerciseId"
               element={<ExerciseEditorRoute />}
             />
+            <Route path="/courses/:courseId/lessons/:lessonId/import" element={<ImportPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppShell>

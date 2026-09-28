@@ -28,6 +28,8 @@ the app cannot render can ever be saved.
 - R2 presigned uploads and a checked audio-link endpoint
 - An audit log line per admin write
 - Vocabulary list/update (Could)
+- Importing a lesson's exercises in one request, checked first, all or
+  nothing (bolt 056)
 
 ### Out of Scope
 - Any learner endpoint or its behaviour

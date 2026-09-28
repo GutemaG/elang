@@ -42,6 +42,8 @@ from app.infrastructure.api.admin_schemas import (
     AudioUploadRequest,
     AudioUploadResponse,
     CreateSectionRequest,
+    ExerciseImportCheck,
+    ExerciseImportRequest,
     ExerciseRequest,
     ImageUploadRequest,
     ImageUploadResponse,
@@ -477,6 +479,27 @@ async def create_exercise(
         answer_key=body.answer_key,
     )
     return _exercise(row)
+
+
+@router.post(
+    "/lessons/{lesson_id}/exercises/import",
+    response_model=AdminExerciseList | ExerciseImportCheck,
+    status_code=201,
+)
+async def import_exercises(
+    lesson_id: str,
+    body: ExerciseImportRequest,
+    response: Response,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+) -> AdminExerciseList | ExerciseImportCheck:
+    """Bolt 056: every exercise is checked, then all are saved or none."""
+    items = [uc.ExerciseInput(e.type, e.prompt, e.content, e.answer_key) for e in body.exercises]
+    if body.dry_run:
+        response.status_code = 200
+        return ExerciseImportCheck(count=await uc.check_import(repo, ctx, lesson_id, items))
+    rows = await uc.import_exercises(repo, ctx, lesson_id, items, replace=body.mode == "replace")
+    return AdminExerciseList(exercises=[_exercise(r) for r in rows])
 
 
 @router.put("/exercises/{exercise_id}", response_model=AdminExercise)

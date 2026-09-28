@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -20,6 +21,7 @@ from app.domain.lesson.exceptions import (
     ContentNotFoundError,
     InvalidContentError,
     InvalidExerciseError,
+    InvalidImportError,
     InvalidOrderError,
 )
 from app.domain.lesson.exercise_parts import validate_exercise
@@ -268,6 +270,88 @@ async def update_exercise(
     await repo.flush()
     _log(ctx, "update", "exercise", exercise_id)
     return exercise
+
+
+# --- importing exercises (bolt 056) ---------------------------------------
+
+# The most exercises one import may hold.
+IMPORT_MAX = 200
+
+
+@dataclass(frozen=True)
+class ExerciseInput:
+    """One exercise of an import, as the admin site sends it."""
+
+    type: str
+    prompt: str
+    content: Any
+    answer_key: Any
+
+
+async def check_import(
+    repo: SqlAlchemyAdminContentRepository,
+    ctx: AdminContext,
+    lesson_id: str,
+    items: Sequence[ExerciseInput],
+) -> int:
+    """Validates every exercise without writing, and returns how many there
+    are. Refuses with every failure at once, not just the first."""
+    await _require(repo, LessonModel, lesson_id)
+    if not 1 <= len(items) <= IMPORT_MAX:
+        raise InvalidContentError(
+            "exercises", f"an import holds 1 to {IMPORT_MAX} exercises, not {len(items)}"
+        )
+    rows: list[dict[str, object]] = []
+    for index, item in enumerate(items):
+        try:
+            validate_exercise(
+                item.type,
+                item.prompt,
+                item.content,
+                item.answer_key,
+                allow_local_media=ctx.allow_local_media,
+            )
+        except InvalidExerciseError as exc:
+            rows.append({"index": index, "field": exc.field, "message": exc.message})
+    if rows:
+        raise InvalidImportError(
+            f"{len(rows)} of {len(items)} exercises cannot be saved", rows=rows
+        )
+    return len(items)
+
+
+async def import_exercises(
+    repo: SqlAlchemyAdminContentRepository,
+    ctx: AdminContext,
+    lesson_id: str,
+    items: Sequence[ExerciseInput],
+    *,
+    replace: bool = False,
+) -> list[ExerciseModel]:
+    """Adds every exercise after the lesson's last one, in the given order,
+    or in place of all of them with `replace`. All or nothing: it checks
+    first, and the request's one transaction covers every write."""
+    await check_import(repo, ctx, lesson_id, items)
+    lesson = await _require(repo, LessonModel, lesson_id)
+    if replace:
+        for old in await repo.children(EXERCISE, lesson_id):
+            await repo.delete_row(old)
+            _log(ctx, "delete", "exercise", old.id)
+    start = await repo.next_order_index(EXERCISE, lesson_id)
+    for offset, item in enumerate(items):
+        exercise = ExerciseModel(
+            id=str(uuid.uuid4()),
+            lesson_id=lesson_id,
+            order_index=start + offset,
+            type=item.type,
+            prompt=item.prompt.strip(),
+            content=item.content,
+            answer_key=item.answer_key,
+        )
+        await repo.add(exercise)
+        _log(ctx, "create", "exercise", exercise.id)
+    await repo.touch_lesson(lesson)
+    return await repo.children(EXERCISE, lesson_id)
 
 
 async def delete_exercise(

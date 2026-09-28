@@ -2,7 +2,7 @@
 unit: 002-content-admin-web
 intent: 017-content-admin-web
 created: '2026-09-22T15:19:04Z'
-last_updated: '2026-09-28T14:43:14Z'
+last_updated: '2026-09-28T20:43:39Z'
 ---
 
 # Construction Log: content-admin-web
@@ -19,12 +19,14 @@ last_updated: '2026-09-28T14:43:14Z'
 | 039-admin-audio-ui | 004-audio-record-upload-link | simple-construction-bolt |
 | 040-admin-vocabulary | 006-vocabulary-screen (+ api 006-vocabulary-api) | simple-construction-bolt |
 | 055-admin-tree-polish | none (criteria in its implementation-plan.md) | simple-construction-bolt |
+| 056-exercise-import | none (criteria in its implementation-plan.md) | simple-construction-bolt |
 
 ## Replanning History
 
 | Date | Action | Change | Reason | Approved |
 |------|--------|--------|--------|----------|
 | 2026-09-28 | Added bolt 055 | Drag-and-drop reordering brought into scope; picture descriptions made optional; the tree remembers what was open | Feedback from using the admin site | Yes |
+| 2026-09-28 | Added bolt 056 | Import a lesson's exercises from CSV or JSON, and export them; one new API endpoint (unit 001) | Adding exercises one at a time is slow | Yes |
 
 ## Execution Log
 
@@ -47,3 +49,7 @@ last_updated: '2026-09-28T14:43:14Z'
 - **2026-09-28T19:52:00Z**: 055-admin-tree-polish stage-complete - plan → implement
 - **2026-09-28T20:11:01Z**: 055-admin-tree-polish stage-complete - implement → test
 - **2026-09-28T20:12:44Z**: 055-admin-tree-polish completed - drag to reorder with one Save, optional picture descriptions (admin, API, app), tree keeps open rows and scroll (admin 534, backend 1282 tests)
+- **2026-09-28T20:43:39Z**: 056-exercise-import started - Stage 1: plan
+- **2026-09-28T20:45:35Z**: 056-exercise-import stage-complete - plan → implement
+- **2026-09-28T21:10:25Z**: 056-exercise-import stage-complete - implement → test
+- **2026-09-28T21:13:07Z**: 056-exercise-import completed - import a lesson's exercises from CSV or JSON with preview and samples, export to both (admin 612, backend 1299 tests)

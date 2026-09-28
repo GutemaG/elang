@@ -129,6 +129,14 @@ class InvalidExerciseError(InvalidContentError):
     error_code = "invalid_exercise"
 
 
+class InvalidImportError(AdminContentError):
+    """An exercise import (bolt 056) holding exercises the app could not
+    play. `details["rows"]` lists every one as `{index, field, message}`,
+    so a file is fixed in one pass."""
+
+    error_code = "invalid_import"
+
+
 class InvalidOrderError(AdminContentError):
     """A reorder's ids are not exactly the parent's current children."""
 

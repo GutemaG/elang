@@ -131,6 +131,21 @@ class AdminExerciseList(BaseModel):
     exercises: list[AdminExercise]
 
 
+class ExerciseImportRequest(BaseModel):
+    """Bolt 056: a lesson's exercises from a file, added after its last one
+    (`append`) or in place of them all (`replace`). `dry_run` only checks."""
+
+    exercises: list[ExerciseRequest]
+    mode: Literal["append", "replace"] = "append"
+    dry_run: bool = False
+
+
+class ExerciseImportCheck(BaseModel):
+    """A dry run's answer: every exercise can be saved."""
+
+    count: int
+
+
 # --- vocabulary (bolt 040) ----------------------------------------------------
 
 

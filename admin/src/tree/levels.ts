@@ -36,6 +36,8 @@ export const routes = {
   exercises: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises`,
   exercise: (id: string) => `${ADMIN}/exercises/${id}`,
   exerciseOrder: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises/order`,
+  // Import (bolt 056): many exercises at once, checked first.
+  importExercises: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises/import`,
   // Audio (bolt 039): an upload link for a clip, and a check of a pasted link.
   audioUploads: `${ADMIN}/audio/uploads`,
   audioLinks: `${ADMIN}/audio/links`,

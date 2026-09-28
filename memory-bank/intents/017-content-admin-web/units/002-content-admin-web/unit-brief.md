@@ -26,6 +26,8 @@ the `/admin/*` API.
 - One editor per exercise type, with inline server errors
 - Audio: record (MediaRecorder), upload a file, paste a link, play
 - Exercise preview (Should), vocabulary screen (Could)
+- Importing a lesson's exercises from a CSV or JSON file, and exporting
+  them to either (bolt 056)
 
 ### Out of Scope
 - Any change to the Flutter app
