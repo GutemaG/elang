@@ -2,7 +2,7 @@
 unit: 001-content-admin-api
 intent: 017-content-admin-web
 created: '2026-09-22T10:10:00Z'
-last_updated: '2026-09-22T10:10:00Z'
+last_updated: '2026-09-28T14:43:14Z'
 ---
 
 # Construction Log: content-admin-api
@@ -44,3 +44,5 @@ last_updated: '2026-09-22T10:10:00Z'
 - **2026-09-24T07:09:11Z**: 041-local-audio-storage stage-complete - plan → implement
 - **2026-09-24T07:30:00Z**: 041-local-audio-storage stage-complete - implement → test
 - **2026-09-24T08:01:56Z**: 041-local-audio-storage completed - All 3 stages done
+- **2026-09-28T00:00:00Z**: 040-admin-vocabulary started - Stage 1: plan
+- **2026-09-28T14:43:14Z**: 040-admin-vocabulary completed - stories 006-vocabulary-api and 006-vocabulary-screen complete; also fixed the clipped Add exercise type menu (backend 1280 tests, admin suite green; run by the user)

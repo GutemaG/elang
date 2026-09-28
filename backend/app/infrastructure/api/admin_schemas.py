@@ -131,6 +131,45 @@ class AdminExerciseList(BaseModel):
     exercises: list[AdminExercise]
 
 
+# --- vocabulary (bolt 040) ----------------------------------------------------
+
+
+class AdminVocabUse(BaseModel):
+    """One exercise that practises a word, and where it sits."""
+
+    exercise_id: str
+    type: str
+    prompt: str
+    lesson_id: str
+    # Its lesson's place in the course, as the tree numbers it: "5.1.1".
+    number: str
+    section_title: str
+    skill_title: str
+    lesson_title: str
+
+
+class AdminVocabItem(BaseModel):
+    id: str
+    word: str
+    translation: str
+    # Learners with spaced-repetition progress on this word.
+    learners: int
+    used_by: list[AdminVocabUse]
+
+
+class AdminVocabList(BaseModel):
+    course: AdminCourse
+    # Items in curriculum order (by their first exercise); unused last.
+    items: list[AdminVocabItem]
+    # Distinct learners practising any word of the course.
+    learners: int
+
+
+class UpdateVocabRequest(BaseModel):
+    word: str | None = None
+    translation: str | None = None
+
+
 # --- audio (bolt 036) ---------------------------------------------------------
 
 

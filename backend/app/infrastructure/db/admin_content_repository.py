@@ -26,6 +26,8 @@ from app.infrastructure.db.lesson_models import (
     LessonModel,
     SkillModel,
     UserSkillProgressModel,
+    UserVocabProgressModel,
+    VocabItemModel,
 )
 
 # Added to every sibling's `order_index` before the final values are
@@ -48,6 +50,16 @@ LESSON = Level("lesson", LessonModel, "skill_id", SkillModel)
 EXERCISE = Level("exercise", ExerciseModel, "lesson_id", LessonModel)
 LEVELS = {level.name: level for level in (SECTION, SKILL, LESSON, EXERCISE)}
 
+# An exercise as the vocabulary page lists it: where it is and what it asks.
+_VOCAB_USE = (
+    ExerciseModel.id,
+    ExerciseModel.lesson_id,
+    ExerciseModel.order_index,
+    ExerciseModel.type,
+    ExerciseModel.prompt,
+    ExerciseModel.vocab_item_id,
+)
+
 
 @dataclass(frozen=True)
 class Subtree:
@@ -56,6 +68,22 @@ class Subtree:
     skill_ids: tuple[str, ...]
     lesson_ids: tuple[str, ...]
     exercise_count: int
+
+
+# A course's sections, skills and lessons, each in order.
+CourseOutline = tuple[list[CategoryModel], list[SkillModel], list[LessonModel]]
+
+
+@dataclass(frozen=True)
+class VocabListing:
+    """A course's words (bolt 040): each item, the exercises pointing at
+    it (light rows, in curriculum order), how many learners practise each,
+    and how many learners practise any of them."""
+
+    items: list[VocabItemModel]
+    uses: list[Any]
+    learners: dict[str, int]
+    learners_total: int
 
 
 class SqlAlchemyAdminContentRepository:
@@ -86,11 +114,8 @@ class SqlAlchemyAdminContentRepository:
         stmt = select(level.model).where(column == parent_id).order_by(level.model.order_index)
         return list((await self._session.execute(stmt)).scalars().all())
 
-    async def course_tree(
-        self, course_id: str
-    ) -> tuple[list[CategoryModel], list[SkillModel], list[LessonModel], list[Any]]:
-        """All four levels of one course, each in order. Exercises come back
-        as light rows (no answer key) -- the tree only lists them."""
+    async def course_outline(self, course_id: str) -> CourseOutline:
+        """The course's sections, skills and lessons, each in order."""
         sections = await self.children(SECTION, course_id)
         section_ids = [s.id for s in sections]
         skills = list(
@@ -111,6 +136,14 @@ class SqlAlchemyAdminContentRepository:
                 )
             ).scalars()
         )
+        return sections, skills, lessons
+
+    async def course_tree(
+        self, course_id: str
+    ) -> tuple[list[CategoryModel], list[SkillModel], list[LessonModel], list[Any]]:
+        """All four levels of one course, each in order. Exercises come back
+        as light rows (no answer key) -- the tree only lists them."""
+        sections, skills, lessons = await self.course_outline(course_id)
         exercises = list(
             (
                 await self._session.execute(
@@ -186,6 +219,68 @@ class SqlAlchemyAdminContentRepository:
             ),
         ).subquery()
         return (await self._session.execute(select(func.count()).select_from(users))).scalar_one()
+
+    async def course_vocab(self, course_id: str, lesson_ids: Sequence[str]) -> VocabListing:
+        """Every vocab item of the course, with the exercises in
+        `lesson_ids` (the course's lessons) that point at one, and the
+        learner counts from `user_vocab_progress`."""
+        items = list(
+            (
+                await self._session.execute(
+                    select(VocabItemModel).where(VocabItemModel.course_id == course_id)
+                )
+            ).scalars()
+        )
+        item_ids = [item.id for item in items]
+        uses = list(
+            (
+                await self._session.execute(
+                    select(*_VOCAB_USE).where(
+                        ExerciseModel.vocab_item_id.in_(item_ids),
+                        ExerciseModel.lesson_id.in_(lesson_ids),
+                    )
+                )
+            ).all()
+        )
+        in_course = UserVocabProgressModel.vocab_item_id.in_(item_ids)
+        learners = {
+            vocab_item_id: n
+            for vocab_item_id, n in (
+                await self._session.execute(
+                    select(UserVocabProgressModel.vocab_item_id, func.count())
+                    .where(in_course)
+                    .group_by(UserVocabProgressModel.vocab_item_id)
+                )
+            ).all()
+        }
+        learners_total = (
+            await self._session.execute(
+                select(func.count(func.distinct(UserVocabProgressModel.user_id))).where(in_course)
+            )
+        ).scalar_one()
+        return VocabListing(
+            items=items, uses=uses, learners=learners, learners_total=learners_total
+        )
+
+    async def vocab_learners(self, vocab_item_id: str) -> int:
+        """How many learners have progress on one vocab item."""
+        return (
+            await self._session.execute(
+                select(func.count())
+                .select_from(UserVocabProgressModel)
+                .where(UserVocabProgressModel.vocab_item_id == vocab_item_id)
+            )
+        ).scalar_one()
+
+    async def vocab_uses(self, vocab_item_id: str) -> list[Any]:
+        """The exercises pointing at one vocab item, as light rows."""
+        return list(
+            (
+                await self._session.execute(
+                    select(*_VOCAB_USE).where(ExerciseModel.vocab_item_id == vocab_item_id)
+                )
+            ).all()
+        )
 
     # --- writes ----------------------------------------------------------
 

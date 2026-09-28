@@ -19,7 +19,25 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'coming_soon', label: 'Coming soon' },
 ]
 
-export function CourseList() {
+// What a course opens to: its curriculum, or (bolt 040) its words.
+const PURPOSES = {
+  curriculum: {
+    eyebrow: 'Curriculum',
+    description:
+      'Every course learners can pick. Open one to shape its sections, skills and lessons — changes reach the app straight away.',
+    open: 'Open curriculum',
+    to: (id: string) => `/courses/${id}`,
+  },
+  vocabulary: {
+    eyebrow: 'Vocabulary',
+    description: 'The words Practice brings back to learners. Open a course to see and correct its words.',
+    open: 'Open vocabulary',
+    to: (id: string) => `/courses/${id}/vocabulary`,
+  },
+}
+
+export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof PURPOSES }) {
+  const copy = PURPOSES[purpose]
   const { api } = useSession()
   const [courses, setCourses] = useState<AdminCourse[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -50,11 +68,7 @@ export function CourseList() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <PageHeader
-        eyebrow="Curriculum"
-        title="Courses"
-        description="Every course learners can pick. Open one to shape its sections, skills and lessons — changes reach the app straight away."
-      />
+      <PageHeader eyebrow={copy.eyebrow} title="Courses" description={copy.description} />
 
       {error && (
         <div
@@ -118,7 +132,7 @@ export function CourseList() {
             return (
               <li key={c.id}>
                 <Link
-                  to={`/courses/${c.id}`}
+                  to={copy.to(c.id)}
                   className="group flex items-center gap-4 px-4 py-4 transition-colors hover:bg-canvas sm:px-6"
                 >
                   <span className="grid size-12 shrink-0 place-items-center rounded-md border border-line bg-inset text-center">
@@ -147,7 +161,7 @@ export function CourseList() {
                     </span>
                   </span>
                   <span className="hidden items-center gap-1 text-sm font-semibold text-forest sm:flex">
-                    Open curriculum
+                    {copy.open}
                   </span>
                   <Icon
                     name="chevron_right"

@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, Ref } from 'react'
 
 import { cx } from './cx'
 
@@ -24,6 +24,7 @@ const SIZES: Record<ButtonSize, string> = {
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
+  ref?: Ref<HTMLButtonElement>
 }
 
 /** Every button in the admin. Kept as one component so the focus ring, the

@@ -9,7 +9,7 @@ request schema -> use case -> response schema.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
+from typing import Any, NamedTuple
 
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +33,9 @@ from app.infrastructure.api.admin_schemas import (
     AdminTreeLesson,
     AdminTreeSection,
     AdminTreeSkill,
+    AdminVocabItem,
+    AdminVocabList,
+    AdminVocabUse,
     AudioLinkRequest,
     AudioLinkResponse,
     AudioStatus,
@@ -46,6 +49,7 @@ from app.infrastructure.api.admin_schemas import (
     TitleRequest,
     UpdateSectionRequest,
     UpdateTitleRequest,
+    UpdateVocabRequest,
 )
 from app.infrastructure.api.dependencies import require_admin
 from app.infrastructure.db.admin_content_repository import (
@@ -53,9 +57,10 @@ from app.infrastructure.db.admin_content_repository import (
     LESSON,
     SECTION,
     SKILL,
+    CourseOutline,
     SqlAlchemyAdminContentRepository,
 )
-from app.infrastructure.db.lesson_models import CourseModel, ExerciseModel
+from app.infrastructure.db.lesson_models import CourseModel, ExerciseModel, VocabItemModel
 from app.infrastructure.db.seed_category_content import PLACEHOLDER_AUDIO_URL
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.external.audio_link_checker import AudioLinkChecker
@@ -128,6 +133,85 @@ def _exercise(row: ExerciseModel) -> AdminExercise:
         answer_key=row.answer_key,
         vocab_item_id=row.vocab_item_id,
     )
+
+
+class _Place(NamedTuple):
+    """Where a lesson sits in its course, numbered as the tree numbers it."""
+
+    key: tuple[int, int, int]
+    section_title: str
+    skill_title: str
+    lesson_title: str
+
+
+def _places(outline: CourseOutline) -> dict[str, _Place]:
+    sections, skills, lessons = outline
+    section_at = {s.id: (n, s.title) for n, s in enumerate(sections, start=1)}
+    # Children counted per parent, in order: the tree's 1-based numbers.
+    counted: dict[str, int] = defaultdict(int)
+    skill_at: dict[str, tuple[int, int, str, str]] = {}
+    for skill in skills:
+        s, section_title = section_at[skill.category_id]
+        counted[skill.category_id] += 1
+        skill_at[skill.id] = (s, counted[skill.category_id], section_title, skill.title)
+    places: dict[str, _Place] = {}
+    for lesson in lessons:
+        s, k, section_title, skill_title = skill_at[lesson.skill_id]
+        counted[lesson.skill_id] += 1
+        places[lesson.id] = _Place(
+            (s, k, counted[lesson.skill_id]), section_title, skill_title, lesson.title
+        )
+    return places
+
+
+def _vocab_items(
+    outline: CourseOutline,
+    items: list[VocabItemModel],
+    uses: list[Any],
+    learners: dict[str, int],
+) -> list[AdminVocabItem]:
+    """Each item with its exercises in curriculum order; items ordered by
+    their first exercise, then unused items by word. An exercise outside
+    the outline's lessons is left out."""
+    places = _places(outline)
+    found: dict[str, list[tuple[tuple[int, ...], AdminVocabUse]]] = defaultdict(list)
+    for use in uses:
+        place = places.get(use.lesson_id)
+        if place is None:
+            continue
+        found[use.vocab_item_id].append(
+            (
+                (*place.key, use.order_index),
+                AdminVocabUse(
+                    exercise_id=use.id,
+                    type=use.type,
+                    prompt=use.prompt,
+                    lesson_id=use.lesson_id,
+                    number=".".join(str(n) for n in place.key),
+                    section_title=place.section_title,
+                    skill_title=place.skill_title,
+                    lesson_title=place.lesson_title,
+                ),
+            )
+        )
+    rows: list[tuple[tuple[Any, ...], AdminVocabItem]] = []
+    for item in items:
+        item_uses = sorted(found[item.id], key=lambda u: u[0])
+        first = item_uses[0][0] if item_uses else None
+        rows.append(
+            (
+                (first is None, first or (), item.word.casefold(), item.id),
+                AdminVocabItem(
+                    id=item.id,
+                    word=item.word,
+                    translation=item.translation,
+                    learners=learners.get(item.id, 0),
+                    used_by=[u for _, u in item_uses],
+                ),
+            )
+        )
+    rows.sort(key=lambda r: r[0])
+    return [item for _, item in rows]
 
 
 def _audio_status(exercise_type: str, content: dict[str, Any]) -> AudioStatus | None:
@@ -433,6 +517,42 @@ async def delete_exercise(
 ) -> Response:
     await uc.delete_exercise(repo, ctx, exercise_id)
     return Response(status_code=204)
+
+
+# --- vocabulary (bolt 040) ----------------------------------------------------
+
+
+@router.get("/courses/{course_id}/vocab", response_model=AdminVocabList)
+async def list_vocab(
+    course_id: str, repo: SqlAlchemyAdminContentRepository = Depends(_repo)
+) -> AdminVocabList:
+    """Story 006-vocabulary-api: the course's words, where each is
+    practised, and how many learners practise it."""
+    course, outline, listing = await uc.list_vocab(repo, course_id)
+    return AdminVocabList(
+        course=_course(course, len(outline[0])),
+        items=_vocab_items(outline, listing.items, listing.uses, listing.learners),
+        learners=listing.learners_total,
+    )
+
+
+@router.patch("/vocab/{vocab_item_id}", response_model=AdminVocabItem)
+async def update_vocab(
+    vocab_item_id: str,
+    body: UpdateVocabRequest,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+) -> AdminVocabItem:
+    item = await uc.update_vocab(
+        repo, ctx, vocab_item_id, word=body.word, translation=body.translation
+    )
+    (row,) = _vocab_items(
+        await repo.course_outline(item.course_id),
+        [item],
+        await repo.vocab_uses(item.id),
+        {item.id: await repo.vocab_learners(item.id)},
+    )
+    return row
 
 
 # --- audio (bolt 036) ---------------------------------------------------------

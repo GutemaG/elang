@@ -2,11 +2,11 @@
 id: 006-vocabulary-screen
 unit: 002-content-admin-web
 intent: 017-content-admin-web
-status: generated
+status: complete
 priority: could
 created: '2026-09-22T10:00:00Z'
 assigned_bolt: 040-admin-vocabulary
-implemented: false
+implemented: true
 ---
 
 # Story: 006-vocabulary-screen
@@ -19,7 +19,7 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** a course, **When** Vocabulary is opened, **Then** its items are listed and each can be edited and saved
+- [x] **Given** a course, **When** Vocabulary is opened, **Then** its items are listed and each can be edited and saved
 
 ## Dependencies
 

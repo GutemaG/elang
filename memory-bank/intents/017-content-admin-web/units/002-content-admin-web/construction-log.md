@@ -2,7 +2,7 @@
 unit: 002-content-admin-web
 intent: 017-content-admin-web
 created: '2026-09-22T15:19:04Z'
-last_updated: '2026-09-24T09:35:41Z'
+last_updated: '2026-09-28T14:43:14Z'
 ---
 
 # Construction Log: content-admin-web
@@ -39,3 +39,5 @@ last_updated: '2026-09-24T09:35:41Z'
 - **2026-09-24T09:20:00Z**: 039-admin-audio-ui stage-complete - plan → implement
 - **2026-09-24T09:17:00Z**: 039-admin-audio-ui stage-complete - implement → test
 - **2026-09-24T09:35:41Z**: 039-admin-audio-ui completed - story 004 complete (395 tests, 18 falsification runs; manual phone check pending)
+- **2026-09-28T00:00:00Z**: 040-admin-vocabulary started - Stage 1: plan
+- **2026-09-28T14:43:14Z**: 040-admin-vocabulary completed - stories 006-vocabulary-api and 006-vocabulary-screen complete; also fixed the clipped Add exercise type menu (backend 1280 tests, admin suite green; run by the user)

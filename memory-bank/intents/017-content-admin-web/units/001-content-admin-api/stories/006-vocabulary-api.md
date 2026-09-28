@@ -2,11 +2,11 @@
 id: 006-vocabulary-api
 unit: 001-content-admin-api
 intent: 017-content-admin-web
-status: generated
+status: complete
 priority: could
 created: '2026-09-22T10:00:00Z'
 assigned_bolt: 040-admin-vocabulary
-implemented: false
+implemented: true
 ---
 
 # Story: 006-vocabulary-api
@@ -19,8 +19,8 @@ implemented: false
 
 ## Acceptance Criteria
 
-- [ ] **Given** a course, **When** `GET /admin/courses/{id}/vocab` is called, **Then** it lists its vocab items
-- [ ] **Given** a vocab item with learner SRS progress, **When** its text is edited, **Then** the progress rows are kept and practice still serves it
+- [x] **Given** a course, **When** `GET /admin/courses/{id}/vocab` is called, **Then** it lists its vocab items
+- [x] **Given** a vocab item with learner SRS progress, **When** its text is edited, **Then** the progress rows are kept and practice still serves it
 
 ## Technical Notes
 

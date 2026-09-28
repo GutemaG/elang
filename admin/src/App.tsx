@@ -7,6 +7,7 @@ import { ExerciseEditorRoute } from './exercises/ExerciseEditorPage'
 import { AppShell } from './shell/AppShell'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
+import { VocabularyPage } from './vocab/VocabularyPage'
 
 /** The session decides the screen; only an admin reaches the routes. */
 export function App() {
@@ -32,6 +33,8 @@ export function App() {
           <Routes>
             <Route path="/" element={<CourseList />} />
             <Route path="/courses/:courseId" element={<CourseTree />} />
+            <Route path="/vocabulary" element={<CourseList key="vocabulary" purpose="vocabulary" />} />
+            <Route path="/courses/:courseId/vocabulary" element={<VocabularyPage />} />
             <Route
               path="/courses/:courseId/lessons/:lessonId/exercises/new/:type"
               element={<ExerciseEditorRoute />}

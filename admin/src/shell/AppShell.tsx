@@ -5,10 +5,14 @@ import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 
-/** The next bolts of unit 002, shown so the tool is honest about what is
- * still missing. Plain text, not controls: none of it works yet. */
-const PLANNED = [
-  { icon: 'translate', label: 'Vocabulary' },
+const isVocabulary = (path: string) => path === '/vocabulary' || /^\/courses\/[^/]+\/vocabulary$/.test(path)
+const isCurriculum = (path: string) => (path === '/' || path.startsWith('/courses/')) && !isVocabulary(path)
+
+/** The workspace's places. Curriculum covers the course list and every
+ * course page except a course's words, which are Vocabulary's (bolt 040). */
+const NAV = [
+  { to: '/', icon: 'menu_book', label: 'Curriculum', current: isCurriculum },
+  { to: '/vocabulary', icon: 'translate', label: 'Vocabulary', current: isVocabulary },
 ]
 
 function initialsOf(email: string): string {
@@ -30,9 +34,7 @@ interface Props {
 export function AppShell({ email, onSignOut, children }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const close = () => setDrawerOpen(false)
-  // The course list and every course page are the curriculum.
   const { pathname } = useLocation()
-  const onCurriculum = pathname === '/' || pathname.startsWith('/courses/')
 
   return (
     <div className="min-h-screen lg:flex">
@@ -75,36 +77,26 @@ export function AppShell({ email, onSignOut, children }: Props) {
 
         <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Sections">
           <p className="px-2 pt-2 pb-2 text-[0.6875rem] font-bold tracking-[0.12em] text-stone uppercase">Workspace</p>
-          <Link
-            to="/"
-            onClick={close}
-            aria-current={onCurriculum ? 'page' : undefined}
-            className={cx(
-              'flex items-center gap-3 rounded border-l-[3px] px-3 py-2.5 text-sm font-semibold transition-colors',
-              onCurriculum
-                ? 'border-l-forest bg-inset text-forest'
-                : 'border-l-transparent text-coffee-soft hover:bg-inset hover:text-coffee',
-            )}
-          >
-            <Icon name="menu_book" className="text-xl" />
-            Curriculum
-          </Link>
-
-          <p className="px-2 pt-6 pb-2 text-[0.6875rem] font-bold tracking-[0.12em] text-stone uppercase">
-            Coming next
-          </p>
-          {PLANNED.map((item) => (
-            <p
-              key={item.label}
-              className="flex items-center gap-3 border-l-[3px] border-l-transparent px-3 py-2.5 text-sm font-semibold text-stone-soft"
-            >
-              <Icon name={item.icon} className="text-xl" />
-              <span className="flex-1">{item.label}</span>
-              <span className="rounded-full border border-line px-2 py-px text-[0.625rem] font-bold tracking-wider uppercase">
-                Soon
-              </span>
-            </p>
-          ))}
+          {NAV.map((item) => {
+            const current = item.current(pathname)
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={close}
+                aria-current={current ? 'page' : undefined}
+                className={cx(
+                  'mb-1 flex items-center gap-3 rounded border-l-[3px] px-3 py-2.5 text-sm font-semibold transition-colors',
+                  current
+                    ? 'border-l-forest bg-inset text-forest'
+                    : 'border-l-transparent text-coffee-soft hover:bg-inset hover:text-coffee',
+                )}
+              >
+                <Icon name={item.icon} className="text-xl" />
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
 
         <div className="border-t border-line p-3">

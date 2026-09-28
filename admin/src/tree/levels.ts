@@ -41,6 +41,9 @@ export const routes = {
   audioLinks: `${ADMIN}/audio/links`,
   // Pictures (bolt 050): an upload link for a picture.
   imageUploads: `${ADMIN}/images/uploads`,
+  // Vocabulary (bolt 040): a course's words, and one word.
+  vocab: (courseId: string) => `${ADMIN}/courses/${courseId}/vocab`,
+  vocabItem: (id: string) => `${ADMIN}/vocab/${id}`,
 }
 
 /** `ids` with the item at `index` swapped with its neighbour, or null when

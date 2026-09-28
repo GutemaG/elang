@@ -3,15 +3,24 @@ id: 040-admin-vocabulary
 unit: 001-content-admin-api
 intent: 017-content-admin-web
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 006-vocabulary-api
   - 006-vocabulary-screen
 created: '2026-09-22T10:00:00Z'
-started: null
-completed: null
+started: '2026-09-28T00:00:00Z'
+completed: '2026-09-28T14:43:14Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-28T00:00:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-28T00:00:00Z'
+    artifact: implementation-plan.md
+  - name: test
+    completed: '2026-09-28T14:43:14Z'
+    artifact: implementation-plan.md
 requires_bolts:
   - 035-admin-content-api
   - 037-admin-web-shell
@@ -24,7 +33,8 @@ blocks: false
 
 ## Overview
 
-Vocabulary management (Could).
+Vocabulary management (Could). Also carries the fix for the "Add exercise"
+type menu, which is clipped inside its section card (reported 2026-09-28).
 
 ## Objective
 
@@ -42,9 +52,9 @@ Vocabulary can be listed and edited per course.
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Dependencies
 

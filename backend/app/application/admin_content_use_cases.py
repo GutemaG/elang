@@ -28,8 +28,10 @@ from app.infrastructure.db.admin_content_repository import (
     LESSON,
     LEVELS,
     SECTION,
+    CourseOutline,
     Level,
     SqlAlchemyAdminContentRepository,
+    VocabListing,
 )
 from app.infrastructure.db.lesson_models import (
     CategoryModel,
@@ -37,6 +39,7 @@ from app.infrastructure.db.lesson_models import (
     ExerciseModel,
     LessonModel,
     SkillModel,
+    VocabItemModel,
 )
 
 logger = logging.getLogger("app.admin")
@@ -69,6 +72,7 @@ _NAMES: dict[type[Any], str] = {
     SkillModel: "skill",
     LessonModel: "lesson",
     ExerciseModel: "exercise",
+    VocabItemModel: "vocab",
 }
 
 
@@ -278,16 +282,65 @@ async def delete_exercise(
     _log(ctx, "delete", "exercise", exercise_id)
 
 
+# --- vocabulary (bolt 040) ---------------------------------------------------
+
+# The `vocab_items` columns' length.
+VOCAB_TEXT_MAX = 255
+
+
+def _vocab_text(field: str, value: str) -> str:
+    text = _clean(field, value)
+    if len(text) > VOCAB_TEXT_MAX:
+        raise InvalidContentError(field, f"{field} must be at most {VOCAB_TEXT_MAX} characters")
+    return text
+
+
+async def list_vocab(
+    repo: SqlAlchemyAdminContentRepository, course_id: str
+) -> tuple[CourseModel, CourseOutline, VocabListing]:
+    """The course, its outline (to place each exercise) and its words."""
+    course = await _require(repo, CourseModel, course_id)
+    outline = await repo.course_outline(course_id)
+    listing = await repo.course_vocab(course_id, [lesson.id for lesson in outline[2]])
+    return course, outline, listing
+
+
+async def update_vocab(
+    repo: SqlAlchemyAdminContentRepository,
+    ctx: AdminContext,
+    vocab_item_id: str,
+    *,
+    word: str | None = None,
+    translation: str | None = None,
+) -> VocabItemModel:
+    """Edits the text only. The id stays, so every learner's progress on
+    the word stays with it, and Practice keeps serving it."""
+    item = await _require(repo, VocabItemModel, vocab_item_id)
+    # Both checked before either is written.
+    new_word = _vocab_text("word", word) if word is not None else item.word
+    new_translation = (
+        _vocab_text("translation", translation) if translation is not None else item.translation
+    )
+    item.word = new_word
+    item.translation = new_translation
+    await repo.flush()
+    _log(ctx, "update", "vocab", vocab_item_id)
+    return item
+
+
 __all__ = [
     "LEVELS",
+    "VOCAB_TEXT_MAX",
     "AdminContext",
     "create_exercise",
     "create_node",
     "delete_exercise",
     "delete_node",
     "list_exercises",
+    "list_vocab",
     "rename_course",
     "rename_node",
     "reorder_children",
     "update_exercise",
+    "update_vocab",
 ]

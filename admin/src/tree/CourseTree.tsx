@@ -231,6 +231,13 @@ export function CourseTree() {
                   Rename course
                 </Button>
               )}
+              <Link
+                to={`/courses/${tree.course.id}/vocabulary`}
+                className="inline-flex h-11 items-center gap-2 rounded border border-line bg-surface px-4 text-sm font-semibold text-coffee hover:bg-inset sm:h-10"
+              >
+                <Icon name="translate" className="text-lg" />
+                Vocabulary
+              </Link>
               <Button variant="primary" disabled={busy} onClick={() => setEditing('section')}>
                 <Icon name="add" className="text-lg" />
                 Add section

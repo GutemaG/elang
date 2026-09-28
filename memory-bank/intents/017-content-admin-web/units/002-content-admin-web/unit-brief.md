@@ -2,7 +2,7 @@
 unit: 002-content-admin-web
 intent: 017-content-admin-web
 phase: inception
-status: stories-defined
+status: complete
 created: '2026-09-22T10:00:00Z'
 updated: '2026-09-22T10:00:00Z'
 ---

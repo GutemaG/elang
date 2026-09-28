@@ -176,6 +176,39 @@ export interface AdminExerciseList {
   exercises: AdminExercise[]
 }
 
+// --- Vocabulary (bolt 040)
+
+/** One exercise that practises a word, and where it sits: `number` is its
+ * lesson's place in the course as the tree numbers it ("5.1.1"). */
+export interface AdminVocabUse {
+  exercise_id: string
+  type: string
+  prompt: string
+  lesson_id: string
+  number: string
+  section_title: string
+  skill_title: string
+  lesson_title: string
+}
+
+/** A word Practice tracks. `learners` have spaced-repetition progress on it;
+ * editing the text keeps that progress. */
+export interface AdminVocabItem {
+  id: string
+  word: string
+  translation: string
+  learners: number
+  used_by: AdminVocabUse[]
+}
+
+/** A course's words in curriculum order, unused ones last; `learners` is
+ * the number of distinct learners practising any of them. */
+export interface AdminVocabList {
+  course: AdminCourse
+  items: AdminVocabItem[]
+  learners: number
+}
+
 /** A short-lived link for uploading one clip (bolt 036): PUT the file to
  * `upload_url` with exactly `headers`, then save `public_url` as the
  * exercise's `audio_url`. `public_url` is a relative `/media/...` path when
