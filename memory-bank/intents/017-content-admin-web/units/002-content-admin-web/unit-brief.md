@@ -21,7 +21,8 @@ the `/admin/*` API.
 - Vite + React + TypeScript scaffold, ESLint, `.env.example`, its own Vercel
   project with an SPA rewrite
 - Google sign-in, session handling, a not-authorised screen
-- A content tree with add, rename, reorder (up/down) and guarded delete
+- A content tree with add, rename, reorder and guarded delete. Reordering
+  is by drag and drop within a list, saved with one Save (bolt 055).
 - One editor per exercise type, with inline server errors
 - Audio: record (MediaRecorder), upload a file, paste a link, play
 - Exercise preview (Should), vocabulary screen (Could)
@@ -29,8 +30,8 @@ the `/admin/*` API.
 ### Out of Scope
 - Any change to the Flutter app
 - UI component libraries (plain CSS)
-- Drag-and-drop reordering, audio editing or trimming, offline use of the
-  admin site
+- Audio editing or trimming, offline use of the admin site
+- Moving a row to another parent (a lesson to another skill)
 
 ---
 

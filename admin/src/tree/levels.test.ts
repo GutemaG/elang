@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { moved, routes } from './levels'
+import { orderRoute, routes } from './levels'
 
 describe('routes', () => {
   it('match the admin API', () => {
@@ -20,29 +20,11 @@ describe('routes', () => {
   })
 })
 
-describe('moving an item', () => {
-  const ids = ['a', 'b', 'c']
-
-  it('swaps with the neighbour above', () => {
-    expect(moved(ids, 2, -1)).toEqual(['a', 'c', 'b'])
-  })
-
-  it('swaps with the neighbour below', () => {
-    expect(moved(ids, 0, 1)).toEqual(['b', 'a', 'c'])
-  })
-
-  it('refuses to move past either end', () => {
-    expect(moved(ids, 0, -1)).toBeNull()
-    expect(moved(ids, 2, 1)).toBeNull()
-  })
-
-  it('refuses an item that is not there', () => {
-    expect(moved(ids, -1, 1)).toBeNull()
-  })
-
-  it('leaves the original list alone', () => {
-    moved(ids, 0, 1)
-
-    expect(ids).toEqual(['a', 'b', 'c'])
+describe('where a new order is sent', () => {
+  it('each level to its parent, and exercises to their lesson', () => {
+    expect(orderRoute('section', 'c1')).toBe('/api/v1/admin/courses/c1/sections/order')
+    expect(orderRoute('skill', 'sec1')).toBe('/api/v1/admin/sections/sec1/skills/order')
+    expect(orderRoute('lesson', 'sk1')).toBe('/api/v1/admin/skills/sk1/lessons/order')
+    expect(orderRoute('exercise', 'l1')).toBe('/api/v1/admin/lessons/l1/exercises/order')
   })
 })

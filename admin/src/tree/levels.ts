@@ -46,12 +46,11 @@ export const routes = {
   vocabItem: (id: string) => `${ADMIN}/vocab/${id}`,
 }
 
-/** `ids` with the item at `index` swapped with its neighbour, or null when
- * it is already at that end. */
-export function moved(ids: readonly string[], index: number, by: -1 | 1): string[] | null {
-  const target = index + by
-  if (index < 0 || index >= ids.length || target < 0 || target >= ids.length) return null
-  const next = [...ids]
-  ;[next[index], next[target]] = [next[target]!, next[index]!]
-  return next
-}
+/** Every list that can be reordered: the three levels, and a lesson's
+ * exercises. */
+export type OrderKind = LevelKey | 'exercise'
+
+/** Where a list's new order is sent, whole, by id. `parentId` is the
+ * course, section, skill or lesson that holds the list. */
+export const orderRoute = (kind: OrderKind, parentId: string): string =>
+  kind === 'exercise' ? routes.exerciseOrder(parentId) : routes.order(kind, parentId)

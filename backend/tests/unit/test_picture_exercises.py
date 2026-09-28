@@ -91,13 +91,15 @@ class TestContentObjects:
         with pytest.raises(ValueError, match="2 to 4"):
             AudioImageChoiceContent(AUDIO_URL, pictures)
 
-    @pytest.mark.parametrize(
-        ("field", "value"), [("id", ""), ("image_url", ""), ("alt_text", ""), ("alt_text", "  ")]
-    )
-    def test_a_picture_needs_every_field(self, field: str, value: str) -> None:
+    @pytest.mark.parametrize(("field", "value"), [("id", ""), ("image_url", "")])
+    def test_a_picture_needs_an_id_and_an_address(self, field: str, value: str) -> None:
         fields = {"id": "p", "image_url": "https://x/p.webp", "alt_text": "A", field: value}
         with pytest.raises(ValueError, match=field):
             PictureChoice(**fields)
+
+    @pytest.mark.parametrize("alt_text", ["", "  "])
+    def test_the_description_is_optional(self, alt_text: str) -> None:
+        assert PictureChoice("p", "https://x/p.webp", alt_text).alt_text == alt_text
 
     def test_the_audio_question_needs_a_clip(self) -> None:
         pictures = tuple(PictureChoice(f"p{i}", f"https://x/{i}.webp", "A") for i in range(2))
@@ -139,13 +141,28 @@ class TestValidation:
         pictures = [_picture(0), _picture(1, id="p0")]
         assert _refused(exercise_type, _content(exercise_type, pictures)) == "content.choices[1].id"
 
-    @pytest.mark.parametrize("field", ["id", "image_url", "alt_text"])
+    @pytest.mark.parametrize("field", ["id", "image_url"])
     @pytest.mark.parametrize("value", ["", "   ", 7, None])
     def test_an_empty_or_non_text_field(self, exercise_type: str, field: str, value: Any) -> None:
         pictures = [_picture(0), _picture(1, **{field: value})]
         assert (
             _refused(exercise_type, _content(exercise_type, pictures))
             == f"content.choices[1].{field}"
+        )
+
+    @pytest.mark.parametrize("value", [7, None])
+    def test_a_description_that_is_not_text(self, exercise_type: str, value: Any) -> None:
+        pictures = [_picture(0), _picture(1, alt_text=value)]
+        assert (
+            _refused(exercise_type, _content(exercise_type, pictures))
+            == "content.choices[1].alt_text"
+        )
+
+    @pytest.mark.parametrize("value", ["", "   "])
+    def test_an_empty_description_saves(self, exercise_type: str, value: str) -> None:
+        pictures = [_picture(0, alt_text=value), _picture(1, alt_text=value)]
+        validate_exercise(
+            exercise_type, "P", _content(exercise_type, pictures), {"correct_choice_id": "p0"}
         )
 
     @pytest.mark.parametrize("field", ["id", "image_url", "alt_text"])

@@ -6,24 +6,28 @@ import { ExercisePreview } from '../exercises/ExercisePreview'
 import { TYPE_INFO, bodyOf } from '../exercises/model'
 import type { AdminExerciseList, AdminTreeExercise, ExerciseBody, ExerciseType } from '../types'
 import { Button } from '../ui/Button'
+import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 import { Modal } from '../ui/Modal'
-import { moved, routes } from './levels'
-import { useTreeActions } from './TreeActions'
+import { routes } from './levels'
+import { DragHandle, SortableItem, SortableList } from './Sortable'
+import { SAVE_ORDER_FIRST, useTreeActions } from './TreeActions'
 
 interface Props {
   courseId: string
   lessonId: string
+  /** In the order to show: the saved one, or a new one not saved yet. */
   exercises: AdminTreeExercise[]
 }
 
 const typeInfo = (type: string) =>
   TYPE_INFO[type as ExerciseType] ?? { name: type, icon: 'help', description: '' }
 
-/** A lesson's exercises, with Edit, Preview, Move and Delete on each. */
+/** A lesson's exercises, each dragged by its handle, with Edit, Preview
+ * and Delete. */
 export function ExerciseList({ courseId, lessonId, exercises }: Props) {
   const { api } = useSession()
-  const { busy, run } = useTreeActions()
+  const { busy, run, reorder } = useTreeActions()
   const [previewing, setPreviewing] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<{ exercise: AdminTreeExercise; number: number } | null>(null)
 
@@ -36,84 +40,30 @@ export function ExerciseList({ courseId, lessonId, exercises }: Props) {
     )
   }
 
-  const ordered = [...exercises].sort((a, b) => a.order_index - b.order_index)
-  const ids = ordered.map((e) => e.id)
-  const move = (index: number, by: -1 | 1) => {
-    const next = moved(ids, index, by)
-    if (next) void run(() => api.put(routes.exerciseOrder(lessonId), { ids: next }))
-  }
+  const ids = exercises.map((e) => e.id)
+  const numberOf = (id: string) => ids.indexOf(id) + 1
 
   return (
     <>
-      <ol className="divide-y divide-line overflow-hidden rounded border border-line bg-surface">
-        {ordered.map((ex, i) => {
-          const info = typeInfo(ex.type)
-          return (
-            <li key={ex.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 text-sm">
-              <span className="tnum w-5 shrink-0 text-xs font-semibold text-stone">{i + 1}</span>
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-inset px-2 py-0.5 text-xs font-semibold text-coffee-soft">
-                <Icon name={info.icon} className="text-sm" />
-                <span>{info.name}</span>
-              </span>
-              {/* Its own line on a phone, beside the type from sm up. */}
-              <Link
-                to={`/courses/${courseId}/lessons/${lessonId}/exercises/${ex.id}`}
-                className="order-last w-full pl-8 text-coffee hover:text-forest hover:underline sm:order-none sm:w-auto sm:min-w-0 sm:flex-1 sm:pl-0"
-              >
-                {ex.prompt}
-              </Link>
-              <AudioBadge audio={ex.audio} />
-              <div
-                role="group"
-                aria-label={`Actions for exercise ${i + 1}`}
-                className="ml-auto flex shrink-0 items-center"
-              >
-                <Link
-                  to={`/courses/${courseId}/lessons/${lessonId}/exercises/${ex.id}`}
-                  aria-label="Edit"
-                  title="Edit"
-                  className="grid size-11 place-items-center rounded text-coffee-soft hover:bg-inset hover:text-coffee sm:size-8"
-                >
-                  <Icon name="edit" className="text-lg" />
-                </Link>
-                <Button size="icon" variant="ghost" aria-label="Preview" title="Preview" onClick={() => setPreviewing(ex.id)}>
-                  <Icon name="visibility" className="text-lg" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Move up"
-                  title="Move up"
-                  disabled={busy || i === 0}
-                  onClick={() => move(i, -1)}
-                >
-                  <Icon name="arrow_upward" className="text-lg" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Move down"
-                  title="Move down"
-                  disabled={busy || i === ordered.length - 1}
-                  onClick={() => move(i, 1)}
-                >
-                  <Icon name="arrow_downward" className="text-lg" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="danger-ghost"
-                  aria-label="Delete"
-                  title="Delete"
-                  disabled={busy}
-                  onClick={() => setDeleting({ exercise: ex, number: i + 1 })}
-                >
-                  <Icon name="delete" className="text-lg" />
-                </Button>
-              </div>
-            </li>
-          )
-        })}
-      </ol>
+      <SortableList
+        ids={ids}
+        nameOf={(id) => `exercise ${numberOf(id)}`}
+        onReorder={(next) => reorder('exercise', lessonId, next)}
+        disabled={busy}
+      >
+        <ol className="divide-y divide-line rounded border border-line bg-surface">
+          {exercises.map((ex, i) => (
+            <ExerciseRow
+              key={ex.id}
+              exercise={ex}
+              number={i + 1}
+              editTo={`/courses/${courseId}/lessons/${lessonId}/exercises/${ex.id}`}
+              onPreview={() => setPreviewing(ex.id)}
+              onDelete={() => setDeleting({ exercise: ex, number: i + 1 })}
+            />
+          ))}
+        </ol>
+      </SortableList>
 
       {previewing && (
         <PreviewDialog lessonId={lessonId} exerciseId={previewing} onClose={() => setPreviewing(null)} />
@@ -145,6 +95,74 @@ export function ExerciseList({ courseId, lessonId, exercises }: Props) {
         </Modal>
       )}
     </>
+  )
+}
+
+interface RowProps {
+  exercise: AdminTreeExercise
+  number: number
+  editTo: string
+  onPreview: () => void
+  onDelete: () => void
+}
+
+function ExerciseRow({ exercise: ex, number, editTo, onPreview, onDelete }: RowProps) {
+  const { busy, ordering } = useTreeActions()
+  const info = typeInfo(ex.type)
+  // Opening the editor would leave the page and lose a new order that is
+  // not saved, so the links wait too.
+  const prompt = 'order-last w-full pl-22 text-coffee sm:order-none sm:w-auto sm:min-w-0 sm:flex-1 sm:pl-0'
+
+  return (
+    <SortableItem
+      id={ex.id}
+      className="flex flex-wrap items-center gap-x-3 gap-y-1.5 bg-surface px-3 py-2 text-sm first:rounded-t last:rounded-b"
+    >
+      <DragHandle name={`exercise ${number}`} />
+      <span className="tnum w-5 shrink-0 text-xs font-semibold text-stone">{number}</span>
+      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-inset px-2 py-0.5 text-xs font-semibold text-coffee-soft">
+        <Icon name={info.icon} className="text-sm" />
+        <span>{info.name}</span>
+      </span>
+      {/* Its own line on a phone, beside the type from sm up. */}
+      {ordering ? (
+        <span className={prompt}>{ex.prompt}</span>
+      ) : (
+        <Link to={editTo} className={cx(prompt, 'hover:text-forest hover:underline')}>
+          {ex.prompt}
+        </Link>
+      )}
+      <AudioBadge audio={ex.audio} />
+      <div role="group" aria-label={`Actions for exercise ${number}`} className="ml-auto flex shrink-0 items-center">
+        {ordering ? (
+          <Button size="icon" variant="ghost" aria-label="Edit" title={SAVE_ORDER_FIRST} disabled>
+            <Icon name="edit" className="text-lg" />
+          </Button>
+        ) : (
+          <Link
+            to={editTo}
+            aria-label="Edit"
+            title="Edit"
+            className="grid size-11 place-items-center rounded text-coffee-soft hover:bg-inset hover:text-coffee sm:size-8"
+          >
+            <Icon name="edit" className="text-lg" />
+          </Link>
+        )}
+        <Button size="icon" variant="ghost" aria-label="Preview" title="Preview" onClick={onPreview}>
+          <Icon name="visibility" className="text-lg" />
+        </Button>
+        <Button
+          size="icon"
+          variant="danger-ghost"
+          aria-label="Delete"
+          title={ordering ? SAVE_ORDER_FIRST : 'Delete'}
+          disabled={busy || ordering}
+          onClick={onDelete}
+        >
+          <Icon name="delete" className="text-lg" />
+        </Button>
+      </div>
+    </SortableItem>
   )
 }
 

@@ -350,13 +350,10 @@ describe('what a picture question still needs', () => {
     expect(missingAnswer(image())).toBeNull()
   })
 
-  it('a picture first, then its description', () => {
-    const body = setAltText(setPictureUrl(image(), 'a', ''), 'b', '   ')
-    expect(pictureProblems(body).slots).toEqual([
-      'Choose a picture.',
-      'Describe the picture for learners who can’t see it.',
-      null,
-    ])
+  it('a picture, but not a description', () => {
+    const body = setAltText(setAltText(setPictureUrl(image(), 'a', ''), 'b', '   '), 'c', '')
+    expect(pictureProblems(body).slots).toEqual(['Choose a picture.', null, null])
+    expect(missingAnswer(setPictureUrl(body, 'a', 'https://pub.example/a.webp'))).toBeNull()
   })
 
   it('a clip, for the audio type only', () => {

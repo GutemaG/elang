@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 
-import type { LevelKey } from './levels'
+import type { LevelKey, OrderKind } from './levels'
 
 export interface NodeRef {
   level: LevelKey
@@ -16,7 +16,18 @@ export interface TreeActions {
   run: (write: () => Promise<unknown>) => Promise<boolean>
   /** Starts a delete; the server's answer decides the dialog. */
   requestDelete: (node: NodeRef) => void
+  /** A list has a new order that is not saved yet. Other edits wait, so a
+   * reload cannot throw it away (bolt 055). */
+  ordering: boolean
+  /** Records a list's new order, unsaved, by the id of what holds it. */
+  reorder: (kind: OrderKind, parentId: string, ids: string[]) => void
+  /** Whether a section, skill or lesson is open; kept for the tab. */
+  isOpen: (id: string) => boolean
+  setOpen: (id: string, open: boolean) => void
 }
+
+/** Why the edit buttons are off while a new order waits. */
+export const SAVE_ORDER_FIRST = 'Save or discard the new order first'
 
 export const TreeActionsContext = createContext<TreeActions | null>(null)
 

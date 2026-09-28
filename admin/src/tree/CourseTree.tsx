@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { ApiError } from '../api'
@@ -13,12 +13,30 @@ import { Icon } from '../ui/Icon'
 import { DeleteDialog, type DeletePrompt } from './DeleteDialog'
 import { ExerciseList } from './ExerciseList'
 import { InlineForm } from './InlineForm'
-import { routes } from './levels'
+import { orderRoute, routes, type OrderKind } from './levels'
 import { NodeRow } from './NodeRow'
-import { TreeActionsContext, type NodeRef, type TreeActions } from './TreeActions'
+import { SortableList } from './Sortable'
+import { SAVE_ORDER_FIRST, TreeActionsContext, type NodeRef, type TreeActions } from './TreeActions'
+import { pathTo, readOpen, readScroll, writeOpen, writeScroll } from './treeMemory'
 
 const byOrder = <T extends { order_index: number }>(items: T[]): T[] =>
   [...items].sort((a, b) => a.order_index - b.order_index)
+
+/** A list's new order, not saved yet (bolt 055). */
+interface Draft {
+  kind: OrderKind
+  ids: string[]
+}
+
+/** `items` in their unsaved order, if there is one for exactly these
+ * items; otherwise in their saved order. */
+function inOrder<T extends { id: string; order_index: number }>(items: T[], draft: Draft | undefined): T[] {
+  const saved = byOrder(items)
+  if (!draft || draft.ids.length !== saved.length) return saved
+  const byId = new Map(saved.map((item) => [item.id, item]))
+  const moved = draft.ids.map((id) => byId.get(id))
+  return moved.every((item) => item !== undefined) ? (moved as T[]) : saved
+}
 
 const asError = (e: unknown): Error => (e instanceof Error ? e : new Error(messageOf(e)))
 
@@ -41,10 +59,17 @@ function totalsOf(tree: AdminCourseTree) {
   return { sections: tree.sections.length, skills, lessons, exercises, placeholders }
 }
 
-/** One course: sections → skills → lessons → exercises. Nothing is kept
- * locally; every write is followed by a fresh load from the server. */
+/** One course: sections → skills → lessons → exercises. Content is not
+ * kept locally; every write is followed by a fresh load from the server.
+ * Kept per course, for the tab: which rows are open and how far down the
+ * page was (bolt 055). A new order waits here until Save. */
 export function CourseTree() {
   const { courseId = '' } = useParams()
+  // Another course starts from its own memory, not this one's state.
+  return <CoursePage key={courseId} courseId={courseId} />
+}
+
+function CoursePage({ courseId }: { courseId: string }) {
   // `?open=<lessonId>`: coming back from an exercise, reopen its lesson.
   const [search] = useSearchParams()
   const openLesson = search.get('open')
@@ -55,6 +80,10 @@ export function CourseTree() {
   const [busy, setBusy] = useState(false)
   const [deletePrompt, setDeletePrompt] = useState<DeletePrompt | null>(null)
   const [editing, setEditing] = useState<'course' | 'section' | null>(null)
+  const [open, setOpenIds] = useState(() => readOpen(courseId))
+  // By the id of what holds each list: the course, a section, skill or lesson.
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({})
+  const ordering = Object.keys(drafts).length > 0
 
   const fetchTree = useCallback(() => api.get<AdminCourseTree>(routes.tree(courseId)), [api, courseId])
 
@@ -74,6 +103,7 @@ export function CourseTree() {
         if (!live) return
         setTree(t)
         setLoadError(null)
+        if (openLesson) setOpenIds((o) => new Set([...o, ...pathTo(t, openLesson)]))
       },
       (e: unknown) => {
         if (live) setLoadError(asError(e))
@@ -82,7 +112,35 @@ export function CourseTree() {
     return () => {
       live = false
     }
+    // `?open=` is read once, on arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchTree])
+
+  useEffect(() => writeOpen(courseId, open), [courseId, open])
+
+  // Where the page was, noted as it is left -- before the next page's
+  // height can move it -- and restored once the tree is drawn.
+  useLayoutEffect(() => () => writeScroll(courseId, window.scrollY), [courseId])
+  const restored = useRef(false)
+  const loaded = tree !== null
+  useLayoutEffect(() => {
+    if (!loaded || restored.current) return
+    restored.current = true
+    const y = readScroll(courseId)
+    if (y !== null) window.scrollTo(0, y)
+    if (openLesson) {
+      const row = document.querySelector(`[data-node="${openLesson}"]`)
+      row?.scrollIntoView?.({ block: 'nearest' })
+    }
+  }, [loaded, courseId, openLesson])
+
+  // Closing the tab or reloading with a new order unsaved asks first.
+  useEffect(() => {
+    if (!ordering) return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [ordering])
 
   const run = useCallback(
     async (write: () => Promise<unknown>) => {
@@ -137,9 +195,33 @@ export function CourseTree() {
   }
 
   const actions = useMemo<TreeActions>(
-    () => ({ busy, run, requestDelete: (node) => void requestDelete(node) }),
-    [busy, run, requestDelete],
+    () => ({
+      busy,
+      run,
+      requestDelete: (node) => void requestDelete(node),
+      ordering,
+      reorder: (kind, parentId, ids) => setDrafts((d) => ({ ...d, [parentId]: { kind, ids } })),
+      isOpen: (id) => open.has(id),
+      setOpen: (id, isOpen) =>
+        setOpenIds((o) => {
+          const next = new Set(o)
+          if (isOpen) next.add(id)
+          else next.delete(id)
+          return next
+        }),
+    }),
+    [busy, run, requestDelete, ordering, open],
   )
+
+  /** Every new order, one `PUT` per list, then the saved tree. A failure
+   * shows in the banner over the reloaded tree, as other writes do. */
+  const saveOrder = async () => {
+    const lists = Object.entries(drafts)
+    await run(async () => {
+      for (const [parentId, draft] of lists) await api.put(orderRoute(draft.kind, parentId), { ids: draft.ids })
+    })
+    setDrafts({})
+  }
 
   if (!tree) {
     if (loadError) {
@@ -182,8 +264,18 @@ export function CourseTree() {
     )
   }
 
-  const sections = byOrder(tree.sections)
+  const sections = inOrder(tree.sections, drafts[tree.course.id])
   const sectionIds = sections.map((s) => s.id)
+  const titleOf = new Map<string, string>()
+  for (const s of tree.sections) {
+    titleOf.set(s.id, `section ${s.title}`)
+    for (const k of s.skills) {
+      titleOf.set(k.id, `skill ${k.title}`)
+      for (const l of k.lessons) titleOf.set(l.id, `lesson ${l.title}`)
+    }
+  }
+  const nameOf = (id: string) => titleOf.get(id) ?? id
+  const locked = busy || ordering
   const totals = totalsOf(tree)
   const status = courseStatus(tree.course.status)
 
@@ -208,7 +300,7 @@ export function CourseTree() {
                   label="Rename course"
                   initial={{ title: tree.course.title }}
                   submitLabel="Save"
-                  disabled={busy}
+                  disabled={locked}
                   onSubmit={(v) => run(() => api.patch(routes.course(tree.course.id), { title: v.title }))}
                   onCancel={() => setEditing(null)}
                 />
@@ -226,7 +318,11 @@ export function CourseTree() {
             </div>
             <div className="flex flex-wrap gap-2">
               {editing !== 'course' && (
-                <Button disabled={busy} onClick={() => setEditing('course')}>
+                <Button
+                  disabled={locked}
+                  title={ordering ? SAVE_ORDER_FIRST : undefined}
+                  onClick={() => setEditing('course')}
+                >
                   <Icon name="edit" className="text-lg" />
                   Rename course
                 </Button>
@@ -238,7 +334,12 @@ export function CourseTree() {
                 <Icon name="translate" className="text-lg" />
                 Vocabulary
               </Link>
-              <Button variant="primary" disabled={busy} onClick={() => setEditing('section')}>
+              <Button
+                variant="primary"
+                disabled={locked}
+                title={ordering ? SAVE_ORDER_FIRST : undefined}
+                onClick={() => setEditing('section')}
+              >
                 <Icon name="add" className="text-lg" />
                 Add section
               </Button>
@@ -283,7 +384,7 @@ export function CourseTree() {
             <h2 className="text-xl leading-7 font-semibold tracking-[-0.015em] text-coffee">Curriculum</h2>
             <p className="text-xs text-stone">
               {plural(totals.sections, 'section')} in learning order. Open one to reach its skills, lessons and
-              exercises.
+              exercises; drag a row by its handle to move it.
             </p>
           </div>
         </div>
@@ -295,7 +396,7 @@ export function CourseTree() {
               label="Add section"
               withSubtitle
               submitLabel="Add section"
-              disabled={busy}
+              disabled={locked}
               onSubmit={(v) => run(() => api.post(routes.create('section', tree.course.id), v))}
               onCancel={() => setEditing(null)}
             />
@@ -307,74 +408,109 @@ export function CourseTree() {
             No sections yet.
           </p>
         )}
-        <ul className="mt-4 space-y-4">
-          {sections.map((section, s) => {
-            const skills = byOrder(section.skills)
-            const skillIds = skills.map((sk) => sk.id)
-            const holdsOpen = skills.some((sk) => sk.lessons.some((l) => l.id === openLesson))
-            return (
-              <NodeRow
-                key={section.id}
-                defaultExpanded={holdsOpen}
-                level="section"
-                id={section.id}
-                title={section.title}
-                subtitle={section.subtitle}
-                number={String(s + 1).padStart(2, '0')}
-                countLabel={plural(section.skill_count, 'skill')}
-                siblingIds={sectionIds}
-                parentId={tree.course.id}
-              >
-                {skills.length === 0 && <Empty>No skills yet.</Empty>}
-                <ul className="space-y-3">
-                  {skills.map((skill, k) => {
-                    const lessons = byOrder(skill.lessons)
-                    const lessonIds = lessons.map((l) => l.id)
-                    return (
-                      <NodeRow
-                        key={skill.id}
-                        defaultExpanded={lessons.some((l) => l.id === openLesson)}
-                        level="skill"
-                        id={skill.id}
-                        title={skill.title}
-                        number={`${s + 1}.${k + 1}`}
-                        countLabel={plural(skill.lesson_count, 'lesson')}
-                        siblingIds={skillIds}
-                        parentId={section.id}
-                      >
-                        {lessons.length === 0 && <Empty>No lessons yet.</Empty>}
-                        <ul className="space-y-2">
-                          {lessons.map((lesson, l) => (
-                            <NodeRow
-                              key={lesson.id}
-                              defaultExpanded={lesson.id === openLesson}
-                              extraAction={
-                                <AddExerciseMenu courseId={tree.course.id} lessonId={lesson.id} disabled={busy} />
-                              }
-                              level="lesson"
-                              id={lesson.id}
-                              title={lesson.title}
-                              number={`${s + 1}.${k + 1}.${l + 1}`}
-                              countLabel={plural(lesson.exercise_count, 'exercise')}
-                              siblingIds={lessonIds}
-                              parentId={skill.id}
+        <SortableList
+          ids={sectionIds}
+          nameOf={nameOf}
+          onReorder={(ids) => actions.reorder('section', tree.course.id, ids)}
+          disabled={busy}
+        >
+          <ul className="mt-4 space-y-4">
+            {sections.map((section, s) => {
+              const skills = inOrder(section.skills, drafts[section.id])
+              return (
+                <NodeRow
+                  key={section.id}
+                  level="section"
+                  id={section.id}
+                  title={section.title}
+                  subtitle={section.subtitle}
+                  number={String(s + 1).padStart(2, '0')}
+                  countLabel={plural(section.skill_count, 'skill')}
+                >
+                  {skills.length === 0 && <Empty>No skills yet.</Empty>}
+                  <SortableList
+                    ids={skills.map((sk) => sk.id)}
+                    nameOf={nameOf}
+                    onReorder={(ids) => actions.reorder('skill', section.id, ids)}
+                    disabled={busy}
+                  >
+                    <ul className="space-y-3">
+                      {skills.map((skill, k) => {
+                        const lessons = inOrder(skill.lessons, drafts[skill.id])
+                        return (
+                          <NodeRow
+                            key={skill.id}
+                            level="skill"
+                            id={skill.id}
+                            title={skill.title}
+                            number={`${s + 1}.${k + 1}`}
+                            countLabel={plural(skill.lesson_count, 'lesson')}
+                          >
+                            {lessons.length === 0 && <Empty>No lessons yet.</Empty>}
+                            <SortableList
+                              ids={lessons.map((l) => l.id)}
+                              nameOf={nameOf}
+                              onReorder={(ids) => actions.reorder('lesson', skill.id, ids)}
+                              disabled={busy}
                             >
-                              <ExerciseList
-                                courseId={tree.course.id}
-                                lessonId={lesson.id}
-                                exercises={lesson.exercises}
-                              />
-                            </NodeRow>
-                          ))}
-                        </ul>
-                      </NodeRow>
-                    )
-                  })}
-                </ul>
-              </NodeRow>
-            )
-          })}
-        </ul>
+                              <ul className="space-y-2">
+                                {lessons.map((lesson, l) => (
+                                  <NodeRow
+                                    key={lesson.id}
+                                    extraAction={
+                                      <AddExerciseMenu courseId={tree.course.id} lessonId={lesson.id} disabled={locked} />
+                                    }
+                                    level="lesson"
+                                    id={lesson.id}
+                                    title={lesson.title}
+                                    number={`${s + 1}.${k + 1}.${l + 1}`}
+                                    countLabel={plural(lesson.exercise_count, 'exercise')}
+                                  >
+                                    <ExerciseList
+                                      courseId={tree.course.id}
+                                      lessonId={lesson.id}
+                                      exercises={inOrder(lesson.exercises, drafts[lesson.id])}
+                                    />
+                                  </NodeRow>
+                                ))}
+                              </ul>
+                            </SortableList>
+                          </NodeRow>
+                        )
+                      })}
+                    </ul>
+                  </SortableList>
+                </NodeRow>
+              )
+            })}
+          </ul>
+        </SortableList>
+
+        {ordering && (
+          <div
+            role="region"
+            aria-label="Unsaved order"
+            className="sticky bottom-4 z-20 mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-forest-line bg-surface px-4 py-3 shadow-e3"
+          >
+            <Icon name="swap_vert" className="text-xl text-forest" />
+            <p className="min-w-0 flex-1 text-sm font-semibold text-coffee">
+              New order not saved{' '}
+              <span className="font-normal text-stone">({plural(Object.keys(drafts).length, 'list')})</span>
+            </p>
+            <div className="flex gap-2">
+              <Button disabled={busy} onClick={() => setDrafts({})}>
+                Discard
+              </Button>
+              <Button variant="primary" disabled={busy} onClick={() => void saveOrder()}>
+                <Icon
+                  name={busy ? 'progress_activity' : 'check'}
+                  className={busy ? 'animate-spin text-lg' : 'text-lg'}
+                />
+                Save order
+              </Button>
+            </div>
+          </div>
+        )}
 
         {deletePrompt && (
           <DeleteDialog

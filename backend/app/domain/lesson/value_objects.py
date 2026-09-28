@@ -280,8 +280,8 @@ class PictureChoice:
     """A choice answered by picture rather than by text.
 
     `alt_text` is never shown beside the picture; the app reads it to
-    screen readers and shows it in place of a picture that fails to load,
-    so it is required.
+    screen readers and shows it in place of a picture that fails to load.
+    It is optional (bolt 055): without it the app says "Picture 2".
     """
 
     id: str
@@ -293,8 +293,6 @@ class PictureChoice:
             raise ValueError("PictureChoice.id must be a non-empty string")
         if not self.image_url:
             raise ValueError("PictureChoice.image_url must be a non-empty string")
-        if not self.alt_text.strip():
-            raise ValueError("PictureChoice.alt_text must be a non-empty string")
 
 
 def _check_picture_count(name: str, choices: tuple[PictureChoice, ...]) -> None:

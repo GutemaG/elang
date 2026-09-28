@@ -181,7 +181,7 @@ function Clip({ url }: { url: string }) {
 function Pictures({ pictures, correct }: { pictures: PictureTile[]; correct: string }) {
   return (
     <ul aria-label="Pictures" className="grid grid-cols-2 gap-2">
-      {pictures.map((p) => {
+      {pictures.map((p, i) => {
         const isCorrect = p.id === correct
         return (
           <li
@@ -191,7 +191,13 @@ function Pictures({ pictures, correct }: { pictures: PictureTile[]; correct: str
               isCorrect ? 'border-forest bg-forest-tint' : 'border-line',
             )}
           >
-            <PictureImage url={p.image_url} alt={p.alt_text} className="size-full" />
+            {/* A picture without a description is named by its place, as in
+                the app; an empty slot still says "No picture". */}
+            <PictureImage
+              url={p.image_url}
+              alt={p.alt_text.trim() || (p.image_url.trim() ? `Picture ${i + 1}` : '')}
+              className="size-full"
+            />
             {isCorrect && (
               <>
                 <Icon name="check_circle" className="absolute top-1.5 right-1.5 text-lg text-forest" filled />

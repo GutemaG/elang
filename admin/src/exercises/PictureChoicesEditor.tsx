@@ -83,7 +83,7 @@ export function PictureChoicesEditor<B extends PictureBody>({
   return (
     <Section
       title="Pictures"
-      hint="2 to 4 pictures. Choose each one, describe it, then mark the one that is correct. Pictures are shrunk to 512 px before they are uploaded."
+      hint="2 to 4 pictures. Choose each one, describe it if you like, then mark the one that is correct. Pictures are shrunk to 512 px before they are uploaded."
     >
       <div role="radiogroup" aria-label="Correct picture" className="space-y-2">
         {choices.map((picture, i) => (
@@ -199,13 +199,14 @@ function Slot({
           </Button>
           <Input
             aria-label={`Picture ${n} description`}
-            placeholder="What it shows, e.g. A cup of coffee"
+            placeholder="Optional: what it shows, e.g. A cup of coffee"
             value={alt}
             maxLength={MAX_ALT_TEXT}
             onChange={(e) => onAlt(e.target.value)}
           />
           <p className="text-xs text-stone">
-            Read aloud to learners who can’t see it. Up to {MAX_ALT_TEXT} characters.
+            Optional. Read aloud to learners who can’t see it; without one they hear “Picture {n}”. Up to{' '}
+            {MAX_ALT_TEXT} characters.
           </p>
         </div>
 

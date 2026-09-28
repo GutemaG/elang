@@ -436,11 +436,9 @@ export interface PictureProblems {
  * shown beside its own field. */
 export function pictureProblems(body: PictureBody): PictureProblems {
   return {
-    slots: body.content.choices.map((p) => {
-      if (!p.image_url.trim()) return 'Choose a picture.'
-      if (!p.alt_text.trim()) return 'Describe the picture for learners who can’t see it.'
-      return null
-    }),
+    // The description is optional (bolt 055): the app says "Picture 2"
+    // for a picture without one.
+    slots: body.content.choices.map((p) => (p.image_url.trim() ? null : 'Choose a picture.')),
     audio: body.type === 'audio_image_choice' && !body.content.audio_url.trim() ? 'Add the clip the learner hears.' : null,
     answer: body.content.choices.some((p) => p.id === body.answer_key.correct_choice_id)
       ? null

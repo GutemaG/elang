@@ -147,6 +147,7 @@ class GapFillExercise extends Exercise {
 ///
 /// [altText] is never shown beside the picture: it is what a screen reader
 /// reads, and what shows in the picture's place if it cannot be loaded.
+/// It may be empty (bolt 055); [labelAt] then names the picture by place.
 class PictureChoice {
   const PictureChoice({required this.imageUrl, required this.altText});
 
@@ -154,6 +155,10 @@ class PictureChoice {
   /// fake an `assets/...` path.
   final String imageUrl;
   final String altText;
+
+  /// [altText], or "Picture 2" for the second picture when it has none.
+  String labelAt(int index) =>
+      altText.trim().isEmpty ? 'Picture ${index + 1}' : altText;
 }
 
 /// Read a word, then tap its picture (019-image-choice-exercise-types).

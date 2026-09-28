@@ -812,7 +812,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
         for (var i = 0; i < choices.length; i++)
           PictureTile(
             image: pictureImageFor(choices[i].imageUrl),
-            altText: choices[i].altText,
+            altText: choices[i].labelAt(i),
             state: choiceStateOf(
               chosen: chosen == i,
               feedback: controller.feedback,

@@ -5,8 +5,9 @@ import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 import { InlineForm, type FormValues } from './InlineForm'
-import { LEVELS, moved, routes, type LevelKey } from './levels'
-import { useTreeActions } from './TreeActions'
+import { LEVELS, routes, type LevelKey } from './levels'
+import { DragHandle, SortableItem } from './Sortable'
+import { SAVE_ORDER_FIRST, useTreeActions } from './TreeActions'
 
 interface Props {
   level: LevelKey
@@ -17,14 +18,8 @@ interface Props {
   number: string
   /** e.g. "3 skills" */
   countLabel: string
-  /** Every sibling's id in order, this row included -- sent whole on a move. */
-  siblingIds: readonly string[]
-  parentId: string
   /** The expanded content: child rows or the exercise list. */
   children: ReactNode
-  /** Opened from the start, e.g. the lesson just returned to from an
-   * exercise, and the section and skill above it. */
-  defaultExpanded?: boolean
   /** An extra action for a level with no child level of its own: a
    * lesson's "Add exercise". */
   extraAction?: ReactNode
@@ -58,33 +53,19 @@ const TITLE: Record<LevelKey, string> = {
   lesson: 'text-sm leading-5 font-medium text-coffee',
 }
 
-/** One section, skill or lesson: its title and counts, its actions, and
- * its children when expanded. */
-export function NodeRow({
-  level,
-  id,
-  title,
-  subtitle,
-  number,
-  countLabel,
-  siblingIds,
-  parentId,
-  children,
-  defaultExpanded = false,
-  extraAction,
-}: Props) {
+/** One section, skill or lesson: its drag handle, title and counts, its
+ * actions, and its children when expanded. It sits in a SortableList of its
+ * siblings; whether it is open is the tree's, so it outlives the page. */
+export function NodeRow({ level, id, title, subtitle, number, countLabel, children, extraAction }: Props) {
   const { api } = useSession()
-  const { busy, run, requestDelete } = useTreeActions()
-  const [expanded, setExpanded] = useState(defaultExpanded)
+  const { busy, ordering, run, requestDelete, isOpen, setOpen } = useTreeActions()
   const [editing, setEditing] = useState<Editing>(null)
   const def = LEVELS[level]
-  const index = siblingIds.indexOf(id)
   const childLevel = def.child
-
-  const move = (by: -1 | 1) => {
-    const ids = moved(siblingIds, index, by)
-    if (ids) void run(() => api.put(routes.order(level, parentId), { ids }))
-  }
+  const expanded = isOpen(id)
+  // Edits wait while a new order is unsaved: their reload would lose it.
+  const locked = busy || ordering
+  const why = (label: string) => (ordering ? SAVE_ORDER_FIRST : label)
 
   const rename = (v: FormValues) =>
     run(() => api.patch(routes.node(level, id), def.hasSubtitle ? { title: v.title, subtitle: v.subtitle } : { title: v.title }))
@@ -92,15 +73,16 @@ export function NodeRow({
   const addChild = async (v: FormValues) => {
     if (!childLevel) return false
     const ok = await run(() => api.post(routes.create(childLevel, id), { title: v.title }))
-    if (ok) setExpanded(true)
+    if (ok) setOpen(id, true)
     return ok
   }
 
-  const toggle = () => setExpanded((x) => !x)
+  const toggle = () => setOpen(id, !expanded)
 
   return (
-    <li className={ITEM[level]}>
+    <SortableItem id={id} data-node={id} className={ITEM[level]}>
       <div className={cx('flex flex-wrap items-center', ROW[level])}>
+        <DragHandle name={`${def.name} ${title}`} />
         <Button
           size="icon"
           variant="ghost"
@@ -120,7 +102,7 @@ export function NodeRow({
             initial={{ title, subtitle }}
             withSubtitle={def.hasSubtitle}
             submitLabel="Save"
-            disabled={busy}
+            disabled={locked}
             onSubmit={rename}
             onCancel={() => setEditing(null)}
           />
@@ -161,8 +143,8 @@ export function NodeRow({
               size="sm"
               variant="outline"
               className="mr-1"
-              disabled={busy}
-              title={`Add ${LEVELS[childLevel].name}`}
+              disabled={locked}
+              title={why(`Add ${LEVELS[childLevel].name}`)}
               onClick={() => setEditing('add')}
             >
               <Icon name="add" className="text-lg sm:text-base" />
@@ -171,28 +153,22 @@ export function NodeRow({
               <span className="sr-only sm:not-sr-only">Add {LEVELS[childLevel].name}</span>
             </Button>
           )}
-          <Button size="icon" variant="ghost" disabled={busy} aria-label="Rename" title="Rename" onClick={() => setEditing('rename')}>
-            <Icon name="edit" className="text-lg" />
-          </Button>
-          <Button size="icon" variant="ghost" disabled={busy || index <= 0} aria-label="Move up" title="Move up" onClick={() => move(-1)}>
-            <Icon name="arrow_upward" className="text-lg" />
-          </Button>
           <Button
             size="icon"
             variant="ghost"
-            disabled={busy || index >= siblingIds.length - 1}
-            aria-label="Move down"
-            title="Move down"
-            onClick={() => move(1)}
+            disabled={locked}
+            aria-label="Rename"
+            title={why('Rename')}
+            onClick={() => setEditing('rename')}
           >
-            <Icon name="arrow_downward" className="text-lg" />
+            <Icon name="edit" className="text-lg" />
           </Button>
           <Button
             size="icon"
             variant="danger-ghost"
-            disabled={busy}
+            disabled={locked}
             aria-label="Delete"
-            title="Delete"
+            title={why('Delete')}
             onClick={() => requestDelete({ level, id, title })}
           >
             <Icon name="delete" className="text-lg" />
@@ -205,13 +181,13 @@ export function NodeRow({
           <InlineForm
             label={`Add ${LEVELS[childLevel].name}`}
             submitLabel={`Add ${LEVELS[childLevel].name}`}
-            disabled={busy}
+            disabled={locked}
             onSubmit={addChild}
             onCancel={() => setEditing(null)}
           />
         </div>
       )}
       {expanded && <div className={BODY[level]}>{children}</div>}
-    </li>
+    </SortableItem>
   )
 }

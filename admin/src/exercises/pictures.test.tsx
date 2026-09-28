@@ -323,11 +323,8 @@ describe('what blocks saving', () => {
     expect(button('Create exercise')).toHaveAttribute('title', 'Choose a picture.')
 
     await choosePicture(1)
-    await waitFor(() =>
-      expect(within(slot(1).parentElement!).getByText('Describe the picture for learners who can’t see it.')).toBeInTheDocument(),
-    )
-    await write('Picture 1 description', 'A cat')
-    expect(within(slot(1).parentElement!).queryByText(/Choose a picture|Describe the picture/)).not.toBeInTheDocument()
+    await waitFor(() => expect(thumbnail(1)).toBeInTheDocument())
+    expect(within(slot(1).parentElement!).queryByText('Choose a picture.')).not.toBeInTheDocument()
 
     await fillSlot(2, 'A dog')
     expect(screen.getByText('Mark which picture is correct.')).toBeInTheDocument()
@@ -337,11 +334,17 @@ describe('what blocks saving', () => {
     expect(button('Create exercise')).toBeEnabled()
   })
 
-  it('a description of only spaces still blocks', async () => {
+  it('a description is optional: an empty one saves, and the preview names the picture by place', async () => {
     await open('ex-image')
-    await userEvent.clear(screen.getByLabelText('Picture 1 description'))
-    await write('Picture 1 description', '   ')
-    expect(button('Save')).toBeDisabled()
+    await userEvent.clear(screen.getByLabelText('Picture 2 description'))
+
+    expect(preview().getByAltText('Picture 2')).toBeInTheDocument()
+    expect(button('Save')).toBeEnabled()
+    await userEvent.click(button('Save'))
+
+    await waitFor(() => expect(server.callsTo('PUT', `${A}/exercises/ex-image`)).toHaveLength(1))
+    const sent = server.callsTo('PUT', `${A}/exercises/ex-image`)[0]!.body as typeof IMAGE
+    expect(sent.content.choices[1]!.alt_text).toBe('')
   })
 
   it('descriptions stop at 200 characters, the server’s limit', async () => {

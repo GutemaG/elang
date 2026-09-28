@@ -24,6 +24,8 @@ let tree: AdminCourseTree
 
 beforeEach(() => {
   withStoredSession()
+  // Set by the tests that leave the course at a scroll position.
+  Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
   tree = courseTree()
   server = new FakeServer()
     .install()
@@ -227,41 +229,141 @@ describe('adding', () => {
   })
 })
 
-describe('moving', () => {
-  it('sends every sibling id in the new order', async () => {
-    server.on('PUT', '/api/v1/admin/courses/course-1/sections/order', { body: { items: [] } })
+describe('reordering', () => {
+  const SECTION_ORDER = '/api/v1/admin/courses/course-1/sections/order'
+  const LESSON_ORDER = '/api/v1/admin/skills/skill-1/lessons/order'
+  const puts = () => server.calls.filter((c) => c.method === 'PUT')
+  const saveBar = () => screen.queryByRole('region', { name: 'Unsaved order' })
+  const sectionTitles = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent).filter((t) => t !== 'Curriculum')
+
+  /** The keyboard's way to drag: focus the handle, press an arrow. */
+  async function press(label: string, key: '{ArrowUp}' | '{ArrowDown}'): Promise<void> {
+    screen.getByRole('button', { name: `Move ${label}` }).focus()
+    await userEvent.keyboard(key)
+  }
+
+  it('every row has a handle, and the up and down buttons are gone', async () => {
     await openCourse()
+    await openToLesson()
 
-    await userEvent.click(actions('section Basics').getByRole('button', { name: 'Move down' }))
-
-    await waitFor(() =>
-      expect(server.callsTo('PUT', '/api/v1/admin/courses/course-1/sections/order')[0]!.body).toEqual({
-        ids: ['sec-2', 'sec-1'],
-      }),
-    )
-    expect(server.callsTo('GET', TREE)).toHaveLength(2)
+    for (const label of ['section Basics', 'section Travel', 'skill Greetings', 'lesson Hello', 'exercise 1', 'exercise 3']) {
+      expect(screen.getByRole('button', { name: `Move ${label}` })).toBeEnabled()
+    }
+    expect(screen.queryByRole('button', { name: 'Move up' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Move down' })).not.toBeInTheDocument()
   })
 
-  it('moves a lesson up within its skill', async () => {
-    server.on('PUT', '/api/v1/admin/skills/skill-1/lessons/order', { body: { items: [] } })
+  it('a move changes the page only, renumbers it, and keeps the handle focused', async () => {
     await openCourse()
-    await expand('section Basics')
-    await expand('skill Greetings')
 
-    await userEvent.click(actions('lesson Goodbye').getByRole('button', { name: 'Move up' }))
+    await press('section Basics', '{ArrowDown}')
 
-    await waitFor(() =>
-      expect(server.callsTo('PUT', '/api/v1/admin/skills/skill-1/lessons/order')[0]!.body).toEqual({
-        ids: ['lesson-2', 'lesson-1'],
-      }),
-    )
+    expect(sectionTitles()).toEqual(['Travel', 'Basics'])
+    expect(screen.getByText('Section 01').closest('li')).toHaveTextContent('Travel')
+    expect(screen.getByRole('button', { name: 'Move section Basics' })).toHaveFocus()
+    expect(screen.getByText('section Basics moved to position 2 of 2. Not saved yet.')).toBeInTheDocument()
+    expect(saveBar()).toHaveTextContent('New order not saved (1 list)')
+    expect(puts()).toHaveLength(0)
   })
 
   it('cannot move past either end', async () => {
     await openCourse()
 
-    expect(actions('section Basics').getByRole('button', { name: 'Move up' })).toBeDisabled()
-    expect(actions('section Travel').getByRole('button', { name: 'Move down' })).toBeDisabled()
+    await press('section Basics', '{ArrowUp}')
+    await press('section Travel', '{ArrowDown}')
+
+    expect(sectionTitles()).toEqual(['Basics', 'Travel'])
+    expect(saveBar()).not.toBeInTheDocument()
+  })
+
+  it('Save sends one PUT per changed list, with every id, then shows the saved tree', async () => {
+    server
+      .on('PUT', SECTION_ORDER, () => {
+        tree.sections[0]!.order_index = 2
+        tree.sections[1]!.order_index = 1
+        return { body: { items: [] } }
+      })
+      .on('PUT', LESSON_ORDER, { body: { items: [] } })
+    await openCourse()
+    await expand('section Basics')
+    await expand('skill Greetings')
+
+    await press('section Basics', '{ArrowDown}')
+    await press('lesson Goodbye', '{ArrowUp}')
+    expect(saveBar()).toHaveTextContent('(2 lists)')
+    await userEvent.click(within(saveBar()!).getByRole('button', { name: 'Save order' }))
+
+    await waitFor(() => expect(saveBar()).not.toBeInTheDocument())
+    expect(server.callsTo('PUT', SECTION_ORDER).map((c) => c.body)).toEqual([{ ids: ['sec-2', 'sec-1'] }])
+    expect(server.callsTo('PUT', LESSON_ORDER).map((c) => c.body)).toEqual([{ ids: ['lesson-2', 'lesson-1'] }])
+    expect(server.callsTo('GET', TREE)).toHaveLength(2)
+    expect(sectionTitles()).toEqual(['Travel', 'Basics'])
+  })
+
+  it('Discard puts every list back and sends nothing', async () => {
+    await openCourse()
+    await expand('section Basics')
+
+    await press('section Basics', '{ArrowDown}')
+    await press('skill Greetings', '{ArrowDown}')
+    await userEvent.click(within(saveBar()!).getByRole('button', { name: 'Discard' }))
+
+    expect(sectionTitles()).toEqual(['Basics', 'Travel'])
+    expect(screen.getByText('1.1').parentElement).toHaveTextContent('Greetings')
+    expect(saveBar()).not.toBeInTheDocument()
+    expect(puts()).toHaveLength(0)
+  })
+
+  it('while a new order is unsaved, other edits wait, and moving does not', async () => {
+    await openCourse()
+    await openToLesson()
+
+    await press('exercise 1', '{ArrowDown}')
+
+    for (const button of [
+      screen.getByRole('button', { name: 'Rename course' }),
+      screen.getByRole('button', { name: 'Add section' }),
+      actions('section Basics').getByRole('button', { name: 'Rename' }),
+      actions('section Basics').getByRole('button', { name: 'Delete' }),
+      actions('section Basics').getByRole('button', { name: /Add skill/ }),
+      actions('lesson Hello').getByRole('button', { name: /Add exercise/ }),
+    ]) {
+      expect(button).toBeDisabled()
+    }
+    expect(actions('section Basics').getByRole('button', { name: 'Rename' })).toHaveAttribute(
+      'title',
+      'Save or discard the new order first',
+    )
+    expect(screen.getByRole('button', { name: 'Move section Basics' })).toBeEnabled()
+  })
+
+  it('a refused save shows why, and the tree as the server has it', async () => {
+    server.on('PUT', SECTION_ORDER, {
+      status: 422,
+      body: { error_code: 'invalid_content', message: 'ids must list every section', details: { field: 'ids' } },
+    })
+    await openCourse()
+
+    await press('section Basics', '{ArrowDown}')
+    await userEvent.click(within(saveBar()!).getByRole('button', { name: 'Save order' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('ids must list every section')
+    await waitFor(() => expect(server.callsTo('GET', TREE)).toHaveLength(2))
+    expect(saveBar()).not.toBeInTheDocument()
+    expect(sectionTitles()).toEqual(['Basics', 'Travel'])
+  })
+
+  it('an unsaved order asks before the tab is closed', async () => {
+    await openCourse()
+    const quiet = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(quiet)
+    expect(quiet.defaultPrevented).toBe(false)
+
+    await press('section Basics', '{ArrowDown}')
+
+    const leaving = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(leaving)
+    expect(leaving.defaultPrevented).toBe(true)
   })
 })
 
@@ -454,19 +556,28 @@ describe('exercises in the tree', () => {
     expect(screen.getByLabelText('Text before the gap')).toBeInTheDocument()
   })
 
-  it('moving an exercise sends the whole lesson in its new order', async () => {
+  it('moving an exercise waits for Save, then sends the whole lesson in its new order', async () => {
     server.on('PUT', `${LIST}/order`, { body: { exercises: [] } })
     await openCourse()
     await openToLesson()
 
-    await userEvent.click(exerciseActions(1).getByRole('button', { name: 'Move down' }))
+    screen.getByRole('button', { name: 'Move exercise 1' }).focus()
+    await userEvent.keyboard('{ArrowDown}')
+
+    // Renumbered on the page; its editor waits, as leaving would lose the order.
+    expect(exerciseActions(2).getByRole('button', { name: 'Edit' })).toBeDisabled()
+    expect(screen.getByText('Which means hello?').closest('li')).toContainElement(
+      screen.getByRole('group', { name: 'Actions for exercise 2' }),
+    )
+    expect(screen.queryByRole('link', { name: 'Which means hello?' })).not.toBeInTheDocument()
+    expect(server.callsTo('PUT', `${LIST}/order`)).toHaveLength(0)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save order' }))
 
     await waitFor(() =>
       expect(server.callsTo('PUT', `${LIST}/order`)[0]!.body).toEqual({ ids: ['ex-2', 'ex-1', 'ex-3'] }),
     )
     expect(server.callsTo('GET', TREE)).toHaveLength(2)
-    expect(exerciseActions(1).getByRole('button', { name: 'Move up' })).toBeDisabled()
-    expect(exerciseActions(3).getByRole('button', { name: 'Move down' })).toBeDisabled()
   })
 
   it('deleting an exercise asks first, and Cancel sends nothing', async () => {
@@ -523,5 +634,58 @@ describe('exercises in the tree', () => {
     expect(await screen.findByText('Which means hello?')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Collapse lesson Hello' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Expand lesson Goodbye' })).toBeInTheDocument()
+  })
+
+  /** Leaves the course for exercise 1's editor, with the page at `y`. */
+  async function leaveForExercise(y: number): Promise<void> {
+    serveLesson()
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: y })
+    await userEvent.click(exerciseActions(1).getByRole('link', { name: 'Edit' }))
+    await screen.findByRole('heading', { name: 'Edit exercise' })
+  }
+
+  it.each([
+    ['the breadcrumb', 'crumb'],
+    ['Back to lesson', 'back'],
+  ])('coming back by %s finds the tree as it was left, scrolled as it was', async (_, way) => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    await openCourse()
+    await expand('section Basics')
+    await expand('section Travel')
+    await expand('skill Greetings')
+    await expand('lesson Hello')
+    await leaveForExercise(640)
+
+    if (way === 'crumb') {
+      const crumbs = within(screen.getByRole('navigation', { name: 'Breadcrumb' }))
+      await userEvent.click(crumbs.getAllByRole('link')[1]!)
+    } else {
+      await userEvent.click(screen.getByRole('link', { name: /Back to lesson/ }))
+    }
+
+    expect(await screen.findByText('Which means hello?')).toBeInTheDocument()
+    for (const open of ['section Basics', 'section Travel', 'skill Greetings', 'lesson Hello']) {
+      expect(screen.getByRole('button', { name: `Collapse ${open}` })).toBeInTheDocument()
+    }
+    expect(screen.getByRole('button', { name: 'Expand lesson Goodbye' })).toBeInTheDocument()
+    expect(scrollTo).toHaveBeenCalledWith(0, 640)
+  })
+
+  it("coming back by the browser's Back button, which lands on the plain course address, finds it as it was left", async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const first = renderApp('/courses/course-1')
+    await screen.findByRole('heading', { name: 'Amharic' })
+    await openToLesson()
+    await expand('section Travel')
+    await userEvent.click(screen.getByRole('button', { name: 'Collapse section Travel' }))
+    await leaveForExercise(300)
+    first.unmount()
+
+    renderApp('/courses/course-1')
+
+    expect(await screen.findByText('Which means hello?')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Collapse lesson Hello' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Expand section Travel' })).toBeInTheDocument()
+    expect(scrollTo).toHaveBeenCalledWith(0, 300)
   })
 })

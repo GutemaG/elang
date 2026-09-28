@@ -162,6 +162,26 @@ void main() {
       expect(find.byType(AudioPlayButton), findsNothing);
     });
 
+    testWidgets('a picture without a description is named by its place', (
+      tester,
+    ) async {
+      const unnamed = ImageChoiceExercise(
+        id: 'ic-unnamed',
+        prompt: "Choose the picture: 'ውሻ'",
+        choices: [
+          PictureChoice(imageUrl: 'assets/pictures/cat.webp', altText: ''),
+          PictureChoice(imageUrl: 'assets/pictures/dog.webp', altText: 'A dog'),
+          PictureChoice(imageUrl: 'assets/pictures/house.webp', altText: '  '),
+        ],
+        correctOptionIndex: 1,
+      );
+      await tester.pumpWidget(_app(_api(_lesson([unnamed]))));
+      await tester.pumpAndSettle();
+
+      final tiles = tester.widgetList<PictureTile>(find.byType(PictureTile));
+      expect(tiles.map((t) => t.altText), ['Picture 1', 'A dog', 'Picture 3']);
+    });
+
     testWidgets('bundled pictures load from the app, the rest from the '
         'network', (tester) async {
       await tester.pumpWidget(_app(_api(_lesson([_image]))));

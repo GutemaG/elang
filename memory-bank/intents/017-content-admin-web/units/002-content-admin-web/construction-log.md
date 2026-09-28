@@ -18,11 +18,13 @@ last_updated: '2026-09-28T14:43:14Z'
 | 038-admin-exercise-editors | 003-exercise-editors, 005-exercise-preview | simple-construction-bolt |
 | 039-admin-audio-ui | 004-audio-record-upload-link | simple-construction-bolt |
 | 040-admin-vocabulary | 006-vocabulary-screen (+ api 006-vocabulary-api) | simple-construction-bolt |
+| 055-admin-tree-polish | none (criteria in its implementation-plan.md) | simple-construction-bolt |
 
 ## Replanning History
 
 | Date | Action | Change | Reason | Approved |
 |------|--------|--------|--------|----------|
+| 2026-09-28 | Added bolt 055 | Drag-and-drop reordering brought into scope; picture descriptions made optional; the tree remembers what was open | Feedback from using the admin site | Yes |
 
 ## Execution Log
 
@@ -41,3 +43,7 @@ last_updated: '2026-09-28T14:43:14Z'
 - **2026-09-24T09:35:41Z**: 039-admin-audio-ui completed - story 004 complete (395 tests, 18 falsification runs; manual phone check pending)
 - **2026-09-28T00:00:00Z**: 040-admin-vocabulary started - Stage 1: plan
 - **2026-09-28T14:43:14Z**: 040-admin-vocabulary completed - stories 006-vocabulary-api and 006-vocabulary-screen complete; also fixed the clipped Add exercise type menu (backend 1280 tests, admin suite green; run by the user)
+- **2026-09-28T19:41:33Z**: 055-admin-tree-polish started - Stage 1: plan
+- **2026-09-28T19:52:00Z**: 055-admin-tree-polish stage-complete - plan → implement
+- **2026-09-28T20:11:01Z**: 055-admin-tree-polish stage-complete - implement → test
+- **2026-09-28T20:12:44Z**: 055-admin-tree-polish completed - drag to reorder with one Save, optional picture descriptions (admin, API, app), tree keeps open rows and scroll (admin 534, backend 1282 tests)

@@ -163,6 +163,20 @@ class TestSavingAndServing:
         row = next(e for e in listed["exercises"] if e["id"] == exercise_id)
         assert {k: row[k] for k in edited} == edited
 
+    @pytest.mark.parametrize("exercise_type", ["image_choice", "audio_image_choice"])
+    def test_pictures_without_descriptions_save_and_are_served(
+        self, client: TestClient, h: dict, exercise_type: str
+    ) -> None:
+        body = _body(exercise_type, 2)
+        body["content"]["choices"][0]["alt_text"] = ""
+        body["content"]["choices"][1]["alt_text"] = "  "
+
+        created = _create(client, h, body)
+
+        assert created.status_code == 201, created.json()
+        served = _learner_view(client, h, created.json()["id"])
+        assert [c["alt_text"] for c in served["choices"]] == ["", "  "]
+
     def test_the_tree_shows_the_audio_questions_clip(self, client: TestClient, h: dict) -> None:
         exercise_id = _create(client, h, _body("audio_image_choice")).json()["id"]
         picture_id = _create(client, h, _body("image_choice")).json()["id"]
@@ -200,7 +214,7 @@ class TestRefusals:
             ),
             (
                 "image_choice",
-                lambda b: b["content"]["choices"][1].update(alt_text=" "),
+                lambda b: b["content"]["choices"][1].update(alt_text="a" * 201),
                 "content.choices[1].alt_text",
             ),
             (

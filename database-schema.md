@@ -119,7 +119,7 @@ Backs the `Exercise` entity (member of the `Lesson` aggregate, not its own aggre
 
 `spell_tiles` is the only type whose tiles may repeat their `text` — `Maaloo` needs two `a` tiles — so its tiles are identified only by `id`, and its `correct_sequence` names *a* correct ordering rather than the only one. Clients grade it by comparing the spelled text, not the id list.
 
-In `image_choice` and `audio_image_choice`, each of the 2 to 4 `choices` is a picture, `{id, image_url, alt_text}`, not a text tile. `image_url` is an https address, or in local development a `/media/images/...` path. `alt_text` is required: it is read to screen readers and shown when a picture fails to load.
+In `image_choice` and `audio_image_choice`, each of the 2 to 4 `choices` is a picture, `{id, image_url, alt_text}`, not a text tile. `image_url` is an https address, or in local development a `/media/images/...` path. `alt_text` is optional and may be empty (bolt 055): it is read to screen readers and shown when a picture fails to load, and without it the app says "Picture 1", "Picture 2" and so on.
 | `created_at` | `TIMESTAMPTZ` (Postgres) / `TIMESTAMP` (SQLite) | `NOT NULL`, `DEFAULT now()` | |
 
 **Constraints**: `UNIQUE (lesson_id, order_index)`; `CHECK` on `type`.

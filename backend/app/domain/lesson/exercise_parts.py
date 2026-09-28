@@ -191,12 +191,15 @@ def _check_pictures(field: str, pictures: Any, *, allow_local_media: bool) -> No
     for i, picture in enumerate(pictures):
         where = f"{field}[{i}]"
         _check_keys(where, picture, _PICTURE_KEYS)
-        for key in ("id", "image_url", "alt_text"):
+        for key in ("id", "image_url"):
             value = picture[key]
             if not isinstance(value, str) or not value.strip():
                 raise InvalidExerciseError(
                     f"{where}.{key}", f"{where}.{key} must be a non-empty string"
                 )
+        # The description may be empty (bolt 055), but it is still text.
+        if not isinstance(picture["alt_text"], str):
+            raise InvalidExerciseError(f"{where}.alt_text", f"{where}.alt_text must be a string")
         if len(picture["alt_text"]) > MAX_ALT_TEXT_LENGTH:
             raise InvalidExerciseError(
                 f"{where}.alt_text",
