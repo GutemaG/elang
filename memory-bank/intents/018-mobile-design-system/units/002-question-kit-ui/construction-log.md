@@ -32,3 +32,7 @@ last_updated: '2026-09-24T21:20:20Z'
 - **2026-09-24T20:52:00Z**: 045-lesson-screen-on-kit stage-complete - plan → implement
 - **2026-09-24T21:02:05Z**: 045-lesson-screen-on-kit stage-complete - implement → test
 - **2026-09-24T21:20:20Z**: 045-lesson-screen-on-kit completed - All 3 stages done
+- **2026-09-29T09:23:25Z**: 058-audio-playing-state started - Stage 1: plan
+- **2026-09-29T09:26:14Z**: 058-audio-playing-state stage-complete - plan → implement
+- **2026-09-29T09:35:48Z**: 058-audio-playing-state stage-complete - implement → test
+- **2026-09-29T09:41:28Z**: 058-audio-playing-state completed - play button shows playing, with moving bars and a ring, until the clip ends; a tap replays; leaving a question stops its clip (1412 tests)

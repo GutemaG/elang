@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:elang/features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/course.dart';
+import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
 import 'package:elang/shared/models/pending_sync_entry.dart';
@@ -32,6 +33,7 @@ import '../../../helpers/fake_answer_feedback_player.dart';
 import '../../../helpers/fake_connectivity_monitor.dart';
 import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
+import '../../../helpers/fake_media_cache.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
 
@@ -105,6 +107,7 @@ class _Rig {
   final CourseApi courseApi;
   final CourseCacheStore cache;
   final packStore = FakeLessonPackStore();
+  final mediaCache = FakeMediaCache();
   late final downloader = LessonPackDownloader(
     lessonApi: lessonApi,
     packStore: packStore,
@@ -130,6 +133,7 @@ class _Rig {
         syncEngine: syncEngine,
         courseApi: courseApi,
         courseCache: cache,
+        mediaCache: mediaCache,
         sessionRepository: session,
         userPreferencesApi: HttpUserPreferencesApi(sessionRepository: session),
         soundPreferenceRepository: SoundPreferenceRepository(
@@ -411,6 +415,39 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await cache.loadLesson('lesson-c-en-am'), isNotNull);
+  });
+
+  testWidgets("the next lesson's clips and pictures are fetched ahead", (
+    tester,
+  ) async {
+    final rig = _Rig(
+      lessonApi: _lessonApi(_tree(_amharic, 'Greetings'))
+        ..lessonContent = const LessonContent(
+          lessonId: 'lesson-c-en-am',
+          skillId: 'skill-c-en-am',
+          title: 'Greetings',
+          exercises: [
+            ListeningExercise(
+              id: 'li-1',
+              audioUrl: 'https://pub.r2.dev/a/selam.mp3',
+              instruction: 'Tap what you hear',
+              options: ['ሰላም', 'ደህና'],
+              correctOptionIndex: 0,
+            ),
+          ],
+          beansAtStart: 5,
+          beansMax: 5,
+        ),
+      courseApi: FakeCourseApi(courses: [_amharic, _oromo]),
+      cache: InMemoryCourseCacheStore(),
+    );
+
+    await tester.pumpWidget(rig.build());
+    await tester.pumpAndSettle();
+
+    expect(rig.mediaCache.warmed, [
+      ['https://pub.r2.dev/a/selam.mp3'],
+    ]);
   });
 
   testWidgets('offline progress reaching the server reloads the tree', (

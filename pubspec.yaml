@@ -77,6 +77,10 @@ dependencies:
   # directly to resolve where downloaded audio files live on disk.
   path_provider: ^2.1.6
   connectivity_plus: ^7.3.1
+  # Names the files in the media cache (bolt 057, `media_cache.dart`) by
+  # the SHA-1 of their address. Was already transitive (via `http` and
+  # others); promoted to direct at the locked version.
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

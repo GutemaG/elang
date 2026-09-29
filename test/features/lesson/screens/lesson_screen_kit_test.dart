@@ -250,14 +250,21 @@ Finder _picture(String altText) =>
   firstTileLeft: tester.getTopLeft(find.byType(AnswerTile).first).dx,
 );
 
+/// Each play lasts until its [gate] completes: the clip playing.
 class _GatedAudioPlayer implements LessonAudioPlayer {
   final List<String> playedUrls = [];
   Completer<void> gate = Completer<void>();
+  int stops = 0;
 
   @override
   Future<void> play(String url) {
     playedUrls.add(url);
     return gate.future;
+  }
+
+  @override
+  Future<void> stop() async {
+    stops++;
   }
 
   @override
@@ -272,6 +279,9 @@ class _FailingAudioPlayer implements LessonAudioPlayer {
     attempts++;
     throw Exception('no network');
   }
+
+  @override
+  Future<void> stop() async {}
 
   @override
   Future<void> dispose() async {}
@@ -616,7 +626,7 @@ void main() {
       expect(audio.playedUrls, [_clip]);
     });
 
-    testWidgets('the button shows "playing" until the clip has started', (
+    testWidgets('the button shows "playing" until the clip is over', (
       tester,
     ) async {
       final audio = _GatedAudioPlayer();
@@ -628,24 +638,51 @@ void main() {
 
       expect(audio.playedUrls, [_clip]);
       expect(button().playing, isTrue);
+      // Still playing well after it started: the look lasts the clip.
+      await tester.pump(const Duration(seconds: 3));
+      expect(button().playing, isTrue);
 
       audio.gate.complete();
       await tester.pumpAndSettle();
       expect(button().playing, isFalse);
 
-      // A tap while the first play is still starting keeps "playing" on
-      // until the last one has started.
+      // A tap mid-clip replays it, and "playing" stays on until the last
+      // play is over. (Pumped, not settled: the button moves while playing.)
       final first = audio.gate = Completer<void>();
-      await _tap(tester, find.byType(AudioPlayButton));
+      await tester.tap(find.byType(AudioPlayButton));
+      await tester.pump(const Duration(milliseconds: 300));
       final second = audio.gate = Completer<void>();
-      await _tap(tester, find.byType(AudioPlayButton));
+      await tester.tap(find.byType(AudioPlayButton));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(audio.playedUrls, [_clip, _clip, _clip]);
       expect(button().playing, isTrue);
       first.complete();
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
       expect(button().playing, isTrue);
       second.complete();
       await tester.pumpAndSettle();
       expect(button().playing, isFalse);
+    });
+
+    testWidgets('leaving the question stops its clip', (tester) async {
+      final audio = _GatedAudioPlayer();
+      await tester.pumpWidget(
+        _app(_api(_lesson([_listen, _mc])), audio: audio),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(audio.stops, 0);
+
+      // Answered while the clip still plays, then Continue.
+      await tester.tap(find.text('ሰላም'));
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(audio.stops, 1);
+      audio.gate.complete();
+      await tester.pumpAndSettle();
     });
 
     testWidgets('a clip that fails to play is ignored, and play can be '

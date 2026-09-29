@@ -5,6 +5,7 @@ import '../../shared/services/lesson_api.dart';
 import '../../shared/services/lesson_audio_player.dart';
 import '../../shared/services/lesson_pack_downloader.dart';
 import '../../shared/services/lesson_pack_store.dart';
+import '../../shared/services/media_cache.dart';
 import '../../shared/services/session_repository.dart';
 import '../../shared/services/sound_preference_repository.dart';
 import '../../shared/services/sync_engine.dart';
@@ -25,6 +26,9 @@ import '../../shared/services/sync_engine.dart';
 /// as of `009-offline-caching-and-sync-ui` -- offline lesson caching and
 /// download management.
 ///
+/// [mediaCache] is new as of bolt 057: clips and pictures kept on the
+/// device, so a question's audio starts at once.
+///
 /// [feedbackPlayer] defaults to a [SoundGatedAnswerFeedbackPlayer] wrapping
 /// the real player, checking [soundPreferenceRepository] fresh on every
 /// call (`005-profile-and-settings`, FR-5) rather than the bare
@@ -35,13 +39,15 @@ class LessonDependencies {
     required SoundPreferenceRepository soundPreferenceRepository,
     LessonApi? lessonApi,
     LessonAudioPlayer? audioPlayer,
+    MediaCache? mediaCache,
     AnswerFeedbackPlayer? feedbackPlayer,
     ConnectivityMonitor? connectivityMonitor,
     LessonPackStore? lessonPackStore,
     LessonPackDownloader? lessonPackDownloader,
     SyncEngine? syncEngine,
-  }) : lessonApi = lessonApi ?? HttpLessonApi(sessionRepository: sessionRepository),
-       audioPlayer = audioPlayer ?? AudioplayersLessonAudioPlayer(),
+  }) : lessonApi =
+           lessonApi ?? HttpLessonApi(sessionRepository: sessionRepository),
+       mediaCache = mediaCache ?? DiskMediaCache(),
        feedbackPlayer =
            feedbackPlayer ??
            SoundGatedAnswerFeedbackPlayer(
@@ -50,6 +56,12 @@ class LessonDependencies {
            ),
        connectivityMonitor = connectivityMonitor ?? ConnectivityPlusMonitor(),
        lessonPackStore = lessonPackStore ?? SqfliteLessonPackStore() {
+    this.audioPlayer =
+        audioPlayer ??
+        CachingLessonAudioPlayer(
+          player: AudioplayersLessonAudioPlayer(),
+          cache: this.mediaCache,
+        );
     this.lessonPackDownloader =
         lessonPackDownloader ??
         LessonPackDownloader(
@@ -65,7 +77,11 @@ class LessonDependencies {
   }
 
   final LessonApi lessonApi;
-  final LessonAudioPlayer audioPlayer;
+  late final LessonAudioPlayer audioPlayer;
+
+  /// Clips and pictures kept on the device after their first download
+  /// (bolt 057); the default [audioPlayer] plays from it.
+  final MediaCache mediaCache;
   final AnswerFeedbackPlayer feedbackPlayer;
   final ConnectivityMonitor connectivityMonitor;
   final LessonPackStore lessonPackStore;

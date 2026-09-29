@@ -20,6 +20,7 @@ import '../../../shared/services/session_api.dart';
 import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
 import '../../../shared/services/course_cache_store.dart';
+import '../../../shared/services/media_cache.dart';
 import '../../../shared/services/sync_engine.dart';
 import '../../../shared/services/user_preferences_api.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -75,6 +76,7 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     required this.userPreferencesApi,
     required this.soundPreferenceRepository,
     this.courseCache,
+    this.mediaCache,
   });
 
   final LessonApi lessonApi;
@@ -83,6 +85,11 @@ class SkillTreeDashboardScreen extends StatefulWidget {
   /// story 003). When set, every successful load is saved, and a failed load
   /// falls back to the active course's saved copy. `null` disables caching.
   final CourseCacheStore? courseCache;
+
+  /// Clips and pictures kept on the device (bolt 057), handed to each
+  /// lesson; the next lesson's are fetched ahead from here. `null` fetches
+  /// nothing ahead.
+  final MediaCache? mediaCache;
 
   /// The course list and switching (010-multi-language-courses): opened from
   /// the course chip, and threaded down to Settings.
@@ -285,7 +292,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
       ];
       var fetched = 0;
       for (final node in open) {
-        if (fetched >= _prefetchPerLoad || !mounted) return;
+        if (fetched >= _prefetchPerLoad || !mounted) break;
         final cached = await cache.loadLesson(node.lessonId);
         if (cached != null && cached.isFreshFor(node.contentVersion)) continue;
         fetched++;
@@ -296,11 +303,24 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           // Offline or refused: this lesson just fetches when tapped.
         }
       }
+      if (open.isNotEmpty && mounted) {
+        await _warmMediaOf(open.first.lessonId, cache);
+      }
     } on Object {
       // A prefetch is an optimisation; nothing depends on it finishing.
     } finally {
       _prefetching = false;
     }
+  }
+
+  /// Fetches [lessonId]'s clips and pictures ahead, from its saved copy, so
+  /// its first sound plays at once when tapped (bolt 057). Only the next
+  /// lesson: a few hundred KB, fine on mobile data too (the user's choice).
+  Future<void> _warmMediaOf(String lessonId, CourseCacheStore cache) async {
+    final media = widget.mediaCache;
+    if (media == null) return;
+    final copy = await cache.loadLesson(lessonId);
+    if (copy != null) media.warm(lessonMediaOf(copy.content));
   }
 
   Future<void> _saveToCache(_DashboardData data) async {
@@ -500,6 +520,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           lessonPackStore: widget.lessonPackStore,
           syncEngine: widget.syncEngine,
           lessonCache: widget.courseCache,
+          mediaCache: widget.mediaCache,
           skillVersion: node.contentVersion,
           beansNow: _lastData?.beansStatus.beans,
           isReview: isReview,
@@ -539,6 +560,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           audioPlayer: widget.audioPlayer,
           feedbackPlayer: widget.feedbackPlayer,
           syncEngine: widget.syncEngine,
+          mediaCache: widget.mediaCache,
         ),
       ),
     );

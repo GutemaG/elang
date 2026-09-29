@@ -11,9 +11,17 @@ import 'package:elang/shared/services/lesson_audio_player.dart';
 class FakeLessonAudioPlayer implements LessonAudioPlayer {
   final List<String> playedUrls = [];
 
+  /// How many times [stop] was called.
+  int stops = 0;
+
   @override
   Future<void> play(String url) async {
     playedUrls.add(url);
+  }
+
+  @override
+  Future<void> stop() async {
+    stops++;
   }
 
   @override

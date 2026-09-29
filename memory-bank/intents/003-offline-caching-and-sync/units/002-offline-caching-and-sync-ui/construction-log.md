@@ -65,3 +65,8 @@ Two things were deliberately scoped out of this bolt, per its implementation-pla
 While migrating for this bolt's work, discovered bolt 008's Alembic migration (`e3cea3ee5c84`) was actually broken against real SQLite despite that bolt's test report claiming otherwise -- `server_default=sa.func.now()` compiles to `CURRENT_TIMESTAMP`, which SQLite's `ALTER TABLE ADD COLUMN` rejects when combined with `NOT NULL`. Fixed by switching to a fixed constant default; see the errata entry in unit 001's construction-log.md and the corrected `ddd-03-test-report.md` for bolt 008.
 
 Test stage also caught a self-inflicted test bug: two new dashboard tests deadlocked because they awaited `FakeLessonApi.startLesson()` before `pumpWidget` -- under `testWidgets`, `Future.delayed` never fires until something pumps the fake clock. Fixed by building the test fixture directly instead of routing it through the api.
+
+- **2026-09-29T08:39:52Z**: 057-media-cache started - Stage 1: plan
+- **2026-09-29T08:44:00Z**: 057-media-cache stage-complete - plan → implement
+- **2026-09-29T09:09:51Z**: 057-media-cache stage-complete - implement → test
+- **2026-09-29T09:18:55Z**: 057-media-cache completed - clips and pictures kept on the device (500 MB, least recently used out), fetched ahead when a lesson loads and for the next lesson, played from the device; current downloaded lessons used online (1406 tests)

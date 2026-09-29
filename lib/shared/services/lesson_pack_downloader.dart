@@ -10,6 +10,7 @@ import '../models/exercise.dart';
 import '../models/lesson_content.dart';
 import 'lesson_api.dart';
 import 'lesson_pack_store.dart';
+import 'media_cache.dart';
 
 /// A lesson's download state, as shown by the skill-tree dashboard's
 /// download affordance (009-offline-caching-and-sync-ui, story 001).
@@ -73,7 +74,9 @@ class LessonPackDownloader extends ChangeNotifier {
       // is never reached unless every file downloaded successfully, and
       // the files this attempt created are removed again (see
       // `_downloadFilesAndRewrite`).
-      debugPrint('LessonPackDownloader: download failed for $lessonId: $e\n$stackTrace');
+      debugPrint(
+        'LessonPackDownloader: download failed for $lessonId: $e\n$stackTrace',
+      );
       _statusByLessonId[lessonId] = LessonDownloadStatus.failed;
     }
     notifyListeners();
@@ -95,7 +98,9 @@ class LessonPackDownloader extends ChangeNotifier {
     if (!content.exercises.any(_hasFiles)) return content;
 
     final documentsDir = await getApplicationDocumentsDirectory();
-    final packDir = Directory('${documentsDir.path}/lesson_packs/${content.lessonId}');
+    final packDir = Directory(
+      '${documentsDir.path}/lesson_packs/${content.lessonId}',
+    );
     await packDir.create(recursive: true);
 
     final created = <File>[];
@@ -108,7 +113,10 @@ class LessonPackDownloader extends ChangeNotifier {
       return path;
     }
 
-    Future<List<PictureChoice>> fetchPictures(String exerciseId, List<PictureChoice> choices) async => [
+    Future<List<PictureChoice>> fetchPictures(
+      String exerciseId,
+      List<PictureChoice> choices,
+    ) async => [
       for (var n = 0; n < choices.length; n++)
         PictureChoice(
           imageUrl: await fetch(choices[n].imageUrl, '$exerciseId-picture-$n'),
@@ -171,30 +179,29 @@ class LessonPackDownloader extends ChangeNotifier {
 
   /// Whether [exercise] has a clip or pictures to download.
   static bool _hasFiles(Exercise exercise) =>
-      exercise is ListeningExercise || exercise is ImageChoiceExercise || exercise is AudioImageChoiceExercise;
+      exercise is ListeningExercise ||
+      exercise is ImageChoiceExercise ||
+      exercise is AudioImageChoiceExercise;
 
   /// Saves [url] as `{name}{ext}` in [packDir], adding it to [created] if it
   /// was not there before.
-  Future<String> _downloadFile(String url, Directory packDir, String name, List<File> created) async {
+  Future<String> _downloadFile(
+    String url,
+    Directory packDir,
+    String name,
+    List<File> created,
+  ) async {
     final response = await _httpClient.get(Uri.parse(url));
     if (response.statusCode != 200) {
-      throw LessonPackDownloadException('Failed to download $url for $name: HTTP ${response.statusCode}');
+      throw LessonPackDownloadException(
+        'Failed to download $url for $name: HTTP ${response.statusCode}',
+      );
     }
-    final file = File('${packDir.path}/$name${_extensionOf(url)}');
+    final file = File('${packDir.path}/$name${extensionOfUrl(url)}');
     final existed = await file.exists();
     await file.writeAsBytes(response.bodyBytes);
     if (!existed) created.add(file);
     return file.path;
-  }
-
-  /// The extension of [url]'s last path segment, such as `.webp`; a query
-  /// string never ends up in a file name. Empty when there is none: the
-  /// app reads clips and pictures by their content, not their name.
-  static String _extensionOf(String url) {
-    final segments = Uri.parse(url).pathSegments;
-    final last = segments.isEmpty ? '' : segments.last;
-    final dot = last.lastIndexOf('.');
-    return dot <= 0 ? '' : last.substring(dot);
   }
 }
 

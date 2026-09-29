@@ -12,6 +12,7 @@ import '../../../shared/services/course_cache_store.dart';
 import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
 import '../../../shared/services/lesson_pack_store.dart';
+import '../../../shared/services/media_cache.dart';
 import '../../../shared/services/sync_engine.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
@@ -64,6 +65,7 @@ class LessonScreen extends StatefulWidget {
     required this.lessonPackStore,
     required this.syncEngine,
     this.lessonCache,
+    this.mediaCache,
     this.skillVersion,
     this.beansNow,
     this.isReview = false,
@@ -87,6 +89,7 @@ class LessonScreen extends StatefulWidget {
     required this.audioPlayer,
     required this.feedbackPlayer,
     required this.syncEngine,
+    this.mediaCache,
   }) : lessonId = '',
        connectivityMonitor = null,
        lessonPackStore = null,
@@ -110,6 +113,12 @@ class LessonScreen extends StatefulWidget {
   /// starts from its copy at once and the copy is refreshed in the
   /// background; `null` always fetches.
   final CourseCacheStore? lessonCache;
+
+  /// Where clips and pictures are kept once downloaded (bolt 057). When
+  /// set, the lesson's media start downloading as soon as its content is
+  /// known, and its pictures are read from there; `null` loads them from
+  /// the network each time.
+  final MediaCache? mediaCache;
 
   /// The tapped node's `contentVersion`. A cached copy saved under a
   /// different version is stale and is not played.
@@ -173,6 +182,10 @@ class _LessonScreenState extends State<LessonScreen> {
       );
       controller.addListener(_onControllerChanged);
       _controller = controller;
+      // Every clip and picture, in question order, before the first
+      // question asks for its clip: by the time it does, it is usually
+      // on the device.
+      widget.mediaCache?.warm(lessonMediaOf(content));
       _loadPicturesEarly(content);
       return content;
     });
@@ -204,7 +217,7 @@ class _LessonScreenState extends State<LessonScreen> {
       unawaited(
         precacheImage(
           PictureTile.decodedImage(
-            pictureImageFor(source),
+            pictureImageFor(source, cache: widget.mediaCache),
             pictureSide: pictureSide,
             devicePixelRatio: devicePixelRatio,
           ),
@@ -235,9 +248,9 @@ class _LessonScreenState extends State<LessonScreen> {
     if (online) {
       if (copy != null) {
         unawaited(_fetchAndCache().then<void>((_) {}, onError: (Object _) {}));
-        return _withCurrentBeans(copy);
+        return _withPackFiles(_withCurrentBeans(copy));
       }
-      return _fetchAndCache();
+      return _withPackFiles(await _fetchAndCache());
     }
     final pack = await widget.lessonPackStore!.load(widget.lessonId);
     if (pack != null) return pack;
@@ -276,6 +289,43 @@ class _LessonScreenState extends State<LessonScreen> {
       // No copy just means the next open fetches again.
     }
     return content;
+  }
+
+  /// [content] with a downloaded pack's exercises, when this lesson was
+  /// downloaded at the same version: they point at clips and pictures
+  /// already on the device, so nothing is fetched again online (bolt 057).
+  /// Beans and versions stay [content]'s. A pack of another version, or
+  /// none, leaves [content] as it is.
+  Future<LessonContent> _withPackFiles(LessonContent content) async {
+    final version = content.contentVersion;
+    final store = widget.lessonPackStore;
+    if (version == null ||
+        store == null ||
+        !content.exercises.any(_needsItsFiles)) {
+      return content;
+    }
+    final LessonContent? pack;
+    try {
+      pack = await store.load(widget.lessonId);
+    } on Object {
+      return content;
+    }
+    final packVersion = pack?.contentVersion;
+    if (pack == null ||
+        packVersion == null ||
+        !packVersion.isAtSameMomentAs(version)) {
+      return content;
+    }
+    return LessonContent(
+      lessonId: content.lessonId,
+      skillId: content.skillId,
+      title: content.title,
+      exercises: pack.exercises,
+      beansAtStart: content.beansAtStart,
+      beansMax: content.beansMax,
+      contentVersion: content.contentVersion,
+      unrenderableCount: content.unrenderableCount,
+    );
   }
 
   LessonContent _withCurrentBeans(LessonContent content) {
@@ -412,6 +462,7 @@ class _LessonScreenState extends State<LessonScreen> {
             child: _ExerciseBody(
               controller: _controller!,
               audioPlayer: widget.audioPlayer,
+              mediaCache: widget.mediaCache,
             ),
           ),
         );
@@ -466,10 +517,15 @@ class _DownloadRequiredState extends StatelessWidget {
 }
 
 class _ExerciseBody extends StatelessWidget {
-  const _ExerciseBody({required this.controller, required this.audioPlayer});
+  const _ExerciseBody({
+    required this.controller,
+    required this.audioPlayer,
+    required this.mediaCache,
+  });
 
   final LessonController controller;
   final LessonAudioPlayer audioPlayer;
+  final MediaCache? mediaCache;
 
   @override
   Widget build(BuildContext context) {
@@ -493,6 +549,7 @@ class _ExerciseBody extends StatelessWidget {
       key: ValueKey(controller.currentIndex),
       controller: controller,
       audioPlayer: audioPlayer,
+      mediaCache: mediaCache,
     );
   }
 }
@@ -564,6 +621,17 @@ class _MistakeReview extends StatelessWidget {
 bool _needsItsFiles(Exercise exercise) =>
     _clipOf(exercise) != null || _picturesOf(exercise).isNotEmpty;
 
+/// Every clip and picture [content] uses, in question order, a question's
+/// clip before its pictures: the order they are fetched ahead in
+/// (bolt 057). Local files and bundled assets are included; the cache
+/// skips anything not on the web.
+List<String> lessonMediaOf(LessonContent content) => [
+  for (final exercise in content.exercises) ...[
+    ?_clipOf(exercise),
+    for (final picture in _picturesOf(exercise)) picture.imageUrl,
+  ],
+];
+
 /// A picture question's pictures; none for any other question.
 List<PictureChoice> _picturesOf(Exercise exercise) => switch (exercise) {
   ImageChoiceExercise e => e.choices,
@@ -588,19 +656,23 @@ class _LessonQuestion extends StatefulWidget {
     super.key,
     required this.controller,
     required this.audioPlayer,
+    required this.mediaCache,
   });
 
   final LessonController controller;
   final LessonAudioPlayer audioPlayer;
+  final MediaCache? mediaCache;
 
   @override
   State<_LessonQuestion> createState() => _LessonQuestionState();
 }
 
 class _LessonQuestionState extends State<_LessonQuestion> {
-  /// Plays asked for (a tap, or the first play) whose clip has not
-  /// started yet; the button shows "playing" while there are any.
-  int _starting = 0;
+  /// Plays asked for (a tap, or the first play) whose clip is not over
+  /// yet -- still downloading, or playing (bolt 058). The button shows
+  /// "playing" while there are any. A tap mid-clip replays it: the first
+  /// play ends as the second starts, so the count never touches zero.
+  int _playing = 0;
 
   /// A Continue still being handled; a second tap meanwhile is ignored.
   bool _continuing = false;
@@ -620,14 +692,25 @@ class _LessonQuestionState extends State<_LessonQuestion> {
   }
 
   Future<void> _play(String url) async {
-    setState(() => _starting++);
+    setState(() => _playing++);
     try {
       await widget.audioPlayer.play(url);
     } on Object {
       // Nothing to show: the learner can tap play again.
     } finally {
-      if (mounted) setState(() => _starting--);
+      if (mounted) setState(() => _playing--);
     }
+  }
+
+  @override
+  void dispose() {
+    // A clip never plays on after its question: Continue, the mistake
+    // review, or leaving the lesson. The next question's own clip starts
+    // after this, from its first frame.
+    if (_playing > 0) {
+      unawaited(widget.audioPlayer.stop().catchError((Object _) {}));
+    }
+    super.dispose();
   }
 
   Future<void> _continue() async {
@@ -710,7 +793,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
         Center(
           child: AudioPlayButton(
             onPressed: () => _play(audioUrl),
-            playing: _starting > 0,
+            playing: _playing > 0,
           ),
         ),
         const SizedBox(height: AppSpacing.space2xs),
@@ -811,7 +894,10 @@ class _LessonQuestionState extends State<_LessonQuestion> {
       children: [
         for (var i = 0; i < choices.length; i++)
           PictureTile(
-            image: pictureImageFor(choices[i].imageUrl),
+            image: pictureImageFor(
+              choices[i].imageUrl,
+              cache: widget.mediaCache,
+            ),
             altText: choices[i].labelAt(i),
             state: choiceStateOf(
               chosen: chosen == i,
