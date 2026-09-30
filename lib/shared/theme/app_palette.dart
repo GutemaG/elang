@@ -2,12 +2,12 @@
 /// (022-light-and-dark-themes, FR-1).
 ///
 /// **To change a colour**, edit its value in [AppPalette.light] and
-/// [AppPalette.dark]; every screen, tone, shadow and the
-/// Material theme follow.
+/// [AppPalette.dark]; every screen, tone, shadow and the Material theme
+/// follow. The gallery's Colours page shows both side by side.
 ///
-/// **To add a role**, add the field, its constructor parameter and a value
-/// in each palette. Every parameter is required, so a palette missing a role
-/// does not compile.
+/// **To add a role**, add the field, its constructor parameter, a value in
+/// each palette and an entry in [AppPalette.roles]. Every parameter is
+/// required, so a palette missing a role does not compile.
 ///
 /// No other file in `lib/` holds a colour value
 /// (`test/design/design_rules_test.dart`). Screens read the current theme's
@@ -288,6 +288,159 @@ class AppPalette extends ThemeExtension<AppPalette> {
     scrim: Color(0x99000000),
     shadowInk: Color(0xFF000000),
   );
+
+  /// Every role by group, with its name, in the order of the fields:
+  /// what the gallery's Colours page lists. A test checks it names every
+  /// role once, so **a new role goes here too**.
+  static final List<(String, List<(String, Color Function(AppPalette))>)>
+  roles = [
+    (
+      'Surfaces',
+      [
+        ('surface', (p) => p.surface),
+        ('surfaceDim', (p) => p.surfaceDim),
+        ('surfaceContainerLowest', (p) => p.surfaceContainerLowest),
+        ('surfaceContainerLow', (p) => p.surfaceContainerLow),
+        ('surfaceContainer', (p) => p.surfaceContainer),
+        ('surfaceContainerHigh', (p) => p.surfaceContainerHigh),
+        ('surfaceContainerHighest', (p) => p.surfaceContainerHighest),
+      ],
+    ),
+    (
+      'Text on surfaces',
+      [
+        ('onSurface', (p) => p.onSurface),
+        ('onSurfaceVariant', (p) => p.onSurfaceVariant),
+        ('inverseSurface', (p) => p.inverseSurface),
+        ('inverseOnSurface', (p) => p.inverseOnSurface),
+      ],
+    ),
+    (
+      'Lines',
+      [
+        ('outline', (p) => p.outline),
+        ('outlineVariant', (p) => p.outlineVariant),
+      ],
+    ),
+    (
+      'Primary: Highland Acacia',
+      [
+        ('primary', (p) => p.primary),
+        ('onPrimary', (p) => p.onPrimary),
+        ('primaryContainer', (p) => p.primaryContainer),
+        ('onPrimaryContainer', (p) => p.onPrimaryContainer),
+        ('primaryFixed', (p) => p.primaryFixed),
+        ('primaryFixedDim', (p) => p.primaryFixedDim),
+        ('primaryShelf', (p) => p.primaryShelf),
+      ],
+    ),
+    (
+      'Secondary: Simien Gold',
+      [
+        ('secondary', (p) => p.secondary),
+        ('onSecondary', (p) => p.onSecondary),
+        ('secondaryContainer', (p) => p.secondaryContainer),
+        ('onSecondaryContainer', (p) => p.onSecondaryContainer),
+        ('secondaryFixed', (p) => p.secondaryFixed),
+        ('secondaryBrand', (p) => p.secondaryBrand),
+        ('secondaryShelf', (p) => p.secondaryShelf),
+      ],
+    ),
+    (
+      'Tertiary: Rift Terracotta',
+      [
+        ('tertiary', (p) => p.tertiary),
+        ('onTertiary', (p) => p.onTertiary),
+        ('tertiaryContainer', (p) => p.tertiaryContainer),
+        ('onTertiaryContainer', (p) => p.onTertiaryContainer),
+        ('tertiaryFixed', (p) => p.tertiaryFixed),
+        ('tertiaryBrand', (p) => p.tertiaryBrand),
+        ('tertiaryShelf', (p) => p.tertiaryShelf),
+      ],
+    ),
+    (
+      'Error',
+      [
+        ('error', (p) => p.error),
+        ('onError', (p) => p.onError),
+        ('errorContainer', (p) => p.errorContainer),
+        ('onErrorContainer', (p) => p.onErrorContainer),
+      ],
+    ),
+    (
+      'Cards',
+      [('cardBorder', (p) => p.cardBorder), ('cardShelf', (p) => p.cardShelf)],
+    ),
+    (
+      'Answers and choices',
+      [
+        ('answerSelectedFace', (p) => p.answerSelectedFace),
+        ('answerCorrectFace', (p) => p.answerCorrectFace),
+        ('answerIncorrectFace', (p) => p.answerIncorrectFace),
+        ('chosenFace', (p) => p.chosenFace),
+        ('tileBorder', (p) => p.tileBorder),
+        ('tileShelf', (p) => p.tileShelf),
+      ],
+    ),
+    (
+      'Path nodes',
+      [
+        ('lockedNodeFace', (p) => p.lockedNodeFace),
+        ('lockedNodeIcon', (p) => p.lockedNodeIcon),
+        ('activeNodeShelf', (p) => p.activeNodeShelf),
+      ],
+    ),
+    (
+      'Gamification',
+      [
+        ('streak', (p) => p.streak),
+        ('streakRim', (p) => p.streakRim),
+        ('gem', (p) => p.gem),
+        ('xp', (p) => p.xp),
+      ],
+    ),
+    (
+      'Muted text and tracks',
+      [('textMuted', (p) => p.textMuted), ('track', (p) => p.track)],
+    ),
+    (
+      'Tones',
+      [
+        ('primaryToneBorder', (p) => p.primaryToneBorder),
+        ('primaryToneShelf', (p) => p.primaryToneShelf),
+        ('primaryToneSurface', (p) => p.primaryToneSurface),
+        ('secondaryToneBorder', (p) => p.secondaryToneBorder),
+        ('secondaryToneShelf', (p) => p.secondaryToneShelf),
+        ('tertiaryToneBorder', (p) => p.tertiaryToneBorder),
+        ('tertiaryToneShelf', (p) => p.tertiaryToneShelf),
+        ('tertiaryToneSurface', (p) => p.tertiaryToneSurface),
+      ],
+    ),
+    (
+      'Accents on surfaces',
+      [
+        ('primaryAccent', (p) => p.primaryAccent),
+        ('tertiaryAccent', (p) => p.tertiaryAccent),
+        ('tertiaryToneInk', (p) => p.tertiaryToneInk),
+        ('secondaryButtonEdge', (p) => p.secondaryButtonEdge),
+        ('answerLine', (p) => p.answerLine),
+        ('inverseAction', (p) => p.inverseAction),
+        ('pictureMat', (p) => p.pictureMat),
+        ('tertiaryFillShelf', (p) => p.tertiaryFillShelf),
+      ],
+    ),
+    (
+      'Overlays and shadows',
+      [
+        ('dialogShelf', (p) => p.dialogShelf),
+        ('scrim', (p) => p.scrim),
+        ('shadowInk', (p) => p.shadowInk),
+      ],
+    ),
+  ];
+
+  /// Both palettes by name, for the gallery's side-by-side Colours page.
+  static const Map<String, AppPalette> all = {'Light': light, 'Dark': dark};
 
   // Surfaces ---------------------------------------------------------------
 

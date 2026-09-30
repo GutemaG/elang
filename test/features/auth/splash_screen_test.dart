@@ -28,6 +28,7 @@ import 'package:elang/shared/services/sound_preference_repository.dart';
 import '../../helpers/fake_answer_feedback_player.dart';
 import '../../helpers/fake_lesson_audio_player.dart';
 import '../../helpers/in_memory_secure_storage_service.dart';
+import '../../helpers/test_appearance.dart';
 
 LessonDependencies _lessonDeps() => LessonDependencies(
   // Unused (a fake `lessonApi` is supplied below), but required by the
@@ -41,10 +42,13 @@ LessonDependencies _lessonDeps() => LessonDependencies(
   feedbackPlayer: FakeAnswerFeedbackPlayer(),
 );
 
-SettingsDependencies _settingsDeps(AuthDependencies deps) => SettingsDependencies(
-  sessionRepository: deps.sessionRepository,
-  soundPreferenceRepository: SoundPreferenceRepository(storage: deps.storage),
-);
+SettingsDependencies _settingsDeps(AuthDependencies deps) =>
+    SettingsDependencies(
+      sessionRepository: deps.sessionRepository,
+      soundPreferenceRepository: SoundPreferenceRepository(
+        storage: deps.storage,
+      ),
+    );
 
 /// Advances past the splash screen's ~1.4s "brewing" animation so the
 /// navigation that's gated on both the animation *and* the session-check
@@ -65,10 +69,9 @@ void main() {
       MaterialApp(
         home: SplashScreen(
           authFlowController: AuthFlowController(
-            sessionRepository:
-                AuthDependencies(
-                  storage: InMemorySecureStorageService(),
-                ).sessionRepository,
+            sessionRepository: AuthDependencies(
+              storage: InMemorySecureStorageService(),
+            ).sessionRepository,
           ),
         ),
       ),
@@ -79,25 +82,25 @@ void main() {
     expect(find.text('Get Started'), findsOneWidget);
   });
 
-  testWidgets(
-    'routes to the onboarding carousel when no session exists',
-    (tester) async {
-      final deps = AuthDependencies(storage: InMemorySecureStorageService());
+  testWidgets('routes to the onboarding carousel when no session exists', (
+    tester,
+  ) async {
+    final deps = AuthDependencies(storage: InMemorySecureStorageService());
 
-      await tester.pumpWidget(
-        BunaApp(
-          authDependencies: deps,
-          lessonDependencies: _lessonDeps(),
-          settingsDependencies: _settingsDeps(deps),
-        ),
-      );
-      await _finishSplashAnimation(tester);
+    await tester.pumpWidget(
+      BunaApp(
+        appearance: testAppearance(),
+        authDependencies: deps,
+        lessonDependencies: _lessonDeps(),
+        settingsDependencies: _settingsDeps(deps),
+      ),
+    );
+    await _finishSplashAnimation(tester);
 
-      // Onboarding carousel content, not the dashboard.
-      expect(find.text('Bite-Sized Amharic'), findsOneWidget);
-      expect(find.text('Foundations & Greetings'), findsNothing);
-    },
-  );
+    // Onboarding carousel content, not the dashboard.
+    expect(find.text('Bite-Sized Amharic'), findsOneWidget);
+    expect(find.text('Foundations & Greetings'), findsNothing);
+  });
 
   testWidgets(
     'routes to the onboarding carousel when the stored session is expired',
@@ -117,6 +120,7 @@ void main() {
 
       await tester.pumpWidget(
         BunaApp(
+          appearance: testAppearance(),
           authDependencies: deps,
           lessonDependencies: _lessonDeps(),
           settingsDependencies: _settingsDeps(deps),
@@ -146,6 +150,7 @@ void main() {
 
       await tester.pumpWidget(
         BunaApp(
+          appearance: testAppearance(),
           authDependencies: deps,
           lessonDependencies: _lessonDeps(),
           settingsDependencies: _settingsDeps(deps),

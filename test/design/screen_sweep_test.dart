@@ -54,6 +54,7 @@ import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/sync_engine.dart';
 import 'package:elang/shared/theme/app_theme.dart';
+import 'package:elang/shared/theme/appearance.dart';
 import 'package:elang/shared/widgets/app_sheet.dart';
 import 'package:elang/shared/widgets/exercise/answer_action_bar.dart';
 import 'package:elang/shared/widgets/exercise/answer_tile.dart';
@@ -68,6 +69,7 @@ import '../helpers/fake_native_sign_in.dart';
 import '../helpers/fake_pending_sync_queue_store.dart';
 import '../helpers/fake_user_preferences_api.dart';
 import '../helpers/in_memory_secure_storage_service.dart';
+import '../helpers/test_appearance.dart';
 
 // ---------------------------------------------------------------------------
 // The app shell and small drivers.
@@ -75,7 +77,14 @@ import '../helpers/in_memory_secure_storage_service.dart';
 /// The theme the scenes are drawn in; each group sets it.
 ThemeData _theme = AppTheme.light;
 
-Widget _app(Widget home, double scale) => MaterialApp(
+// Under an Appearance scope, as in the app, so Settings shows its
+// Appearance row.
+Widget _app(Widget home, double scale) => AppearanceScope(
+  controller: testAppearance(),
+  child: _materialApp(home, scale),
+);
+
+Widget _materialApp(Widget home, double scale) => MaterialApp(
   theme: _theme,
   builder: (context, child) => MediaQuery(
     data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
@@ -732,6 +741,11 @@ final _scenes = <String, _Scene>{
     await tester.pumpAndSettle();
     await _tap(tester, find.text('Daily goal'));
   },
+  'settings, the appearance sheet': (tester, scale) async {
+    await tester.pumpWidget(_app(await _settings(), scale));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.text('Appearance'));
+  },
   'settings, the log-out dialog': (tester, scale) async {
     await tester.pumpWidget(_app(await _settings(), scale));
     await tester.pumpAndSettle();
@@ -788,6 +802,7 @@ final _shows = <String, Finder>{
   'settings': find.text('Log out'),
   'settings, failed to load': find.text("Couldn't load your settings"),
   'settings, the daily-goal sheet': find.text('Casual · 5 min/day'),
+  'settings, the appearance sheet': find.text('Match your phone'),
   'settings, the log-out dialog': find.text('Log out?'),
   'downloads': find.textContaining('Akkam'),
   'downloads, empty': find.text('No downloaded lessons yet.'),

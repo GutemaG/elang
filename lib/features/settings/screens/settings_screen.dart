@@ -11,6 +11,7 @@ import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
+import '../../../shared/theme/appearance.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon_button.dart';
@@ -101,6 +102,9 @@ class SettingsScreen extends StatefulWidget {
   /// (021-daily-reminder); `null` keeps the switch a saved preference only.
   final ReminderService? reminders;
 
+  /// The Appearance row (System, Light or Dark).
+  static const appearanceRowKey = ValueKey('settings-appearance');
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
@@ -161,6 +165,14 @@ class _SettingsScreenState extends State<SettingsScreen>
     if (minutes != null) {
       await _controller.updateDailyGoalMinutes(minutes);
     }
+  }
+
+  Future<void> _pickAppearance(AppearanceController appearance) async {
+    final mode = await showAppSheet<ThemeMode>(
+      context: context,
+      builder: (context) => _AppearanceSheet(selected: appearance.value),
+    );
+    if (mode != null) await appearance.choose(mode);
   }
 
   Future<void> _pickCourse() async {
@@ -308,6 +320,19 @@ class _SettingsScreenState extends State<SettingsScreen>
                   value: _controller.soundEnabled,
                   onChanged: _controller.updateSoundEnabled,
                 ),
+                // System, Light or Dark (022-light-and-dark-themes), kept
+                // on the phone. The app always provides it; a screen
+                // pumped on its own may not.
+                if (AppearanceScope.maybeOf(context) case final appearance?)
+                  ListRow(
+                    key: SettingsScreen.appearanceRowKey,
+                    icon: Icons.contrast,
+                    title: 'Appearance',
+                    subtitle: _appearanceOptions
+                        .firstWhere((o) => o.mode == appearance.value)
+                        .title,
+                    onTap: () => _pickAppearance(appearance),
+                  ),
               ],
             ),
             const SectionHeader(title: 'About'),
@@ -332,6 +357,80 @@ class _SettingsScreenState extends State<SettingsScreen>
           ],
         );
     }
+  }
+}
+
+class _AppearanceOption {
+  const _AppearanceOption(this.mode, this.icon, this.title, this.description);
+
+  final ThemeMode mode;
+  final IconData icon;
+  final String title;
+  final String description;
+}
+
+const _appearanceOptions = [
+  _AppearanceOption(
+    ThemeMode.system,
+    Icons.brightness_auto,
+    'System',
+    'Match your phone',
+  ),
+  _AppearanceOption(ThemeMode.light, Icons.light_mode, 'Light', 'Always light'),
+  _AppearanceOption(ThemeMode.dark, Icons.dark_mode, 'Dark', 'Always dark'),
+];
+
+/// The Appearance picker: System, Light and Dark as option cards, the
+/// current one selected. Pops with the chosen mode; a dismiss pops `null`.
+class _AppearanceSheet extends StatelessWidget {
+  const _AppearanceSheet({required this.selected});
+
+  final ThemeMode selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Appearance',
+                style: AppTypography.headlineSm.copyWith(
+                  color: context.colors.onSurface,
+                ),
+              ),
+            ),
+            AppIconButton(
+              icon: Icons.close,
+              tooltip: 'Close',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.spaceXs),
+        for (final option in _appearanceOptions)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
+            child: SelectableOptionCard(
+              leading: IconBadge(
+                icon: option.icon,
+                tone: selected == option.mode
+                    ? AppTone.primary
+                    : AppTone.neutral,
+                size: 48,
+                square: true,
+              ),
+              title: option.title,
+              subtitle: option.description,
+              selected: selected == option.mode,
+              onTap: () => Navigator.of(context).pop(option.mode),
+            ),
+          ),
+      ],
+    );
   }
 }
 

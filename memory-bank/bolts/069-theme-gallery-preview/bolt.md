@@ -3,13 +3,22 @@ id: 069-theme-gallery-preview
 unit: 001-theme-palette
 intent: 022-light-and-dark-themes
 type: simple-construction-bolt
-status: planned
+status: complete
 stories: []
 created: '2026-09-30T13:52:00Z'
-started: null
-completed: null
+started: '2026-09-30T19:37:34Z'
+completed: '2026-09-30T20:13:06Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-30T19:38:45Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-30T20:09:17Z'
+    artifact: implementation-plan.md
+  - name: test
+    completed: '2026-09-30T20:13:06Z'
+    artifact: implementation-plan.md
 requires_bolts:
   - 068-dark-palette
 enables_bolts: []
@@ -33,7 +42,7 @@ Add a Colours page and a light/dark toggle to the component gallery.
 Written in the unit brief (`intents/022-light-and-dark-themes/units/001-theme-palette/unit-brief.md`), not
 as separate files, so `stories:` above is empty.
 
-- [ ] **005-gallery-preview**
+- [x] **005-gallery-preview**
 
 ## Bolt Type
 
@@ -42,9 +51,9 @@ as separate files, so `stories:` above is empty.
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

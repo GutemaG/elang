@@ -4,7 +4,7 @@ intent: 022-light-and-dark-themes
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
 phase: inception
-status: ready
+status: complete
 created: '2026-09-30T13:52:00Z'
 updated: '2026-09-30T18:54:45Z'
 ---
@@ -64,7 +64,7 @@ colour change is one edit and dark mode works everywhere.
 | 002-screens-read-theme | Screens take colours from the theme | Must | Complete (bolt 067) |
 | 003-dark-palette | The dark palette | Must | Complete (bolt 068) |
 | 004-contrast-guard | Text stays readable in both palettes | Must | Complete (bolt 068) |
-| 005-gallery-preview | See the palette and flip themes in the gallery | Should | Planned (bolt 069) |
+| 005-gallery-preview | See the palette and flip themes in the gallery | Should | Complete (bolt 069) |
 
 ### 001-palette-by-role (FR-1, FR-2)
 
@@ -117,9 +117,9 @@ colour edit can't make text unreadable.
 **As a** developer, **I want** to see every colour and flip themes in the
 gallery, **so that** I can check a change in seconds.
 
-- [ ] A Colours page lists each role with its light and dark swatch and
+- [x] A Colours page lists each role with its light and dark swatch and
   hex.
-- [ ] A toggle redraws every gallery page in the other theme.
+- [x] A toggle redraws every gallery page in the other theme.
 
 ---
 

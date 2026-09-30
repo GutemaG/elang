@@ -16,7 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 enum _Rule {
   colourLiteral(r'Color\(0x', 'a Color(0x…) literal: use a palette role'),
   fixedPalette(
-    r'\bAppColors\b|\bAppPalette\.(light|dark)\b|\bAppShadows\.of\(',
+    r'\bAppColors\b|\bAppPalette\.(light|dark|all)\b|\bAppShadows\.of\(',
     'a colour fixed to one palette: use context.colors, context.tone or '
         'context.shadows',
   ),
@@ -51,6 +51,12 @@ enum _Rule {
 /// widgets and the gallery may draw decoration but must use the tokens.
 bool _exempt(String path, _Rule rule) {
   if (path.startsWith('lib/shared/theme/')) return true;
+  // The gallery's Colours page shows both palettes side by side, which no
+  // theme gives (022-light-and-dark-themes, story 005).
+  if (rule == _Rule.fixedPalette &&
+      path == 'lib/shared/gallery/gallery_colours.dart') {
+    return true;
+  }
   if (rule == _Rule.colourLiteral || rule == _Rule.fixedPalette) {
     return false;
   }
@@ -207,6 +213,8 @@ void main() {
       final rule = _Rule.fixedPalette.regExp;
       expect(rule.hasMatch('color: AppPalette.light.onSurface,'), isTrue);
       expect(rule.hasMatch('color: AppPalette.dark.onSurface,'), isTrue);
+      expect(rule.hasMatch('for (final p in AppPalette.all.values)'), isTrue);
+      expect(rule.hasMatch('for (final group in AppPalette.roles)'), isFalse);
       expect(rule.hasMatch('AppShadows.of(AppPalette.light).card'), isTrue);
       expect(rule.hasMatch('boxShadow: AppShadows.of(palette).card,'), isTrue);
       expect(rule.hasMatch('color: context.colors.onSurface,'), isFalse);
@@ -285,6 +293,14 @@ void main() {
           _Rule.pageScaffold,
         ),
         isTrue,
+      );
+      expect(
+        _exempt('lib/shared/gallery/gallery_colours.dart', _Rule.fixedPalette),
+        isTrue,
+      );
+      expect(
+        _exempt('lib/shared/gallery/gallery_colours.dart', _Rule.colourLiteral),
+        isFalse,
       );
       expect(
         _exempt(

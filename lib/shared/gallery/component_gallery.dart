@@ -9,6 +9,7 @@ import '../theme/app_typography.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_icon_button.dart';
 import '../widgets/app_page.dart';
+import 'gallery_colours.dart';
 import 'gallery_exercise.dart';
 import 'gallery_sheets.dart';
 import 'gallery_status.dart';
@@ -21,8 +22,18 @@ import 'gallery_surfaces.dart';
 ///
 /// Run it with `flutter run -t lib/gallery_main.dart`. The app's own
 /// `main.dart` never imports it, so it is not part of the app.
-class ComponentGalleryApp extends StatelessWidget {
+///
+/// The sun/moon button in the top bar redraws every page in the other theme
+/// (022-light-and-dark-themes, story 005).
+class ComponentGalleryApp extends StatefulWidget {
   const ComponentGalleryApp({super.key});
+
+  @override
+  State<ComponentGalleryApp> createState() => _ComponentGalleryAppState();
+}
+
+class _ComponentGalleryAppState extends State<ComponentGalleryApp> {
+  ThemeMode _mode = ThemeMode.light;
 
   @override
   Widget build(BuildContext context) {
@@ -30,22 +41,51 @@ class ComponentGalleryApp extends StatelessWidget {
       title: 'Buna components',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const ComponentGallery(),
+      darkTheme: AppTheme.dark,
+      themeMode: _mode,
+      home: ComponentGallery(
+        dark: _mode == ThemeMode.dark,
+        onToggleTheme: () => setState(
+          () => _mode = _mode == ThemeMode.dark
+              ? ThemeMode.light
+              : ThemeMode.dark,
+        ),
+      ),
     );
   }
 }
 
 class ComponentGallery extends StatelessWidget {
-  const ComponentGallery({super.key});
+  const ComponentGallery({super.key, this.dark = false, this.onToggleTheme});
+
+  /// Whether the gallery is drawn in the dark theme, for the switch's icon.
+  final bool dark;
+
+  /// Flips the gallery between light and dark; no switch without it.
+  final VoidCallback? onToggleTheme;
+
+  /// The light/dark switch in the top bar.
+  static const themeSwitchKey = ValueKey('gallery-theme-switch');
 
   @override
   Widget build(BuildContext context) {
-    return const AppPage(
-      topBar: AppTopBar(title: 'Buna components'),
-      body: Column(
+    return AppPage(
+      topBar: AppTopBar(
+        title: 'Buna components',
+        trailing: [
+          if (onToggleTheme != null)
+            AppIconButton(
+              key: themeSwitchKey,
+              icon: dark ? Icons.light_mode : Icons.dark_mode,
+              tooltip: dark ? 'Light theme' : 'Dark theme',
+              onPressed: onToggleTheme,
+            ),
+        ],
+      ),
+      body: const Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ColoursSection(),
+          ColoursGallerySection(),
           _ShadowsSection(),
           _RadiiSection(),
           _MotionSection(),
@@ -128,158 +168,6 @@ class GalleryCase extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.spaceXs),
           child,
-        ],
-      ),
-    );
-  }
-}
-
-class _ColoursSection extends StatelessWidget {
-  const _ColoursSection();
-
-  static Map<String, List<(String, Color)>> _groups(AppPalette colors) => {
-    'Surfaces': [
-      ('surface', colors.surface),
-      ('surfaceContainerLowest', colors.surfaceContainerLowest),
-      ('surfaceContainerLow', colors.surfaceContainerLow),
-      ('surfaceContainer', colors.surfaceContainer),
-      ('surfaceContainerHigh', colors.surfaceContainerHigh),
-      ('surfaceContainerHighest', colors.surfaceContainerHighest),
-      ('surfaceDim', colors.surfaceDim),
-    ],
-    'Text and lines': [
-      ('onSurface', colors.onSurface),
-      ('onSurfaceVariant', colors.onSurfaceVariant),
-      ('textMuted', colors.textMuted),
-      ('outline', colors.outline),
-      ('outlineVariant', colors.outlineVariant),
-      ('track', colors.track),
-    ],
-    'Highland Acacia (primary)': [
-      ('primary', colors.primary),
-      ('primaryContainer', colors.primaryContainer),
-      ('primaryShelf', colors.primaryShelf),
-      ('primaryFixed', colors.primaryFixed),
-    ],
-    'Simien Gold (secondary)': [
-      ('secondary', colors.secondary),
-      ('secondaryContainer', colors.secondaryContainer),
-      ('secondaryBrand', colors.secondaryBrand),
-      ('secondaryShelf', colors.secondaryShelf),
-      ('secondaryFixed', colors.secondaryFixed),
-    ],
-    'Rift Terracotta (tertiary)': [
-      ('tertiary', colors.tertiary),
-      ('tertiaryContainer', colors.tertiaryContainer),
-      ('tertiaryBrand', colors.tertiaryBrand),
-      ('tertiaryShelf', colors.tertiaryShelf),
-      ('tertiaryFixed', colors.tertiaryFixed),
-    ],
-    'Cards and tiles': [
-      ('cardBorder', colors.cardBorder),
-      ('cardShelf', colors.cardShelf),
-      ('tileBorder', colors.tileBorder),
-      ('tileShelf', colors.tileShelf),
-    ],
-    'Answer states': [
-      ('answerSelectedFace', colors.answerSelectedFace),
-      ('answerCorrectFace', colors.answerCorrectFace),
-      ('answerIncorrectFace', colors.answerIncorrectFace),
-      ('chosenFace', colors.chosenFace),
-    ],
-    'Path nodes': [
-      ('lockedNodeFace', colors.lockedNodeFace),
-      ('lockedNodeIcon', colors.lockedNodeIcon),
-      ('activeNodeShelf', colors.activeNodeShelf),
-    ],
-    'Gamification': [
-      ('streak', colors.streak),
-      ('streakRim', colors.streakRim),
-      ('gem', colors.gem),
-      ('xp', colors.xp),
-    ],
-    'Tones (AppTone)': [
-      ('primaryToneBorder', colors.primaryToneBorder),
-      ('primaryToneShelf', colors.primaryToneShelf),
-      ('primaryToneSurface', colors.primaryToneSurface),
-      ('secondaryToneBorder', colors.secondaryToneBorder),
-      ('secondaryToneShelf', colors.secondaryToneShelf),
-      ('tertiaryToneBorder', colors.tertiaryToneBorder),
-      ('tertiaryToneShelf', colors.tertiaryToneShelf),
-      ('tertiaryToneSurface', colors.tertiaryToneSurface),
-    ],
-    'Feedback and overlay': [
-      ('error', colors.error),
-      ('errorContainer', colors.errorContainer),
-      ('scrim', colors.scrim),
-      ('dialogShelf', colors.dialogShelf),
-    ],
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return GallerySection(
-      title: 'Colours',
-      note: 'Every colour a component may use (AppPalette).',
-      children: [
-        for (final group in _groups(context.colors).entries)
-          GalleryCase(
-            label: group.key,
-            child: Wrap(
-              spacing: AppSpacing.spaceSm,
-              runSpacing: AppSpacing.spaceSm,
-              children: [
-                for (final (name, colour) in group.value)
-                  _Swatch(name: name, colour: colour),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _Swatch extends StatelessWidget {
-  const _Swatch({required this.name, required this.colour});
-
-  final String name;
-  final Color colour;
-
-  String get _hex {
-    final argb = colour.toARGB32().toRadixString(16).padLeft(8, '0');
-    final rgb = '#${argb.substring(2).toUpperCase()}';
-    return argb.startsWith('ff') ? rgb : '$rgb @${argb.substring(0, 2)}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 96,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: colour,
-              borderRadius: BorderRadius.circular(AppRadii.sm),
-              border: Border.all(color: context.colors.outlineVariant),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space2xs),
-          Text(
-            name,
-            style: AppTypography.labelSm.copyWith(
-              color: context.colors.onSurface,
-            ),
-          ),
-          Text(
-            _hex,
-            style: AppTypography.bodySm.copyWith(
-              color: context.colors.onSurfaceVariant,
-              fontSize: 11,
-            ),
-          ),
         ],
       ),
     );

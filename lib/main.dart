@@ -12,12 +12,14 @@ import 'features/settings/settings_dependencies.dart';
 import 'shared/licences/picture_credits.dart';
 import 'shared/services/reminders/reminder_scheduler.dart';
 import 'shared/services/reminders/reminder_service.dart';
+import 'shared/services/appearance_repository.dart';
 import 'shared/services/secure_storage_service.dart';
 import 'shared/services/sound_preference_repository.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/app_theme_context.dart';
+import 'shared/theme/appearance.dart';
 
-void main() {
+Future<void> main() async {
   // The dependencies below reach platform plugins as soon as they are
   // built (the sync engine asks connectivity_plus whether it is online), so
   // the binding has to exist before `runApp` would create it.
@@ -46,8 +48,14 @@ void main() {
   final soundPreferenceRepository = SoundPreferenceRepository(
     storage: authDependencies.storage,
   );
+  // The Appearance choice (022-light-and-dark-themes), read before the
+  // first frame so the splash is already in the chosen theme.
+  final appearance = await AppearanceController.load(
+    AppearanceRepository(storage: storage),
+  );
   runApp(
     BunaApp(
+      appearance: appearance,
       authDependencies: authDependencies,
       lessonDependencies: LessonDependencies(
         sessionRepository: authDependencies.sessionRepository,
@@ -73,21 +81,33 @@ class BunaApp extends StatelessWidget {
     required this.authDependencies,
     required this.lessonDependencies,
     required this.settingsDependencies,
+    required this.appearance,
   });
 
   final AuthDependencies authDependencies;
   final LessonDependencies lessonDependencies;
   final SettingsDependencies settingsDependencies;
 
+  /// System, Light or Dark: the learner's choice in Settings.
+  final AppearanceController appearance;
+
   @override
   Widget build(BuildContext context) {
+    return AppearanceScope(
+      controller: appearance,
+      child: ValueListenableBuilder(
+        valueListenable: appearance,
+        builder: (context, mode, _) => _app(mode),
+      ),
+    );
+  }
+
+  Widget _app(ThemeMode mode) {
     return MaterialApp(
       title: 'Buna',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      // Follows the phone until the Appearance setting (bolt 070) lets the
-      // learner choose.
-      themeMode: ThemeMode.system,
+      themeMode: mode,
       builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
         value: AppTheme.systemBarsFor(
           context.colors,

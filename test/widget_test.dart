@@ -16,6 +16,7 @@ import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'helpers/fake_answer_feedback_player.dart';
 import 'helpers/fake_lesson_audio_player.dart';
 import 'helpers/in_memory_secure_storage_service.dart';
+import 'helpers/test_appearance.dart';
 
 void main() {
   testWidgets('BunaApp boots into the splash screen', (
@@ -29,6 +30,7 @@ void main() {
     );
     await tester.pumpWidget(
       BunaApp(
+        appearance: testAppearance(),
         authDependencies: authDependencies,
         lessonDependencies: LessonDependencies(
           sessionRepository: authDependencies.sessionRepository,
