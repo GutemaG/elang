@@ -1,7 +1,8 @@
 // The consistency sweep (018-mobile-design-system, bolt 049, story 005,
 // NFR-2 and NFR-4): every screen, sheet and dialog, in its main states, on
 // a small phone (360×640) and a large one (430×932), at 1.0× and 1.3×
-// text. Any overflow or other framework error fails.
+// text, in the light and the dark theme (022-light-and-dark-themes, bolt
+// 068). Any overflow or other framework error fails.
 //
 // Each screen's own tests check its layout; this file only checks that
 // nothing breaks at these sizes, all in one place.
@@ -71,8 +72,11 @@ import '../helpers/in_memory_secure_storage_service.dart';
 // ---------------------------------------------------------------------------
 // The app shell and small drivers.
 
+/// The theme the scenes are drawn in; each group sets it.
+ThemeData _theme = AppTheme.light;
+
 Widget _app(Widget home, double scale) => MaterialApp(
-  theme: AppTheme.light,
+  theme: _theme,
   builder: (context, child) => MediaQuery(
     data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
     child: child!,
@@ -795,23 +799,29 @@ void main() {
     expect(_shows.keys.toSet(), _scenes.keys.toSet());
   });
 
-  for (final size in const [Size(360, 640), Size(430, 932)]) {
-    for (final scale in const [1.0, 1.3]) {
-      final at = '${size.width.toInt()}×${size.height.toInt()} at ${scale}x';
-      group(at, () {
-        for (final MapEntry(key: name, value: scene) in _scenes.entries) {
-          testWidgets('$name lays out without overflow', (tester) async {
-            tester.view.physicalSize = size;
-            tester.view.devicePixelRatio = 1;
-            addTearDown(tester.view.reset);
+  for (final (mode, theme) in [
+    ('light', AppTheme.light),
+    ('dark', AppTheme.dark),
+  ]) {
+    for (final size in const [Size(360, 640), Size(430, 932)]) {
+      for (final scale in const [1.0, 1.3]) {
+        final at = '${size.width.toInt()}×${size.height.toInt()} at ${scale}x';
+        group('$mode, $at', () {
+          setUp(() => _theme = theme);
+          for (final MapEntry(key: name, value: scene) in _scenes.entries) {
+            testWidgets('$name lays out without overflow', (tester) async {
+              tester.view.physicalSize = size;
+              tester.view.devicePixelRatio = 1;
+              addTearDown(tester.view.reset);
 
-            await scene(tester, scale);
+              await scene(tester, scale);
 
-            expect(tester.takeException(), isNull);
-            expect(_shows[name], findsWidgets);
-          });
-        }
-      });
+              expect(tester.takeException(), isNull);
+              expect(_shows[name], findsWidgets);
+            });
+          }
+        });
+      }
     }
   }
 }

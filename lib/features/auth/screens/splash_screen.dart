@@ -114,7 +114,7 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       'Buna',
                       style: AppTypography.displayLgMobile.copyWith(
-                        color: context.colors.primaryContainer,
+                        color: context.colors.primaryAccent,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.space2xs),

@@ -71,8 +71,9 @@ Widget _host(
   double width = 320,
   double scale = 1,
   bool reduceMotion = false,
+  ThemeData? theme,
 }) => MaterialApp(
-  theme: AppTheme.light,
+  theme: theme ?? AppTheme.light,
   home: Builder(
     builder: (context) => MediaQuery(
       data: MediaQuery.of(context).copyWith(
@@ -103,12 +104,14 @@ Widget _tile(
   double width = 150,
   double scale = 1,
   bool reduceMotion = false,
+  ThemeData? theme,
 }) => _host(
   Center(
     child: SizedBox(width: width, child: tile),
   ),
   scale: scale,
   reduceMotion: reduceMotion,
+  theme: theme,
 );
 
 BoxDecoration _face(WidgetTester tester, Finder of) {
@@ -638,6 +641,38 @@ void main() {
       expect(find.byKey(PictureTile.loadingKey), findsNothing);
       expect(find.byKey(PictureTile.failedKey), findsNothing);
       expect(find.byType(RawImage), findsOneWidget);
+    });
+
+    for (final (mode, theme, mat) in [
+      ('light', AppTheme.light, AppPalette.light.pictureMat),
+      ('dark', AppTheme.dark, AppPalette.dark.pictureMat),
+    ]) {
+      testWidgets("in $mode, a loaded picture sits on the theme's mat", (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          _tile(
+            PictureTile(image: const _Loaded(), altText: 'A', onTap: () {}),
+            theme: theme,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final box = tester.widget<ColoredBox>(find.byKey(PictureTile.matKey));
+        expect(box.color, mat);
+        expect(
+          find.descendant(
+            of: find.byKey(PictureTile.matKey),
+            matching: find.byType(RawImage),
+          ),
+          findsOneWidget,
+        );
+      });
+    }
+
+    test('the mat is clear in light and a soft white in dark', () {
+      expect(AppPalette.light.pictureMat.a, 0);
+      expect(AppPalette.dark.pictureMat.a, 1);
+      expect(AppPalette.dark.pictureMat.computeLuminance(), greaterThan(0.8));
     });
 
     testWidgets('a picture that fails shows its description, and can still '

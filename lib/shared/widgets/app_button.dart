@@ -349,8 +349,8 @@ class _TactileStyle {
         ),
         AppButtonVariant.accent => _TactileStyle(
           face: colors.secondaryContainer,
-          border: colors.secondary,
-          shelf: colors.secondary,
+          border: colors.secondaryButtonEdge,
+          shelf: colors.secondaryButtonEdge,
           foreground: colors.onSecondaryContainer,
         ),
         AppButtonVariant.destructive => _TactileStyle(

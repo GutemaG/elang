@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#004527</color>
+    <!-- The page colour behind the launch screen (AppPalette.light.surface). -->
+    <color name="launch_background">#FFF8F5</color>
 </resources>

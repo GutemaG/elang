@@ -81,7 +81,7 @@ class LessonCompleteScreen extends StatelessWidget {
             result.isReview ? 'Review Complete!' : 'Lesson Complete!',
             textAlign: TextAlign.center,
             style: AppTypography.displayLgMobile.copyWith(
-              color: context.colors.primaryContainer,
+              color: context.colors.primaryAccent,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceLg),

@@ -180,7 +180,7 @@ class _CourseTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.labelSm.copyWith(
                   color: selected
-                      ? context.colors.primaryContainer
+                      ? context.colors.primaryAccent
                       : context.colors.onSurface,
                 ),
               ),

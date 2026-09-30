@@ -58,7 +58,7 @@ class CourseBadge extends StatelessWidget {
                 Icon(
                   Icons.translate,
                   size: 24,
-                  color: context.colors.primaryContainer,
+                  color: context.colors.primaryAccent,
                 ),
               const SizedBox(width: AppSpacing.spaceXs),
               Flexible(

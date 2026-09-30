@@ -153,7 +153,7 @@ void main() {
       expect(theme.switchTheme.trackColor!.resolve(chosen), p.primaryContainer);
       expect(theme.switchTheme.thumbColor!.resolve({}), p.outline);
       expect(theme.snackBarTheme.backgroundColor, p.inverseSurface);
-      expect(theme.snackBarTheme.actionTextColor, p.primaryFixedDim);
+      expect(theme.snackBarTheme.actionTextColor, p.inverseAction);
     });
 
     test('light is the light palette', () {
@@ -171,7 +171,7 @@ void main() {
       expect(primary.selectedFace, p.chosenFace);
       expect(AppTone.neutral.colorsIn(p).border, p.cardBorder);
       expect(AppTone.secondary.colorsIn(p).icon, p.secondaryContainer);
-      expect(AppTone.tertiary.colorsIn(p).fillShelf, p.tertiary);
+      expect(AppTone.tertiary.colorsIn(p).fillShelf, p.tertiaryFillShelf);
     });
 
     test('in light, every tone keeps the colours it had', () {

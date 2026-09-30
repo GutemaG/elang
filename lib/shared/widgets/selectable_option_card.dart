@@ -67,7 +67,7 @@ class SelectableOptionCard extends StatelessWidget {
                             badgeLabel!,
                             style: AppTypography.labelSm.copyWith(
                               color: enabled
-                                  ? context.colors.primaryContainer
+                                  ? context.colors.primaryAccent
                                   : context.colors.onSurfaceVariant,
                             ),
                           ),
@@ -78,7 +78,7 @@ class SelectableOptionCard extends StatelessWidget {
                           AppTypography.headlineSm.copyWith(
                             color: enabled
                                 ? (selected
-                                      ? context.colors.primaryContainer
+                                      ? context.colors.primaryAccent
                                       : context.colors.onSurface)
                                 : context.colors.onSurfaceVariant,
                           ),

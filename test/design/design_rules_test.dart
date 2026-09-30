@@ -16,7 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 enum _Rule {
   colourLiteral(r'Color\(0x', 'a Color(0x…) literal: use a palette role'),
   fixedPalette(
-    r'\bAppColors\b|\bAppPalette\.light\b|\bAppShadows\.of\(',
+    r'\bAppColors\b|\bAppPalette\.(light|dark)\b|\bAppShadows\.of\(',
     'a colour fixed to one palette: use context.colors, context.tone or '
         'context.shadows',
   ),
@@ -206,6 +206,7 @@ void main() {
     test("a colour fixed to one palette is caught; the theme's is not", () {
       final rule = _Rule.fixedPalette.regExp;
       expect(rule.hasMatch('color: AppPalette.light.onSurface,'), isTrue);
+      expect(rule.hasMatch('color: AppPalette.dark.onSurface,'), isTrue);
       expect(rule.hasMatch('AppShadows.of(AppPalette.light).card'), isTrue);
       expect(rule.hasMatch('boxShadow: AppShadows.of(palette).card,'), isTrue);
       expect(rule.hasMatch('color: context.colors.onSurface,'), isFalse);

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'features/auth/auth_dependencies.dart';
 import 'features/auth/auth_routes.dart';
@@ -14,6 +15,7 @@ import 'shared/services/reminders/reminder_service.dart';
 import 'shared/services/secure_storage_service.dart';
 import 'shared/services/sound_preference_repository.dart';
 import 'shared/theme/app_theme.dart';
+import 'shared/theme/app_theme_context.dart';
 
 void main() {
   // The dependencies below reach platform plugins as soon as they are
@@ -82,6 +84,17 @@ class BunaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Buna',
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      // Follows the phone until the Appearance setting (bolt 070) lets the
+      // learner choose.
+      themeMode: ThemeMode.system,
+      builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: AppTheme.systemBarsFor(
+          context.colors,
+          brightness: Theme.of(context).brightness,
+        ),
+        child: child!,
+      ),
       initialRoute: AuthRoutes.splash,
       routes: AuthRoutes.build(
         authDependencies,

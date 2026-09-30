@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_palette.dart';
 import 'app_spacing.dart';
@@ -11,6 +12,28 @@ import 'app_typography.dart';
 abstract final class AppTheme {
   static ThemeData get light =>
       fromPalette(AppPalette.light, brightness: Brightness.light);
+
+  /// The warm dark theme (022-light-and-dark-themes, FR-4).
+  static ThemeData get dark =>
+      fromPalette(AppPalette.dark, brightness: Brightness.dark);
+
+  /// The phone's status and navigation bars in [p]: coloured as the page,
+  /// with dark icons on a light theme and light icons on a dark one.
+  static SystemUiOverlayStyle systemBarsFor(
+    AppPalette p, {
+    required Brightness brightness,
+  }) {
+    final icons = brightness == Brightness.dark
+        ? Brightness.light
+        : Brightness.dark;
+    return SystemUiOverlayStyle(
+      statusBarColor: p.surface.withValues(alpha: 0),
+      statusBarIconBrightness: icons,
+      statusBarBrightness: brightness,
+      systemNavigationBarColor: p.surface,
+      systemNavigationBarIconBrightness: icons,
+    );
+  }
 
   /// The whole theme drawn in [p].
   static ThemeData fromPalette(AppPalette p, {required Brightness brightness}) {
@@ -70,6 +93,7 @@ abstract final class AppTheme {
         backgroundColor: p.surface,
         foregroundColor: p.onSurface,
         elevation: 0,
+        systemOverlayStyle: systemBarsFor(p, brightness: brightness),
       ),
       chipTheme: chipThemeFor(p),
       switchTheme: switchThemeFor(p),
@@ -153,7 +177,7 @@ abstract final class AppTheme {
       contentTextStyle: AppTypography.bodyMd.copyWith(
         color: p.inverseOnSurface,
       ),
-      actionTextColor: p.primaryFixedDim,
+      actionTextColor: p.inverseAction,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.base),
       ),

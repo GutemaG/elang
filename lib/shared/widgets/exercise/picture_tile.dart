@@ -39,6 +39,9 @@ class PictureTile extends StatelessWidget {
   /// The placeholder shown while the picture loads.
   static const loadingKey = ValueKey('picture-tile-loading');
 
+  /// The mat a loaded picture sits on ([AppPalette.pictureMat]).
+  static const matKey = ValueKey('picture-tile-mat');
+
   /// What shows in place of a picture that could not be loaded.
   static const failedKey = ValueKey('picture-tile-failed');
 
@@ -160,8 +163,15 @@ class _FittedPicture extends StatelessWidget {
           fit: BoxFit.contain,
           excludeFromSemantics: true,
           gaplessPlayback: true,
-          frameBuilder: (context, child, frame, _) =>
-              frame == null ? const _Loading() : child,
+          // The picture sits on a mat: nothing in light, a soft warm white
+          // in dark, so pictures drawn on white don't glare.
+          frameBuilder: (context, child, frame, _) => frame == null
+              ? const _Loading()
+              : ColoredBox(
+                  key: PictureTile.matKey,
+                  color: context.colors.pictureMat,
+                  child: child,
+                ),
           errorBuilder: (context, error, stackTrace) =>
               _Failed(altText: altText),
         );

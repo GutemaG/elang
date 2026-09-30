@@ -206,7 +206,7 @@ class _CatalogRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.labelLg.copyWith(
                       color: course.isActive
-                          ? context.colors.primaryContainer
+                          ? context.colors.primaryAccent
                           : context.colors.onSurface,
                     ),
                   ),

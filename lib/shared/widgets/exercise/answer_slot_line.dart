@@ -74,9 +74,9 @@ class AnswerSlotLine extends StatelessWidget {
   static const double _gapPadding = AppSpacing.spaceSm;
 
   Color _lineColour(AppPalette colors) => switch (grade) {
-    null => colors.tileShelf,
-    AnswerGrade.correct => colors.primaryContainer,
-    AnswerGrade.incorrect => colors.tertiaryBrand,
+    null => colors.answerLine,
+    AnswerGrade.correct => colors.primaryAccent,
+    AnswerGrade.incorrect => colors.tertiaryAccent,
   };
 
   @override
@@ -158,8 +158,8 @@ class AnswerSlotLine extends StatelessWidget {
     final word = filled;
     final wordColour = switch (grade) {
       null => context.colors.onSurface,
-      AnswerGrade.correct => context.colors.primaryContainer,
-      AnswerGrade.incorrect => context.colors.tertiaryBrand,
+      AnswerGrade.correct => context.colors.primaryAccent,
+      AnswerGrade.incorrect => context.colors.tertiaryAccent,
     };
     return Text.rich(
       TextSpan(

@@ -57,7 +57,7 @@ class BeanTimerCard extends StatelessWidget {
                 countdown,
                 semanticsLabel: 'Next bean in $countdown',
                 style: AppTypography.headlineSm.copyWith(
-                  color: context.colors.tertiaryBrand,
+                  color: context.colors.tertiaryAccent,
                 ),
               ),
             ],

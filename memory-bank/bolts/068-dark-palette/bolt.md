@@ -3,13 +3,22 @@ id: 068-dark-palette
 unit: 001-theme-palette
 intent: 022-light-and-dark-themes
 type: simple-construction-bolt
-status: planned
+status: complete
 stories: []
 created: '2026-09-30T13:52:00Z'
-started: null
-completed: null
+started: '2026-09-30T19:10:12Z'
+completed: '2026-09-30T19:35:41Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-30T19:11:56Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-30T19:30:08Z'
+    artifact: implementation-plan.md
+  - name: test
+    completed: '2026-09-30T19:35:41Z'
+    artifact: implementation-plan.md
 requires_bolts:
   - 067-screens-read-theme
 enables_bolts:
@@ -35,8 +44,8 @@ Add the warm dark palette and `AppTheme.dark`, the picture card, system bars and
 Written in the unit brief (`intents/022-light-and-dark-themes/units/001-theme-palette/unit-brief.md`), not
 as separate files, so `stories:` above is empty.
 
-- [ ] **003-dark-palette**
-- [ ] **004-contrast-guard**
+- [x] **003-dark-palette**
+- [x] **004-contrast-guard**
 
 ## Bolt Type
 
@@ -45,9 +54,9 @@ as separate files, so `stories:` above is empty.
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

@@ -1,8 +1,8 @@
 /// Highland Pulse colours: every colour the app draws, by role, in one place
 /// (022-light-and-dark-themes, FR-1).
 ///
-/// **To change a colour**, edit its value in [AppPalette.light] (and in the
-/// dark palette, once it exists); every screen, tone, shadow and the
+/// **To change a colour**, edit its value in [AppPalette.light] and
+/// [AppPalette.dark]; every screen, tone, shadow and the
 /// Material theme follow.
 ///
 /// **To add a role**, add the field, its constructor parameter and a value
@@ -86,6 +86,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.tertiaryToneBorder,
     required this.tertiaryToneShelf,
     required this.tertiaryToneSurface,
+    required this.primaryAccent,
+    required this.tertiaryAccent,
+    required this.tertiaryToneInk,
+    required this.secondaryButtonEdge,
+    required this.answerLine,
+    required this.inverseAction,
+    required this.pictureMat,
+    required this.tertiaryFillShelf,
     required this.dialogShelf,
     required this.scrim,
     required this.shadowInk,
@@ -169,10 +177,116 @@ class AppPalette extends ThemeExtension<AppPalette> {
     tertiaryToneBorder: Color(0xFFFBD6CF),
     tertiaryToneShelf: Color(0xFFEDB9AF),
     tertiaryToneSurface: Color(0xFFFEE9E6),
+    // Accents on surfaces
+    primaryAccent: Color(0xFF1B5E3B),
+    tertiaryAccent: Color(0xFFD84A38),
+    tertiaryToneInk: Color(0xFF9F2115),
+    secondaryButtonEdge: Color(0xFF8D4F00),
+    answerLine: Color(0xFFD5CCBD),
+    inverseAction: Color(0xFF92D5A9),
+    pictureMat: Color(0x00FFFFFF),
+    tertiaryFillShelf: Color(0xFF7D0301),
     // Overlays and shadows
     dialogShelf: Color(0xFFE5D8C3),
     scrim: Color(0x732B2118),
     shadowInk: Color(0xFF231A11),
+  );
+
+  /// The dark palette: a warm Highland Pulse dark (FR-4), not Material's
+  /// grey. Fills keep their light colours; texts, surfaces and shelves
+  /// change. Every shelf is darker than the face above it, and the
+  /// neutral ones than the page, since soft shadows barely show on it.
+  static const AppPalette dark = AppPalette(
+    // Surfaces
+    surface: Color(0xFF1B1510),
+    surfaceDim: Color(0xFF2E251E),
+    surfaceContainerLowest: Color(0xFF251D16),
+    surfaceContainerLow: Color(0xFF2A2119),
+    surfaceContainer: Color(0xFF30261E),
+    surfaceContainerHigh: Color(0xFF372C23),
+    surfaceContainerHighest: Color(0xFF3E3229),
+    // Text on surfaces
+    onSurface: Color(0xFFF2DFD1),
+    onSurfaceVariant: Color(0xFFCDBFB2),
+    inverseSurface: Color(0xFFF2DFD1),
+    inverseOnSurface: Color(0xFF392E25),
+    // Lines
+    outline: Color(0xFF9A8B7E),
+    outlineVariant: Color(0xFF5E5147),
+    // Primary: Highland Acacia
+    primary: Color(0xFF92D5A9),
+    onPrimary: Color(0xFFFFFFFF),
+    primaryContainer: Color(0xFF1B5E3B),
+    onPrimaryContainer: Color(0xFFAEF2C4),
+    primaryFixed: Color(0xFFAEF2C4),
+    primaryFixedDim: Color(0xFF92D5A9),
+    primaryShelf: Color(0xFF0B2E1A),
+    // Secondary: Simien Gold
+    secondary: Color(0xFFFFB875),
+    onSecondary: Color(0xFF3D2000),
+    secondaryContainer: Color(0xFFFFA03B),
+    onSecondaryContainer: Color(0xFF6C3B00),
+    secondaryFixed: Color(0xFF4D3520),
+    secondaryBrand: Color(0xFFE08722),
+    secondaryShelf: Color(0xFFA85E0E),
+    // Tertiary: Rift Terracotta
+    tertiary: Color(0xFFFFB4A8),
+    onTertiary: Color(0xFFFFFFFF),
+    tertiaryContainer: Color(0xFF9F2115),
+    onTertiaryContainer: Color(0xFFFFDAD4),
+    tertiaryFixed: Color(0xFF5A2B24),
+    // A shade deeper than light's, so white text on it reads at 4.5:1.
+    tertiaryBrand: Color(0xFFC23E2D),
+    tertiaryShelf: Color(0xFF9F2B1D),
+    // Error
+    error: Color(0xFFFFB4AB),
+    onError: Color(0xFF690005),
+    errorContainer: Color(0xFF93000A),
+    onErrorContainer: Color(0xFFFFDAD6),
+    // Cards
+    cardBorder: Color(0xFF3A2F26),
+    cardShelf: Color(0xFF120D09),
+    // Answers and choices
+    answerSelectedFace: Color(0xFF3A2A14),
+    answerCorrectFace: Color(0xFF173826),
+    answerIncorrectFace: Color(0xFF3D1D18),
+    chosenFace: Color(0xFF1D3325),
+    tileBorder: Color(0xFF3F342A),
+    tileShelf: Color(0xFF110C08),
+    // Learning-map nodes
+    lockedNodeFace: Color(0xFF2E251E),
+    lockedNodeIcon: Color(0xFF16110C),
+    activeNodeShelf: Color(0xFFA85E0E),
+    // Gamification accents
+    streak: Color(0xFFFF5A1F),
+    streakRim: Color(0xFFFFA726),
+    gem: Color(0xFF10B981),
+    xp: Color(0xFF0EA5E9),
+    // Muted text and tracks
+    textMuted: Color(0xFFA8988A),
+    track: Color(0xFF3A2F26),
+    // Tones (see `app_tone.dart`)
+    primaryToneBorder: Color(0xFF2B4A36),
+    primaryToneShelf: Color(0xFF08140D),
+    primaryToneSurface: Color(0xFF1D3A2A),
+    secondaryToneBorder: Color(0xFF4D3A22),
+    secondaryToneShelf: Color(0xFF1A1106),
+    tertiaryToneBorder: Color(0xFF5A2B24),
+    tertiaryToneShelf: Color(0xFF230B08),
+    tertiaryToneSurface: Color(0xFF3D1D18),
+    // Accents on surfaces
+    primaryAccent: Color(0xFF7CCB98),
+    tertiaryAccent: Color(0xFFFF8A78),
+    tertiaryToneInk: Color(0xFFFFB4A8),
+    secondaryButtonEdge: Color(0xFF8D4F00),
+    answerLine: Color(0xFF5A4D42),
+    inverseAction: Color(0xFF1B5E3B),
+    pictureMat: Color(0xFFF3EBE2),
+    tertiaryFillShelf: Color(0xFF5C130B),
+    // Overlays and shadows
+    dialogShelf: Color(0xFF0F0A07),
+    scrim: Color(0x99000000),
+    shadowInk: Color(0xFF000000),
   );
 
   // Surfaces ---------------------------------------------------------------
@@ -323,6 +437,45 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color tertiaryToneBorder;
   final Color tertiaryToneShelf;
   final Color tertiaryToneSurface;
+
+  // Accents on surfaces --------------------------------------------------
+  //
+  // Roles that share a value with a fill in light but need their own in
+  // dark, where a fill's colour is too dark to read on the page.
+
+  /// Green text and icons drawn on a surface: a completed title, a
+  /// correct answer, the green tone's icons. In light it is the green of
+  /// fills; in dark a lighter green, since a fill's green is too dark to
+  /// read on a dark page.
+  final Color primaryAccent;
+
+  /// Red text and icons drawn on a surface: a wrong answer, the bean
+  /// countdown. In light it is the red button's face.
+  final Color tertiaryAccent;
+
+  /// The terracotta tone's text and icons. In light it is the terracotta
+  /// fill.
+  final Color tertiaryToneInk;
+
+  /// The gold button's border and shelf. In light it is the gold text
+  /// colour; in dark gold text is light, and a shelf must stay dark.
+  final Color secondaryButtonEdge;
+
+  /// The line under an unanswered slot ("_____"). In light it is the
+  /// choice tile's rim; in dark that rim is darker than the page, and the
+  /// line must show on it.
+  final Color answerLine;
+
+  /// A snack bar's action, on [inverseSurface].
+  final Color inverseAction;
+
+  /// Behind a lesson picture, so pictures drawn on white don't glare in
+  /// dark. Transparent in light: the tile's face shows through.
+  final Color pictureMat;
+
+  /// The shelf under a terracotta-filled card. In light it is the
+  /// terracotta text colour; in dark that is light.
+  final Color tertiaryFillShelf;
 
   // Overlays and shadows ---------------------------------------------------
 

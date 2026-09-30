@@ -117,7 +117,7 @@ class _Entry extends StatelessWidget {
               shown,
               style: AppTypography.labelLg.copyWith(
                 color: earned
-                    ? context.colors.primaryContainer
+                    ? context.colors.primaryAccent
                     : context.colors.error,
               ),
             ),

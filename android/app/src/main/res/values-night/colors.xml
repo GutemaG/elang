@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The page colour behind the launch screen in dark mode
+         (AppPalette.dark.surface). -->
+    <color name="launch_background">#1B1510</color>
+</resources>

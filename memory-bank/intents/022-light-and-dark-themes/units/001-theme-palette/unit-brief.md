@@ -62,8 +62,8 @@ colour change is one edit and dark mode works everywhere.
 |----------|-------|----------|--------|
 | 001-palette-by-role | One palette file, and everything built from it | Must | Complete (bolt 066) |
 | 002-screens-read-theme | Screens take colours from the theme | Must | Complete (bolt 067) |
-| 003-dark-palette | The dark palette | Must | Planned (bolt 068) |
-| 004-contrast-guard | Text stays readable in both palettes | Must | Planned (bolt 068) |
+| 003-dark-palette | The dark palette | Must | Complete (bolt 068) |
+| 004-contrast-guard | Text stays readable in both palettes | Must | Complete (bolt 068) |
 | 005-gallery-preview | See the palette and flip themes in the gallery | Should | Planned (bolt 069) |
 
 ### 001-palette-by-role (FR-1, FR-2)
@@ -95,12 +95,12 @@ dark mode has no light patches.
 **As a** learner, **I want** a warm, readable dark theme, **so that** the
 app is comfortable at night.
 
-- [ ] The dark palette starts from the FR-4 values; every shelf is darker
+- [x] The dark palette starts from the FR-4 values; every shelf is darker
   than its face and the page.
-- [ ] `AppTheme.dark` exists; the screen sweep renders every screen in
+- [x] `AppTheme.dark` exists; the screen sweep renders every screen in
   dark without errors.
-- [ ] Lesson pictures sit on a light card in dark.
-- [ ] Status and navigation bar icons follow the theme; the Android launch
+- [x] Lesson pictures sit on a light card in dark.
+- [x] Status and navigation bar icons follow the theme; the Android launch
   screen uses the dark page colour at night.
 
 ### 004-contrast-guard (FR-7)
@@ -108,9 +108,9 @@ app is comfortable at night.
 **As a** developer, **I want** a test that checks contrast, **so that** a
 colour edit can't make text unreadable.
 
-- [ ] Listed text/background pairs are checked in both palettes: 4.5:1 for
+- [x] Listed text/background pairs are checked in both palettes: 4.5:1 for
   body text, 3:1 for large text and icons.
-- [ ] A failure names both roles, the palette and the ratio.
+- [x] A failure names both roles, the palette and the ratio.
 
 ### 005-gallery-preview (FR-6)
 

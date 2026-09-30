@@ -85,7 +85,7 @@ class AnswerActionBar extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: AppTypography.bodySm.copyWith(
-              color: context.colors.tertiaryBrand,
+              color: context.colors.tertiaryAccent,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceXs),
@@ -147,8 +147,8 @@ class _AnswerFeedbackPanelState extends State<AnswerFeedbackPanel>
     final tone = correct ? AppTone.primary : AppTone.tertiary;
     final title = correct ? 'Correct!' : 'Not quite';
     final ink = correct
-        ? context.colors.primaryContainer
-        : context.colors.tertiaryBrand;
+        ? context.colors.primaryAccent
+        : context.colors.tertiaryAccent;
 
     return SizeTransition(
       sizeFactor: _curve,

@@ -689,7 +689,7 @@ class AppSpinner extends StatelessWidget {
       child: CircularProgressIndicator(
         strokeWidth: strokeWidth,
         strokeCap: StrokeCap.round,
-        color: color ?? context.colors.primaryContainer,
+        color: color ?? context.colors.primaryAccent,
       ),
     );
   }

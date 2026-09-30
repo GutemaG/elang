@@ -403,13 +403,13 @@ class _TileLook {
           face: colors.answerCorrectFace,
           border: colors.primaryContainer,
           rim: colors.primaryShelf,
-          text: colors.primaryContainer,
+          text: colors.primaryAccent,
         ),
         AnswerTileState.incorrect => _TileLook(
           face: colors.answerIncorrectFace,
           border: colors.tertiaryBrand,
           rim: colors.tertiaryShelf,
-          text: colors.tertiaryBrand,
+          text: colors.tertiaryAccent,
         ),
       };
 
