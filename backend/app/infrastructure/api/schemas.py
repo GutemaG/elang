@@ -6,7 +6,7 @@ Shapes match `ddd-02-technical-design.md`'s API Design table exactly.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -49,6 +49,8 @@ class SessionUserResponse(BaseModel):
     daily_xp_target: int
     notification_enabled: bool
     active_course_id: str
+    # Bolt 071 (FR-8): every known account setting, stored or default.
+    settings: dict[str, Any]
 
 
 class SessionValidResponse(BaseModel):

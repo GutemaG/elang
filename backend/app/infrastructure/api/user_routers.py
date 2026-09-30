@@ -7,18 +7,36 @@ shape. No business logic lives here.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from typing import Any
 
-from app.application.use_cases import update_user_preferences
+from fastapi import APIRouter, Body, Depends
+
+from app.application.use_cases import (
+    read_app_config,
+    update_account_settings,
+    update_user_preferences,
+)
 from app.domain.entities import User
 from app.domain.services import UserPreferencesService
-from app.infrastructure.api.dependencies import get_current_user, get_user_preferences_service
+from app.infrastructure.api.dependencies import (
+    get_app_config_repository,
+    get_current_user,
+    get_user_preferences_service,
+    get_user_repository,
+)
 from app.infrastructure.api.user_schemas import (
+    AccountSettingsResponse,
+    AppConfigResponse,
     UserPreferencesResponse,
     UserPreferencesUpdateRequest,
 )
+from app.infrastructure.db.repositories import (
+    SqlAlchemyAppConfigRepository,
+    SqlAlchemyUserRepository,
+)
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
+config_router = APIRouter(prefix="/api/v1", tags=["config"])
 
 
 @router.patch("/me", response_model=UserPreferencesResponse)
@@ -48,3 +66,27 @@ async def update_my_preferences_endpoint(
         notification_enabled=updated.notification_enabled,
         active_course_id=updated.active_course_id,
     )
+
+
+@router.patch("/me/settings", response_model=AccountSettingsResponse)
+async def update_my_settings_endpoint(
+    changes: dict[str, Any] = Body(...),
+    user: User = Depends(get_current_user),
+    user_repo: SqlAlchemyUserRepository = Depends(get_user_repository),
+) -> AccountSettingsResponse:
+    """Bolt 071 (FR-8): merges a partial map of account settings and returns
+    them all. An unknown key or a wrong type is `422 invalid_setting`, and
+    nothing is saved.
+    """
+    settings = await update_account_settings(user_repo, user, changes)
+    return AccountSettingsResponse(settings=settings)
+
+
+@config_router.get("/config", response_model=AppConfigResponse)
+async def get_app_config_endpoint(
+    repo: SqlAlchemyAppConfigRepository = Depends(get_app_config_repository),
+) -> AppConfigResponse:
+    """Bolt 071 (FR-9): every known app-wide value. No sign-in: nothing
+    secret is ever stored there (`app/domain/settings.py`).
+    """
+    return AppConfigResponse(config=await read_app_config(repo))

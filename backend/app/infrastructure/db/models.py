@@ -10,14 +10,17 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import (
+    JSON,
     CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
     String,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -64,6 +67,26 @@ class UserModel(Base):
     email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+    # Bolt 071 (022-light-and-dark-themes, FR-8): account settings as one
+    # JSON map, read through `app.domain.settings.ACCOUNT_SETTINGS`. A new
+    # setting is a registry line, never a new column.
+    settings: Mapped[dict[str, Any]] = mapped_column(
+        JSON, nullable=False, default=dict, server_default=text("'{}'")
+    )
+
+
+class AppConfigModel(Base):
+    """Bolt 071 (FR-9): app-wide values, one JSON value per key, read
+    through `app.domain.settings.APP_CONFIG`. Empty until someone changes a
+    value; a key with no row reads as its default. Never anything secret."""
+
+    __tablename__ = "app_config"
+
+    key: Mapped[str] = mapped_column(String(100), primary_key=True)
+    value: Mapped[Any] = mapped_column(JSON, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
     )
 
 

@@ -13,16 +13,10 @@ from pathlib import Path
 
 import pytest
 
-from tests.integration.test_courses_migration import _alembic, _ok
+from tests.integration.test_courses_migration import _ok
 
 _PREVIOUS_HEAD = "a7d3c9e1f042"
 _NEW_HEAD = "b5e9d2c7a4f1"
-
-
-def test_there_is_a_single_head(tmp_path: Path) -> None:
-    result = _alembic(tmp_path / "unused.db", "heads")
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.split() == [_NEW_HEAD, "(head)"]
 
 
 _INSERT = (

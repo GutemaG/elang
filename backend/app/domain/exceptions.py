@@ -59,6 +59,14 @@ class InvalidPreferenceValueError(AuthDomainError):
     error_code = "invalid_preference_value"
 
 
+class InvalidSettingError(AuthDomainError):
+    """An account-settings update (`022-light-and-dark-themes`, bolt 071)
+    named a key the registry doesn't know, or gave a value of the wrong
+    type. Mapped to 422; nothing in the update is saved."""
+
+    error_code = "invalid_setting"
+
+
 class CourseNotFoundError(AuthDomainError):
     """No course exists with the given id (bolt `024-courses-service`)."""
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 from app.domain.entities import User
 from app.domain.events import (
@@ -21,6 +22,7 @@ from app.domain.events import (
     UserRegistered,
 )
 from app.domain.exceptions import AuthDomainError
+from app.domain.repositories import AppConfigRepository, UserRepository
 from app.domain.services import (
     AuthenticationService,
     AuthResult,
@@ -28,6 +30,7 @@ from app.domain.services import (
     UserPreferencesService,
     ValidatedSession,
 )
+from app.domain.settings import ACCOUNT_SETTINGS, APP_CONFIG, SettingsRegistry
 from app.domain.value_objects import AuthProvider
 
 logger = logging.getLogger("app.auth")
@@ -191,3 +194,34 @@ async def update_user_preferences(
     )
     logger.info("user_preferences_updated user_id=%s", updated.id)
     return updated
+
+
+async def update_account_settings(
+    user_repo: UserRepository,
+    user: User,
+    changes: dict[str, Any],
+    registry: SettingsRegistry = ACCOUNT_SETTINGS,
+) -> dict[str, Any]:
+    """Bolt 071 (FR-8): merges `changes` into the account's stored settings
+    and returns the full map, every known key with its value or default.
+    Checks the whole update first, so an unknown key or a wrong type raises
+    `InvalidSettingError` (422) and nothing is saved.
+    """
+    registry.validate(changes)
+    updated = await user_repo.set_settings(user.id, {**user.settings, **changes})
+    logger.info("account_settings_updated user_id=%s keys=%s", updated.id, sorted(changes))
+    return registry.resolve(updated.settings)
+
+
+async def read_app_config(
+    repo: AppConfigRepository,
+    registry: SettingsRegistry = APP_CONFIG,
+) -> dict[str, Any]:
+    """Bolt 071 (FR-9): every known app-wide key, with its `app_config` row's
+    value or its default. A row holding the wrong type (a bad hand edit)
+    reads as the default and is logged, so it can't break the app.
+    """
+    stored = await repo.get_all()
+    for key in registry.invalid_keys(stored):
+        logger.warning("app_config_invalid_value key=%s", key)
+    return registry.resolve(stored)

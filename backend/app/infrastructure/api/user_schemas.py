@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -26,3 +28,15 @@ class UserPreferencesResponse(BaseModel):
     daily_xp_target: int
     notification_enabled: bool
     active_course_id: str
+
+
+class AccountSettingsResponse(BaseModel):
+    """Bolt 071 (FR-8): every known account setting, stored or default."""
+
+    settings: dict[str, Any]
+
+
+class AppConfigResponse(BaseModel):
+    """Bolt 071 (FR-9): every known app-wide value, stored or default."""
+
+    config: dict[str, Any]

@@ -20,6 +20,7 @@ from app.domain.services import (
     AuthResult,
     SessionValidationService,
 )
+from app.domain.settings import ACCOUNT_SETTINGS
 from app.infrastructure.api.dependencies import (
     get_authentication_service,
     get_session_validation_service,
@@ -115,6 +116,7 @@ async def get_session(
             daily_xp_target=user.daily_xp_target.xp_per_day,
             notification_enabled=user.notification_enabled,
             active_course_id=user.active_course_id,
+            settings=ACCOUNT_SETTINGS.resolve(user.settings),
         ),
         expires_at=validated.expires_at,
     )

@@ -7,7 +7,7 @@ depends on these Protocols, never on SQLAlchemy directly.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Protocol
+from typing import Any, Protocol
 
 from app.domain.entities import AuthSession, User
 from app.domain.value_objects import AuthProvider
@@ -31,6 +31,17 @@ class UserRepository(Protocol):
         Separate from `update` so the authentication path writes only this
         field (User invariants 2 and 5)."""
         ...
+
+    async def set_settings(self, user_id: str, settings: dict[str, Any]) -> User:
+        """Replaces the stored account settings (bolt 071). Callers merge
+        and validate first (`update_account_settings`)."""
+        ...
+
+
+class AppConfigRepository(Protocol):
+    """The `app_config` rows (bolt 071, FR-9): one JSON value per key."""
+
+    async def get_all(self) -> dict[str, Any]: ...
 
 
 class AuthSessionRepository(Protocol):

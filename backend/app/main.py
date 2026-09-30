@@ -23,6 +23,7 @@ from app.infrastructure.api.error_handlers import register_exception_handlers
 from app.infrastructure.api.lesson_routers import router as lesson_router
 from app.infrastructure.api.practice_routers import router as practice_router
 from app.infrastructure.api.routers import router as auth_router
+from app.infrastructure.api.user_routers import config_router
 from app.infrastructure.api.user_routers import router as user_router
 from app.infrastructure.external.apple_verifier import AppleTokenVerifier
 from app.infrastructure.external.google_verifier import GoogleTokenVerifier
@@ -86,6 +87,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(lesson_router)
     app.include_router(user_router)
+    app.include_router(config_router)
     app.include_router(practice_router)
     app.include_router(course_router)
     app.include_router(admin_router)

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +22,7 @@ from app.domain.value_objects import (
     ProviderIdentity,
     SessionToken,
 )
-from app.infrastructure.db.models import AuthSessionModel, UserModel
+from app.infrastructure.db.models import AppConfigModel, AuthSessionModel, UserModel
 
 
 def _hash_token(token_value: str) -> str:
@@ -58,6 +59,7 @@ def _user_model_to_domain(model: UserModel) -> User:
         created_at=_ensure_utc(model.created_at),
         active_course_id=model.active_course_id,
         email=model.email,
+        settings=dict(model.settings or {}),
     )
 
 
@@ -72,6 +74,7 @@ def _user_domain_to_model(user: User) -> UserModel:
         created_at=user.created_at,
         active_course_id=user.active_course_id,
         email=user.email,
+        settings=dict(user.settings),
     )
 
 
@@ -118,6 +121,16 @@ class SqlAlchemyUserRepository:
         model.active_course_id = user.active_course_id
         model.daily_xp_target = user.daily_xp_target.xp_per_day
         model.notification_enabled = user.notification_enabled
+        await self._session.flush()
+        return _user_model_to_domain(model)
+
+    async def set_settings(self, user_id: str, settings: dict[str, Any]) -> User:
+        """Bolt 071: replaces the stored account settings. A new dict is
+        assigned (not an in-place edit), so SQLAlchemy sees the change."""
+        stmt = select(UserModel).where(UserModel.id == user_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one()
+        model.settings = dict(settings)
         await self._session.flush()
         return _user_model_to_domain(model)
 
@@ -198,3 +211,14 @@ class SqlAlchemyAuthSessionRepository:
             .where(AuthSessionModel.id == session_id)
             .values(expires_at=expires_at)
         )
+
+
+class SqlAlchemyAppConfigRepository:
+    """Implements `app.domain.repositories.AppConfigRepository` (bolt 071)."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_all(self) -> dict[str, Any]:
+        result = await self._session.execute(select(AppConfigModel))
+        return {row.key: row.value for row in result.scalars()}

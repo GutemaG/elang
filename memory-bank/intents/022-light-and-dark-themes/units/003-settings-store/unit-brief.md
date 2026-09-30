@@ -59,8 +59,8 @@ seed or a backfill again.
 
 | Story ID | Title | Priority | Status |
 |----------|-------|----------|--------|
-| 007-account-settings-json | Account settings in one JSON column | Must | Planned (bolt 071) |
-| 008-app-config | App configuration rows with defaults | Should | Planned (bolt 071) |
+| 007-account-settings-json | Account settings in one JSON column | Must | Complete (bolt 071) |
+| 008-app-config | App configuration rows with defaults | Should | Complete (bolt 071) |
 | 009-app-reads-settings | The app reads settings and configuration | Must | Planned (bolt 072) |
 
 ### 007-account-settings-json (FR-8)
@@ -68,14 +68,14 @@ seed or a backfill again.
 **As a** developer, **I want** new account settings to be one registry
 line, **so that** I never write a migration or seed for a setting again.
 
-- [ ] `users.settings` exists, defaults to `{}`, and existing rows need no
+- [x] `users.settings` exists, defaults to `{}`, and existing rows need no
   backfill.
-- [ ] Reading returns every registry key: the stored value, else the
+- [x] Reading returns every registry key: the stored value, else the
   default; stored keys no longer in the registry are ignored.
-- [ ] `PATCH /api/v1/users/me/settings` merges a partial map; an unknown
+- [x] `PATCH /api/v1/users/me/settings` merges a partial map; an unknown
   key or a wrong type is refused (422) and nothing is saved.
-- [ ] The session check and the PATCH return the full map.
-- [ ] A test adds a key to the registry and reads it for an existing
+- [x] The session check and the PATCH return the full map.
+- [x] A test adds a key to the registry and reads it for an existing
   account with no migration.
 
 ### 008-app-config (FR-9)
@@ -83,10 +83,10 @@ line, **so that** I never write a migration or seed for a setting again.
 **As the** team, **I want** app-wide values in a table with defaults in
 code, **so that** changing one needs no deploy and nothing is seeded.
 
-- [ ] `app_config` starts empty; a key with no row returns its default.
-- [ ] `GET /api/v1/config` returns every registry key, no sign-in needed.
-- [ ] Writing a row changes the value returned, with no code change.
-- [ ] Nothing secret is allowed in the registry (documented in the file).
+- [x] `app_config` starts empty; a key with no row returns its default.
+- [x] `GET /api/v1/config` returns every registry key, no sign-in needed.
+- [x] Writing a row changes the value returned, with no code change.
+- [x] Nothing secret is allowed in the registry (documented in the file).
 
 ### 009-app-reads-settings (FR-10)
 

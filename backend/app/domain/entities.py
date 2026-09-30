@@ -6,8 +6,9 @@ Pure Python only — no framework/DB imports, per the layering rule in
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 from app.domain.value_objects import (
     DailyXPTarget,
@@ -55,6 +56,10 @@ class User:
     # `selected_language`.
     active_course_id: str
     email: str | None = None
+    # Bolt 071 (022-light-and-dark-themes, FR-8): the account settings as
+    # stored, a JSON map. Read them through `ACCOUNT_SETTINGS.resolve`, which
+    # fills every known key missing here with its default.
+    settings: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

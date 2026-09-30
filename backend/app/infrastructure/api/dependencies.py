@@ -25,6 +25,7 @@ from app.domain.services import (
 )
 from app.infrastructure.db.lesson_repositories import SqlAlchemyCourseRepository
 from app.infrastructure.db.repositories import (
+    SqlAlchemyAppConfigRepository,
     SqlAlchemyAuthSessionRepository,
     SqlAlchemyUserRepository,
 )
@@ -63,6 +64,12 @@ async def get_user_repository(
     session: AsyncSession = Depends(get_db_session),
 ) -> SqlAlchemyUserRepository:
     return SqlAlchemyUserRepository(session)
+
+
+async def get_app_config_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> SqlAlchemyAppConfigRepository:
+    return SqlAlchemyAppConfigRepository(session)
 
 
 async def get_session_validation_service(

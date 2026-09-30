@@ -13,6 +13,7 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import replace
 from datetime import UTC, date, datetime
+from typing import Any
 
 from app.domain.course import Course, CourseStatus
 from app.domain.entities import AuthSession, User
@@ -164,6 +165,11 @@ class FakeUserRepository:
 
     async def set_email(self, user_id: str, email: str | None) -> User:
         user = replace(self._users[user_id], email=email)
+        self._users[user_id] = user
+        return user
+
+    async def set_settings(self, user_id: str, settings: dict[str, Any]) -> User:
+        user = replace(self._users[user_id], settings=dict(settings))
         self._users[user_id] = user
         return user
 
