@@ -106,6 +106,7 @@ def _to_skill_tree_response(summary: SkillTreeSummary) -> SkillTreeResponse:
         beans=summary.beans,
         beans_max=summary.beans_max,
         total_xp=summary.total_xp,
+        practised_today=summary.practised_today,
     )
 
 

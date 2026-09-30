@@ -13,6 +13,7 @@ import '../../../shared/services/lesson_api.dart';
 import '../../../shared/services/lesson_audio_player.dart';
 import '../../../shared/services/lesson_pack_store.dart';
 import '../../../shared/services/media_cache.dart';
+import '../../../shared/services/reminders/reminder_service.dart';
 import '../../../shared/services/sync_engine.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_spacing.dart';
@@ -70,6 +71,7 @@ class LessonScreen extends StatefulWidget {
     this.beansNow,
     this.isReview = false,
     this.skillProgress,
+    this.reminders,
   }) : practiceContent = null,
        practiceVocabItemIdByExerciseId = null;
 
@@ -97,7 +99,8 @@ class LessonScreen extends StatefulWidget {
        skillVersion = null,
        beansNow = null,
        isReview = false,
-       skillProgress = null;
+       skillProgress = null,
+       reminders = null;
 
   final String lessonId;
   final LessonApi lessonApi;
@@ -137,6 +140,10 @@ class LessonScreen extends StatefulWidget {
   /// say how many lessons are left; `null` shows nothing there (see
   /// [SkillLessonProgress.forNode]).
   final SkillLessonProgress? skillProgress;
+
+  /// Told when this lesson counts for the streak, so that day's reminder
+  /// is dropped (021-daily-reminder); `null` tells nothing.
+  final ReminderService? reminders;
 
   bool get isPractice => practiceContent != null;
 
@@ -178,6 +185,7 @@ class _LessonScreenState extends State<LessonScreen> {
         startedOffline: _startedOffline,
         isPractice: widget.isPractice,
         isReview: widget.isReview,
+        onLessonCounted: _onLessonCounted,
         vocabItemIdByExerciseId: widget.practiceVocabItemIdByExerciseId,
       );
       controller.addListener(_onControllerChanged);
@@ -341,6 +349,12 @@ class _LessonScreenState extends State<LessonScreen> {
       contentVersion: content.contentVersion,
       unrenderableCount: content.unrenderableCount,
     );
+  }
+
+  void _onLessonCounted(DateTime completedAt, int? streakCount) {
+    final reminders = widget.reminders;
+    if (reminders == null) return;
+    unawaited(reminders.lessonCounted(completedAt, streakCount: streakCount));
   }
 
   void _onControllerChanged() {

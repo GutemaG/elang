@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../shared/models/course.dart';
 import '../../../shared/services/course_api.dart';
+import '../../../shared/services/reminders/reminder_service.dart';
 import '../../../shared/services/session_api.dart';
 import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
@@ -31,6 +32,7 @@ class SettingsController extends ChangeNotifier {
     required this._userPreferencesApi,
     required this._soundPreferenceRepository,
     required this._sessionRepository,
+    this._reminders,
   });
 
   final SessionApi _sessionApi;
@@ -38,6 +40,11 @@ class SettingsController extends ChangeNotifier {
   final UserPreferencesApi _userPreferencesApi;
   final SoundPreferenceRepository _soundPreferenceRepository;
   final SessionRepository _sessionRepository;
+
+  /// The 8 pm reminder the Notifications switch controls
+  /// (021-daily-reminder, bolt 064); `null` makes the switch only a saved
+  /// preference, as before.
+  final ReminderService? _reminders;
 
   SettingsLoadStatus _loadStatus = SettingsLoadStatus.loading;
   String? _errorMessage;
@@ -50,6 +57,10 @@ class SettingsController extends ChangeNotifier {
   Course? _activeCourse;
   int? _dailyXpTarget;
   bool _notificationEnabled = true;
+
+  /// Whether the phone allows notifications; `true` where reminders are
+  /// not in play (no [_reminders], or the web).
+  bool _notificationsPermitted = true;
   bool _soundEnabled = true;
 
   /// `null` for a session saved before `014-profile-and-settings-ui` (a
@@ -67,7 +78,16 @@ class SettingsController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get selectedLanguage => _selectedLanguage;
   Course? get activeCourse => _activeCourse;
-  bool get notificationEnabled => _notificationEnabled;
+
+  /// What the switch shows: saved on **and** allowed by the phone, so a
+  /// learner who never allowed notifications sees it off (FR-5).
+  bool get notificationEnabled =>
+      _notificationEnabled && _notificationsPermitted;
+
+  /// The switch is saved on but the phone blocks notifications: Settings
+  /// offers the phone's settings.
+  bool get notificationsBlocked =>
+      _notificationEnabled && !_notificationsPermitted;
   bool get soundEnabled => _soundEnabled;
   String? get authProvider => _authProvider;
   String? get displayName => _displayName;
@@ -120,6 +140,8 @@ class SettingsController extends ChangeNotifier {
     }
     _dailyXpTarget = user.dailyXpTarget;
     _notificationEnabled = user.notificationEnabled;
+    await _reminders?.setEnabled(_notificationEnabled);
+    _notificationsPermitted = await _checkPermitted();
     _soundEnabled = await _soundPreferenceRepository.getSoundEnabled();
     _loadStatus = SettingsLoadStatus.loaded;
     notifyListeners();
@@ -139,20 +161,52 @@ class SettingsController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     await _applyUpdate(
-      call: () => _userPreferencesApi.updatePreferences(dailyGoalMinutes: minutes),
+      call: () =>
+          _userPreferencesApi.updatePreferences(dailyGoalMinutes: minutes),
       onRevert: () => _dailyXpTarget = previous,
     );
   }
 
   Future<void> updateNotificationEnabled(bool enabled) async {
+    final reminders = _reminders;
+    if (enabled && reminders != null && reminders.supported) {
+      // Only here does the app ask (FR-5). The learner's "on" is saved
+      // either way: after a refusal the switch still shows off, and the
+      // blocked line offers the phone's settings, from which it comes on
+      // by itself (see [recheckNotificationPermission]).
+      _notificationsPermitted = await reminders.requestPermission();
+    }
     final previous = _notificationEnabled;
     _notificationEnabled = enabled;
     _errorMessage = null;
     notifyListeners();
     await _applyUpdate(
-      call: () => _userPreferencesApi.updatePreferences(notificationEnabled: enabled),
+      call: () =>
+          _userPreferencesApi.updatePreferences(notificationEnabled: enabled),
       onRevert: () => _notificationEnabled = previous,
     );
+    await reminders?.setEnabled(_notificationEnabled);
+  }
+
+  /// Checks the phone's permission again, e.g. after the learner comes
+  /// back from the phone's settings.
+  Future<void> recheckNotificationPermission() async {
+    final permitted = await _checkPermitted();
+    if (permitted == _notificationsPermitted) return;
+    _notificationsPermitted = permitted;
+    notifyListeners();
+    await _reminders?.reschedule();
+  }
+
+  /// Opens the phone's notification settings for the app.
+  Future<void> openNotificationSettings() async {
+    await _reminders?.openSettings();
+  }
+
+  Future<bool> _checkPermitted() async {
+    final reminders = _reminders;
+    if (reminders == null || !reminders.supported) return true;
+    return reminders.isPermitted();
   }
 
   /// Applies [call], adopting the backend's authoritative returned values
@@ -190,5 +244,8 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  Future<void> logout() => _sessionRepository.clearSession();
+  Future<void> logout() async {
+    await _sessionRepository.clearSession();
+    await _reminders?.signedOut();
+  }
 }

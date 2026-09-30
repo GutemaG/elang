@@ -192,6 +192,21 @@ void main() {
       },
     );
 
+    test("practised_today is read, and false when it's missing", () async {
+      // 021-daily-reminder (bolt 063).
+      final empty = [
+        {'id': 'c1', 'title': 'Empty', 'subtitle': '', 'order_index': 1},
+      ];
+      final practised = await apiReturning({
+        ...tree(categories: empty, skills: []),
+        'practised_today': true,
+      });
+      final older = await apiReturning(tree(categories: empty, skills: []));
+
+      expect((await practised.getSkillTree()).practisedToday, isTrue);
+      expect((await older.getSkillTree()).practisedToday, isFalse);
+    });
+
     test('a category with no skills parses to an empty group', () async {
       final api = await apiReturning(
         tree(

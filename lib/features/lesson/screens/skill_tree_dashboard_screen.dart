@@ -21,6 +21,7 @@ import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
 import '../../../shared/services/course_cache_store.dart';
 import '../../../shared/services/media_cache.dart';
+import '../../../shared/services/reminders/reminder_service.dart';
 import '../../../shared/services/sync_engine.dart';
 import '../../../shared/services/user_preferences_api.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -78,6 +79,7 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     required this.soundPreferenceRepository,
     this.courseCache,
     this.mediaCache,
+    this.reminders,
   });
 
   final LessonApi lessonApi;
@@ -91,6 +93,11 @@ class SkillTreeDashboardScreen extends StatefulWidget {
   /// lesson; the next lesson's are fetched ahead from here. `null` fetches
   /// nothing ahead.
   final MediaCache? mediaCache;
+
+  /// Kept in step with each load's streak and practised day, so the 8 pm
+  /// reminder skips a day already done (021-daily-reminder); `null` keeps
+  /// no reminders.
+  final ReminderService? reminders;
 
   /// The course list and switching (010-multi-language-courses): opened from
   /// the course chip, and threaded down to Settings.
@@ -282,6 +289,12 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
         dueCount: results[2] as int,
       );
       _sheetBeans = null;
+      unawaited(
+        widget.reminders?.refresh(
+          streakCount: data.tree.streakCount,
+          practisedToday: data.tree.practisedToday,
+        ),
+      );
       widget.lessonPackDownloader.currentCourse = data.tree.course;
       unawaited(_saveToCache(data));
       unawaited(_prefetchLessons(data.tree));
@@ -291,6 +304,11 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
       // A backend answer (e.g. an expired session) is not "offline".
       if (e.errorCode != null) rethrow;
       if (cached == null) rethrow;
+      // The saved copy's practised day may be another day's, so only its
+      // streak is passed on.
+      unawaited(
+        widget.reminders?.refresh(streakCount: cached.tree.streakCount),
+      );
       _lastData = cached;
       return cached;
     }
@@ -412,6 +430,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           soundPreferenceRepository: widget.soundPreferenceRepository,
           sessionRepository: widget.sessionRepository,
           courseApi: widget.courseApi,
+          reminders: widget.reminders,
         ),
       ),
     );
@@ -503,6 +522,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   /// queued and are sent once the learner is signed in again.
   Future<void> _signInAgain() async {
     await widget.sessionRepository.clearSession();
+    await widget.reminders?.signedOut();
     if (!mounted) return;
     Navigator.of(context)
         .pushNamedAndRemoveUntil(AuthRoutes.signIn, (route) => false);
@@ -570,6 +590,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           beansNow: (_sheetBeans ?? _lastData?.beansStatus)?.beans,
           isReview: isReview,
           skillProgress: SkillLessonProgress.forNode(node),
+          reminders: widget.reminders,
         ),
       ),
     );

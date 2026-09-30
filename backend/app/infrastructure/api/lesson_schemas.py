@@ -70,6 +70,8 @@ class SkillTreeResponse(BaseModel):
     beans: int
     beans_max: int
     total_xp: int
+    # 021-daily-reminder (bolt 062): today's UTC streak day is already done.
+    practised_today: bool = False
 
 
 class MultipleChoiceExerciseResponse(BaseModel):

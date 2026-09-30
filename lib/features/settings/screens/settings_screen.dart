@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/models/language_names.dart';
 import '../../../shared/services/course_api.dart';
+import '../../../shared/services/reminders/reminder_service.dart';
 import '../../../shared/services/session_api.dart';
 import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
@@ -87,6 +88,7 @@ class SettingsScreen extends StatefulWidget {
     required this.userPreferencesApi,
     required this.soundPreferenceRepository,
     required this.sessionRepository,
+    this.reminders,
   });
 
   final SessionApi sessionApi;
@@ -95,22 +97,29 @@ class SettingsScreen extends StatefulWidget {
   final SoundPreferenceRepository soundPreferenceRepository;
   final SessionRepository sessionRepository;
 
+  /// The 8 pm reminder the Notifications switch controls
+  /// (021-daily-reminder); `null` keeps the switch a saved preference only.
+  final ReminderService? reminders;
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
   late final SettingsController _controller;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = SettingsController(
       sessionApi: widget.sessionApi,
       courseApi: widget.courseApi,
       userPreferencesApi: widget.userPreferencesApi,
       soundPreferenceRepository: widget.soundPreferenceRepository,
       sessionRepository: widget.sessionRepository,
+      reminders: widget.reminders,
     );
     _controller.addListener(_onControllerChanged);
     _controller.load();
@@ -128,8 +137,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// Back from the phone's settings: notifications may be allowed now.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _controller.recheckNotificationPermission();
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
@@ -271,9 +289,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SwitchRow(
                   icon: Icons.notifications,
                   title: 'Notifications',
+                  subtitle: "A reminder at 8 pm if you haven't practised",
                   value: _controller.notificationEnabled,
                   onChanged: _controller.updateNotificationEnabled,
                 ),
+                // Wanted on, but the phone blocks it (021-daily-reminder).
+                if (_controller.notificationsBlocked)
+                  ListRow(
+                    key: const ValueKey('notifications-blocked'),
+                    icon: Icons.notifications_off,
+                    title: "Blocked in your phone's settings",
+                    subtitle: 'Tap to allow notifications',
+                    onTap: _controller.openNotificationSettings,
+                  ),
                 SwitchRow(
                   icon: Icons.volume_up,
                   title: 'Sound',

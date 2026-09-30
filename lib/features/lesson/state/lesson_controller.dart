@@ -32,6 +32,7 @@ class LessonController extends ChangeNotifier {
     this.startedOffline = false,
     this.isPractice = false,
     this.isReview = false,
+    this.onLessonCounted,
     Map<String, String>? vocabItemIdByExerciseId,
   }) : _content = content,
        _beansRemaining = content.beansAtStart,
@@ -43,6 +44,12 @@ class LessonController extends ChangeNotifier {
   final AnswerFeedbackPlayer _feedbackPlayer;
   final SyncEngine _syncEngine;
   final LessonContent _content;
+
+  /// Called when a finished lesson counts for the streak (not a review,
+  /// not Practice), online or queued offline, with when it finished and
+  /// the server's new streak when it answered (021-daily-reminder: that
+  /// day needs no reminder).
+  final void Function(DateTime completedAt, int? streakCount)? onLessonCounted;
 
   /// The exercise count the *server* believes this lesson has, which is
   /// not `exercises.length` when this build could not render one of them
@@ -434,6 +441,10 @@ class LessonController extends ChangeNotifier {
       _completionResult = result;
       _lessonFinished = true;
       _completionError = null;
+      // The server decides what is a review (see [isReview]).
+      if (!result.isReview) {
+        onLessonCounted?.call(clientCompletedAt, result.streakCount);
+      }
     } on LessonApiException catch (e) {
       if (e.errorCode == null) {
         // Never reached the server -- the connection dropped during the
@@ -489,6 +500,7 @@ class LessonController extends ChangeNotifier {
     );
     _lessonFinished = true;
     _completionError = null;
+    if (!isReview) onLessonCounted?.call(clientCompletedAt, null);
     notifyListeners();
   }
 

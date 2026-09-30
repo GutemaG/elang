@@ -5,12 +5,19 @@ boundary), never mocking the domain services underneath.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta, timezone
 
 import pytest
 
 from app.application.lesson_use_cases import get_lesson_content, get_skill_tree
-from app.domain.lesson.entities import Category, Exercise, Lesson, Skill, UserSkillProgress
+from app.domain.lesson.entities import (
+    Category,
+    Exercise,
+    Lesson,
+    Skill,
+    UserSkillProgress,
+    UserStreak,
+)
 from app.domain.lesson.exceptions import LessonNotFoundError, SkillLockedError
 from app.domain.lesson.value_objects import Choice as ChoiceVO
 from app.domain.lesson.value_objects import (
@@ -168,6 +175,56 @@ class TestGetSkillTree:
         # One of two lessons done: the skill is still unfinished, and the
         # summary says how far through it the learner is.
         assert summary.lesson_progress_by_skill["s1"] == (1, 2)
+
+
+class TestPractisedToday:
+    """021-daily-reminder (bolt 062): whether today's UTC streak day is
+    already practised, from the streak row the tree already reads."""
+
+    @staticmethod
+    async def _practised(last: date | None, now: datetime = _NOW) -> bool:
+        streaks = (
+            []
+            if last is None
+            else [
+                UserStreak(
+                    user_id="user-1",
+                    current_streak=3,
+                    last_completed_date=last,
+                    active_freeze_count=0,
+                )
+            ]
+        )
+        summary = await get_skill_tree(
+            "user-1",
+            FakeSkillRepository([]),
+            FakeUserSkillProgressRepository([]),
+            FakeUserBeansRepository(),
+            FakeUserStreakRepository(streaks),
+            FakeLessonAttemptRepository(),
+            FakeLessonRepositoryWithSkillIndex(),
+            FakeCategoryRepository(),
+            now,
+        )
+        return summary.practised_today
+
+    async def test_a_new_learner_has_not_practised(self) -> None:
+        assert await self._practised(None) is False
+
+    async def test_a_lesson_today_counts(self) -> None:
+        assert await self._practised(date(2026, 9, 16)) is True
+
+    async def test_a_lesson_yesterday_does_not(self) -> None:
+        assert await self._practised(date(2026, 9, 15)) is False
+
+    async def test_the_day_rolls_over_at_midnight_utc(self) -> None:
+        just_after = datetime(2026, 9, 17, 0, 0, 1, tzinfo=UTC)
+        assert await self._practised(date(2026, 9, 16), just_after) is False
+
+    async def test_today_is_the_utc_date_whatever_the_clock_zone(self) -> None:
+        # 01:30 in Addis Ababa on the 17th is still the 16th in UTC.
+        addis = datetime(2026, 9, 17, 1, 30, tzinfo=timezone(timedelta(hours=3)))
+        assert await self._practised(date(2026, 9, 16), addis) is True
 
 
 class TestGetLessonContent:

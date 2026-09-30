@@ -59,6 +59,29 @@ void main() {
     expect(cached.tree.streakCount, 3);
   });
 
+  test('practised_today round-trips (021-daily-reminder)', () async {
+    final store = InMemoryCourseCacheStore();
+    final tree = _tree('a', 'Akkam');
+    await store.saveDashboard(
+      'a',
+      SkillTreeResponse(
+        course: tree.course,
+        categories: tree.categories,
+        nodes: tree.nodes,
+        streakCount: 3,
+        beans: 4,
+        beansMax: 5,
+        totalXp: 10,
+        practisedToday: true,
+      ),
+      amoleBalance: 0,
+    );
+    await store.saveDashboard('b', _tree('b', 'Akkam'), amoleBalance: 0);
+
+    expect((await store.loadDashboard('a'))!.tree.practisedToday, isTrue);
+    expect((await store.loadDashboard('b'))!.tree.practisedToday, isFalse);
+  });
+
   test('the beans timing round-trips (bolt 060)', () async {
     final store = InMemoryCourseCacheStore();
     final next = DateTime.utc(2026, 9, 30, 12, 15);

@@ -13,11 +13,19 @@ import 'session_repository.dart';
 /// [renew] is called in the background at launch and never blocks or
 /// throws: offline, or on any failure, the saved expiry just stays as it is
 /// until the next launch.
+///
+/// [onChecked] hears the account the check returned, so the device can keep
+/// what the server says (021-daily-reminder: the Notifications switch).
 class SessionRenewer {
-  SessionRenewer({required this._sessionApi, required this._sessionRepository});
+  SessionRenewer({
+    required this._sessionApi,
+    required this._sessionRepository,
+    this.onChecked,
+  });
 
   final SessionApi _sessionApi;
   final SessionRepository _sessionRepository;
+  final void Function(SessionUser user)? onChecked;
 
   Future<void> renew() async {
     try {
@@ -38,6 +46,8 @@ class SessionRenewer {
       final now = await _sessionRepository.getSessionState();
       if (now.token != token) return;
       await _sessionRepository.saveSession(now.withExpiresAt(expiresAt));
+      final user = result.user;
+      if (user != null) onChecked?.call(user);
     } on Object {
       // Renewal is best effort; the saved session is still usable.
     }

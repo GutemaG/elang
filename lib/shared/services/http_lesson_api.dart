@@ -171,6 +171,8 @@ class HttpLessonApi implements LessonApi {
       beans: json['beans'] as int,
       beansMax: json['beans_max'] as int,
       totalXp: json['total_xp'] as int,
+      // Missing from a backend older than 021-daily-reminder.
+      practisedToday: json['practised_today'] == true,
     );
   }
 

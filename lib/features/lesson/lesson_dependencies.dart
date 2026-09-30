@@ -6,6 +6,7 @@ import '../../shared/services/lesson_audio_player.dart';
 import '../../shared/services/lesson_pack_downloader.dart';
 import '../../shared/services/lesson_pack_store.dart';
 import '../../shared/services/media_cache.dart';
+import '../../shared/services/reminders/reminder_service.dart';
 import '../../shared/services/session_repository.dart';
 import '../../shared/services/sound_preference_repository.dart';
 import '../../shared/services/sync_engine.dart';
@@ -33,6 +34,9 @@ import '../../shared/services/sync_engine.dart';
 /// the real player, checking [soundPreferenceRepository] fresh on every
 /// call (`005-profile-and-settings`, FR-5) rather than the bare
 /// [SystemAnswerFeedbackPlayer].
+///
+/// [reminders] is new as of bolt 063 (021-daily-reminder): the 8 pm
+/// reminder, kept in step by the dashboard and lessons; `null` keeps none.
 class LessonDependencies {
   LessonDependencies({
     required SessionRepository sessionRepository,
@@ -45,6 +49,7 @@ class LessonDependencies {
     LessonPackStore? lessonPackStore,
     LessonPackDownloader? lessonPackDownloader,
     SyncEngine? syncEngine,
+    this.reminders,
   }) : lessonApi =
            lessonApi ?? HttpLessonApi(sessionRepository: sessionRepository),
        mediaCache = mediaCache ?? DiskMediaCache(),
@@ -87,4 +92,5 @@ class LessonDependencies {
   final LessonPackStore lessonPackStore;
   late final LessonPackDownloader lessonPackDownloader;
   late final SyncEngine syncEngine;
+  final ReminderService? reminders;
 }

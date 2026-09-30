@@ -81,6 +81,11 @@ dependencies:
   # the SHA-1 of their address. Was already transitive (via `http` and
   # others); promoted to direct at the locked version.
   crypto: ^3.0.7
+  # The 8 pm daily reminder (021-daily-reminder): scheduled on the phone,
+  # at 8 pm in the phone's own time zone.
+  flutter_local_notifications: ^22.3.1
+  timezone: ^0.11.1
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:

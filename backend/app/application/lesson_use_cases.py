@@ -178,6 +178,9 @@ class SkillTreeSummary:
     beans: int
     beans_max: int
     total_xp: int
+    # 021-daily-reminder (bolt 062): a lesson that counts for the streak was
+    # finished on today's UTC date, so the app can skip tonight's reminder.
+    practised_today: bool = False
 
 
 async def get_skill_tree(
@@ -277,6 +280,9 @@ async def get_skill_tree(
         beans=regenerated_beans.current_count,
         beans_max=BEANS_MAX,
         total_xp=total_xp,
+        # Only a non-review lesson writes `last_completed_date`, so this is
+        # the streak's own day rule with no extra query.
+        practised_today=streak.last_completed_date == now.astimezone(UTC).date(),
     )
 
 

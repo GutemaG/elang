@@ -28,6 +28,7 @@ class AuthDependencies {
     CourseApi? courseApi,
     CourseCacheStore? courseCache,
     SessionApi? sessionApi,
+    void Function(SessionUser user)? onSessionChecked,
   }) : courseCache = courseCache ?? FileCourseCacheStore(),
        storage = storage ?? FlutterSecureStorageService(),
        authApi = authApi ?? HttpAuthApi() {
@@ -49,6 +50,7 @@ class AuthDependencies {
       renewer: SessionRenewer(
         sessionApi: sessionApi ?? SessionApi(),
         sessionRepository: sessionRepository,
+        onChecked: onSessionChecked,
       ),
     );
   }

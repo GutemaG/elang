@@ -324,6 +324,67 @@ class TestCompleteLesson:
         assert beans_after["amole_balance"] == beans_before["amole_balance"]
         assert beans_after["beans"] == beans_before["beans"]
 
+    def test_the_skill_tree_says_whether_today_is_practised(
+        self, make_client: Any, seeded_content: dict[str, str]
+    ) -> None:
+        # 021-daily-reminder (bolt 062).
+        client, token = _sign_in(make_client)
+        tree = client.get("/api/v1/skill-tree", headers=_auth(token)).json()
+        assert tree["practised_today"] is False
+
+        response = client.post(
+            f"/api/v1/lessons/{seeded_content['lesson_a1']}/complete",
+            headers=_auth(token),
+            json={
+                "attempt_id": "attempt-1",
+                "correct_count": 4,
+                "total_count": 4,
+                "time_spent_seconds": 30.0,
+                "client_completed_at": _now_iso(),
+            },
+        )
+        assert response.status_code == 200
+
+        tree = client.get("/api/v1/skill-tree", headers=_auth(token)).json()
+        assert tree["practised_today"] is True
+
+    def test_a_review_today_does_not_make_today_practised(
+        self, make_client: Any, seeded_content: dict[str, str], db_path: Path
+    ) -> None:
+        # 021-daily-reminder (bolt 062): the lesson was finished two days
+        # ago (an account old enough for that), and today's replay is a
+        # review, which doesn't count for the streak.
+        client, token = _sign_in(make_client)
+        engine = create_engine(f"sqlite:///{db_path}")
+        with SyncSession(engine) as session:
+            user = session.execute(
+                select(UserModel).where(UserModel.provider_user_id == "google-user-1")
+            ).scalar_one()
+            user.created_at = datetime.now(UTC) - timedelta(days=10)
+            session.commit()
+        engine.dispose()
+
+        def complete(attempt_id: str, at: datetime) -> dict[str, Any]:
+            response = client.post(
+                f"/api/v1/lessons/{seeded_content['lesson_a1']}/complete",
+                headers=_auth(token),
+                json={
+                    "attempt_id": attempt_id,
+                    "correct_count": 4,
+                    "total_count": 4,
+                    "time_spent_seconds": 30.0,
+                    "client_completed_at": at.isoformat(),
+                },
+            )
+            assert response.status_code == 200
+            return response.json()
+
+        assert complete("attempt-1", datetime.now(UTC) - timedelta(days=2))["is_review"] is False
+        assert complete("attempt-2", datetime.now(UTC))["is_review"] is True
+
+        tree = client.get("/api/v1/skill-tree", headers=_auth(token)).json()
+        assert tree["practised_today"] is False
+
     def test_a_review_with_mistakes_consumes_no_beans(
         self, make_client: Any, seeded_content: dict[str, str]
     ) -> None:

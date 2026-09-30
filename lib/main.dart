@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'features/auth/auth_dependencies.dart';
@@ -6,6 +9,9 @@ import 'features/lesson/lesson_dependencies.dart';
 import 'features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'features/settings/settings_dependencies.dart';
 import 'shared/licences/picture_credits.dart';
+import 'shared/services/reminders/reminder_scheduler.dart';
+import 'shared/services/reminders/reminder_service.dart';
+import 'shared/services/secure_storage_service.dart';
 import 'shared/services/sound_preference_repository.dart';
 import 'shared/theme/app_theme.dart';
 
@@ -17,7 +23,21 @@ void main() {
   // The bundled sample pictures' credits, on the licence page settings
   // opens (019-image-choice-exercise-types, story 005).
   registerPictureCredits();
-  final authDependencies = AuthDependencies();
+  // One store for the whole app, built first so the reminders below and
+  // sign-in share it.
+  final storage = FlutterSecureStorageService();
+  // The 8 pm reminder (021-daily-reminder). The web can't schedule one.
+  final reminders = ReminderService(
+    scheduler: kIsWeb ? const NoReminderScheduler() : LocalReminderScheduler(),
+    store: ReminderStore(storage: storage),
+  );
+  final authDependencies = AuthDependencies(
+    storage: storage,
+    // Each launch's session check brings the Notifications switch as the
+    // server has it, so a switch turned off on another phone applies here.
+    onSessionChecked: (user) =>
+        unawaited(reminders.setEnabled(user.notificationEnabled)),
+  );
   // Shared with both LessonDependencies (gates AnswerFeedbackPlayer) and
   // SettingsDependencies (the toggle UI) -- same instance, so a flip is
   // visible on the very next graded answer, no restart needed.
@@ -30,6 +50,7 @@ void main() {
       lessonDependencies: LessonDependencies(
         sessionRepository: authDependencies.sessionRepository,
         soundPreferenceRepository: soundPreferenceRepository,
+        reminders: reminders,
       ),
       settingsDependencies: SettingsDependencies(
         sessionRepository: authDependencies.sessionRepository,
@@ -75,6 +96,7 @@ class BunaApp extends StatelessWidget {
           courseApi: authDependencies.courseApi,
           courseCache: authDependencies.courseCache,
           mediaCache: lessonDependencies.mediaCache,
+          reminders: lessonDependencies.reminders,
           sessionRepository: settingsDependencies.sessionRepository,
           userPreferencesApi: settingsDependencies.userPreferencesApi,
           soundPreferenceRepository:

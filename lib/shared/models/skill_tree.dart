@@ -154,6 +154,7 @@ class SkillTreeResponse {
     required this.beansMax,
     required this.totalXp,
     this.course,
+    this.practisedToday = false,
   });
 
   /// The course this tree belongs to -- the learner's active course
@@ -168,6 +169,11 @@ class SkillTreeResponse {
   final int beansMax;
   final int totalXp;
 
+  /// A lesson that counts for the streak was finished on today's UTC date
+  /// (021-daily-reminder). Kept in the saved copy, but only trusted fresh
+  /// from the server: a saved copy may be from another day.
+  final bool practisedToday;
+
   int get completedCount =>
       nodes.where((n) => n.state == SkillNodeState.completed).length;
 
@@ -181,6 +187,7 @@ class SkillTreeResponse {
     'beans': beans,
     'beans_max': beansMax,
     'total_xp': totalXp,
+    'practised_today': practisedToday,
   };
 
   /// Reads what [toJson] wrote; `null` if it is malformed, so a damaged
@@ -205,6 +212,7 @@ class SkillTreeResponse {
         beans: raw['beans'] as int,
         beansMax: raw['beans_max'] as int,
         totalXp: raw['total_xp'] as int,
+        practisedToday: raw['practised_today'] == true,
       );
     } on Object {
       return null;

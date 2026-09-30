@@ -87,6 +87,40 @@ void main() {
     expect(saved.displayName, 'Abebe');
   });
 
+  test('passes the checked account on (021-daily-reminder)', () async {
+    final repo = await _signedIn();
+    final heard = <SessionUser>[];
+
+    await SessionRenewer(
+      sessionApi: SessionApi(
+        client: MockClient(
+          (_) async => _valid(expiresAt: '2026-10-21T12:00:00Z'),
+        ),
+        baseUrl: 'http://x',
+      ),
+      sessionRepository: repo,
+      onChecked: heard.add,
+    ).renew();
+
+    expect(heard.single.notificationEnabled, isTrue);
+  });
+
+  test('offline, nobody hears of an account', () async {
+    final repo = await _signedIn();
+    final heard = <SessionUser>[];
+
+    await SessionRenewer(
+      sessionApi: SessionApi(
+        client: MockClient((_) async => throw http.ClientException('off')),
+        baseUrl: 'http://x',
+      ),
+      sessionRepository: repo,
+      onChecked: heard.add,
+    ).renew();
+
+    expect(heard, isEmpty);
+  });
+
   test('offline, the saved session is left exactly as it was', () async {
     final repo = await _signedIn();
     final before = (await repo.getSessionState()).expiresAt;
