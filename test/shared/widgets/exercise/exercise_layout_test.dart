@@ -331,7 +331,10 @@ void main() {
       final phonetic = tester
           .widget<Text>(find.text('buna efellegalehu'))
           .style!;
-      expect(phonetic, AppTypography.phonetic);
+      expect(
+        phonetic,
+        AppTypography.phonetic.copyWith(color: AppColors.textMuted),
+      );
       expect(phonetic.fontSize, 14);
       expect(phonetic.fontWeight, FontWeight.w500);
       expect(phonetic.color, AppColors.textMuted);

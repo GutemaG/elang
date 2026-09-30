@@ -333,7 +333,7 @@ class _CardsGallerySectionState extends State<CardsGallerySection> {
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.verified,
                       size: 20,
                       color: AppColors.primaryContainer,

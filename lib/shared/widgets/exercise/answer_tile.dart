@@ -380,7 +380,7 @@ class _TileLook {
   final Color rim;
   final Color text;
 
-  static const _idle = _TileLook(
+  static final _idle = _TileLook(
     face: AppColors.surfaceContainerLowest,
     border: AppColors.tileBorder,
     rim: AppColors.tileShelf,
@@ -391,19 +391,19 @@ class _TileLook {
     AnswerTileState.idle ||
     AnswerTileState.used ||
     AnswerTileState.disabled => _idle,
-    AnswerTileState.selected => const _TileLook(
+    AnswerTileState.selected => _TileLook(
       face: AppColors.answerSelected,
       border: AppColors.secondaryBrand,
       rim: AppColors.activeNodeShelf,
       text: AppColors.onSurface,
     ),
-    AnswerTileState.correct => const _TileLook(
+    AnswerTileState.correct => _TileLook(
       face: AppColors.answerCorrect,
       border: AppColors.primaryContainer,
       rim: AppColors.primaryBevel,
       text: AppColors.primaryContainer,
     ),
-    AnswerTileState.incorrect => const _TileLook(
+    AnswerTileState.incorrect => _TileLook(
       face: AppColors.answerIncorrect,
       border: AppColors.tertiaryBrand,
       rim: AppColors.tertiaryBevel,

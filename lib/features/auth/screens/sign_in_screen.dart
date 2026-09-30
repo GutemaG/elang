@@ -139,11 +139,7 @@ class _SignInScreenState extends State<SignInScreen> {
             onPressed: _controller.isInFlight
                 ? null
                 : () => _controller.signIn(AuthProvider.apple),
-            leading: const Icon(
-              Icons.apple,
-              size: 22,
-              color: AppColors.onSurface,
-            ),
+            leading: Icon(Icons.apple, size: 22, color: AppColors.onSurface),
           ),
           if (showError) ...[
             const SizedBox(height: AppSpacing.spaceMd),
@@ -203,7 +199,7 @@ class _GoogleGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    return SizedBox(
       width: 20,
       height: 20,
       child: Icon(Icons.g_mobiledata, size: 22, color: AppColors.onSurface),

@@ -332,7 +332,7 @@ class _TactileStyle {
   final Color foreground;
 
   static _TactileStyle of(AppButtonVariant variant) => switch (variant) {
-    AppButtonVariant.primary => const _TactileStyle(
+    AppButtonVariant.primary => _TactileStyle(
       face: AppColors.primaryContainer,
       shelf: AppColors.primaryBevel,
       foreground: AppColors.onPrimary,
@@ -344,13 +344,13 @@ class _TactileStyle {
       shelfDepth: AppShadows.tileShelfDepth,
       foreground: AppColors.primary,
     ),
-    AppButtonVariant.accent => const _TactileStyle(
+    AppButtonVariant.accent => _TactileStyle(
       face: AppColors.secondaryContainer,
       border: AppColors.secondary,
       shelf: AppColors.secondary,
       foreground: AppColors.onSecondaryContainer,
     ),
-    AppButtonVariant.destructive => const _TactileStyle(
+    AppButtonVariant.destructive => _TactileStyle(
       face: AppColors.tertiaryBrand,
       shelf: AppColors.tertiaryBevel,
       foreground: AppColors.onTertiary,

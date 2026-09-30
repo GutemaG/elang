@@ -440,7 +440,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         _host(
-          const ColoredBox(
+          ColoredBox(
             color: AppColors.surfaceContainer,
             child: AppCard(tone: AppTone.secondary, child: Text('Card')),
           ),

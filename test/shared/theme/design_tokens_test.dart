@@ -12,7 +12,7 @@ void main() {
     test(
       'should match DESIGN.md and the mockups for every token added by 018',
       () {
-        const expected = {
+        final expected = {
           'answerSelected': (AppColors.answerSelected, 0xFFFFF7ED),
           'answerCorrect': (AppColors.answerCorrect, 0xFFE8F8F0),
           'answerIncorrect': (AppColors.answerIncorrect, 0xFFFDF0EE),
@@ -165,10 +165,12 @@ void main() {
       },
     );
 
-    test('should style pronunciation as muted body-sm at 500 (DESIGN.md)', () {
+    // The muted colour comes from the theme where it is drawn (022, bolt
+    // 066); exercise_layout_test checks it.
+    test('should style pronunciation as body-sm at 500 (DESIGN.md)', () {
       expect(AppTypography.phonetic.fontSize, AppTypography.bodySm.fontSize);
       expect(AppTypography.phonetic.fontWeight, FontWeight.w500);
-      expect(AppTypography.phonetic.color, AppColors.textMuted);
+      expect(AppTypography.phonetic.color, isNull);
     });
 
     test('should detect Ethiopic in every Ethiopic block and nowhere else', () {

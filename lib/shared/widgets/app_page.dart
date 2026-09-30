@@ -395,7 +395,7 @@ class TibebStripe extends StatelessWidget {
             ? const RepaintBoundary(
                 child: CustomPaint(painter: WovenTibebPainter()),
               )
-            : const DecoratedBox(
+            : DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -416,7 +416,7 @@ class TibebStripe extends StatelessWidget {
 class WovenTibebPainter extends CustomPainter {
   const WovenTibebPainter();
 
-  static const bands = <(Color, double)>[
+  static final bands = <(Color, double)>[
     (AppColors.tertiary, 8),
     (AppColors.secondaryContainer, 8),
     (AppColors.primary, 8),

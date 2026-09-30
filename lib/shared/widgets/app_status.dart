@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_tone.dart';
 import '../theme/app_typography.dart';
 import 'app_button.dart';
@@ -424,20 +425,14 @@ class AppProgressBar extends StatelessWidget {
   static const double largeHeight = 14;
 
   List<Color> get _gradientColors => switch (tone) {
-    AppTone.primary => const [
+    AppTone.primary => [
       AppColors.primary,
       AppColors.primaryContainer,
       AppColors.primaryFixedDim,
     ],
-    AppTone.secondary => const [
-      AppColors.secondaryContainer,
-      AppColors.secondary,
-    ],
-    AppTone.tertiary => const [
-      AppColors.tertiaryBrand,
-      AppColors.tertiaryContainer,
-    ],
-    AppTone.neutral => const [AppColors.outline, AppColors.onSurfaceVariant],
+    AppTone.secondary => [AppColors.secondaryContainer, AppColors.secondary],
+    AppTone.tertiary => [AppColors.tertiaryBrand, AppColors.tertiaryContainer],
+    AppTone.neutral => [AppColors.outline, AppColors.onSurfaceVariant],
   };
 
   @override
@@ -654,7 +649,8 @@ class PageDots extends StatelessWidget {
   }
 }
 
-/// The one spinner, in a token colour. Indeterminate spinners never
+/// The one spinner, in a token colour (the theme's `primaryContainer`
+/// unless given one). Indeterminate spinners never
 /// settle, so a place a test pumps to rest shows [LoadingState.still]
 /// instead.
 class AppSpinner extends StatelessWidget {
@@ -662,16 +658,14 @@ class AppSpinner extends StatelessWidget {
     super.key,
     this.size = 24,
     this.strokeWidth = 2.5,
-    this.color = AppColors.primaryContainer,
+    this.color,
   });
 
-  const AppSpinner.small({super.key, this.color = AppColors.primaryContainer})
-    : size = 16,
-      strokeWidth = 2;
+  const AppSpinner.small({super.key, this.color}) : size = 16, strokeWidth = 2;
 
   final double size;
   final double strokeWidth;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -680,7 +674,7 @@ class AppSpinner extends StatelessWidget {
       child: CircularProgressIndicator(
         strokeWidth: strokeWidth,
         strokeCap: StrokeCap.round,
-        color: color,
+        color: color ?? context.colors.primaryContainer,
       ),
     );
   }

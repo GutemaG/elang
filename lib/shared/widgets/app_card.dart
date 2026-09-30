@@ -385,7 +385,7 @@ class _ListRowState extends State<ListRow> {
         widget.trailing ??
         (widget.onTap == null
             ? null
-            : const Icon(
+            : Icon(
                 Icons.chevron_right,
                 size: 24,
                 color: AppColors.onSurfaceVariant,
@@ -535,7 +535,7 @@ class ListRowGroup extends StatelessWidget {
         children: [
           for (var i = 0; i < children.length; i++) ...[
             if (i > 0)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(left: dividerIndent),
                 child: SizedBox(
                   height: 1,
@@ -567,7 +567,7 @@ class PathSectionDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const line = Expanded(
+    final line = Expanded(
       child: SizedBox(
         height: 1,
         child: ColoredBox(color: AppColors.outlineVariant),

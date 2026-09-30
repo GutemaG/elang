@@ -237,7 +237,7 @@ class _CrownBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.workspace_premium,
             size: 12,
             color: AppColors.secondaryContainer,

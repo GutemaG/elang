@@ -104,7 +104,7 @@ class SelectableOptionCard extends StatelessWidget {
             ),
             if (trailingAction != null) ...[
               const SizedBox(height: AppSpacing.spaceSm),
-              const SizedBox(
+              SizedBox(
                 height: 1,
                 width: double.infinity,
                 child: ColoredBox(color: AppColors.surfaceContainer),
@@ -120,7 +120,7 @@ class SelectableOptionCard extends StatelessWidget {
 
   Widget _buildIndicator() {
     if (!enabled) {
-      return const Icon(
+      return Icon(
         Icons.lock_outline,
         color: AppColors.onSurfaceVariant,
         size: 20,
@@ -130,11 +130,11 @@ class SelectableOptionCard extends StatelessWidget {
       return Container(
         width: 28,
         height: 28,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.primaryContainer,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check, color: AppColors.onPrimary, size: 18),
+        child: Icon(Icons.check, color: AppColors.onPrimary, size: 18),
       );
     }
     return Container(

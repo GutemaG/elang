@@ -62,7 +62,7 @@ class CoursePanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.spaceSm),
             _rail(context),
             const SizedBox(height: AppSpacing.spaceXs),
-            const SizedBox(
+            SizedBox(
               height: 1,
               child: ColoredBox(color: AppColors.cardBorderDefault),
             ),

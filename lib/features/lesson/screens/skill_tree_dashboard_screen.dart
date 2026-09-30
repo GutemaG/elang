@@ -741,7 +741,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
             key: const ValueKey('course-panel-scrim'),
             onTap: _closePanel,
             behavior: HitTestBehavior.opaque,
-            child: const ColoredBox(color: AppColors.scrim),
+            child: ColoredBox(color: AppColors.scrim),
           ),
         ),
         Positioned(
@@ -1166,10 +1166,7 @@ class _PracticeEntryCard extends StatelessWidget {
                   ),
                 ),
                 if (enabled)
-                  const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.onSurfaceVariant,
-                  ),
+                  Icon(Icons.chevron_right, color: AppColors.onSurfaceVariant),
               ],
             ),
           ),
@@ -1215,7 +1212,7 @@ class _DownloadAffordance extends StatelessWidget {
           ),
         );
       case LessonDownloadStatus.downloading:
-        return const _AffordanceBadge(
+        return _AffordanceBadge(
           label: 'Downloading',
           child: SizedBox.square(
             dimension: _AffordanceBadge.badgeSize,

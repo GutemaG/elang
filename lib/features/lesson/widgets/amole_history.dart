@@ -62,7 +62,7 @@ class AmoleHistoryList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < entries.length; i++) ...[
-          if (i > 0) const Divider(height: 1, color: AppColors.outlineVariant),
+          if (i > 0) Divider(height: 1, color: AppColors.outlineVariant),
           _Entry(entry: entries[i]),
         ],
       ],

@@ -175,7 +175,7 @@ class _Loading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
+    return ColoredBox(
       key: PictureTile.loadingKey,
       color: AppColors.surfaceContainerLow,
       child: Center(

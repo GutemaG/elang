@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
+import '../../theme/app_theme_context.dart';
 import '../../theme/app_typography.dart';
 import '../app_icon_button.dart';
 import '../app_page.dart';
@@ -200,7 +201,12 @@ class QuestionPrompt extends StatelessWidget {
           ),
         if (spoken != null) ...[
           const SizedBox(height: AppSpacing.space2xs),
-          Text(spoken, style: AppTypography.phonetic),
+          Text(
+            spoken,
+            style: AppTypography.phonetic.copyWith(
+              color: context.colors.textMuted,
+            ),
+          ),
         ],
         if (meaning != null) ...[
           const SizedBox(height: AppSpacing.space2xs),

@@ -55,7 +55,7 @@ class CourseBadge extends StatelessWidget {
               if (course != null)
                 CourseGlyph(languageCode: course.learningLanguage)
               else
-                const Icon(
+                Icon(
                   Icons.translate,
                   size: 24,
                   color: AppColors.primaryContainer,
@@ -74,7 +74,7 @@ class CourseBadge extends StatelessWidget {
               AnimatedRotation(
                 turns: expanded ? 0.5 : 0,
                 duration: const Duration(milliseconds: 180),
-                child: const Icon(
+                child: Icon(
                   Icons.expand_more,
                   size: 20,
                   color: AppColors.onSurfaceVariant,

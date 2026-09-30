@@ -5,6 +5,7 @@ import '../theme/app_motion.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_icon_button.dart';
@@ -133,7 +134,7 @@ class GalleryCase extends StatelessWidget {
 class _ColoursSection extends StatelessWidget {
   const _ColoursSection();
 
-  static const _groups = <String, List<(String, Color)>>{
+  static final _groups = <String, List<(String, Color)>>{
     'Surfaces': [
       ('background', AppColors.background),
       ('surfaceContainerLowest', AppColors.surfaceContainerLowest),
@@ -474,7 +475,12 @@ class _TypeSection extends StatelessWidget {
                   'ቡና አለቀ!',
                 ),
               ),
-              const Text('Buna aleke!', style: AppTypography.phonetic),
+              Text(
+                'Buna aleke!',
+                style: AppTypography.phonetic.copyWith(
+                  color: context.colors.textMuted,
+                ),
+              ),
             ],
           ),
         ),

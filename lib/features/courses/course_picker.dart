@@ -240,7 +240,7 @@ class _CatalogRow extends StatelessWidget {
 
   Widget _indicator() {
     if (!course.isAvailable) {
-      return const Icon(
+      return Icon(
         Icons.lock_outline,
         size: 20,
         color: AppColors.onSurfaceVariant,
@@ -250,14 +250,14 @@ class _CatalogRow extends StatelessWidget {
       return Container(
         width: 24,
         height: 24,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.primaryContainer,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check, color: AppColors.onPrimary, size: 16),
+        child: Icon(Icons.check, color: AppColors.onPrimary, size: 16),
       );
     }
-    return const Icon(
+    return Icon(
       Icons.chevron_right,
       size: 20,
       color: AppColors.onSurfaceVariant,

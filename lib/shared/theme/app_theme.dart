@@ -1,53 +1,57 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'app_palette.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
 
-/// Builds the app-wide [ThemeData] from the Highland Pulse tokens in
-/// [AppColors] / [AppTypography] / `app_spacing.dart`, so screens read
-/// `Theme.of(context)` or the token classes directly instead of hardcoding
-/// hex values or font sizes.
+/// Builds the app-wide [ThemeData] from a Highland Pulse palette
+/// ([AppPalette]) with [AppTypography] and `app_spacing.dart`, so screens
+/// read `Theme.of(context)` or `context.colors` instead of hardcoding hex
+/// values or font sizes. The palette rides along as a theme extension.
 abstract final class AppTheme {
-  static ThemeData get light {
+  static ThemeData get light =>
+      fromPalette(AppPalette.light, brightness: Brightness.light);
+
+  /// The whole theme drawn in [p].
+  static ThemeData fromPalette(AppPalette p, {required Brightness brightness}) {
     final colorScheme = ColorScheme(
-      brightness: Brightness.light,
-      primary: AppColors.primary,
-      onPrimary: AppColors.onPrimary,
-      primaryContainer: AppColors.primaryContainer,
-      onPrimaryContainer: AppColors.onPrimaryContainer,
-      secondary: AppColors.secondary,
-      onSecondary: AppColors.onSecondary,
-      secondaryContainer: AppColors.secondaryContainer,
-      onSecondaryContainer: AppColors.onSecondaryContainer,
-      tertiary: AppColors.tertiary,
-      onTertiary: AppColors.onTertiary,
-      tertiaryContainer: AppColors.tertiaryContainer,
-      onTertiaryContainer: AppColors.onTertiaryContainer,
-      error: AppColors.error,
-      onError: AppColors.onError,
-      errorContainer: AppColors.errorContainer,
-      onErrorContainer: AppColors.onErrorContainer,
-      surface: AppColors.surface,
-      onSurface: AppColors.onSurface,
-      surfaceContainerLowest: AppColors.surfaceContainerLowest,
-      surfaceContainerLow: AppColors.surfaceContainerLow,
-      surfaceContainer: AppColors.surfaceContainer,
-      surfaceContainerHigh: AppColors.surfaceContainerHigh,
-      surfaceContainerHighest: AppColors.surfaceContainerHighest,
-      onSurfaceVariant: AppColors.onSurfaceVariant,
-      outline: AppColors.outline,
-      outlineVariant: AppColors.outlineVariant,
-      inverseSurface: AppColors.inverseSurface,
-      onInverseSurface: AppColors.inverseOnSurface,
-      inversePrimary: AppColors.primaryFixedDim,
-      surfaceTint: AppColors.primaryContainer,
+      brightness: brightness,
+      primary: p.primary,
+      onPrimary: p.onPrimary,
+      primaryContainer: p.primaryContainer,
+      onPrimaryContainer: p.onPrimaryContainer,
+      secondary: p.secondary,
+      onSecondary: p.onSecondary,
+      secondaryContainer: p.secondaryContainer,
+      onSecondaryContainer: p.onSecondaryContainer,
+      tertiary: p.tertiary,
+      onTertiary: p.onTertiary,
+      tertiaryContainer: p.tertiaryContainer,
+      onTertiaryContainer: p.onTertiaryContainer,
+      error: p.error,
+      onError: p.onError,
+      errorContainer: p.errorContainer,
+      onErrorContainer: p.onErrorContainer,
+      surface: p.surface,
+      onSurface: p.onSurface,
+      surfaceContainerLowest: p.surfaceContainerLowest,
+      surfaceContainerLow: p.surfaceContainerLow,
+      surfaceContainer: p.surfaceContainer,
+      surfaceContainerHigh: p.surfaceContainerHigh,
+      surfaceContainerHighest: p.surfaceContainerHighest,
+      onSurfaceVariant: p.onSurfaceVariant,
+      outline: p.outline,
+      outlineVariant: p.outlineVariant,
+      inverseSurface: p.inverseSurface,
+      onInverseSurface: p.inverseOnSurface,
+      inversePrimary: p.primaryFixedDim,
+      surfaceTint: p.primaryContainer,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: p.surface,
       fontFamily: AppTypography.fontFamily,
       fontFamilyFallback: AppTypography.fontFamilyFallback,
       textTheme: const TextTheme(
@@ -62,33 +66,37 @@ abstract final class AppTheme {
         labelMedium: AppTypography.labelMd,
         labelSmall: AppTypography.labelSm,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.onSurface,
+      appBarTheme: AppBarTheme(
+        backgroundColor: p.surface,
+        foregroundColor: p.onSurface,
         elevation: 0,
       ),
-      chipTheme: chipTheme,
-      switchTheme: switchTheme,
-      snackBarTheme: snackBarTheme,
+      chipTheme: chipThemeFor(p),
+      switchTheme: switchThemeFor(p),
+      snackBarTheme: snackBarThemeFor(p),
+      extensions: [p],
     );
   }
+
+  /// [chipThemeFor] in the light palette.
+  static ChipThemeData get chipTheme => chipThemeFor(AppPalette.light);
 
   /// Choice chips ("I speak"): white stadiums with a 2 px border; a chosen
   /// one takes the chosen-option face, a green border and a check, like a
   /// selected option card.
-  static ChipThemeData get chipTheme {
+  static ChipThemeData chipThemeFor(AppPalette p) {
     return ChipThemeData(
       color: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.selected)
-            ? AppColors.optionChosen
-            : AppColors.surfaceContainerLowest,
+            ? p.chosenFace
+            : p.surfaceContainerLowest,
       ),
-      checkmarkColor: AppColors.primaryContainer,
+      checkmarkColor: p.primaryContainer,
       side: WidgetStateBorderSide.resolveWith(
         (states) => BorderSide(
           color: states.contains(WidgetState.selected)
-              ? AppColors.primaryContainer
-              : AppColors.cardBorderDefault,
+              ? p.primaryContainer
+              : p.cardBorder,
           width: 2,
         ),
       ),
@@ -96,8 +104,8 @@ abstract final class AppTheme {
       labelStyle: WidgetStateTextStyle.resolveWith(
         (states) => AppTypography.labelMd.copyWith(
           color: states.contains(WidgetState.selected)
-              ? AppColors.primary
-              : AppColors.onSurface,
+              ? p.primary
+              : p.onSurface,
         ),
       ),
       padding: const EdgeInsets.symmetric(
@@ -113,7 +121,7 @@ abstract final class AppTheme {
   /// Settings switches (Notifications, Sound): on is a green track with a
   /// white thumb, as in Duolingo's settings; off is a grey outlined track.
   /// Disabled keeps the same colours, faded.
-  static SwitchThemeData get switchTheme {
+  static SwitchThemeData switchThemeFor(AppPalette p) {
     Color faded(Set<WidgetState> states, Color color) =>
         states.contains(WidgetState.disabled)
         ? color.withValues(alpha: 0.4)
@@ -121,22 +129,16 @@ abstract final class AppTheme {
     bool on(Set<WidgetState> states) => states.contains(WidgetState.selected);
     return SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
-        (states) =>
-            faded(states, on(states) ? AppColors.onPrimary : AppColors.outline),
+        (states) => faded(states, on(states) ? p.onPrimary : p.outline),
       ),
       trackColor: WidgetStateProperty.resolveWith(
         (states) => faded(
           states,
-          on(states)
-              ? AppColors.primaryContainer
-              : AppColors.surfaceContainerHighest,
+          on(states) ? p.primaryContainer : p.surfaceContainerHighest,
         ),
       ),
       trackOutlineColor: WidgetStateProperty.resolveWith(
-        (states) => faded(
-          states,
-          on(states) ? AppColors.primaryContainer : AppColors.outline,
-        ),
+        (states) => faded(states, on(states) ? p.primaryContainer : p.outline),
       ),
       trackOutlineWidth: const WidgetStatePropertyAll(2),
     );
@@ -144,14 +146,14 @@ abstract final class AppTheme {
 
   /// Short messages ("Couldn't switch course"): a floating dark card with
   /// the base radius, clear of the page's docked buttons.
-  static SnackBarThemeData get snackBarTheme {
+  static SnackBarThemeData snackBarThemeFor(AppPalette p) {
     return SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.inverseSurface,
+      backgroundColor: p.inverseSurface,
       contentTextStyle: AppTypography.bodyMd.copyWith(
-        color: AppColors.inverseOnSurface,
+        color: p.inverseOnSurface,
       ),
-      actionTextColor: AppColors.primaryFixedDim,
+      actionTextColor: p.primaryFixedDim,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.base),
       ),

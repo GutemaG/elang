@@ -6,8 +6,6 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
-
 abstract final class AppTypography {
   static const String fontFamily = 'PlusJakartaSans';
 
@@ -114,14 +112,14 @@ abstract final class AppTypography {
   );
 
   /// DESIGN.md "Phonetics & Pronunciation Guides": the Latin or IPA line
-  /// under Fidel, in `body-sm` at weight 500 and the muted text colour.
+  /// under Fidel, in `body-sm` at weight 500. It carries no colour: the
+  /// widget adds the theme's muted text colour (`context.colors.textMuted`).
   static const TextStyle phonetic = TextStyle(
     fontFamily: fontFamily,
     fontFamilyFallback: fontFamilyFallback,
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 20 / 14,
-    color: AppColors.textMuted,
   );
 
   /// Whether [text] contains any Ethiopic character (the Ethiopic,
