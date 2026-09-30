@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/beans_status.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
@@ -49,7 +49,7 @@ class BeanTimerCard extends StatelessWidget {
                 child: Text(
                   'Next bean in',
                   style: AppTypography.labelMd.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.colors.onSurface,
                   ),
                 ),
               ),
@@ -57,7 +57,7 @@ class BeanTimerCard extends StatelessWidget {
                 countdown,
                 semanticsLabel: 'Next bean in $countdown',
                 style: AppTypography.headlineSm.copyWith(
-                  color: AppColors.tertiaryBrand,
+                  color: context.colors.tertiaryBrand,
                 ),
               ),
             ],

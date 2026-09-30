@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/language_names.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
@@ -34,18 +34,18 @@ class CourseGlyph extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.primaryContainer,
+        color: context.colors.primaryContainer,
         borderRadius: BorderRadius.circular(AppRadii.sm),
         border: selected
-            ? Border.all(color: AppColors.secondaryContainer, width: 3)
-            : Border.all(color: AppColors.outlineVariant),
+            ? Border.all(color: context.colors.secondaryContainer, width: 3)
+            : Border.all(color: context.colors.outlineVariant),
       ),
       child: Text(
         languageGlyph(languageCode),
         maxLines: 1,
         textScaler: TextScaler.noScaling,
         style: AppTypography.labelLg.copyWith(
-          color: AppColors.onPrimary,
+          color: context.colors.onPrimary,
           fontSize: size * 0.5,
         ),
       ),

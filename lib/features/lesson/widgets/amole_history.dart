@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/stat_history.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_status.dart';
@@ -53,7 +53,7 @@ class AmoleHistoryList extends StatelessWidget {
           'No Amole yet',
           textAlign: TextAlign.center,
           style: AppTypography.bodyMd.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
           ),
         ),
       );
@@ -62,7 +62,7 @@ class AmoleHistoryList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < entries.length; i++) ...[
-          if (i > 0) Divider(height: 1, color: AppColors.outlineVariant),
+          if (i > 0) Divider(height: 1, color: context.colors.outlineVariant),
           _Entry(entry: entries[i]),
         ],
       ],
@@ -101,13 +101,13 @@ class _Entry extends StatelessWidget {
                   Text(
                     entry.reason,
                     style: AppTypography.bodyMd.copyWith(
-                      color: AppColors.onSurface,
+                      color: context.colors.onSurface,
                     ),
                   ),
                   Text(
                     '${when.day} ${_shortMonths[when.month - 1]}',
                     style: AppTypography.labelSm.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -116,7 +116,9 @@ class _Entry extends StatelessWidget {
             Text(
               shown,
               style: AppTypography.labelLg.copyWith(
-                color: earned ? AppColors.primaryContainer : AppColors.error,
+                color: earned
+                    ? context.colors.primaryContainer
+                    : context.colors.error,
               ),
             ),
           ],

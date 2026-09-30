@@ -2,7 +2,6 @@
 // palette keeps every colour it had, and the theme, the tones and the
 // shadows are built from whichever palette they are given.
 
-import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_shadows.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/app_theme_context.dart';
@@ -10,80 +9,7 @@ import 'package:elang/shared/theme/app_tone.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// A palette in which every role has its own colour, so a piece that reads
-/// the wrong role, or the light palette, is caught.
-AppPalette _distinct() {
-  var n = 0;
-  Color next() => Color(0xFF000000 + (++n) * 0x010203);
-  return AppPalette(
-    surface: next(),
-    surfaceDim: next(),
-    surfaceContainerLowest: next(),
-    surfaceContainerLow: next(),
-    surfaceContainer: next(),
-    surfaceContainerHigh: next(),
-    surfaceContainerHighest: next(),
-    onSurface: next(),
-    onSurfaceVariant: next(),
-    inverseSurface: next(),
-    inverseOnSurface: next(),
-    outline: next(),
-    outlineVariant: next(),
-    primary: next(),
-    onPrimary: next(),
-    primaryContainer: next(),
-    onPrimaryContainer: next(),
-    primaryFixed: next(),
-    primaryFixedDim: next(),
-    primaryShelf: next(),
-    secondary: next(),
-    onSecondary: next(),
-    secondaryContainer: next(),
-    onSecondaryContainer: next(),
-    secondaryFixed: next(),
-    secondaryBrand: next(),
-    secondaryShelf: next(),
-    tertiary: next(),
-    onTertiary: next(),
-    tertiaryContainer: next(),
-    onTertiaryContainer: next(),
-    tertiaryFixed: next(),
-    tertiaryBrand: next(),
-    tertiaryShelf: next(),
-    error: next(),
-    onError: next(),
-    errorContainer: next(),
-    onErrorContainer: next(),
-    cardBorder: next(),
-    cardShelf: next(),
-    answerSelectedFace: next(),
-    answerCorrectFace: next(),
-    answerIncorrectFace: next(),
-    chosenFace: next(),
-    tileBorder: next(),
-    tileShelf: next(),
-    lockedNodeFace: next(),
-    lockedNodeIcon: next(),
-    activeNodeShelf: next(),
-    streak: next(),
-    streakRim: next(),
-    gem: next(),
-    xp: next(),
-    textMuted: next(),
-    track: next(),
-    primaryToneBorder: next(),
-    primaryToneShelf: next(),
-    primaryToneSurface: next(),
-    secondaryToneBorder: next(),
-    secondaryToneShelf: next(),
-    tertiaryToneBorder: next(),
-    tertiaryToneShelf: next(),
-    tertiaryToneSurface: next(),
-    dialogShelf: next(),
-    scrim: next(),
-    shadowInk: next(),
-  );
-}
+import '../../helpers/distinct_palette.dart';
 
 void main() {
   test('the light palette keeps every colour it had before bolt 066', () {
@@ -163,7 +89,7 @@ void main() {
   });
 
   test('a theme change switches palettes halfway, never blending', () {
-    final other = _distinct();
+    final other = distinctPalette();
     expect(AppPalette.light.lerp(other, 0.49), same(AppPalette.light));
     expect(AppPalette.light.lerp(other, 0.5), same(other));
     expect(AppPalette.light.lerp(null, 1), same(AppPalette.light));
@@ -188,7 +114,7 @@ void main() {
     }
 
     testWidgets('reads the palette the theme carries', (tester) async {
-      final p = _distinct();
+      final p = distinctPalette();
       final context = await pump(
         tester,
         AppTheme.fromPalette(p, brightness: Brightness.dark),
@@ -210,7 +136,7 @@ void main() {
 
   group('AppTheme.fromPalette', () {
     test('draws the Material theme in the given palette', () {
-      final p = _distinct();
+      final p = distinctPalette();
       final theme = AppTheme.fromPalette(p, brightness: Brightness.dark);
       const chosen = {WidgetState.selected};
 
@@ -238,7 +164,7 @@ void main() {
 
   group('tones', () {
     test('each tone takes its colours from the given palette', () {
-      final p = _distinct();
+      final p = distinctPalette();
       final primary = AppTone.primary.colorsIn(p);
       expect(primary.border, p.primaryToneBorder);
       expect(primary.fillShelf, p.primaryShelf);
@@ -280,7 +206,7 @@ void main() {
 
   group('shadows', () {
     test('are built from the given palette', () {
-      final p = _distinct();
+      final p = distinctPalette();
       final s = AppShadows.of(p);
 
       expect(s.card.first.color, p.cardShelf);

@@ -1,7 +1,7 @@
 // ExerciseLayout, its top bar, and QuestionPrompt: the one frame and the
 // one prompt style (018-mobile-design-system, unit 002 story 001).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/app_typography.dart';
@@ -256,11 +256,11 @@ void main() {
         find.text('Complete the sentence'),
       );
       expect(instruction.style!.fontSize, AppTypography.labelLg.fontSize);
-      expect(instruction.style!.color, AppColors.onSurfaceVariant);
+      expect(instruction.style!.color, AppPalette.light.onSurfaceVariant);
       final question = tester.widget<Text>(find.text('I want coffee'));
       expect(question.style!.fontSize, AppTypography.headlineMd.fontSize);
       expect(question.style!.fontWeight, FontWeight.w700);
-      expect(question.style!.color, AppColors.onSurface);
+      expect(question.style!.color, AppPalette.light.onSurface);
       expect(
         tester.getTopLeft(find.text('I want coffee')).dy -
             tester.getBottomLeft(find.text('Complete the sentence')).dy,
@@ -280,7 +280,7 @@ void main() {
         find.text('Match each word to its meaning'),
       );
       expect(headline.style!.fontSize, AppTypography.headlineMd.fontSize);
-      expect(headline.style!.color, AppColors.onSurface);
+      expect(headline.style!.color, AppPalette.light.onSurface);
     });
 
     testWidgets('the headline is a heading for screen readers; the '
@@ -333,16 +333,16 @@ void main() {
           .style!;
       expect(
         phonetic,
-        AppTypography.phonetic.copyWith(color: AppColors.textMuted),
+        AppTypography.phonetic.copyWith(color: AppPalette.light.textMuted),
       );
       expect(phonetic.fontSize, 14);
       expect(phonetic.fontWeight, FontWeight.w500);
-      expect(phonetic.color, AppColors.textMuted);
+      expect(phonetic.color, AppPalette.light.textMuted);
       final translation = tester
           .widget<Text>(find.text('I want coffee'))
           .style!;
       expect(translation.fontSize, AppTypography.bodyMd.fontSize);
-      expect(translation.color, AppColors.onSurfaceVariant);
+      expect(translation.color, AppPalette.light.onSurfaceVariant);
     });
 
     testWidgets('the speaker chip sits at the start of the question and '

@@ -24,7 +24,7 @@ import '../../../shared/services/media_cache.dart';
 import '../../../shared/services/reminders/reminder_service.dart';
 import '../../../shared/services/sync_engine.dart';
 import '../../../shared/services/user_preferences_api.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_motion.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
@@ -741,7 +741,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
             key: const ValueKey('course-panel-scrim'),
             onTap: _closePanel,
             behavior: HitTestBehavior.opaque,
-            child: ColoredBox(color: AppColors.scrim),
+            child: ColoredBox(color: context.colors.scrim),
           ),
         ),
         Positioned(
@@ -850,7 +850,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                 // An opaque band, so the path scrolls cleanly under the
                 // header instead of peeking through the gaps around the card.
                 child: ColoredBox(
-                  color: AppColors.background,
+                  color: context.colors.surface,
                   child: AnimatedSwitcher(
                     duration: AppMotion.reduced(context)
                         ? Duration.zero
@@ -1153,20 +1153,23 @@ class _PracticeEntryCard extends StatelessWidget {
                       Text(
                         'Practice',
                         style: AppTypography.headlineSm.copyWith(
-                          color: AppColors.onSurface,
+                          color: context.colors.onSurface,
                         ),
                       ),
                       Text(
                         subtitle,
                         style: AppTypography.bodySm.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.colors.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (enabled)
-                  Icon(Icons.chevron_right, color: AppColors.onSurfaceVariant),
+                  Icon(
+                    Icons.chevron_right,
+                    color: context.colors.onSurfaceVariant,
+                  ),
               ],
             ),
           ),
@@ -1193,6 +1196,7 @@ class _DownloadAffordance extends StatelessWidget {
       builder: (context, _) {
         final status = downloader.statusFor(lessonId);
         return _iconFor(
+          context,
           status,
           onTap: () => downloader.downloadLesson(lessonId),
         );
@@ -1200,7 +1204,11 @@ class _DownloadAffordance extends StatelessWidget {
     );
   }
 
-  Widget _iconFor(LessonDownloadStatus status, {required VoidCallback onTap}) {
+  Widget _iconFor(
+    BuildContext context,
+    LessonDownloadStatus status, {
+    required VoidCallback onTap,
+  }) {
     switch (status) {
       case LessonDownloadStatus.downloaded:
         return const _AffordanceBadge(
@@ -1217,7 +1225,7 @@ class _DownloadAffordance extends StatelessWidget {
           child: SizedBox.square(
             dimension: _AffordanceBadge.badgeSize,
             child: Center(
-              child: AppSpinner.small(color: AppColors.secondaryContainer),
+              child: AppSpinner.small(color: context.colors.secondaryContainer),
             ),
           ),
         );

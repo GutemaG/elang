@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tone.dart';
 import '../theme/app_typography.dart';
@@ -142,7 +142,7 @@ class GalleryPhoneFrame extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.outlineVariant, width: 2),
+        border: Border.all(color: context.colors.outlineVariant, width: 2),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadii.card - 2),
@@ -166,7 +166,9 @@ class _ValueText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: AppTypography.labelMd.copyWith(color: AppColors.onSurfaceVariant),
+      style: AppTypography.labelMd.copyWith(
+        color: context.colors.onSurfaceVariant,
+      ),
     );
   }
 }
@@ -192,20 +194,20 @@ class _MilestoneCard extends StatelessWidget {
                     Text(
                       'Current milestone',
                       style: AppTypography.labelSm.copyWith(
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                       ),
                     ),
                     Text(
                       'Unit 1: Foundations & Greetings',
                       style: AppTypography.headlineSm.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.colors.onSurface,
                       ),
                     ),
                     Text(
                       'ሰላምታ እና ፊደል መግቢያ',
                       style: AppTypography.forText(
                         AppTypography.bodySm.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.colors.onSurfaceVariant,
                         ),
                         'ሰላምታ',
                       ),
@@ -285,7 +287,7 @@ class _CardsGallerySectionState extends State<CardsGallerySection> {
 
   @override
   Widget build(BuildContext context) {
-    final body = AppTypography.bodySm.copyWith(color: AppColors.onSurface);
+    final body = AppTypography.bodySm.copyWith(color: context.colors.onSurface);
     return GallerySection(
       title: 'AppCard',
       note:
@@ -336,14 +338,14 @@ class _CardsGallerySectionState extends State<CardsGallerySection> {
                     Icon(
                       Icons.verified,
                       size: 20,
-                      color: AppColors.primaryContainer,
+                      color: context.colors.primaryContainer,
                     ),
                     const SizedBox(width: AppSpacing.space2xs),
                     Expanded(
                       child: Text(
                         'Accuracy score',
                         style: AppTypography.labelLg.copyWith(
-                          color: AppColors.onSurface,
+                          color: context.colors.onSurface,
                         ),
                       ),
                     ),
@@ -384,7 +386,9 @@ class _CardsGallerySectionState extends State<CardsGallerySection> {
               padding: AppCardPadding.compact,
               child: Text(
                 'Family & People',
-                style: AppTypography.labelLg.copyWith(color: tone.onFill),
+                style: AppTypography.labelLg.copyWith(
+                  color: context.tone(tone).onFill,
+                ),
               ),
             ),
           ),

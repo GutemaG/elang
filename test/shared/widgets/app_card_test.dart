@@ -1,7 +1,7 @@
 // AppCard and the pieces built on it, the tone table, and
 // SelectableOptionCard on AppCard (018-mobile-design-system, story 006).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_shadows.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
 import 'package:elang/shared/theme/app_theme.dart';
@@ -55,20 +55,41 @@ void main() {
   group('AppTone', () {
     test('should take borders and icon surfaces from the lesson-complete '
         'stat cards', () {
-      expect(AppTone.primary.border, const Color(0xFFD1E8D9));
-      expect(AppTone.primary.surface, const Color(0xFFE5F5EC));
-      expect(AppTone.secondary.border, const Color(0xFFF3DFC7));
-      expect(AppTone.tertiary.border, const Color(0xFFFBD6CF));
-      expect(AppTone.tertiary.surface, const Color(0xFFFEE9E6));
-      expect(AppTone.neutral.border, AppColors.cardBorderDefault);
-      expect(AppTone.neutral.shelf, AppColors.cardBevelDefault);
+      expect(
+        AppTone.primary.colorsIn(AppPalette.light).border,
+        const Color(0xFFD1E8D9),
+      );
+      expect(
+        AppTone.primary.colorsIn(AppPalette.light).surface,
+        const Color(0xFFE5F5EC),
+      );
+      expect(
+        AppTone.secondary.colorsIn(AppPalette.light).border,
+        const Color(0xFFF3DFC7),
+      );
+      expect(
+        AppTone.tertiary.colorsIn(AppPalette.light).border,
+        const Color(0xFFFBD6CF),
+      );
+      expect(
+        AppTone.tertiary.colorsIn(AppPalette.light).surface,
+        const Color(0xFFFEE9E6),
+      );
+      expect(
+        AppTone.neutral.colorsIn(AppPalette.light).border,
+        AppPalette.light.cardBorder,
+      );
+      expect(
+        AppTone.neutral.colorsIn(AppPalette.light).shelf,
+        AppPalette.light.cardShelf,
+      );
     });
 
     test('should give every tone a shelf darker than its border', () {
       for (final tone in AppTone.values) {
         expect(
-          _luminance(tone.shelf),
-          lessThan(_luminance(tone.border)),
+          _luminance(tone.colorsIn(AppPalette.light).shelf),
+          lessThan(_luminance(tone.colorsIn(AppPalette.light).border)),
           reason: tone.name,
         );
       }
@@ -79,8 +100,8 @@ void main() {
     test("every tone's fill shelf is darker than its fill", () {
       for (final tone in AppTone.values) {
         expect(
-          _luminance(tone.fillShelf),
-          lessThan(_luminance(tone.fill)),
+          _luminance(tone.colorsIn(AppPalette.light).fillShelf),
+          lessThan(_luminance(tone.colorsIn(AppPalette.light).fill)),
           reason: tone.name,
         );
       }
@@ -97,9 +118,19 @@ void main() {
           _host(AppCard(tone: tone, filled: true, child: const Text('x'))),
         );
         final face = _face(tester);
-        expect(face.color, tone.fill, reason: tone.name);
-        expect((face.border! as Border).top.color, tone.fill);
-        expect(face.boxShadow!.first.color, tone.fillShelf);
+        expect(
+          face.color,
+          tone.colorsIn(AppPalette.light).fill,
+          reason: tone.name,
+        );
+        expect(
+          (face.border! as Border).top.color,
+          tone.colorsIn(AppPalette.light).fill,
+        );
+        expect(
+          face.boxShadow!.first.color,
+          tone.colorsIn(AppPalette.light).fillShelf,
+        );
       }
     });
 
@@ -125,8 +156,16 @@ void main() {
             )
             .map((b) => (b.decoration as BoxDecoration).color)
             .toList();
-        expect(boxes, contains(tone.onFill), reason: tone.name);
-        expect(boxes, isNot(contains(tone.fill)), reason: tone.name);
+        expect(
+          boxes,
+          contains(tone.colorsIn(AppPalette.light).onFill),
+          reason: tone.name,
+        );
+        expect(
+          boxes,
+          isNot(contains(tone.colorsIn(AppPalette.light).fill)),
+          reason: tone.name,
+        );
         final track = tester.widget<Container>(
           find
               .descendant(
@@ -137,7 +176,7 @@ void main() {
         );
         expect(
           (track.decoration! as BoxDecoration).color,
-          tone.onFill.withValues(alpha: 0.25),
+          tone.colorsIn(AppPalette.light).onFill.withValues(alpha: 0.25),
         );
       }
     });
@@ -153,7 +192,10 @@ void main() {
           ),
         ),
       );
-      expect(_face(tester).color, AppTone.secondary.fill);
+      expect(
+        _face(tester).color,
+        AppTone.secondary.colorsIn(AppPalette.light).fill,
+      );
     });
   });
 
@@ -165,13 +207,13 @@ void main() {
         _host(const PathSectionDivider(title: 'Family & People')),
       );
       final text = tester.widget<Text>(find.text('Family & People'));
-      expect(text.style!.color, AppColors.textMuted);
+      expect(text.style!.color, AppPalette.light.textMuted);
       expect(text.style!.fontStyle, FontStyle.italic);
       expect(text.textAlign, TextAlign.center);
       final lines = find.descendant(
         of: find.byType(PathSectionDivider),
         matching: find.byWidgetPredicate(
-          (w) => w is ColoredBox && w.color == AppColors.outlineVariant,
+          (w) => w is ColoredBox && w.color == AppPalette.light.outlineVariant,
         ),
       );
       expect(lines, findsNWidgets(2));
@@ -196,7 +238,7 @@ void main() {
       final text = tester.widget<Text>(find.byType(Text));
       expect(text.maxLines, 2);
       final lines = find.byWidgetPredicate(
-        (w) => w is ColoredBox && w.color == AppColors.outlineVariant,
+        (w) => w is ColoredBox && w.color == AppPalette.light.outlineVariant,
       );
       // Both hairlines are the same const widget, so each is measured
       // through its own element.
@@ -227,12 +269,12 @@ void main() {
       await tester.pumpWidget(_host(const AppCard(child: Text('Card'))));
 
       final face = _face(tester);
-      expect(face.color, AppColors.surfaceContainerLowest);
+      expect(face.color, AppPalette.light.surfaceContainerLowest);
       expect(face.borderRadius, BorderRadius.circular(AppRadii.card));
       final border = face.border! as Border;
       expect(border.top.width, 2);
-      expect(border.top.color, AppColors.cardBorderDefault);
-      expect(face.boxShadow, AppShadows.card);
+      expect(border.top.color, AppPalette.light.cardBorder);
+      expect(face.boxShadow, AppShadows.of(AppPalette.light).card);
     });
 
     testWidgets('should reserve the shelf below its face', (tester) async {
@@ -259,9 +301,16 @@ void main() {
         );
 
         final face = _face(tester);
-        expect(face.color, AppColors.surfaceContainerLowest);
-        expect((face.border! as Border).top.color, tone.border);
-        expect(face.boxShadow, AppShadows.raised(tone.shelf));
+        expect(face.color, AppPalette.light.surfaceContainerLowest);
+        expect(
+          (face.border! as Border).top.color,
+          tone.colorsIn(AppPalette.light).border,
+        );
+        expect(
+          face.boxShadow,
+          AppShadows.of(AppPalette.light)
+              .raised(tone.colorsIn(AppPalette.light).shelf),
+        );
       });
     }
 
@@ -376,7 +425,7 @@ void main() {
           .y;
       expect(sunk, AppShadows.shelfDepth);
       // Pressed, the shelf has gone and only the soft shadow remains.
-      expect(_face(tester).boxShadow, [AppShadows.soft]);
+      expect(_face(tester).boxShadow, [AppShadows.of(AppPalette.light).soft]);
 
       await gesture.up();
       await tester.pumpAndSettle();
@@ -399,8 +448,11 @@ void main() {
       );
 
       final face = _face(tester);
-      expect(face.color, AppColors.optionChosen);
-      expect((face.border! as Border).top.color, AppColors.primaryContainer);
+      expect(face.color, AppPalette.light.chosenFace);
+      expect(
+        (face.border! as Border).top.color,
+        AppPalette.light.primaryContainer,
+      );
       expect(
         tester.getSemantics(find.byType(AppCard)),
         isSemantics(
@@ -441,13 +493,13 @@ void main() {
       await tester.pumpWidget(
         _host(
           ColoredBox(
-            color: AppColors.surfaceContainer,
+            color: AppPalette.light.surfaceContainer,
             child: AppCard(tone: AppTone.secondary, child: Text('Card')),
           ),
         ),
       );
 
-      expect(_face(tester).color, AppColors.surfaceContainerLowest);
+      expect(_face(tester).color, AppPalette.light.surfaceContainerLowest);
     });
   });
 
@@ -478,7 +530,10 @@ void main() {
       expect(find.text('XP EARNED'), findsOneWidget);
       expect(find.byType(IconBadge), findsNWidgets(2));
       final value = tester.widget<Text>(find.text('6 Days'));
-      expect(value.style!.color, AppTone.tertiary.ink);
+      expect(
+        value.style!.color,
+        AppTone.tertiary.colorsIn(AppPalette.light).ink,
+      );
     });
 
     testWidgets('should fill its slot in a row', (tester) async {
@@ -550,7 +605,10 @@ void main() {
             .first,
       );
       final decoration = box.decoration! as BoxDecoration;
-      expect(decoration.color, AppTone.secondary.surface);
+      expect(
+        decoration.color,
+        AppTone.secondary.colorsIn(AppPalette.light).surface,
+      );
       expect(decoration.borderRadius, BorderRadius.circular(AppRadii.full));
       expect((decoration.border! as Border).top.width, 1);
       expect(
@@ -582,7 +640,10 @@ void main() {
       );
       final border = (box.decoration! as BoxDecoration).border! as Border;
       expect(border.top.width, 2);
-      expect(border.top.color, AppTone.tertiary.icon);
+      expect(
+        border.top.color,
+        AppTone.tertiary.colorsIn(AppPalette.light).icon,
+      );
     });
   });
 
@@ -654,7 +715,7 @@ void main() {
         tester.getCenter(find.byType(ListRow)),
       );
       await tester.pump(const Duration(milliseconds: 150));
-      expect(background(), AppColors.surfaceContainerLow);
+      expect(background(), AppPalette.light.surfaceContainerLow);
 
       await gesture.up();
       await tester.pump();
@@ -689,7 +750,7 @@ void main() {
 
       expect(find.byType(AppCard), findsOneWidget);
       final dividers = find.byWidgetPredicate(
-        (w) => w is ColoredBox && w.color == AppColors.cardBorderDefault,
+        (w) => w is ColoredBox && w.color == AppPalette.light.cardBorder,
       );
       expect(dividers, findsNWidgets(2));
       expect(

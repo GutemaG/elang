@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/stat_history.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_icon_button.dart';
@@ -104,7 +104,7 @@ class _StreakCalendarState extends State<StreakCalendar> {
                 key: const ValueKey('streak-calendar-month'),
                 textAlign: TextAlign.center,
                 style: AppTypography.labelLg.copyWith(
-                  color: AppColors.onSurface,
+                  color: context.colors.onSurface,
                 ),
               ),
             ),
@@ -126,7 +126,7 @@ class _StreakCalendarState extends State<StreakCalendar> {
                     initial,
                     textAlign: TextAlign.center,
                     style: AppTypography.labelSm.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.colors.onSurfaceVariant,
                     ),
                   ),
                 ),

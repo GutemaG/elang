@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../shared/models/course.dart';
 import '../../shared/models/language_names.dart';
-import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_theme_context.dart';
 import '../../shared/theme/app_spacing.dart';
 import '../../shared/theme/app_typography.dart';
 import '../../shared/widgets/course_glyph.dart';
@@ -58,7 +58,7 @@ class CourseBadge extends StatelessWidget {
                 Icon(
                   Icons.translate,
                   size: 24,
-                  color: AppColors.primaryContainer,
+                  color: context.colors.primaryContainer,
                 ),
               const SizedBox(width: AppSpacing.spaceXs),
               Flexible(
@@ -67,7 +67,7 @@ class CourseBadge extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.labelLg.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.colors.onSurface,
                   ),
                 ),
               ),
@@ -77,7 +77,7 @@ class CourseBadge extends StatelessWidget {
                 child: Icon(
                   Icons.expand_more,
                   size: 20,
-                  color: AppColors.onSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
             ],

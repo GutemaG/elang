@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import '../../theme/app_theme_context.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import 'answer_action_bar.dart';
@@ -73,10 +73,10 @@ class AnswerSlotLine extends StatelessWidget {
 
   static const double _gapPadding = AppSpacing.spaceSm;
 
-  Color get _lineColour => switch (grade) {
-    null => AppColors.tileShelf,
-    AnswerGrade.correct => AppColors.primaryContainer,
-    AnswerGrade.incorrect => AppColors.tertiaryBrand,
+  Color _lineColour(AppPalette colors) => switch (grade) {
+    null => colors.tileShelf,
+    AnswerGrade.correct => colors.primaryContainer,
+    AnswerGrade.incorrect => colors.tertiaryBrand,
   };
 
   @override
@@ -92,7 +92,7 @@ class AnswerSlotLine extends StatelessWidget {
       painter: _RulesPainter(
         firstLine: pill + runGap / 2,
         pitch: pitch,
-        colour: _lineColour,
+        colour: _lineColour(context.colors),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -114,7 +114,7 @@ class AnswerSlotLine extends StatelessWidget {
                       child: Text(
                         hint!,
                         style: AppTypography.bodySm.copyWith(
-                          color: AppColors.textMuted,
+                          color: context.colors.textMuted,
                         ),
                       ),
                     ),
@@ -130,8 +130,8 @@ class AnswerSlotLine extends StatelessWidget {
     );
   }
 
-  TextStyle _sentenceStyle() => AppTypography.forText(
-    AppTypography.displayLgMobile.copyWith(color: AppColors.onSurface),
+  TextStyle _sentenceStyle(BuildContext context) => AppTypography.forText(
+    AppTypography.displayLgMobile.copyWith(color: context.colors.onSurface),
     '$before${options!.join()}$after',
   );
 
@@ -154,12 +154,12 @@ class AnswerSlotLine extends StatelessWidget {
   }
 
   Widget _gapSentence(BuildContext context) {
-    final style = _sentenceStyle();
+    final style = _sentenceStyle(context);
     final word = filled;
     final wordColour = switch (grade) {
-      null => AppColors.onSurface,
-      AnswerGrade.correct => AppColors.primaryContainer,
-      AnswerGrade.incorrect => AppColors.tertiaryBrand,
+      null => context.colors.onSurface,
+      AnswerGrade.correct => context.colors.primaryContainer,
+      AnswerGrade.incorrect => context.colors.tertiaryBrand,
     };
     return Text.rich(
       TextSpan(
@@ -182,7 +182,10 @@ class AnswerSlotLine extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: _gapPadding),
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: _lineColour, width: lineWidth),
+                    bottom: BorderSide(
+                      color: _lineColour(context.colors),
+                      width: lineWidth,
+                    ),
                   ),
                 ),
                 // No fixed height: the gap takes the line's own height, so

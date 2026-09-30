@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/skill_tree.dart';
 import '../../../shared/theme/app_shadows.dart';
 import '../../../shared/theme/app_spacing.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -163,7 +164,7 @@ class CategoryBanner extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.labelLg.copyWith(
-                            color: tone.onFill,
+                            color: context.tone(tone).onFill,
                           ),
                         ),
                         Text(
@@ -171,7 +172,7 @@ class CategoryBanner extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.bodySm.copyWith(
-                            color: tone.onFill,
+                            color: context.tone(tone).onFill,
                           ),
                         ),
                       ],

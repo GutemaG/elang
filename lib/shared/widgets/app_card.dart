@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tone.dart';
@@ -72,16 +72,18 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = selected ?? false;
     final border = filled
-        ? tone.fill
+        ? context.tone(tone).fill
         : isSelected
-        ? tone.icon
-        : tone.border;
+        ? context.tone(tone).icon
+        : context.tone(tone).border;
     final face = filled
-        ? tone.fill
+        ? context.tone(tone).fill
         : isSelected
-        ? tone.selectedFace
-        : AppColors.surfaceContainerLowest;
-    final shelf = filled ? tone.fillShelf : tone.shelf;
+        ? context.tone(tone).selectedFace
+        : context.colors.surfaceContainerLowest;
+    final shelf = filled
+        ? context.tone(tone).fillShelf
+        : context.tone(tone).shelf;
     final radius = BorderRadius.circular(AppRadii.card);
 
     // The content is clipped to the inside of the border, so a stripe or a
@@ -113,7 +115,7 @@ class AppCard extends StatelessWidget {
             color: face,
             borderRadius: radius,
             border: Border.all(color: border, width: borderWidth),
-            boxShadow: AppShadows.raised(shelf),
+            boxShadow: context.shadows.raised(shelf),
           ),
           // A DecoratedBox, unlike the pressable's Container, does not inset
           // its child by the border.
@@ -131,7 +133,7 @@ class AppCard extends StatelessWidget {
         borderWidth: borderWidth,
         borderRadius: radius,
         shelfDepth: AppShadows.shelfDepth,
-        shadows: (visible) => AppShadows.raised(shelf, visible: visible),
+        shadows: (visible) => context.shadows.raised(shelf, visible: visible),
         child: inner,
       );
     }
@@ -194,8 +196,8 @@ class StatCard extends StatelessWidget {
                         maxLines: 1,
                         style: AppTypography.headlineSm.copyWith(
                           color: tone == AppTone.neutral
-                              ? AppColors.onSurface
-                              : tone.ink,
+                              ? context.colors.onSurface
+                              : context.tone(tone).ink,
                         ),
                       ),
                     ),
@@ -206,7 +208,7 @@ class StatCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.forText(
                         AppTypography.labelSm.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: context.colors.onSurfaceVariant,
                         ),
                         label,
                       ),
@@ -256,7 +258,9 @@ class InfoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ink = tone == AppTone.neutral ? AppColors.onSurfaceVariant : tone.ink;
+    final ink = tone == AppTone.neutral
+        ? context.colors.onSurfaceVariant
+        : context.tone(tone).ink;
     final text = Text(
       message,
       style: AppTypography.forText(
@@ -264,14 +268,18 @@ class InfoBanner extends StatelessWidget {
         message,
       ),
     );
-    final iconWidget = Icon(icon, size: 20, color: emphasis ? tone.icon : ink);
+    final iconWidget = Icon(
+      icon,
+      size: 20,
+      color: emphasis ? context.tone(tone).icon : ink,
+    );
     final decoration = BoxDecoration(
-      color: tone.surface,
+      color: context.tone(tone).surface,
       borderRadius: BorderRadius.circular(
         action == null ? AppRadii.full : AppRadii.base,
       ),
       border: Border.all(
-        color: emphasis ? tone.icon : ink.withValues(alpha: 0.2),
+        color: emphasis ? context.tone(tone).icon : ink.withValues(alpha: 0.2),
         width: emphasis ? 2 : 1,
       ),
     );
@@ -388,7 +396,7 @@ class _ListRowState extends State<ListRow> {
             : Icon(
                 Icons.chevron_right,
                 size: 24,
-                color: AppColors.onSurfaceVariant,
+                color: context.colors.onSurfaceVariant,
               ));
     final row = ConstrainedBox(
       constraints: BoxConstraints(
@@ -398,8 +406,8 @@ class _ListRowState extends State<ListRow> {
       ),
       child: ColoredBox(
         color: _pressed
-            ? AppColors.surfaceContainerLow
-            : AppColors.surfaceContainerLowest.withValues(alpha: 0),
+            ? context.colors.surfaceContainerLow
+            : context.colors.surfaceContainerLowest.withValues(alpha: 0),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.spaceMd,
@@ -420,7 +428,7 @@ class _ListRowState extends State<ListRow> {
                       widget.title,
                       style: AppTypography.forText(
                         AppTypography.labelLg.copyWith(
-                          color: AppColors.onSurface,
+                          color: context.colors.onSurface,
                         ),
                         widget.title,
                       ),
@@ -431,7 +439,7 @@ class _ListRowState extends State<ListRow> {
                         widget.subtitle!,
                         style: AppTypography.forText(
                           AppTypography.bodySm.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: context.colors.onSurfaceVariant,
                           ),
                           widget.subtitle!,
                         ),
@@ -539,7 +547,7 @@ class ListRowGroup extends StatelessWidget {
                 padding: EdgeInsets.only(left: dividerIndent),
                 child: SizedBox(
                   height: 1,
-                  child: ColoredBox(color: AppColors.cardBorderDefault),
+                  child: ColoredBox(color: context.colors.cardBorder),
                 ),
               ),
             children[i],
@@ -570,7 +578,7 @@ class PathSectionDivider extends StatelessWidget {
     final line = Expanded(
       child: SizedBox(
         height: 1,
-        child: ColoredBox(color: AppColors.outlineVariant),
+        child: ColoredBox(color: context.colors.outlineVariant),
       ),
     );
     return Semantics(
@@ -594,7 +602,7 @@ class PathSectionDivider extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: AppTypography.forText(
                       AppTypography.bodyMd.copyWith(
-                        color: AppColors.textMuted,
+                        color: context.colors.textMuted,
                         fontStyle: FontStyle.italic,
                       ),
                       title,
@@ -647,14 +655,14 @@ class SectionHeader extends StatelessWidget {
                     Text(
                       eyebrow!,
                       style: AppTypography.labelSm.copyWith(
-                        color: AppColors.secondary,
+                        color: context.colors.secondary,
                       ),
                     ),
                   Text(
                     title,
                     style: AppTypography.forText(
                       AppTypography.headlineSm.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.colors.onSurface,
                       ),
                       title,
                     ),

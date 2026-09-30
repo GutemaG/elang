@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tone.dart';
@@ -31,9 +31,9 @@ Future<T?> showAppSheet<T>({
     useSafeArea: true,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
-    backgroundColor: AppColors.surface.withValues(alpha: 0),
+    backgroundColor: context.colors.surface.withValues(alpha: 0),
     elevation: 0,
-    barrierColor: AppColors.scrim,
+    barrierColor: context.colors.scrim,
     constraints: const BoxConstraints(maxWidth: AppSheetFrame.maxWidth),
     builder: (sheetContext) =>
         AppSheetFrame(showHandle: enableDrag, child: builder(sheetContext)),
@@ -59,11 +59,11 @@ class AppSheetFrame extends StatelessWidget {
     final keyboard = media.viewInsets.bottom;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppRadii.lg),
         ),
-        boxShadow: AppShadows.overlay,
+        boxShadow: context.shadows.overlay,
       ),
       child: Material(
         type: MaterialType.transparency,
@@ -110,7 +110,7 @@ class _Handle extends StatelessWidget {
         width: AppSheetFrame.handleWidth,
         height: AppSheetFrame.handleHeight,
         decoration: BoxDecoration(
-          color: AppColors.outlineVariant,
+          color: context.colors.outlineVariant,
           borderRadius: BorderRadius.circular(AppRadii.full),
         ),
       ),
@@ -133,7 +133,7 @@ Future<T?> showAppDialog<T>({
   return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
-    barrierColor: AppColors.scrim,
+    barrierColor: context.colors.scrim,
     builder: (dialogContext) => AppDialogFrame(
       onClose: showClose ? () => Navigator.of(dialogContext).pop() : null,
       child: builder(dialogContext),
@@ -212,13 +212,13 @@ class AppDialogFrame extends StatelessWidget {
                 type: MaterialType.transparency,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest,
+                    color: context.colors.surfaceContainerLowest,
                     borderRadius: radius,
                     border: Border.all(
-                      color: AppColors.surfaceContainerHighest,
+                      color: context.colors.surfaceContainerHighest,
                       width: borderWidth,
                     ),
-                    boxShadow: AppShadows.dialog,
+                    boxShadow: context.shadows.dialog,
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(
@@ -304,7 +304,9 @@ class SheetHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleColor = tone == AppTone.neutral ? AppColors.onSurface : tone.ink;
+    final titleColor = tone == AppTone.neutral
+        ? context.colors.onSurface
+        : context.tone(tone).ink;
     final actions = [?primaryAction, ?secondaryAction];
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -332,7 +334,7 @@ class SheetHero extends StatelessWidget {
                   text: secondLanguage,
                   style: AppTypography.forText(
                     AppTypography.headlineSm.copyWith(
-                      color: AppColors.secondary,
+                      color: context.colors.secondary,
                     ),
                     secondLanguage!,
                   ),
@@ -341,7 +343,7 @@ class SheetHero extends StatelessWidget {
                   TextSpan(
                     text: ' ($phonetic)',
                     style: AppTypography.labelMd.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.colors.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -360,7 +362,7 @@ class SheetHero extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTypography.forText(
                   AppTypography.bodySm.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: context.colors.onSurfaceVariant,
                   ),
                   body!,
                 ),
@@ -408,16 +410,19 @@ class _Illustration extends StatelessWidget {
               height: size,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
+                color: context.colors.surfaceContainerLow,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.outlineVariant.withValues(alpha: 0.4),
+                  color: context.colors.outlineVariant.withValues(alpha: 0.4),
                   width: 2,
                 ),
-                boxShadow: AppShadows.halo(hero.tone.border),
+                boxShadow: AppShadows.halo(context.tone(hero.tone).border),
               ),
               child: IconTheme.merge(
-                data: IconThemeData(color: hero.tone.icon, size: size * 0.4),
+                data: IconThemeData(
+                  color: context.tone(hero.tone).icon,
+                  size: size * 0.4,
+                ),
                 child: hero.illustration,
               ),
             ),

@@ -4,7 +4,7 @@
 // a stripe card that gives way when held short, the heights a pinned
 // header reads, and a button that reads its badge.
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_motion.dart';
 import 'package:elang/shared/theme/app_shadows.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
@@ -84,9 +84,9 @@ void main() {
           ((e.widget as AnimatedContainer).decoration! as BoxDecoration).color,
       ];
       expect(colours, [
-        AppColors.outlineVariant,
-        AppColors.primaryContainer,
-        AppColors.outlineVariant,
+        AppPalette.light.outlineVariant,
+        AppPalette.light.primaryContainer,
+        AppPalette.light.outlineVariant,
       ]);
     });
 
@@ -393,10 +393,7 @@ void main() {
       );
       expect(
         tester.getSemantics(find.byType(AppButton)),
-        isSemantics(
-          label: 'Refill with Amole, 350 Amole',
-          isButton: true,
-        ),
+        isSemantics(label: 'Refill with Amole, 350 Amole', isButton: true),
       );
 
       await tester.pumpWidget(
@@ -456,31 +453,34 @@ void main() {
     const idle = <WidgetState>{};
 
     test('a chosen chip takes the chosen-option face and a green border', () {
-      expect(theme.color!.resolve(chosen), AppColors.optionChosen);
-      expect(theme.color!.resolve(idle), AppColors.surfaceContainerLowest);
+      expect(theme.color!.resolve(chosen), AppPalette.light.chosenFace);
+      expect(
+        theme.color!.resolve(idle),
+        AppPalette.light.surfaceContainerLowest,
+      );
       final side = theme.side! as WidgetStateBorderSide;
-      expect(side.resolve(chosen)!.color, AppColors.primaryContainer);
-      expect(side.resolve(idle)!.color, AppColors.cardBorderDefault);
+      expect(side.resolve(chosen)!.color, AppPalette.light.primaryContainer);
+      expect(side.resolve(idle)!.color, AppPalette.light.cardBorder);
       expect(side.resolve(chosen)!.width, 2);
       expect(side.resolve(idle)!.width, 2);
     });
 
     test('the label is label-md, green when chosen', () {
       final style = theme.labelStyle! as WidgetStateTextStyle;
-      expect(style.resolve(chosen).color, AppColors.primary);
-      expect(style.resolve(idle).color, AppColors.onSurface);
+      expect(style.resolve(chosen).color, AppPalette.light.primary);
+      expect(style.resolve(idle).color, AppPalette.light.onSurface);
       expect(style.resolve(idle).fontSize, AppTypography.labelMd.fontSize);
     });
 
     test('it is a flat stadium with a check, and the app theme uses it', () {
       expect(theme.shape, const StadiumBorder());
       expect(theme.showCheckmark, isTrue);
-      expect(theme.checkmarkColor, AppColors.primaryContainer);
+      expect(theme.checkmarkColor, AppPalette.light.primaryContainer);
       expect(theme.elevation, 0);
       expect(AppTheme.light.chipTheme.color, isNotNull);
       expect(
         AppTheme.light.chipTheme.color!.resolve(chosen),
-        AppColors.optionChosen,
+        AppPalette.light.chosenFace,
       );
     });
 
@@ -507,10 +507,10 @@ void main() {
                   )
                   .decoration!
               as ShapeDecoration;
-      expect(face.color, AppColors.optionChosen);
+      expect(face.color, AppPalette.light.chosenFace);
       expect(
         (face.shape as OutlinedBorder).side.color,
-        AppColors.primaryContainer,
+        AppPalette.light.primaryContainer,
       );
     });
   });
@@ -545,20 +545,20 @@ void main() {
       PathNodeState.locked: (
         Icons.lock_outline,
         PathNode.size,
-        AppColors.surfaceDim,
-        AppColors.lockedNodeIcon,
+        AppPalette.light.surfaceDim,
+        AppPalette.light.lockedNodeIcon,
       ),
       PathNodeState.active: (
         Icons.play_arrow,
         PathNode.activeSize,
-        AppColors.secondaryContainer,
-        AppColors.activeNodeShelf,
+        AppPalette.light.secondaryContainer,
+        AppPalette.light.activeNodeShelf,
       ),
       PathNodeState.completed: (
         Icons.check,
         PathNode.size,
-        AppColors.primaryContainer,
-        AppColors.primaryBevel,
+        AppPalette.light.primaryContainer,
+        AppPalette.light.primaryShelf,
       ),
     };
     for (final MapEntry(key: state, value: look) in looks.entries) {
@@ -632,20 +632,12 @@ void main() {
       await tester.pumpWidget(node(onTap: () {}));
       expect(
         tester.getSemantics(find.byType(PathNode)),
-        isSemantics(
-          label: 'Numbers, active',
-          isButton: true,
-          isEnabled: true,
-        ),
+        isSemantics(label: 'Numbers, active', isButton: true, isEnabled: true),
       );
       await tester.pumpWidget(node(state: PathNodeState.locked));
       expect(
         tester.getSemantics(find.byType(PathNode)),
-        isSemantics(
-          label: 'Numbers, active',
-          isButton: true,
-          isEnabled: false,
-        ),
+        isSemantics(label: 'Numbers, active', isButton: true, isEnabled: false),
       );
       semantics.dispose();
     });
@@ -661,7 +653,7 @@ void main() {
       expect(find.text('አ'), findsOneWidget);
       expect(tester.getSize(find.byType(CourseGlyph)), const Size(44, 44));
       final decoration = _decorationOf(tester, find.byType(Container).last);
-      expect(decoration.color, AppColors.primaryContainer);
+      expect(decoration.color, AppPalette.light.primaryContainer);
     });
 
     testWidgets('the active course wears the gold ring', (tester) async {
@@ -673,13 +665,13 @@ void main() {
           const Center(child: CourseGlyph(languageCode: 'om', selected: true)),
         ),
       );
-      expect(border().top.color, AppColors.secondaryContainer);
+      expect(border().top.color, AppPalette.light.secondaryContainer);
       expect(border().top.width, 3);
 
       await tester.pumpWidget(
         _host(const Center(child: CourseGlyph(languageCode: 'om'))),
       );
-      expect(border().top.color, AppColors.outlineVariant);
+      expect(border().top.color, AppPalette.light.outlineVariant);
       expect(border().top.width, 1);
     });
   });

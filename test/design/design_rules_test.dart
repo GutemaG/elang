@@ -1,5 +1,6 @@
 // Keeps every screen on the shared design library (018-mobile-design-system,
-// NFR-1). Colours, shadows, radii, borders, buttons, sheets, page scaffolds
+// NFR-1), and every colour on the current theme (022-light-and-dark-themes,
+// FR-3). Colours, shadows, radii, borders, buttons, sheets, page scaffolds
 // and progress indicators may only be drawn in `lib/shared/`, where the
 // tokens and components live; a screen that draws its own fails here.
 //
@@ -13,7 +14,12 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 enum _Rule {
-  colourLiteral(r'Color\(0x', 'a Color(0x…) literal: use an AppColors token'),
+  colourLiteral(r'Color\(0x', 'a Color(0x…) literal: use a palette role'),
+  fixedPalette(
+    r'\bAppColors\b|\bAppPalette\.light\b|\bAppShadows\.of\(',
+    'a colour fixed to one palette: use context.colors, context.tone or '
+        'context.shadows',
+  ),
   boxShadow(r'\bBoxShadow\(', 'a hand-built BoxShadow: use AppShadows'),
   radiusOrBorder(
     r'\bBorderRadius\.circular\(|\bBorder\.all\(',
@@ -45,7 +51,9 @@ enum _Rule {
 /// widgets and the gallery may draw decoration but must use the tokens.
 bool _exempt(String path, _Rule rule) {
   if (path.startsWith('lib/shared/theme/')) return true;
-  if (rule == _Rule.colourLiteral) return false;
+  if (rule == _Rule.colourLiteral || rule == _Rule.fixedPalette) {
+    return false;
+  }
   return path.startsWith('lib/shared/widgets/') ||
       path.startsWith('lib/shared/gallery/');
 }
@@ -182,6 +190,7 @@ void main() {
     test('each rule catches what it names', () {
       const samples = {
         _Rule.colourLiteral: 'color: Color(0xFFFFF7ED),',
+        _Rule.fixedPalette: 'color: AppColors.onSurface,',
         _Rule.boxShadow: 'boxShadow: [BoxShadow(color: c)],',
         _Rule.radiusOrBorder: 'BorderRadius.circular(20), Border.all()',
         _Rule.materialButton: 'TextButton.icon(onPressed: f)',
@@ -192,6 +201,17 @@ void main() {
       for (final MapEntry(key: rule, value: sample) in samples.entries) {
         expect(rule.regExp.hasMatch(sample), isTrue, reason: rule.name);
       }
+    });
+
+    test("a colour fixed to one palette is caught; the theme's is not", () {
+      final rule = _Rule.fixedPalette.regExp;
+      expect(rule.hasMatch('color: AppPalette.light.onSurface,'), isTrue);
+      expect(rule.hasMatch('AppShadows.of(AppPalette.light).card'), isTrue);
+      expect(rule.hasMatch('boxShadow: AppShadows.of(palette).card,'), isTrue);
+      expect(rule.hasMatch('color: context.colors.onSurface,'), isFalse);
+      expect(rule.hasMatch('context.tone(AppTone.primary).ink'), isFalse);
+      expect(rule.hasMatch('boxShadow: context.shadows.card,'), isFalse);
+      expect(rule.hasMatch('Widget f(AppPalette colors) =>'), isFalse);
     });
 
     test('comments do not count, and line numbers are kept', () {
@@ -236,7 +256,7 @@ void main() {
 
     test('the library is exempt, the theme from everything', () {
       expect(
-        _exempt('lib/shared/theme/app_colors.dart', _Rule.colourLiteral),
+        _exempt('lib/shared/theme/app_palette.dart', _Rule.colourLiteral),
         isTrue,
       );
       expect(
@@ -245,6 +265,17 @@ void main() {
       );
       expect(
         _exempt('lib/shared/widgets/app_button.dart', _Rule.colourLiteral),
+        isFalse,
+      );
+      expect(
+        _exempt('lib/shared/widgets/app_button.dart', _Rule.fixedPalette),
+        isFalse,
+      );
+      expect(
+        _exempt(
+          'lib/shared/gallery/component_gallery.dart',
+          _Rule.fixedPalette,
+        ),
         isFalse,
       );
       expect(

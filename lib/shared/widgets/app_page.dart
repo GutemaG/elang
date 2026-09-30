@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
@@ -99,7 +99,7 @@ class AppPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.surface,
       body: AppBackground(
         style: background,
         child: SafeArea(
@@ -157,8 +157,8 @@ class _DockFade extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.background.withValues(alpha: 0),
-            AppColors.background,
+            context.colors.surface.withValues(alpha: 0),
+            context.colors.surface,
           ],
         ),
       ),
@@ -197,7 +197,9 @@ class AppTopBar extends StatelessWidget {
     final centre = _brand
         ? Text(
             'Buna',
-            style: AppTypography.headlineMd.copyWith(color: AppColors.primary),
+            style: AppTypography.headlineMd.copyWith(
+              color: context.colors.primary,
+            ),
           )
         : title == null
         ? null
@@ -209,7 +211,9 @@ class AppTopBar extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: AppTypography.forText(
-                AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+                AppTypography.headlineSm.copyWith(
+                  color: context.colors.onSurface,
+                ),
                 title!,
               ),
             ),
@@ -283,11 +287,13 @@ class AppBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     final painter = switch (style) {
       AppPageBackground.plain => null,
-      AppPageBackground.patterned => const LatticePainter(),
-      AppPageBackground.celebration => const CelebrationGlowPainter(),
+      AppPageBackground.patterned => LatticePainter(colors: context.colors),
+      AppPageBackground.celebration => CelebrationGlowPainter(
+        colors: context.colors,
+      ),
     };
     return ColoredBox(
-      color: AppColors.background,
+      color: context.colors.surface,
       child: painter == null
           ? child
           : Stack(
@@ -309,7 +315,9 @@ class AppBackground extends StatelessWidget {
 /// The dashboard mockup's lattice: 1 px lines at 45° and 135°, crossing the
 /// top edge every 28 px, in the shadow ink at 3.5 %.
 class LatticePainter extends CustomPainter {
-  const LatticePainter();
+  const LatticePainter({required this.colors});
+
+  final AppPalette colors;
 
   static const double spacing = 28;
   static const double opacity = 0.035;
@@ -317,7 +325,7 @@ class LatticePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.shadowInk.withValues(alpha: opacity)
+      ..color = colors.shadowInk.withValues(alpha: opacity)
       ..strokeWidth = 1;
     final h = size.height;
     for (var x = -h; x <= size.width; x += spacing) {
@@ -329,13 +337,16 @@ class LatticePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(LatticePainter oldDelegate) => false;
+  bool shouldRepaint(LatticePainter oldDelegate) =>
+      oldDelegate.colors != colors;
 }
 
 /// The lesson-complete mockup's "sunburst aura": a 320 px
 /// `surface-container-high` glow, blurred, centred 200 px from the top.
 class CelebrationGlowPainter extends CustomPainter {
-  const CelebrationGlowPainter();
+  const CelebrationGlowPainter({required this.colors});
+
+  final AppPalette colors;
 
   static const double centreFromTop = 200;
   static const double radius = 220;
@@ -347,9 +358,9 @@ class CelebrationGlowPainter extends CustomPainter {
     final paint = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppColors.surfaceContainerHigh,
-          AppColors.surfaceContainerHigh.withValues(alpha: 0.6),
-          AppColors.surfaceContainerHigh.withValues(alpha: 0),
+          colors.surfaceContainerHigh,
+          colors.surfaceContainerHigh.withValues(alpha: 0.6),
+          colors.surfaceContainerHigh.withValues(alpha: 0),
         ],
         stops: const [0, 0.45, 1],
       ).createShader(rect);
@@ -357,7 +368,8 @@ class CelebrationGlowPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CelebrationGlowPainter oldDelegate) => false;
+  bool shouldRepaint(CelebrationGlowPainter oldDelegate) =>
+      oldDelegate.colors != colors;
 }
 
 /// The two Tibeb accents the mockups draw.
@@ -392,16 +404,18 @@ class TibebStripe extends StatelessWidget {
         height: h,
         width: double.infinity,
         child: style == TibebStyle.woven
-            ? const RepaintBoundary(
-                child: CustomPaint(painter: WovenTibebPainter()),
+            ? RepaintBoundary(
+                child: CustomPaint(
+                  painter: WovenTibebPainter(colors: context.colors),
+                ),
               )
             : DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary,
-                      AppColors.secondaryContainer,
-                      AppColors.tertiaryContainer,
+                      context.colors.primary,
+                      context.colors.secondaryContainer,
+                      context.colors.tertiaryContainer,
                     ],
                   ),
                 ),
@@ -414,13 +428,15 @@ class TibebStripe extends StatelessWidget {
 /// The out-of-beans mockup's `repeating-linear-gradient(45deg, #7d0301 0 8px,
 /// #ffa03b 8px 16px, #004527 16px 24px, #fff8f5 24px 28px)`.
 class WovenTibebPainter extends CustomPainter {
-  const WovenTibebPainter();
+  const WovenTibebPainter({required this.colors});
 
-  static final bands = <(Color, double)>[
-    (AppColors.tertiary, 8),
-    (AppColors.secondaryContainer, 8),
-    (AppColors.primary, 8),
-    (AppColors.surface, 4),
+  final AppPalette colors;
+
+  List<(Color, double)> get bands => [
+    (colors.tertiary, 8),
+    (colors.secondaryContainer, 8),
+    (colors.primary, 8),
+    (colors.surface, 4),
   ];
 
   @override
@@ -451,5 +467,6 @@ class WovenTibebPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(WovenTibebPainter oldDelegate) => false;
+  bool shouldRepaint(WovenTibebPainter oldDelegate) =>
+      oldDelegate.colors != colors;
 }

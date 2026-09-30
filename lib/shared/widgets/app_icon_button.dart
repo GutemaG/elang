@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_spacing.dart';
 import 'tactile_pressable.dart';
 
@@ -47,8 +47,8 @@ class AppIconButton extends StatelessWidget {
               child: TactilePressable(
                 onPressed: onPressed,
                 faceColor: plain
-                    ? AppColors.surfaceContainerLowest.withValues(alpha: 0)
-                    : AppColors.surfaceContainer,
+                    ? context.colors.surfaceContainerLowest.withValues(alpha: 0)
+                    : context.colors.surfaceContainer,
                 borderRadius: BorderRadius.circular(AppRadii.full),
                 travel: 2,
                 height: faceSize,
@@ -57,7 +57,7 @@ class AppIconButton extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 22,
-                    color: AppColors.onSurfaceVariant,
+                    color: context.colors.onSurfaceVariant,
                   ),
                 ),
               ),

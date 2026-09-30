@@ -1,7 +1,7 @@
 // AnswerTile: every state and shape of the one answer tile
 // (018-mobile-design-system, unit 002 story 002).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_motion.dart';
 import 'package:elang/shared/theme/app_shadows.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
@@ -98,28 +98,28 @@ void main() {
   group('states (DESIGN.md component 4)', () {
     final expected = <AnswerTileState, (Color, Color, Color, Color)>{
       AnswerTileState.idle: (
-        AppColors.surfaceContainerLowest,
-        AppColors.tileBorder,
-        AppColors.tileShelf,
-        AppColors.onSurface,
+        AppPalette.light.surfaceContainerLowest,
+        AppPalette.light.tileBorder,
+        AppPalette.light.tileShelf,
+        AppPalette.light.onSurface,
       ),
       AnswerTileState.selected: (
-        AppColors.answerSelected,
-        AppColors.secondaryBrand,
-        AppColors.activeNodeShelf,
-        AppColors.onSurface,
+        AppPalette.light.answerSelectedFace,
+        AppPalette.light.secondaryBrand,
+        AppPalette.light.activeNodeShelf,
+        AppPalette.light.onSurface,
       ),
       AnswerTileState.correct: (
-        AppColors.answerCorrect,
-        AppColors.primaryContainer,
-        AppColors.primaryBevel,
-        AppColors.primaryContainer,
+        AppPalette.light.answerCorrectFace,
+        AppPalette.light.primaryContainer,
+        AppPalette.light.primaryShelf,
+        AppPalette.light.primaryContainer,
       ),
       AnswerTileState.incorrect: (
-        AppColors.answerIncorrect,
-        AppColors.tertiaryBrand,
-        AppColors.tertiaryBevel,
-        AppColors.tertiaryBrand,
+        AppPalette.light.answerIncorrectFace,
+        AppPalette.light.tertiaryBrand,
+        AppPalette.light.tertiaryShelf,
+        AppPalette.light.tertiaryBrand,
       ),
     };
 
@@ -135,7 +135,7 @@ void main() {
         expect(d.color, face);
         expect(_borderColour(d), border);
         expect((d.border! as Border).top.width, AnswerTile.borderWidth);
-        expect(d.boxShadow, AppShadows.tileRaised(rim));
+        expect(d.boxShadow, AppShadows.of(AppPalette.light).tileRaised(rim));
         expect(d.boxShadow!.first.offset.dy, AppShadows.tileShelfDepth);
         expect(_textColour(tester, 'Coffee'), text);
       });
@@ -145,7 +145,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(_host(AnswerTile(label: 'a', onTap: () {})));
-      expect(_face(tester).boxShadow, AppShadows.tile);
+      expect(_face(tester).boxShadow, AppShadows.of(AppPalette.light).tile);
     });
 
     testWidgets('used dims the whole tile, as a placed word-bank word', (
@@ -167,7 +167,7 @@ void main() {
         ),
       );
       expect(opacity.opacity, 0.35);
-      expect(_face(tester).color, AppColors.surfaceContainerLowest);
+      expect(_face(tester).color, AppPalette.light.surfaceContainerLowest);
     });
 
     testWidgets('disabled fades the text and ignores taps even with onTap', (
@@ -187,7 +187,7 @@ void main() {
       expect(taps, 0);
       expect(
         _textColour(tester, 'Tea'),
-        AppColors.onSurface.withValues(alpha: 0.6),
+        AppPalette.light.onSurface.withValues(alpha: 0.6),
       );
     });
 
@@ -209,9 +209,9 @@ void main() {
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
       expect(find.byIcon(Icons.cancel), findsOneWidget);
       final check = tester.widget<Icon>(find.byIcon(Icons.check_circle));
-      expect(check.color, AppColors.primaryContainer);
+      expect(check.color, AppPalette.light.primaryContainer);
       final cross = tester.widget<Icon>(find.byIcon(Icons.cancel));
-      expect(cross.color, AppColors.tertiaryBrand);
+      expect(cross.color, AppPalette.light.tertiaryBrand);
     });
 
     testWidgets('colours ease between states over AppMotion.state', (
@@ -223,10 +223,10 @@ void main() {
       await tester.pumpWidget(tile(AnswerTileState.selected));
       await tester.pump(AppMotion.state ~/ 2);
       final mid = _face(tester).color!;
-      expect(mid, isNot(AppColors.surfaceContainerLowest));
-      expect(mid, isNot(AppColors.answerSelected));
+      expect(mid, isNot(AppPalette.light.surfaceContainerLowest));
+      expect(mid, isNot(AppPalette.light.answerSelectedFace));
       await tester.pump(AppMotion.state);
-      expect(_face(tester).color, AppColors.answerSelected);
+      expect(_face(tester).color, AppPalette.light.answerSelectedFace);
     });
   });
 
@@ -375,7 +375,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(Icon), findsNothing);
       expect(tester.getSize(find.byType(AnswerTile)).width, before);
-      expect(_face(tester).color, AppColors.answerIncorrect);
+      expect(_face(tester).color, AppPalette.light.answerIncorrectFace);
     });
 
     testWidgets('a word too long for its row shrinks into its pill', (
@@ -451,7 +451,7 @@ void main() {
       await tester.pumpWidget(_host(const AnswerTile(label: 'Water')));
       expect(
         _textColour(tester, 'Water'),
-        AppColors.onSurface.withValues(alpha: 0.6),
+        AppPalette.light.onSurface.withValues(alpha: 0.6),
       );
     });
 
@@ -461,7 +461,7 @@ void main() {
         _host(const AnswerTile(label: 'Tea', state: AnswerTileState.correct)),
       );
       await tester.pumpAndSettle();
-      expect(_textColour(tester, 'Tea'), AppColors.primaryContainer);
+      expect(_textColour(tester, 'Tea'), AppPalette.light.primaryContainer);
     });
 
     testWidgets('a tapped tile at rest has not moved', (tester) async {
@@ -519,7 +519,7 @@ void main() {
         expect(_shakeOffset(tester), 0);
       }
       await tester.pumpAndSettle();
-      expect(_face(tester).color, AppColors.answerIncorrect);
+      expect(_face(tester).color, AppPalette.light.answerIncorrectFace);
     });
 
     testWidgets('a tile first built wrong shakes once too', (tester) async {

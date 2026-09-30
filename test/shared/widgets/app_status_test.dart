@@ -2,7 +2,7 @@
 // and the empty, error and loading states (018-mobile-design-system,
 // story 008).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_motion.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/app_tone.dart';
@@ -61,25 +61,25 @@ void main() {
         const StatPill(kind: StatKind.streak, value: 5),
         '5 day streak',
         Icons.local_fire_department,
-        AppColors.streak,
+        AppPalette.light.streak,
       ),
       (
         const StatPill(kind: StatKind.beans, value: 3, max: 5),
         '3 of 5 beans remaining',
         Icons.favorite,
-        AppColors.tertiaryBrand,
+        AppPalette.light.tertiaryBrand,
       ),
       (
         const StatPill(kind: StatKind.xp, value: 340),
         '340 total XP',
         Icons.bolt,
-        AppColors.secondary,
+        AppPalette.light.secondary,
       ),
       (
         const StatPill(kind: StatKind.amole, value: 420),
         '420 Amole',
         Icons.diamond,
-        AppColors.gem,
+        AppPalette.light.gem,
       ),
     ];
 
@@ -118,7 +118,10 @@ void main() {
                   .decoration!
               as BoxDecoration;
       expect(decoration.color!.a, closeTo(0.9, 0.01));
-      expect((decoration.border! as Border).top.color, AppColors.streakRim);
+      expect(
+        (decoration.border! as Border).top.color,
+        AppPalette.light.streakRim,
+      );
     });
 
     testWidgets('should group large numbers and fit them at 1.3x text', (
@@ -184,7 +187,7 @@ void main() {
                   )
                   .decoration!
               as BoxDecoration;
-      expect(decoration.color, AppColors.surfaceContainerHigh);
+      expect(decoration.color, AppPalette.light.surfaceContainerHigh);
       expect(decoration.boxShadow, isNotEmpty);
       expect(
         tester.getSemantics(find.byType(CountBadge)),
@@ -212,9 +215,9 @@ void main() {
                   )
                   .decoration!
               as BoxDecoration;
-      expect(decoration.color, AppColors.surfaceContainerLowest);
+      expect(decoration.color, AppPalette.light.surfaceContainerLowest);
       final border = (decoration.border! as Border).top;
-      expect(border.color, AppTone.tertiary.icon);
+      expect(border.color, AppTone.tertiary.colorsIn(AppPalette.light).icon);
       expect(border.width, 2);
     });
 
@@ -250,10 +253,13 @@ void main() {
                     )
                     .decoration!
                 as BoxDecoration;
-        expect(decoration.color, AppTone.tertiary.fill);
+        expect(
+          decoration.color,
+          AppTone.tertiary.colorsIn(AppPalette.light).fill,
+        );
         expect(
           tester.widget<Text>(find.text('+1 TODAY')).style!.color,
-          AppTone.tertiary.onFill,
+          AppTone.tertiary.colorsIn(AppPalette.light).onFill,
         );
       });
     }
@@ -298,7 +304,7 @@ void main() {
                   )
                   .decoration!
               as BoxDecoration;
-      expect(decoration.color, AppColors.surfaceContainerHigh);
+      expect(decoration.color, AppPalette.light.surfaceContainerHigh);
     });
 
     testWidgets('large should be 14 px', (tester) async {
@@ -376,8 +382,8 @@ void main() {
           .map((b) => (b.decoration as BoxDecoration).gradient)
           .whereType<LinearGradient>();
       expect(gradients.single.colors, [
-        AppColors.secondaryContainer,
-        AppColors.secondary,
+        AppPalette.light.secondaryContainer,
+        AppPalette.light.secondary,
       ]);
     });
 
@@ -431,10 +437,13 @@ void main() {
                   .decoration!
               as BoxDecoration;
       expect(decoration.shape, BoxShape.circle);
-      expect(decoration.color, AppTone.primary.surface);
+      expect(
+        decoration.color,
+        AppTone.primary.colorsIn(AppPalette.light).surface,
+      );
       expect(
         tester.widget<Icon>(find.byIcon(Icons.flag)).color,
-        AppTone.primary.icon,
+        AppTone.primary.colorsIn(AppPalette.light).icon,
       );
       expect(
         tester.getSize(find.byType(IconBadge)),
@@ -477,7 +486,7 @@ void main() {
       final indicator = tester.widget<CircularProgressIndicator>(
         find.byType(CircularProgressIndicator),
       );
-      expect(indicator.color, AppColors.primaryContainer);
+      expect(indicator.color, AppPalette.light.primaryContainer);
       expect(tester.getSize(find.byType(AppSpinner)), const Size.square(16));
     });
 

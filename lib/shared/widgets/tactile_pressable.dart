@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_motion.dart';
 
 /// The one press behaviour behind every tactile element (buttons now; cards,
@@ -99,7 +99,7 @@ class _TactilePressableState extends State<TactilePressable>
     final travel = widget.travel ?? widget.shelfDepth;
     final face = reduced && _pressed
         ? Color.alphaBlend(
-            AppColors.shadowInk.withValues(alpha: 0.08),
+            context.colors.shadowInk.withValues(alpha: 0.08),
             widget.faceColor,
           )
         : widget.faceColor;

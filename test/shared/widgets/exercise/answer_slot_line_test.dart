@@ -1,7 +1,7 @@
 // AnswerSlotLine: the ruled lines a built sentence sits on, and the gap in
 // a gap-fill sentence (018-mobile-design-system, unit 002 story 003).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/app_typography.dart';
 import 'package:elang/shared/widgets/exercise/answer_action_bar.dart';
@@ -142,7 +142,7 @@ void main() {
             .widget<Text>(find.text('Tap words below to build your answer'))
             .style!
             .color,
-        AppColors.textMuted,
+        AppPalette.light.textMuted,
       );
     });
 
@@ -186,9 +186,9 @@ void main() {
     testWidgets('the rules are warm grey until graded, then green or '
         'terracotta', (tester) async {
       for (final (grade, colour) in [
-        (null, AppColors.tileShelf),
-        (AnswerGrade.correct, AppColors.primaryContainer),
-        (AnswerGrade.incorrect, AppColors.tertiaryBrand),
+        (null, AppPalette.light.tileShelf),
+        (AnswerGrade.correct, AppPalette.light.primaryContainer),
+        (AnswerGrade.incorrect, AppPalette.light.tertiaryBrand),
       ]) {
         await tester.pumpWidget(
           _host(AnswerSlotLine.sentence(grade: grade, children: _pills(['a']))),
@@ -304,16 +304,16 @@ void main() {
     testWidgets('the line is warm grey until graded, then green or '
         'terracotta, and the word takes the grade', (tester) async {
       for (final (grade, colour, word) in [
-        (null, AppColors.tileShelf, AppColors.onSurface),
+        (null, AppPalette.light.tileShelf, AppPalette.light.onSurface),
         (
           AnswerGrade.correct,
-          AppColors.primaryContainer,
-          AppColors.primaryContainer,
+          AppPalette.light.primaryContainer,
+          AppPalette.light.primaryContainer,
         ),
         (
           AnswerGrade.incorrect,
-          AppColors.tertiaryBrand,
-          AppColors.tertiaryBrand,
+          AppPalette.light.tertiaryBrand,
+          AppPalette.light.tertiaryBrand,
         ),
       ]) {
         await tester.pumpWidget(

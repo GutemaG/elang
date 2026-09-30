@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
@@ -145,7 +145,7 @@ class AppButton extends StatelessWidget {
             leading: leading,
             trailing: trailing,
           )
-        : _buildTactile();
+        : _buildTactile(context);
     // The badge is part of what the button says ("Refill with Amole, 350
     // Amole"), since the price is the point of it.
     return Semantics(
@@ -158,8 +158,8 @@ class AppButton extends StatelessWidget {
     );
   }
 
-  Widget _buildTactile() {
-    final style = _TactileStyle.of(variant);
+  Widget _buildTactile(BuildContext context) {
+    final style = _TactileStyle.of(variant, context.colors);
     final faceHeight = size == AppButtonSize.regular
         ? regularHeight
         : compactHeight;
@@ -292,21 +292,23 @@ class AppButtonBadge extends StatelessWidget {
         vertical: AppSpacing.space2xs / 2,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest.withValues(alpha: 0.8),
+        color: context.colors.surfaceContainerLowest.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(AppRadii.full),
-        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: context.colors.secondary.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 16, color: AppColors.onSecondaryContainer),
+            Icon(icon, size: 16, color: context.colors.onSecondaryContainer),
             const SizedBox(width: AppSpacing.space2xs),
           ],
           Text(
             label,
             style: AppTypography.labelMd.copyWith(
-              color: AppColors.onSecondaryContainer,
+              color: context.colors.onSecondaryContainer,
             ),
           ),
         ],
@@ -331,32 +333,33 @@ class _TactileStyle {
   final double shelfDepth;
   final Color foreground;
 
-  static _TactileStyle of(AppButtonVariant variant) => switch (variant) {
-    AppButtonVariant.primary => _TactileStyle(
-      face: AppColors.primaryContainer,
-      shelf: AppColors.primaryBevel,
-      foreground: AppColors.onPrimary,
-    ),
-    AppButtonVariant.secondary => _TactileStyle(
-      face: AppColors.surfaceContainerLowest,
-      border: AppColors.primary.withValues(alpha: 0.3),
-      shelf: AppColors.tileShelf,
-      shelfDepth: AppShadows.tileShelfDepth,
-      foreground: AppColors.primary,
-    ),
-    AppButtonVariant.accent => _TactileStyle(
-      face: AppColors.secondaryContainer,
-      border: AppColors.secondary,
-      shelf: AppColors.secondary,
-      foreground: AppColors.onSecondaryContainer,
-    ),
-    AppButtonVariant.destructive => _TactileStyle(
-      face: AppColors.tertiaryBrand,
-      shelf: AppColors.tertiaryBevel,
-      foreground: AppColors.onTertiary,
-    ),
-    AppButtonVariant.text => throw StateError('text has no tactile style'),
-  };
+  static _TactileStyle of(AppButtonVariant variant, AppPalette colors) =>
+      switch (variant) {
+        AppButtonVariant.primary => _TactileStyle(
+          face: colors.primaryContainer,
+          shelf: colors.primaryShelf,
+          foreground: colors.onPrimary,
+        ),
+        AppButtonVariant.secondary => _TactileStyle(
+          face: colors.surfaceContainerLowest,
+          border: colors.primary.withValues(alpha: 0.3),
+          shelf: colors.tileShelf,
+          shelfDepth: AppShadows.tileShelfDepth,
+          foreground: colors.primary,
+        ),
+        AppButtonVariant.accent => _TactileStyle(
+          face: colors.secondaryContainer,
+          border: colors.secondary,
+          shelf: colors.secondary,
+          foreground: colors.onSecondaryContainer,
+        ),
+        AppButtonVariant.destructive => _TactileStyle(
+          face: colors.tertiaryBrand,
+          shelf: colors.tertiaryShelf,
+          foreground: colors.onTertiary,
+        ),
+        AppButtonVariant.text => throw StateError('text has no tactile style'),
+      };
 }
 
 /// The flat "Not now" link: muted `label-md` text that turns green while
@@ -388,7 +391,9 @@ class _TextLinkState extends State<_TextLink> {
 
   @override
   Widget build(BuildContext context) {
-    final color = _pressed ? AppColors.primary : AppColors.onSurfaceVariant;
+    final color = _pressed
+        ? context.colors.primary
+        : context.colors.onSurfaceVariant;
     final style = AppTypography.labelMd.copyWith(color: color);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

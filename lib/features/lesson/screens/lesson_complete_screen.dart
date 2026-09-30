@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/models/lesson_completion_result.dart';
 import '../../../shared/models/skill_lesson_progress.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
@@ -81,7 +81,7 @@ class LessonCompleteScreen extends StatelessWidget {
             result.isReview ? 'Review Complete!' : 'Lesson Complete!',
             textAlign: TextAlign.center,
             style: AppTypography.displayLgMobile.copyWith(
-              color: AppColors.primaryContainer,
+              color: context.colors.primaryContainer,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceLg),
@@ -145,7 +145,7 @@ class LessonCompleteScreen extends StatelessWidget {
                   Text(
                     'Daily Goal Progress',
                     style: AppTypography.labelLg.copyWith(
-                      color: AppColors.onSurface,
+                      color: context.colors.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.spaceXs),
@@ -154,7 +154,7 @@ class LessonCompleteScreen extends StatelessWidget {
                       "You're offline -- this lesson's XP will sync and "
                       'count toward today\'s goal once you\'re back online.',
                       style: AppTypography.bodySm.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: context.colors.onSurfaceVariant,
                       ),
                     )
                   else ...[
@@ -168,7 +168,7 @@ class LessonCompleteScreen extends StatelessWidget {
                     Text(
                       '${result.dailyXpTotal} / ${result.dailyXpTarget} XP today',
                       style: AppTypography.bodySm.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: context.colors.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -214,7 +214,9 @@ class _SkillProgressCard extends StatelessWidget {
         children: [
           Text(
             headline,
-            style: AppTypography.labelLg.copyWith(color: AppColors.onSurface),
+            style: AppTypography.labelLg.copyWith(
+              color: context.colors.onSurface,
+            ),
           ),
           const SizedBox(height: AppSpacing.spaceXs),
           AppProgressBar(
@@ -228,7 +230,7 @@ class _SkillProgressCard extends StatelessWidget {
           Text(
             detail,
             style: AppTypography.bodySm.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
             ),
           ),
         ],

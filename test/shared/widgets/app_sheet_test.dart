@@ -1,7 +1,7 @@
 // showAppSheet, showAppDialog, showAppConfirmDialog and SheetHero
 // (018-mobile-design-system, story 007).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_shadows.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
 import 'package:elang/shared/theme/app_theme.dart';
@@ -114,12 +114,12 @@ void main() {
             .first,
       );
       final decoration = frame.decoration as BoxDecoration;
-      expect(decoration.color, AppColors.surface);
+      expect(decoration.color, AppPalette.light.surface);
       expect(
         decoration.borderRadius,
         const BorderRadius.vertical(top: Radius.circular(32)),
       );
-      expect(decoration.boxShadow, AppShadows.overlay);
+      expect(decoration.boxShadow, AppShadows.of(AppPalette.light).overlay);
 
       final handle = find.descendant(
         of: find.byType(AppSheetFrame),
@@ -140,7 +140,7 @@ void main() {
       final barrier = tester
           .widgetList<ModalBarrier>(find.byType(ModalBarrier))
           .last;
-      expect(barrier.color, AppColors.scrim);
+      expect(barrier.color, AppPalette.light.scrim);
     });
 
     testWidgets('should return what its content pops', (tester) async {
@@ -283,16 +283,16 @@ void main() {
             .first,
       );
       final decoration = card.decoration as BoxDecoration;
-      expect(decoration.color, AppColors.surfaceContainerLowest);
+      expect(decoration.color, AppPalette.light.surfaceContainerLowest);
       expect(decoration.borderRadius, BorderRadius.circular(AppRadii.lg));
       expect(
         (decoration.border! as Border).top.color,
-        AppColors.surfaceContainerHighest,
+        AppPalette.light.surfaceContainerHighest,
       );
-      expect(decoration.boxShadow, AppShadows.dialog);
+      expect(decoration.boxShadow, AppShadows.of(AppPalette.light).dialog);
       expect(
         tester.widgetList<ModalBarrier>(find.byType(ModalBarrier)).last.color,
-        AppColors.scrim,
+        AppPalette.light.scrim,
       );
       expect(tester.getSize(find.byType(AppDialogFrame)).width, 360);
     });
@@ -467,7 +467,7 @@ void main() {
 
       expect(
         tester.widget<Text>(find.text('Out of beans!')).style!.color,
-        AppTone.tertiary.ink,
+        AppTone.tertiary.colorsIn(AppPalette.light).ink,
       );
       expect(
         find.textContaining('(Buna aleke!)', findRichText: true),
@@ -503,7 +503,10 @@ void main() {
       );
       final decoration = circle.decoration! as BoxDecoration;
       expect(decoration.shape, BoxShape.circle);
-      expect(decoration.boxShadow, AppShadows.halo(AppTone.tertiary.border));
+      expect(
+        decoration.boxShadow,
+        AppShadows.halo(AppTone.tertiary.colorsIn(AppPalette.light).border),
+      );
     });
   });
 }

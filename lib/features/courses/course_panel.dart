@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../shared/models/course.dart';
 import '../../shared/models/language_names.dart';
-import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_theme_context.dart';
 import '../../shared/theme/app_spacing.dart';
 import '../../shared/theme/app_typography.dart';
 import '../../shared/widgets/app_button.dart';
@@ -64,7 +64,7 @@ class CoursePanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.spaceXs),
             SizedBox(
               height: 1,
-              child: ColoredBox(color: AppColors.cardBorderDefault),
+              child: ColoredBox(color: context.colors.cardBorder),
             ),
             ListRow(
               icon: Icons.settings_outlined,
@@ -98,7 +98,7 @@ class CoursePanel extends StatelessWidget {
               child: Text(
                 "Couldn't load your courses",
                 style: AppTypography.bodySm.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
             ),
@@ -180,8 +180,8 @@ class _CourseTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.labelSm.copyWith(
                   color: selected
-                      ? AppColors.primaryContainer
-                      : AppColors.onSurface,
+                      ? context.colors.primaryContainer
+                      : context.colors.onSurface,
                 ),
               ),
               Text(
@@ -189,7 +189,7 @@ class _CourseTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.labelSm.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
             ],
@@ -225,7 +225,7 @@ class _AddCourseTile extends StatelessWidget {
                 'Course',
                 maxLines: 1,
                 style: AppTypography.labelSm.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
             ],

@@ -29,7 +29,7 @@ import 'package:elang/shared/services/lesson_pack_downloader.dart';
 import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/sync_engine.dart';
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_shadows.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
 import 'package:elang/shared/theme/app_theme.dart';
@@ -292,8 +292,14 @@ void main() {
       expect(card.selected, isNull);
       Color colourOf(String text) =>
           tester.widget<Text>(find.text(text)).style!.color!;
-      expect(colourOf('Category 0'), AppTone.primary.onFill);
-      expect(colourOf('ምድብ'), AppTone.primary.onFill);
+      expect(
+        colourOf('Category 0'),
+        AppTone.primary.colorsIn(AppPalette.light).onFill,
+      );
+      expect(
+        colourOf('ምድብ'),
+        AppTone.primary.colorsIn(AppPalette.light).onFill,
+      );
     });
 
     testWidgets('consecutive sections take primary, secondary and tertiary in '
@@ -950,6 +956,6 @@ void main() {
         matching: find.byType(ColoredBox),
       ),
     );
-    expect(scrim.color, AppColors.scrim);
+    expect(scrim.color, AppPalette.light.scrim);
   });
 }

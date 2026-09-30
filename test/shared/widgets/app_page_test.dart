@@ -1,7 +1,7 @@
 // AppPage, AppTopBar, AppBackground and TibebStripe (018-mobile-design-system,
 // story 005).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/widgets/app_button.dart';
@@ -55,7 +55,7 @@ void main() {
       await _pump(tester, const AppPage(body: Text('Hello')));
 
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-      expect(scaffold.backgroundColor, AppColors.background);
+      expect(scaffold.backgroundColor, AppPalette.light.surface);
       expect(find.byType(SafeArea), findsOneWidget);
       expect(tester.getTopLeft(find.text('Hello')).dx, AppSpacing.marginMobile);
       expect(
@@ -214,7 +214,8 @@ void main() {
 
       expect(paints(), before);
       expect(
-        const LatticePainter().shouldRepaint(const LatticePainter()),
+        const LatticePainter(colors: AppPalette.light)
+            .shouldRepaint(const LatticePainter(colors: AppPalette.light)),
         isFalse,
       );
     });
@@ -232,9 +233,9 @@ void main() {
 
       expect(paintOf(tester, CelebrationGlowPainter), isNotNull);
       expect(
-        const CelebrationGlowPainter().shouldRepaint(
-          const CelebrationGlowPainter(),
-        ),
+        const CelebrationGlowPainter(
+          colors: AppPalette.light,
+        ).shouldRepaint(const CelebrationGlowPainter(colors: AppPalette.light)),
         isFalse,
       );
     });
@@ -316,7 +317,7 @@ void main() {
       );
 
       final wordmark = tester.widget<Text>(find.text('Buna'));
-      expect(wordmark.style!.color, AppColors.primary);
+      expect(wordmark.style!.color, AppPalette.light.primary);
     });
 
     testWidgets('should shrink a crowded row of stat pills rather than '
@@ -366,9 +367,9 @@ void main() {
       final gradient =
           (box.decoration as BoxDecoration).gradient! as LinearGradient;
       expect(gradient.colors, [
-        AppColors.primary,
-        AppColors.secondaryContainer,
-        AppColors.tertiaryContainer,
+        AppPalette.light.primary,
+        AppPalette.light.secondaryContainer,
+        AppPalette.light.tertiaryContainer,
       ]);
       expect(
         tester.getSize(find.byType(TibebStripe)).height,
@@ -377,13 +378,14 @@ void main() {
     });
 
     test('woven should repeat the mockup\'s four bands', () {
-      expect(WovenTibebPainter.bands.map((b) => b.$1), [
-        AppColors.tertiary,
-        AppColors.secondaryContainer,
-        AppColors.primary,
-        AppColors.surface,
+      const woven = WovenTibebPainter(colors: AppPalette.light);
+      expect(woven.bands.map((b) => b.$1), [
+        AppPalette.light.tertiary,
+        AppPalette.light.secondaryContainer,
+        AppPalette.light.primary,
+        AppPalette.light.surface,
       ]);
-      expect(WovenTibebPainter.bands.map((b) => b.$2), [8, 8, 8, 4]);
+      expect(woven.bands.map((b) => b.$2), [8, 8, 8, 4]);
     });
   });
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tone.dart';
 import '../theme/app_typography.dart';
@@ -67,8 +67,8 @@ class SelectableOptionCard extends StatelessWidget {
                             badgeLabel!,
                             style: AppTypography.labelSm.copyWith(
                               color: enabled
-                                  ? AppColors.primaryContainer
-                                  : AppColors.onSurfaceVariant,
+                                  ? context.colors.primaryContainer
+                                  : context.colors.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -78,9 +78,9 @@ class SelectableOptionCard extends StatelessWidget {
                           AppTypography.headlineSm.copyWith(
                             color: enabled
                                 ? (selected
-                                      ? AppColors.primaryContainer
-                                      : AppColors.onSurface)
-                                : AppColors.onSurfaceVariant,
+                                      ? context.colors.primaryContainer
+                                      : context.colors.onSurface)
+                                : context.colors.onSurfaceVariant,
                           ),
                           title,
                         ),
@@ -90,7 +90,7 @@ class SelectableOptionCard extends StatelessWidget {
                         subtitle,
                         style: AppTypography.forText(
                           AppTypography.bodySm.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: context.colors.onSurfaceVariant,
                           ),
                           subtitle,
                         ),
@@ -99,7 +99,7 @@ class SelectableOptionCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.spaceSm),
-                _buildIndicator(),
+                _buildIndicator(context),
               ],
             ),
             if (trailingAction != null) ...[
@@ -107,7 +107,7 @@ class SelectableOptionCard extends StatelessWidget {
               SizedBox(
                 height: 1,
                 width: double.infinity,
-                child: ColoredBox(color: AppColors.surfaceContainer),
+                child: ColoredBox(color: context.colors.surfaceContainer),
               ),
               const SizedBox(height: AppSpacing.spaceXs),
               trailingAction!,
@@ -118,11 +118,11 @@ class SelectableOptionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildIndicator() {
+  Widget _buildIndicator(BuildContext context) {
     if (!enabled) {
       return Icon(
         Icons.lock_outline,
-        color: AppColors.onSurfaceVariant,
+        color: context.colors.onSurfaceVariant,
         size: 20,
       );
     }
@@ -131,10 +131,10 @@ class SelectableOptionCard extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: AppColors.primaryContainer,
+          color: context.colors.primaryContainer,
           shape: BoxShape.circle,
         ),
-        child: Icon(Icons.check, color: AppColors.onPrimary, size: 18),
+        child: Icon(Icons.check, color: context.colors.onPrimary, size: 18),
       );
     }
     return Container(
@@ -142,7 +142,7 @@ class SelectableOptionCard extends StatelessWidget {
       height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.outlineVariant, width: 2),
+        border: Border.all(color: context.colors.outlineVariant, width: 2),
       ),
     );
   }

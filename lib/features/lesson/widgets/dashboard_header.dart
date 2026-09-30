@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import 'pinned_header_sliver.dart';
@@ -54,10 +54,10 @@ class DashboardHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: context.colors.surfaceContainerLowest,
         border: Border(
           bottom: BorderSide(
-            color: AppColors.cardBorderDefault,
+            color: context.colors.cardBorder,
             width: _borderWidth,
           ),
         ),

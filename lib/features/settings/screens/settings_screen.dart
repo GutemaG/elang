@@ -7,7 +7,7 @@ import '../../../shared/services/session_api.dart';
 import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
 import '../../../shared/services/user_preferences_api.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
@@ -354,7 +354,7 @@ class _GoalSheet extends StatelessWidget {
               child: Text(
                 'Daily goal',
                 style: AppTypography.headlineSm.copyWith(
-                  color: AppColors.onSurface,
+                  color: context.colors.onSurface,
                 ),
               ),
             ),
@@ -421,14 +421,14 @@ class _ProfileHeader extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 32,
-          backgroundColor: AppColors.primaryContainer,
+          backgroundColor: context.colors.primaryContainer,
           foregroundImage: url == null ? null : NetworkImage(url),
           // A photo that fails to load falls back to the initials below.
           onForegroundImageError: url == null ? null : (_, _) {},
           child: Text(
             _initials,
             style: AppTypography.headlineSm.copyWith(
-              color: AppColors.onPrimary,
+              color: context.colors.onPrimary,
             ),
           ),
         ),
@@ -443,7 +443,7 @@ class _ProfileHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.headlineSm.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.colors.onSurface,
                   ),
                 ),
               if (name != null && email != null)
@@ -452,13 +452,13 @@ class _ProfileHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodySm.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: context.colors.onSurfaceVariant,
                   ),
                 ),
               Text(
                 providerLabel,
                 style: AppTypography.bodySm.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
             ],

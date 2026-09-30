@@ -15,7 +15,7 @@ import '../../../shared/services/lesson_pack_store.dart';
 import '../../../shared/services/media_cache.dart';
 import '../../../shared/services/reminders/reminder_service.dart';
 import '../../../shared/services/sync_engine.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
@@ -815,7 +815,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
           'Tap to play/replay',
           textAlign: TextAlign.center,
           style: AppTypography.bodySm.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
           ),
         ),
       ],

@@ -9,6 +9,8 @@ import 'app_palette.dart';
 import 'app_shadows.dart';
 import 'app_tone.dart';
 
+export 'app_palette.dart' show AppPalette;
+
 extension AppThemeContext on BuildContext {
   /// The current theme's palette, or the light one when the theme carries
   /// none (a bare `MaterialApp` in a widget test).

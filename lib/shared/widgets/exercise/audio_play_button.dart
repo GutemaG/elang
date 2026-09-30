@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import '../../theme/app_theme_context.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_spacing.dart';
@@ -107,13 +107,13 @@ class _AudioPlayButtonState extends State<AudioPlayButton>
 
     final button = TactilePressable(
       onPressed: onPressed,
-      faceColor: AppColors.primaryContainer,
+      faceColor: context.colors.primaryContainer,
       borderRadius: BorderRadius.circular(AppRadii.full),
       shelfDepth: AppShadows.shelfDepth,
       height: face,
       shadows: (visible) => [
-        if (playing) ...AppShadows.halo(AppColors.primaryToneBorder),
-        ...AppShadows.button(AppColors.primaryBevel, visible: visible),
+        if (playing) ...AppShadows.halo(context.colors.primaryToneBorder),
+        ...AppShadows.button(context.colors.primaryShelf, visible: visible),
       ],
       child: SizedBox.square(
         dimension: face,
@@ -126,14 +126,14 @@ class _AudioPlayButtonState extends State<AudioPlayButton>
                     size: Size.square(glyphSize),
                     painter: SoundBarsPainter(
                       phase: moving ? _motion.value : null,
-                      color: AppColors.onPrimary,
+                      color: context.colors.onPrimary,
                     ),
                   ),
                 )
               : Icon(
                   Icons.volume_up,
                   size: glyphSize,
-                  color: AppColors.onPrimary,
+                  color: context.colors.onPrimary,
                 ),
         ),
       ),
@@ -199,7 +199,7 @@ class _Ring extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: AppColors.primaryContainer.withValues(
+            color: context.colors.primaryContainer.withValues(
               alpha: 0.55 * (1 - eased),
             ),
             width: 3,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/theme/app_tone.dart';
@@ -119,7 +119,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
             Text(
               'Already have an account?',
               style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.colors.onSurfaceVariant,
               ),
             ),
             AppButton.text(label: 'Log In', onPressed: _goToSignIn),
@@ -194,7 +194,7 @@ class _SlideCard extends StatelessWidget {
                   Text(
                     slide.title,
                     style: AppTypography.headlineSm.copyWith(
-                      color: AppColors.onSurface,
+                      color: context.colors.onSurface,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -202,7 +202,7 @@ class _SlideCard extends StatelessWidget {
                   Text(
                     slide.body,
                     style: AppTypography.bodyMd.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.colors.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                   ),

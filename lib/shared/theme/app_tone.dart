@@ -74,19 +74,6 @@ enum AppTone {
       selectedFace: p.answerIncorrectFace,
     ),
   };
-
-  // The light colours under the old names, until every screen reads
-  // `context.tone(...)` (bolt 067 removes these).
-  ToneColors get _light => colorsIn(AppPalette.light);
-  Color get border => _light.border;
-  Color get shelf => _light.shelf;
-  Color get surface => _light.surface;
-  Color get icon => _light.icon;
-  Color get ink => _light.ink;
-  Color get fill => _light.fill;
-  Color get onFill => _light.onFill;
-  Color get fillShelf => _light.fillShelf;
-  Color get selectedFace => _light.selectedFace;
 }
 
 /// One tone's colours in one palette.

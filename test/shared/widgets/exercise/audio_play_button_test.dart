@@ -1,7 +1,7 @@
 // AudioPlayButton: the one play button (018-mobile-design-system, unit 002
 // story 003).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_motion.dart';
 import 'package:elang/shared/theme/app_shadows.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
@@ -45,9 +45,9 @@ void main() {
     await tester.pumpWidget(_host(AudioPlayButton(onPressed: () {})));
 
     final face = _face(tester);
-    expect(face.color, AppColors.primaryContainer);
+    expect(face.color, AppPalette.light.primaryContainer);
     expect(face.borderRadius, BorderRadius.circular(AppRadii.full));
-    expect(face.boxShadow, AppShadows.button(AppColors.primaryBevel));
+    expect(face.boxShadow, AppShadows.button(AppPalette.light.primaryShelf));
     final faceSize = tester.getSize(
       find
           .descendant(
@@ -64,7 +64,7 @@ void main() {
     expect(find.byIcon(Icons.volume_up), findsOneWidget);
     expect(
       tester.widget<Icon>(find.byIcon(Icons.volume_up)).color,
-      AppColors.onPrimary,
+      AppPalette.light.onPrimary,
     );
   });
 
@@ -97,7 +97,7 @@ void main() {
     expect(find.byIcon(Icons.volume_up), findsNothing);
     expect(
       _face(tester).boxShadow!.first,
-      AppShadows.halo(AppColors.primaryToneBorder).single,
+      AppShadows.halo(AppPalette.light.primaryToneBorder).single,
     );
   });
 
@@ -167,8 +167,10 @@ void main() {
   });
 
   test('the bars loop without a jump', () {
-    List<double> at(double phase) =>
-        SoundBarsPainter(phase: phase, color: AppColors.onPrimary).heights();
+    List<double> at(double phase) => SoundBarsPainter(
+      phase: phase,
+      color: AppPalette.light.onPrimary,
+    ).heights();
     for (var i = 0; i < 4; i++) {
       expect(at(1)[i], closeTo(at(0)[i], 1e-9));
     }

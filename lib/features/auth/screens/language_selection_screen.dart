@@ -4,7 +4,7 @@ import '../../../shared/models/course.dart';
 import '../../../shared/models/language_names.dart';
 import '../../../shared/services/course_api.dart';
 import '../../../shared/services/onboarding_repository.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/theme/app_tone.dart';
@@ -171,7 +171,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
       children: [
         Text(
           'I speak',
-          style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+          style: AppTypography.headlineSm.copyWith(
+            color: context.colors.onSurface,
+          ),
         ),
         const SizedBox(height: AppSpacing.spaceXs),
         Wrap(
@@ -189,13 +191,15 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
         const SizedBox(height: AppSpacing.spaceLg),
         Text(
           'What do you want to learn?',
-          style: AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+          style: AppTypography.headlineSm.copyWith(
+            color: context.colors.onSurface,
+          ),
         ),
         const SizedBox(height: AppSpacing.space2xs),
         Text(
           'Choose your journey to connect with heritage & family.',
           style: AppTypography.bodySm.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: AppSpacing.spaceMd),
@@ -230,7 +234,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           'You can always switch courses anytime from the home screen or '
           'your settings.',
           style: AppTypography.bodySm.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
           ),
           textAlign: TextAlign.center,
         ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tone.dart';
 import '../theme/app_typography.dart';
@@ -80,7 +80,7 @@ class _SheetsGallerySectionState extends State<SheetsGallerySection> {
                   child: Text(
                     '$minutes minutes a day',
                     style: AppTypography.labelLg.copyWith(
-                      color: AppColors.onSurface,
+                      color: context.colors.onSurface,
                     ),
                   ),
                 ),
@@ -226,7 +226,7 @@ class _OutOfBeansHero extends StatelessWidget {
                   child: Text(
                     'Next bean in 12:34',
                     style: AppTypography.labelLg.copyWith(
-                      color: AppColors.onSurface,
+                      color: context.colors.onSurface,
                     ),
                   ),
                 ),

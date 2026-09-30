@@ -6,7 +6,7 @@ default_bolt_type: simple-construction-bolt
 phase: inception
 status: ready
 created: '2026-09-30T13:52:00Z'
-updated: '2026-09-30T15:18:23Z'
+updated: '2026-09-30T18:54:45Z'
 ---
 
 # Unit Brief: Theme Palette
@@ -61,7 +61,7 @@ colour change is one edit and dark mode works everywhere.
 | Story ID | Title | Priority | Status |
 |----------|-------|----------|--------|
 | 001-palette-by-role | One palette file, and everything built from it | Must | Complete (bolt 066) |
-| 002-screens-read-theme | Screens take colours from the theme | Must | Planned (bolt 067) |
+| 002-screens-read-theme | Screens take colours from the theme | Must | Complete (bolt 067) |
 | 003-dark-palette | The dark palette | Must | Planned (bolt 068) |
 | 004-contrast-guard | Text stays readable in both palettes | Must | Planned (bolt 068) |
 | 005-gallery-preview | See the palette and flip themes in the gallery | Should | Planned (bolt 069) |
@@ -84,11 +84,11 @@ that** changing one is a single edit.
 **As a** learner, **I want** every screen to follow the theme, **so that**
 dark mode has no light patches.
 
-- [ ] Screens and shared widgets read `context.colors` (and tones and
+- [x] Screens and shared widgets read `context.colors` (and tones and
   shadows) instead of `AppColors`.
-- [ ] A design rule fails any `AppColors` or palette-instance use outside
+- [x] A design rule fails any `AppColors` or palette-instance use outside
   `lib/shared/theme/`.
-- [ ] All existing tests pass unchanged.
+- [x] All existing tests pass unchanged.
 
 ### 003-dark-palette (FR-4)
 

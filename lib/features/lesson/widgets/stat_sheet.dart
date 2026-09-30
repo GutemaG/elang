@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/beans_status.dart';
 import '../../../shared/models/stat_history.dart';
 import '../../../shared/services/lesson_api_exception.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
@@ -424,7 +424,7 @@ class _StatSheetState extends State<StatSheet> {
             Text(
               error,
               textAlign: TextAlign.center,
-              style: AppTypography.bodySm.copyWith(color: AppColors.error),
+              style: AppTypography.bodySm.copyWith(color: context.colors.error),
             ),
           ],
         ],
@@ -521,13 +521,15 @@ class _TabBody extends StatelessWidget {
                     header: true,
                     child: Text(
                       title,
-                      style: AppTypography.headlineSm.copyWith(color: tone.ink),
+                      style: AppTypography.headlineSm.copyWith(
+                        color: context.tone(tone).ink,
+                      ),
                     ),
                   ),
                   Text(
                     subtitle,
                     style: AppTypography.bodySm.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -557,13 +559,13 @@ class _Note extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceMd),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.onSurfaceVariant),
+          Icon(icon, size: 20, color: context.colors.onSurfaceVariant),
           const SizedBox(width: AppSpacing.spaceXs),
           Expanded(
             child: Text(
               text,
               style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.colors.onSurfaceVariant,
               ),
             ),
           ),

@@ -3,7 +3,7 @@
 
 import 'dart:ui' as ui;
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_motion.dart';
 import 'package:elang/shared/theme/app_shadows.dart';
 import 'package:elang/shared/theme/app_spacing.dart';
@@ -228,10 +228,10 @@ void main() {
       tester,
     ) async {
       for (final (state, colour) in [
-        (AnswerTileState.idle, AppColors.onSurface),
-        (AnswerTileState.selected, AppColors.onSurface),
-        (AnswerTileState.correct, AppColors.primaryContainer),
-        (AnswerTileState.incorrect, AppColors.tertiaryBrand),
+        (AnswerTileState.idle, AppPalette.light.onSurface),
+        (AnswerTileState.selected, AppPalette.light.onSurface),
+        (AnswerTileState.correct, AppPalette.light.primaryContainer),
+        (AnswerTileState.incorrect, AppPalette.light.tertiaryBrand),
       ]) {
         await tester.pumpWidget(
           _tile(
@@ -275,7 +275,7 @@ void main() {
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
       expect(
         tester.widget<Icon>(find.byIcon(Icons.check_circle)).color,
-        AppColors.primaryContainer,
+        AppPalette.light.primaryContainer,
       );
       final tile = tester.getRect(find.byType(AnswerTile));
       // Inside the border and the inset, at the top end.
@@ -286,7 +286,7 @@ void main() {
       expect(find.byIcon(Icons.cancel), findsOneWidget);
       expect(
         tester.widget<Icon>(find.byIcon(Icons.cancel)).color,
-        AppColors.tertiaryBrand,
+        AppPalette.light.tertiaryBrand,
       );
     });
 
@@ -492,7 +492,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         _face(tester, find.byType(AnswerTile)).color,
-        AppColors.answerIncorrect,
+        AppPalette.light.answerIncorrectFace,
       );
     });
   });
@@ -626,7 +626,7 @@ void main() {
       expect(find.byKey(PictureTile.failedKey), findsNothing);
       expect(
         tester.widget<ColoredBox>(find.byKey(PictureTile.loadingKey)).color,
-        AppColors.surfaceContainerLow,
+        AppPalette.light.surfaceContainerLow,
       );
     });
 

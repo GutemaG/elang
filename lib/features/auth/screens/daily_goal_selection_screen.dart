@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/services/onboarding_repository.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/theme/app_tone.dart';
@@ -103,7 +103,7 @@ class _DailyGoalSelectionScreenState extends State<DailyGoalSelectionScreen> {
           'You can change your goal anytime in Settings.',
           textAlign: TextAlign.center,
           style: AppTypography.labelSm.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: context.colors.onSurfaceVariant,
           ),
         ),
       ],
@@ -113,7 +113,7 @@ class _DailyGoalSelectionScreenState extends State<DailyGoalSelectionScreen> {
           Text(
             'Choose your daily goal',
             style: AppTypography.displayLgMobile.copyWith(
-              color: AppColors.onSurface,
+              color: context.colors.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.space2xs),
@@ -121,7 +121,7 @@ class _DailyGoalSelectionScreenState extends State<DailyGoalSelectionScreen> {
             'How much time do you want to dedicate to Habesha '
             'languages each day?',
             style: AppTypography.bodySm.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceLg),

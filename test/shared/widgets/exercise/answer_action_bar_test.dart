@@ -2,7 +2,7 @@
 // "Correct!" / "Not quite" above Continue (018-mobile-design-system, unit
 // 002 story 003).
 
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_motion.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/app_tone.dart';
@@ -136,11 +136,14 @@ void main() {
       expect(find.text('Correct!'), findsOneWidget);
       expect(
         tester.widget<Text>(find.text('Correct!')).style!.color,
-        AppColors.primaryContainer,
+        AppPalette.light.primaryContainer,
       );
       final panel = _panel(tester);
-      expect(panel.color, AppColors.answerCorrect);
-      expect((panel.border! as Border).top.color, AppTone.primary.border);
+      expect(panel.color, AppPalette.light.answerCorrectFace);
+      expect(
+        (panel.border! as Border).top.color,
+        AppTone.primary.colorsIn(AppPalette.light).border,
+      );
       expect(
         tester.widget<IconBadge>(find.byType(IconBadge)).icon,
         Icons.check,
@@ -162,11 +165,14 @@ void main() {
 
       expect(
         tester.widget<Text>(find.text('Not quite')).style!.color,
-        AppColors.tertiaryBrand,
+        AppPalette.light.tertiaryBrand,
       );
       final panel = _panel(tester);
-      expect(panel.color, AppColors.answerIncorrect);
-      expect((panel.border! as Border).top.color, AppTone.tertiary.border);
+      expect(panel.color, AppPalette.light.answerIncorrectFace);
+      expect(
+        (panel.border! as Border).top.color,
+        AppTone.tertiary.colorsIn(AppPalette.light).border,
+      );
       expect(
         tester.widget<IconBadge>(find.byType(IconBadge)).icon,
         Icons.close,
@@ -263,7 +269,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       final text = tester.widget<Text>(find.text(message));
-      expect(text.style!.color, AppColors.tertiaryBrand);
+      expect(text.style!.color, AppPalette.light.tertiaryBrand);
       expect(
         tester.getRect(find.text(message)).bottom,
         lessThan(tester.getRect(find.text('Continue')).top),

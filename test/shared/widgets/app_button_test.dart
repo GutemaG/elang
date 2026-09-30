@@ -1,4 +1,4 @@
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/widgets/app_button.dart';
 import 'package:elang/shared/widgets/app_icon_button.dart';
@@ -118,13 +118,13 @@ void main() {
     ) async {
       final faces = {
         AppButton.primary(label: 'Go', onPressed: () {}):
-            AppColors.primaryContainer,
+            AppPalette.light.primaryContainer,
         AppButton.secondary(label: 'Go', onPressed: () {}):
-            AppColors.surfaceContainerLowest,
+            AppPalette.light.surfaceContainerLowest,
         AppButton.accent(label: 'Go', onPressed: () {}):
-            AppColors.secondaryContainer,
+            AppPalette.light.secondaryContainer,
         AppButton.destructive(label: 'Go', onPressed: () {}):
-            AppColors.tertiaryBrand,
+            AppPalette.light.tertiaryBrand,
       };
       for (final MapEntry(key: button, value: face) in faces.entries) {
         await tester.pumpWidget(_host(button));
@@ -138,7 +138,7 @@ void main() {
       );
       expect(find.byType(TactilePressable), findsNothing);
       final text = tester.widget<Text>(find.text('Not now'));
-      expect(text.style!.color, AppColors.onSurfaceVariant);
+      expect(text.style!.color, AppPalette.light.onSurfaceVariant);
     });
 
     testWidgets('should line up variants: the same height with their shelves', (

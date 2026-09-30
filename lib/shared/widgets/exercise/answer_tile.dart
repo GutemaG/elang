@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import '../../theme/app_theme_context.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_spacing.dart';
@@ -169,7 +169,7 @@ class _AnswerTileState extends State<AnswerTile>
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
-    final look = _TileLook.of(state);
+    final look = _TileLook.of(state, context.colors);
     // Graded tiles keep their full colour so the result reads clearly;
     // only a choice that simply cannot be tapped fades.
     final faded =
@@ -195,7 +195,8 @@ class _AnswerTileState extends State<AnswerTile>
           widget.shape == AnswerTileShape.pill ? AppRadii.full : AppRadii.tile,
         ),
         shelfDepth: AppShadows.tileShelfDepth,
-        shadows: (visible) => AppShadows.tileRaised(look.rim, visible: visible),
+        shadows: (visible) =>
+            context.shadows.tileRaised(look.rim, visible: visible),
         height: widget.shape == AnswerTileShape.pill
             ? AnswerTile.pillHeightOf(context) - AppShadows.tileShelfDepth
             : null,
@@ -380,36 +381,37 @@ class _TileLook {
   final Color rim;
   final Color text;
 
-  static final _idle = _TileLook(
-    face: AppColors.surfaceContainerLowest,
-    border: AppColors.tileBorder,
-    rim: AppColors.tileShelf,
-    text: AppColors.onSurface,
+  static _TileLook _idle(AppPalette colors) => _TileLook(
+    face: colors.surfaceContainerLowest,
+    border: colors.tileBorder,
+    rim: colors.tileShelf,
+    text: colors.onSurface,
   );
 
-  static _TileLook of(AnswerTileState state) => switch (state) {
-    AnswerTileState.idle ||
-    AnswerTileState.used ||
-    AnswerTileState.disabled => _idle,
-    AnswerTileState.selected => _TileLook(
-      face: AppColors.answerSelected,
-      border: AppColors.secondaryBrand,
-      rim: AppColors.activeNodeShelf,
-      text: AppColors.onSurface,
-    ),
-    AnswerTileState.correct => _TileLook(
-      face: AppColors.answerCorrect,
-      border: AppColors.primaryContainer,
-      rim: AppColors.primaryBevel,
-      text: AppColors.primaryContainer,
-    ),
-    AnswerTileState.incorrect => _TileLook(
-      face: AppColors.answerIncorrect,
-      border: AppColors.tertiaryBrand,
-      rim: AppColors.tertiaryBevel,
-      text: AppColors.tertiaryBrand,
-    ),
-  };
+  static _TileLook of(AnswerTileState state, AppPalette colors) =>
+      switch (state) {
+        AnswerTileState.idle ||
+        AnswerTileState.used ||
+        AnswerTileState.disabled => _idle(colors),
+        AnswerTileState.selected => _TileLook(
+          face: colors.answerSelectedFace,
+          border: colors.secondaryBrand,
+          rim: colors.activeNodeShelf,
+          text: colors.onSurface,
+        ),
+        AnswerTileState.correct => _TileLook(
+          face: colors.answerCorrectFace,
+          border: colors.primaryContainer,
+          rim: colors.primaryShelf,
+          text: colors.primaryContainer,
+        ),
+        AnswerTileState.incorrect => _TileLook(
+          face: colors.answerIncorrectFace,
+          border: colors.tertiaryBrand,
+          rim: colors.tertiaryShelf,
+          text: colors.tertiaryBrand,
+        ),
+      };
 
   static _TileLook lerp(_TileLook a, _TileLook b, double t) => _TileLook(
     face: Color.lerp(a.face, b.face, t)!,

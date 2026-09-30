@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
@@ -94,27 +93,27 @@ class _StatPillState extends State<StatPill> {
   (IconData, Color icon, Color text, Color border) get _look => switch (kind) {
     StatKind.streak => (
       Icons.local_fire_department,
-      AppColors.streak,
-      AppColors.secondary,
-      AppColors.streakRim,
+      context.colors.streak,
+      context.colors.secondary,
+      context.colors.streakRim,
     ),
     StatKind.beans => (
       Icons.favorite,
-      AppColors.tertiaryBrand,
-      AppColors.tertiaryBrand,
-      AppTone.tertiary.border,
+      context.colors.tertiaryBrand,
+      context.colors.tertiaryBrand,
+      context.tone(AppTone.tertiary).border,
     ),
     StatKind.xp => (
       Icons.bolt,
-      AppColors.secondary,
-      AppColors.secondary,
-      AppTone.secondary.border,
+      context.colors.secondary,
+      context.colors.secondary,
+      context.tone(AppTone.secondary).border,
     ),
     StatKind.amole => (
       Icons.diamond,
-      AppColors.gem,
-      AppColors.primaryContainer,
-      AppTone.primary.border,
+      context.colors.gem,
+      context.colors.primaryContainer,
+      context.tone(AppTone.primary).border,
     ),
   };
 
@@ -136,7 +135,7 @@ class _StatPillState extends State<StatPill> {
         vertical: AppSpacing.space2xs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest.withValues(alpha: 0.9),
+        color: context.colors.surfaceContainerLowest.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(AppRadii.full),
         border: Border.all(color: border, width: StatPill.borderWidth),
         // A ring outside the border, so choosing a tab never moves it.
@@ -218,11 +217,11 @@ class CalendarDay extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color ink;
     if (filled) {
-      ink = AppColors.onPrimary;
+      ink = context.colors.onPrimary;
     } else if (faded) {
-      ink = AppColors.outlineVariant;
+      ink = context.colors.outlineVariant;
     } else {
-      ink = AppColors.onSurface;
+      ink = context.colors.onSurface;
     }
     return Semantics(
       label: label,
@@ -234,10 +233,12 @@ class CalendarDay extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: filled ? AppColors.streak : null,
+          color: filled ? context.colors.streak : null,
           border: ringed
               ? Border.all(
-                  color: filled ? AppColors.streakRim : AppColors.streak,
+                  color: filled
+                      ? context.colors.streakRim
+                      : context.colors.streak,
                   width: ringWidth,
                 )
               : null,
@@ -284,7 +285,7 @@ class CountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final neutral = tone == AppTone.neutral;
-    final ink = neutral ? AppColors.primary : tone.ink;
+    final ink = neutral ? context.colors.primary : context.tone(tone).ink;
     return Semantics(
       container: true,
       label: label,
@@ -296,20 +297,26 @@ class CountBadge extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: neutral
-              ? AppColors.surfaceContainerHigh
-              : AppColors.surfaceContainerLowest,
+              ? context.colors.surfaceContainerHigh
+              : context.colors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadii.full),
           border: Border.all(
-            color: neutral ? AppColors.outlineVariant : tone.icon,
+            color: neutral
+                ? context.colors.outlineVariant
+                : context.tone(tone).icon,
             width: neutral ? 1 : 2,
           ),
-          boxShadow: neutral ? AppShadows.badge : AppShadows.none,
+          boxShadow: neutral ? context.shadows.badge : AppShadows.none,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 14, color: neutral ? ink : tone.icon),
+              Icon(
+                icon,
+                size: 14,
+                color: neutral ? ink : context.tone(tone).icon,
+              ),
               const SizedBox(width: AppSpacing.space2xs),
             ],
             Text(label, style: AppTypography.labelSm.copyWith(color: ink)),
@@ -349,14 +356,14 @@ class RibbonBadge extends StatelessWidget {
         vertical: _verticalPadding,
       ),
       decoration: BoxDecoration(
-        color: tone.fill,
+        color: context.tone(tone).fill,
         borderRadius: BorderRadius.circular(AppRadii.full),
       ),
       child: Text(
         label,
         maxLines: 1,
         style: AppTypography.labelSm.copyWith(
-          color: tone.onFill,
+          color: context.tone(tone).onFill,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -424,15 +431,15 @@ class AppProgressBar extends StatelessWidget {
   static const double regularHeight = 12;
   static const double largeHeight = 14;
 
-  List<Color> get _gradientColors => switch (tone) {
+  List<Color> _gradientColors(AppPalette colors) => switch (tone) {
     AppTone.primary => [
-      AppColors.primary,
-      AppColors.primaryContainer,
-      AppColors.primaryFixedDim,
+      colors.primary,
+      colors.primaryContainer,
+      colors.primaryFixedDim,
     ],
-    AppTone.secondary => [AppColors.secondaryContainer, AppColors.secondary],
-    AppTone.tertiary => [AppColors.tertiaryBrand, AppColors.tertiaryContainer],
-    AppTone.neutral => [AppColors.outline, AppColors.onSurfaceVariant],
+    AppTone.secondary => [colors.secondaryContainer, colors.secondary],
+    AppTone.tertiary => [colors.tertiaryBrand, colors.tertiaryContainer],
+    AppTone.neutral => [colors.outline, colors.onSurfaceVariant],
   };
 
   @override
@@ -453,13 +460,13 @@ class AppProgressBar extends StatelessWidget {
         padding: const EdgeInsets.all(_inset),
         decoration: BoxDecoration(
           color: onFilled
-              ? tone.onFill.withValues(alpha: 0.25)
-              : AppColors.surfaceContainerHigh,
+              ? context.tone(tone).onFill.withValues(alpha: 0.25)
+              : context.colors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(AppRadii.full),
           border: Border.all(
             color: onFilled
-                ? tone.onFill.withValues(alpha: 0)
-                : AppColors.outlineVariant.withValues(alpha: 0.3),
+                ? context.tone(tone).onFill.withValues(alpha: 0)
+                : context.colors.outlineVariant.withValues(alpha: 0.3),
           ),
         ),
         child: TweenAnimationBuilder<double>(
@@ -478,8 +485,12 @@ class AppProgressBar extends StatelessWidget {
                   width: math.max(fillHeight, constraints.maxWidth * shown),
                   height: fillHeight,
                   child: _Fill(
-                    color: onFilled ? tone.onFill : tone.fill,
-                    gradient: gradient && !onFilled ? _gradientColors : null,
+                    color: onFilled
+                        ? context.tone(tone).onFill
+                        : context.tone(tone).fill,
+                    gradient: gradient && !onFilled
+                        ? _gradientColors(context.colors)
+                        : null,
                   ),
                 ),
               ),
@@ -502,7 +513,7 @@ class AppProgressBar extends StatelessWidget {
               child: Text(
                 startLabel ?? '',
                 style: AppTypography.labelSm.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: context.colors.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -513,8 +524,8 @@ class AppProgressBar extends StatelessWidget {
                 endLabel!,
                 style: AppTypography.labelSm.copyWith(
                   color: tone == AppTone.neutral
-                      ? AppColors.onSurfaceVariant
-                      : tone.ink,
+                      ? context.colors.onSurfaceVariant
+                      : context.tone(tone).ink,
                 ),
               ),
             ],
@@ -552,7 +563,9 @@ class _Fill extends StatelessWidget {
           heightFactor: 0.5,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLowest.withValues(alpha: 0.25),
+              color: context.colors.surfaceContainerLowest.withValues(
+                alpha: 0.25,
+              ),
               borderRadius: radius,
             ),
           ),
@@ -588,14 +601,16 @@ class IconBadge extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: tone.surface,
+          color: context.tone(tone).surface,
           shape: square ? BoxShape.rectangle : BoxShape.circle,
           borderRadius: square ? BorderRadius.circular(size * 0.3) : null,
           border: square
-              ? Border.all(color: tone.icon.withValues(alpha: 0.2))
+              ? Border.all(
+                  color: context.tone(tone).icon.withValues(alpha: 0.2),
+                )
               : null,
         ),
-        child: Icon(icon, size: size * 0.55, color: tone.icon),
+        child: Icon(icon, size: size * 0.55, color: context.tone(tone).icon),
       ),
     );
   }
@@ -638,8 +653,8 @@ class PageDots extends StatelessWidget {
               height: dotSize,
               decoration: BoxDecoration(
                 color: i == index
-                    ? AppColors.primaryContainer
-                    : AppColors.outlineVariant,
+                    ? context.colors.primaryContainer
+                    : context.colors.outlineVariant,
                 borderRadius: BorderRadius.circular(AppRadii.full),
               ),
             ),
@@ -789,7 +804,7 @@ class LoadingState extends StatelessWidget {
                 height: _StatusLayout.badgeSize,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppTone.primary.surface,
+                  color: context.tone(AppTone.primary).surface,
                   shape: BoxShape.circle,
                 ),
                 child: const AppSpinner(size: 32, strokeWidth: 3),
@@ -836,7 +851,9 @@ class _StatusLayout extends StatelessWidget {
                 title!,
                 textAlign: TextAlign.center,
                 style: AppTypography.forText(
-                  AppTypography.headlineSm.copyWith(color: AppColors.onSurface),
+                  AppTypography.headlineSm.copyWith(
+                    color: context.colors.onSurface,
+                  ),
                   title!,
                 ),
               ),
@@ -852,7 +869,7 @@ class _StatusLayout extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: AppTypography.forText(
                     AppTypography.bodySm.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.colors.onSurfaceVariant,
                     ),
                     message!,
                   ),

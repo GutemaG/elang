@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -114,14 +114,14 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       'Buna',
                       style: AppTypography.displayLgMobile.copyWith(
-                        color: AppColors.primaryContainer,
+                        color: context.colors.primaryContainer,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.space2xs),
                     Text(
                       'Learn Amharic, One Sip at a Time.',
                       style: AppTypography.bodyMd.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: context.colors.onSurfaceVariant,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -161,7 +161,7 @@ class _Mascot extends StatelessWidget {
             child: Icon(
               Icons.local_cafe,
               size: 64,
-              color: AppColors.secondaryContainer,
+              color: context.colors.secondaryContainer,
             ),
           ),
         ),
@@ -188,7 +188,7 @@ class _BrewingProgress extends StatelessWidget {
                 child: Text(
                   'Brewing your lessons...',
                   style: AppTypography.labelMd.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.colors.onSurface,
                   ),
                 ),
               ),

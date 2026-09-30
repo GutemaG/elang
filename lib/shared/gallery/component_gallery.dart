@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
@@ -86,14 +85,16 @@ class GallerySection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTypography.headlineMd.copyWith(color: AppColors.primary),
+            style: AppTypography.headlineMd.copyWith(
+              color: context.colors.primary,
+            ),
           ),
           if (note != null) ...[
             const SizedBox(height: AppSpacing.space2xs),
             Text(
               note!,
               style: AppTypography.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.colors.onSurfaceVariant,
               ),
             ),
           ],
@@ -121,7 +122,9 @@ class GalleryCase extends StatelessWidget {
         children: [
           Text(
             label,
-            style: AppTypography.labelSm.copyWith(color: AppColors.textMuted),
+            style: AppTypography.labelSm.copyWith(
+              color: context.colors.textMuted,
+            ),
           ),
           const SizedBox(height: AppSpacing.spaceXs),
           child,
@@ -134,82 +137,82 @@ class GalleryCase extends StatelessWidget {
 class _ColoursSection extends StatelessWidget {
   const _ColoursSection();
 
-  static final _groups = <String, List<(String, Color)>>{
+  static Map<String, List<(String, Color)>> _groups(AppPalette colors) => {
     'Surfaces': [
-      ('background', AppColors.background),
-      ('surfaceContainerLowest', AppColors.surfaceContainerLowest),
-      ('surfaceContainerLow', AppColors.surfaceContainerLow),
-      ('surfaceContainer', AppColors.surfaceContainer),
-      ('surfaceContainerHigh', AppColors.surfaceContainerHigh),
-      ('surfaceContainerHighest', AppColors.surfaceContainerHighest),
-      ('surfaceDim', AppColors.surfaceDim),
+      ('surface', colors.surface),
+      ('surfaceContainerLowest', colors.surfaceContainerLowest),
+      ('surfaceContainerLow', colors.surfaceContainerLow),
+      ('surfaceContainer', colors.surfaceContainer),
+      ('surfaceContainerHigh', colors.surfaceContainerHigh),
+      ('surfaceContainerHighest', colors.surfaceContainerHighest),
+      ('surfaceDim', colors.surfaceDim),
     ],
     'Text and lines': [
-      ('onSurface', AppColors.onSurface),
-      ('onSurfaceVariant', AppColors.onSurfaceVariant),
-      ('textMuted', AppColors.textMuted),
-      ('outline', AppColors.outline),
-      ('outlineVariant', AppColors.outlineVariant),
-      ('track', AppColors.track),
+      ('onSurface', colors.onSurface),
+      ('onSurfaceVariant', colors.onSurfaceVariant),
+      ('textMuted', colors.textMuted),
+      ('outline', colors.outline),
+      ('outlineVariant', colors.outlineVariant),
+      ('track', colors.track),
     ],
     'Highland Acacia (primary)': [
-      ('primary', AppColors.primary),
-      ('primaryContainer', AppColors.primaryContainer),
-      ('primaryBevel', AppColors.primaryBevel),
-      ('primaryFixed', AppColors.primaryFixed),
+      ('primary', colors.primary),
+      ('primaryContainer', colors.primaryContainer),
+      ('primaryShelf', colors.primaryShelf),
+      ('primaryFixed', colors.primaryFixed),
     ],
     'Simien Gold (secondary)': [
-      ('secondary', AppColors.secondary),
-      ('secondaryContainer', AppColors.secondaryContainer),
-      ('secondaryBrand', AppColors.secondaryBrand),
-      ('secondaryBevel', AppColors.secondaryBevel),
-      ('secondaryFixed', AppColors.secondaryFixed),
+      ('secondary', colors.secondary),
+      ('secondaryContainer', colors.secondaryContainer),
+      ('secondaryBrand', colors.secondaryBrand),
+      ('secondaryShelf', colors.secondaryShelf),
+      ('secondaryFixed', colors.secondaryFixed),
     ],
     'Rift Terracotta (tertiary)': [
-      ('tertiary', AppColors.tertiary),
-      ('tertiaryContainer', AppColors.tertiaryContainer),
-      ('tertiaryBrand', AppColors.tertiaryBrand),
-      ('tertiaryBevel', AppColors.tertiaryBevel),
-      ('tertiaryFixed', AppColors.tertiaryFixed),
+      ('tertiary', colors.tertiary),
+      ('tertiaryContainer', colors.tertiaryContainer),
+      ('tertiaryBrand', colors.tertiaryBrand),
+      ('tertiaryShelf', colors.tertiaryShelf),
+      ('tertiaryFixed', colors.tertiaryFixed),
     ],
     'Cards and tiles': [
-      ('cardBorderDefault', AppColors.cardBorderDefault),
-      ('cardBevelDefault', AppColors.cardBevelDefault),
-      ('tileBorder', AppColors.tileBorder),
-      ('tileShelf', AppColors.tileShelf),
+      ('cardBorder', colors.cardBorder),
+      ('cardShelf', colors.cardShelf),
+      ('tileBorder', colors.tileBorder),
+      ('tileShelf', colors.tileShelf),
     ],
     'Answer states': [
-      ('answerSelected', AppColors.answerSelected),
-      ('answerCorrect', AppColors.answerCorrect),
-      ('answerIncorrect', AppColors.answerIncorrect),
-      ('optionChosen', AppColors.optionChosen),
+      ('answerSelectedFace', colors.answerSelectedFace),
+      ('answerCorrectFace', colors.answerCorrectFace),
+      ('answerIncorrectFace', colors.answerIncorrectFace),
+      ('chosenFace', colors.chosenFace),
     ],
     'Path nodes': [
-      ('lockedNode', AppColors.lockedNode),
-      ('lockedNodeIcon', AppColors.lockedNodeIcon),
-      ('activeNodeShelf', AppColors.activeNodeShelf),
+      ('lockedNodeFace', colors.lockedNodeFace),
+      ('lockedNodeIcon', colors.lockedNodeIcon),
+      ('activeNodeShelf', colors.activeNodeShelf),
     ],
     'Gamification': [
-      ('streak', AppColors.streak),
-      ('streakRim', AppColors.streakRim),
-      ('gem', AppColors.gem),
-      ('xp', AppColors.xp),
+      ('streak', colors.streak),
+      ('streakRim', colors.streakRim),
+      ('gem', colors.gem),
+      ('xp', colors.xp),
     ],
     'Tones (AppTone)': [
-      ('primaryToneBorder', AppColors.primaryToneBorder),
-      ('primaryToneShelf', AppColors.primaryToneShelf),
-      ('primaryToneSurface', AppColors.primaryToneSurface),
-      ('secondaryToneBorder', AppColors.secondaryToneBorder),
-      ('secondaryToneShelf', AppColors.secondaryToneShelf),
-      ('tertiaryToneBorder', AppColors.tertiaryToneBorder),
-      ('tertiaryToneShelf', AppColors.tertiaryToneShelf),
-      ('tertiaryToneSurface', AppColors.tertiaryToneSurface),
+      ('primaryToneBorder', colors.primaryToneBorder),
+      ('primaryToneShelf', colors.primaryToneShelf),
+      ('primaryToneSurface', colors.primaryToneSurface),
+      ('secondaryToneBorder', colors.secondaryToneBorder),
+      ('secondaryToneShelf', colors.secondaryToneShelf),
+      ('tertiaryToneBorder', colors.tertiaryToneBorder),
+      ('tertiaryToneShelf', colors.tertiaryToneShelf),
+      ('tertiaryToneSurface', colors.tertiaryToneSurface),
     ],
     'Feedback and overlay': [
-      ('error', AppColors.error),
-      ('errorContainer', AppColors.errorContainer),
-      ('scrim', AppColors.scrim),
-      ('dialogShelf', AppColors.dialogShelf),
+      ('error', colors.error),
+      ('errorContainer', colors.errorContainer),
+      ('scrim', colors.scrim),
+      ('dialogShelf', colors.dialogShelf),
     ],
   };
 
@@ -217,9 +220,9 @@ class _ColoursSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return GallerySection(
       title: 'Colours',
-      note: 'Every colour a component may use (AppColors).',
+      note: 'Every colour a component may use (AppPalette).',
       children: [
-        for (final group in _groups.entries)
+        for (final group in _groups(context.colors).entries)
           GalleryCase(
             label: group.key,
             child: Wrap(
@@ -260,18 +263,20 @@ class _Swatch extends StatelessWidget {
             decoration: BoxDecoration(
               color: colour,
               borderRadius: BorderRadius.circular(AppRadii.sm),
-              border: Border.all(color: AppColors.outlineVariant),
+              border: Border.all(color: context.colors.outlineVariant),
             ),
           ),
           const SizedBox(height: AppSpacing.space2xs),
           Text(
             name,
-            style: AppTypography.labelSm.copyWith(color: AppColors.onSurface),
+            style: AppTypography.labelSm.copyWith(
+              color: context.colors.onSurface,
+            ),
           ),
           Text(
             _hex,
             style: AppTypography.bodySm.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
               fontSize: 11,
             ),
           ),
@@ -287,19 +292,31 @@ class _ShadowsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final samples = <(String, List<BoxShadow>, Color?)>[
-      ('card', AppShadows.card, AppColors.cardBorderDefault),
-      ('tile', AppShadows.tile, AppColors.tileBorder),
-      ('button(primaryBevel)', AppShadows.button(AppColors.primaryBevel), null),
+      ('card', context.shadows.card, context.colors.cardBorder),
+      ('tile', context.shadows.tile, context.colors.tileBorder),
+      (
+        'button(primaryShelf)',
+        AppShadows.button(context.colors.primaryShelf),
+        null,
+      ),
       (
         'raised(primaryToneShelf)',
-        AppShadows.raised(AppColors.primaryToneShelf),
-        AppColors.primaryToneBorder,
+        context.shadows.raised(context.colors.primaryToneShelf),
+        context.colors.primaryToneBorder,
       ),
-      ('badge', AppShadows.badge, AppColors.outlineVariant),
-      ('dialog', AppShadows.dialog, AppColors.surfaceContainerHighest),
-      ('overlay', AppShadows.overlay, null),
-      ('glow(secondaryBrand)', AppShadows.glow(AppColors.secondaryBrand), null),
-      ('none (pressed)', AppShadows.none, AppColors.cardBorderDefault),
+      ('badge', context.shadows.badge, context.colors.outlineVariant),
+      (
+        'dialog',
+        context.shadows.dialog,
+        context.colors.surfaceContainerHighest,
+      ),
+      ('overlay', context.shadows.overlay, null),
+      (
+        'glow(secondaryBrand)',
+        AppShadows.glow(context.colors.secondaryBrand),
+        null,
+      ),
+      ('none (pressed)', AppShadows.none, context.colors.cardBorder),
     ];
     return GallerySection(
       title: 'Shadows',
@@ -320,7 +337,7 @@ class _ShadowsSection extends StatelessWidget {
                     Container(
                       height: 64,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerLowest,
+                        color: context.colors.surfaceContainerLowest,
                         borderRadius: BorderRadius.circular(AppRadii.card),
                         border: border == null
                             ? null
@@ -332,7 +349,7 @@ class _ShadowsSection extends StatelessWidget {
                     Text(
                       name,
                       style: AppTypography.labelSm.copyWith(
-                        color: AppColors.onSurface,
+                        color: context.colors.onSurface,
                       ),
                     ),
                   ],
@@ -373,14 +390,17 @@ class _RadiiSection extends StatelessWidget {
                 height: 56,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerLow,
+                  color: context.colors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(radius),
-                  border: Border.all(color: AppColors.tileBorder, width: 2),
+                  border: Border.all(
+                    color: context.colors.tileBorder,
+                    width: 2,
+                  ),
                 ),
                 child: Text(
                   name,
                   style: AppTypography.labelSm.copyWith(
-                    color: AppColors.onSurface,
+                    color: context.colors.onSurface,
                   ),
                 ),
               ),
@@ -412,7 +432,9 @@ class _MotionSection extends StatelessWidget {
         for (final (name, duration) in rows)
           Text(
             '$name: ${duration.inMilliseconds} ms',
-            style: AppTypography.bodySm.copyWith(color: AppColors.onSurface),
+            style: AppTypography.bodySm.copyWith(
+              color: context.colors.onSurface,
+            ),
           ),
       ],
     );
@@ -452,11 +474,14 @@ class _TypeSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_latin, style: style.copyWith(color: AppColors.onSurface)),
+                Text(
+                  _latin,
+                  style: style.copyWith(color: context.colors.onSurface),
+                ),
                 Text(
                   _fidel,
                   style: AppTypography.forText(
-                    style.copyWith(color: AppColors.onSurface),
+                    style.copyWith(color: context.colors.onSurface),
                     _fidel,
                   ),
                 ),
@@ -471,7 +496,9 @@ class _TypeSection extends StatelessWidget {
               Text(
                 'ቡና አለቀ!',
                 style: AppTypography.forText(
-                  AppTypography.headlineMd.copyWith(color: AppColors.tertiary),
+                  AppTypography.headlineMd.copyWith(
+                    color: context.colors.tertiary,
+                  ),
                   'ቡና አለቀ!',
                 ),
               ),

@@ -25,7 +25,7 @@ import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/sync_engine.dart';
 import 'package:elang/shared/services/user_preferences_api.dart';
 import 'package:elang/shared/services/user_preferences_api_exception.dart';
-import 'package:elang/shared/theme/app_colors.dart';
+import 'package:elang/shared/theme/app_palette.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/app_tone.dart';
 import 'package:elang/shared/widgets/app_button.dart';
@@ -436,7 +436,7 @@ void main() {
       final card = tester.widget<Material>(
         find.ancestor(of: message, matching: find.byType(Material)).first,
       );
-      expect(card.color, AppColors.inverseSurface);
+      expect(card.color, AppPalette.light.inverseSurface);
     });
   });
 
@@ -548,15 +548,21 @@ void main() {
       final theme = AppTheme.light.switchTheme;
       final on = states([WidgetState.selected]);
       final off = states([]);
-      expect(theme.trackColor!.resolve(on), AppColors.primaryContainer);
-      expect(theme.thumbColor!.resolve(on), AppColors.onPrimary);
-      expect(theme.trackOutlineColor!.resolve(on), AppColors.primaryContainer);
-      expect(theme.trackColor!.resolve(off), AppColors.surfaceContainerHighest);
-      expect(theme.thumbColor!.resolve(off), AppColors.outline);
-      expect(theme.trackOutlineColor!.resolve(off), AppColors.outline);
+      expect(theme.trackColor!.resolve(on), AppPalette.light.primaryContainer);
+      expect(theme.thumbColor!.resolve(on), AppPalette.light.onPrimary);
+      expect(
+        theme.trackOutlineColor!.resolve(on),
+        AppPalette.light.primaryContainer,
+      );
+      expect(
+        theme.trackColor!.resolve(off),
+        AppPalette.light.surfaceContainerHighest,
+      );
+      expect(theme.thumbColor!.resolve(off), AppPalette.light.outline);
+      expect(theme.trackOutlineColor!.resolve(off), AppPalette.light.outline);
       expect(
         theme.trackColor!.resolve({WidgetState.selected, WidgetState.disabled}),
-        AppColors.primaryContainer.withValues(alpha: 0.4),
+        AppPalette.light.primaryContainer.withValues(alpha: 0.4),
       );
     });
 
@@ -565,8 +571,8 @@ void main() {
     ) async {
       final theme = AppTheme.light.snackBarTheme;
       expect(theme.behavior, SnackBarBehavior.floating);
-      expect(theme.backgroundColor, AppColors.inverseSurface);
-      expect(theme.contentTextStyle!.color, AppColors.inverseOnSurface);
+      expect(theme.backgroundColor, AppPalette.light.inverseSurface);
+      expect(theme.contentTextStyle!.color, AppPalette.light.inverseOnSurface);
     });
   });
 

@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import '../../theme/app_theme_context.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import 'answer_tile.dart';
@@ -177,12 +177,12 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) {
     return ColoredBox(
       key: PictureTile.loadingKey,
-      color: AppColors.surfaceContainerLow,
+      color: context.colors.surfaceContainerLow,
       child: Center(
         child: Icon(
           Icons.image_outlined,
           size: 32,
-          color: AppColors.outlineVariant,
+          color: context.colors.outlineVariant,
         ),
       ),
     );

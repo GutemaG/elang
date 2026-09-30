@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/services/auth_api.dart';
 import '../../../shared/services/onboarding_repository.dart';
 import '../../../shared/services/session_repository.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/theme/app_tone.dart';
@@ -120,7 +120,7 @@ class _SignInScreenState extends State<SignInScreen> {
           Text(
             'Create your free account',
             style: AppTypography.headlineLg.copyWith(
-              color: AppColors.onSurface,
+              color: context.colors.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceXs),
@@ -128,7 +128,7 @@ class _SignInScreenState extends State<SignInScreen> {
             'Save your streak, sync your progress across devices, and '
             'start speaking Amharic today.',
             style: AppTypography.bodyMd.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: context.colors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceXl),
@@ -139,7 +139,11 @@ class _SignInScreenState extends State<SignInScreen> {
             onPressed: _controller.isInFlight
                 ? null
                 : () => _controller.signIn(AuthProvider.apple),
-            leading: Icon(Icons.apple, size: 22, color: AppColors.onSurface),
+            leading: Icon(
+              Icons.apple,
+              size: 22,
+              color: context.colors.onSurface,
+            ),
           ),
           if (showError) ...[
             const SizedBox(height: AppSpacing.spaceMd),
@@ -151,7 +155,7 @@ class _SignInScreenState extends State<SignInScreen> {
               'By continuing you agree to our Terms of Service & Privacy '
               'Policy.',
               style: AppTypography.labelSm.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.colors.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -202,7 +206,11 @@ class _GoogleGlyph extends StatelessWidget {
     return SizedBox(
       width: 20,
       height: 20,
-      child: Icon(Icons.g_mobiledata, size: 22, color: AppColors.onSurface),
+      child: Icon(
+        Icons.g_mobiledata,
+        size: 22,
+        color: context.colors.onSurface,
+      ),
     );
   }
 }

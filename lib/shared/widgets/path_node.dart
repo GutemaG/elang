@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_context.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
@@ -94,18 +94,23 @@ class PathNode extends StatelessWidget {
                   height: diameter,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _face,
+                    color: _face(context.colors),
                     border: Border.all(
                       color: locked
-                          ? AppColors.outline
-                          : AppColors.outlineVariant,
+                          ? context.colors.outline
+                          : context.colors.outlineVariant,
                       width: active ? 4 : 2,
                     ),
-                    boxShadow: [AppShadows.shelf(_shelf, depth: shelfDepth)],
+                    boxShadow: [
+                      AppShadows.shelf(
+                        _shelf(context.colors),
+                        depth: shelfDepth,
+                      ),
+                    ],
                   ),
                   child: Icon(
                     _icon,
-                    color: _foreground,
+                    color: _foreground(context.colors),
                     size: active ? 34 : 28,
                   ),
                 ),
@@ -118,17 +123,17 @@ class PathNode extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: locked
-                      ? AppColors.surfaceContainer
-                      : AppColors.surfaceContainerLowest,
+                      ? context.colors.surfaceContainer
+                      : context.colors.surfaceContainerLowest,
                   borderRadius: BorderRadius.circular(AppRadii.full),
-                  border: Border.all(color: AppColors.outlineVariant),
+                  border: Border.all(color: context.colors.outlineVariant),
                 ),
                 child: Text(
                   label,
                   style: AppTypography.labelMd.copyWith(
                     color: locked
-                        ? AppColors.onSurfaceVariant
-                        : AppColors.onSurface,
+                        ? context.colors.onSurfaceVariant
+                        : context.colors.onSurface,
                   ),
                 ),
               ),
@@ -139,22 +144,22 @@ class PathNode extends StatelessWidget {
     );
   }
 
-  Color get _face => switch (state) {
-    PathNodeState.locked => AppColors.surfaceDim,
-    PathNodeState.active => AppColors.secondaryContainer,
-    PathNodeState.completed => AppColors.primaryContainer,
+  Color _face(AppPalette colors) => switch (state) {
+    PathNodeState.locked => colors.surfaceDim,
+    PathNodeState.active => colors.secondaryContainer,
+    PathNodeState.completed => colors.primaryContainer,
   };
 
-  Color get _foreground => switch (state) {
-    PathNodeState.locked => AppColors.outlineVariant,
-    PathNodeState.active => AppColors.onSecondary,
-    PathNodeState.completed => AppColors.onPrimary,
+  Color _foreground(AppPalette colors) => switch (state) {
+    PathNodeState.locked => colors.outlineVariant,
+    PathNodeState.active => colors.onSecondary,
+    PathNodeState.completed => colors.onPrimary,
   };
 
-  Color get _shelf => switch (state) {
-    PathNodeState.locked => AppColors.lockedNodeIcon,
-    PathNodeState.active => AppColors.activeNodeShelf,
-    PathNodeState.completed => AppColors.primaryBevel,
+  Color _shelf(AppPalette colors) => switch (state) {
+    PathNodeState.locked => colors.lockedNodeIcon,
+    PathNodeState.active => colors.activeNodeShelf,
+    PathNodeState.completed => colors.primaryShelf,
   };
 
   IconData get _icon => switch (state) {
@@ -182,7 +187,11 @@ class _ProgressRing extends StatelessWidget {
     if (fraction == null) return child;
     return CustomPaint(
       key: PathNode.progressRingKey,
-      painter: _RingPainter(fraction: fraction.clamp(0, 1).toDouble()),
+      painter: _RingPainter(
+        fraction: fraction.clamp(0, 1).toDouble(),
+        track: context.colors.surfaceContainer,
+        fill: context.colors.primaryContainer,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(_gap + _stroke),
         child: child,
@@ -192,9 +201,15 @@ class _ProgressRing extends StatelessWidget {
 }
 
 class _RingPainter extends CustomPainter {
-  const _RingPainter({required this.fraction});
+  const _RingPainter({
+    required this.fraction,
+    required this.track,
+    required this.fill,
+  });
 
   final double fraction;
+  final Color track;
+  final Color fill;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -203,21 +218,28 @@ class _RingPainter extends CustomPainter {
       center: size.center(Offset.zero),
       radius: (math.min(size.width, size.height) - stroke) / 2,
     );
-    final track = Paint()
+    final trackPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
-      ..color = AppColors.surfaceContainer;
-    final fill = Paint()
+      ..color = track;
+    final fillPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round
-      ..color = AppColors.primaryContainer;
-    canvas.drawArc(rect, 0, 2 * math.pi, false, track);
-    canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * fraction, false, fill);
+      ..color = fill;
+    canvas.drawArc(rect, 0, 2 * math.pi, false, trackPaint);
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      2 * math.pi * fraction,
+      false,
+      fillPaint,
+    );
   }
 
   @override
-  bool shouldRepaint(_RingPainter old) => old.fraction != fraction;
+  bool shouldRepaint(_RingPainter old) =>
+      old.fraction != fraction || old.track != track || old.fill != fill;
 }
 
 class _CrownBadge extends StatelessWidget {
@@ -230,9 +252,9 @@ class _CrownBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: context.colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadii.full),
-        border: Border.all(color: AppColors.secondaryContainer),
+        border: Border.all(color: context.colors.secondaryContainer),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -240,12 +262,14 @@ class _CrownBadge extends StatelessWidget {
           Icon(
             Icons.workspace_premium,
             size: 12,
-            color: AppColors.secondaryContainer,
+            color: context.colors.secondaryContainer,
           ),
           const SizedBox(width: 2),
           Text(
             'Lv $level',
-            style: AppTypography.labelSm.copyWith(color: AppColors.secondary),
+            style: AppTypography.labelSm.copyWith(
+              color: context.colors.secondary,
+            ),
           ),
         ],
       ),

@@ -4,7 +4,7 @@ import '../../shared/models/course.dart';
 import '../../shared/models/language_names.dart';
 import '../../shared/services/caching_course_api.dart';
 import '../../shared/services/course_api.dart';
-import '../../shared/theme/app_colors.dart';
+import '../../shared/theme/app_theme_context.dart';
 import '../../shared/theme/app_spacing.dart';
 import '../../shared/theme/app_tone.dart';
 import '../../shared/theme/app_typography.dart';
@@ -98,7 +98,7 @@ class _CoursePickerSheetState extends State<CoursePickerSheet> {
               child: Text(
                 'Choose a course',
                 style: AppTypography.headlineSm.copyWith(
-                  color: AppColors.onSurface,
+                  color: context.colors.onSurface,
                 ),
               ),
             ),
@@ -156,7 +156,7 @@ class _CourseGroups extends StatelessWidget {
             child: Text(
               'For ${languageName(entry.key)} speakers',
               style: AppTypography.labelSm.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: context.colors.onSurfaceVariant,
               ),
             ),
           ),
@@ -206,8 +206,8 @@ class _CatalogRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.labelLg.copyWith(
                       color: course.isActive
-                          ? AppColors.primaryContainer
-                          : AppColors.onSurface,
+                          ? context.colors.primaryContainer
+                          : context.colors.onSurface,
                     ),
                   ),
                   Text(
@@ -215,7 +215,7 @@ class _CatalogRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.bodySm.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: context.colors.onSurfaceVariant,
                     ),
                   ),
                   if (enabled && course.totalSkills > 0) ...[
@@ -231,19 +231,19 @@ class _CatalogRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.spaceXs),
-            _indicator(),
+            _indicator(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _indicator() {
+  Widget _indicator(BuildContext context) {
     if (!course.isAvailable) {
       return Icon(
         Icons.lock_outline,
         size: 20,
-        color: AppColors.onSurfaceVariant,
+        color: context.colors.onSurfaceVariant,
       );
     }
     if (course.isActive) {
@@ -251,16 +251,16 @@ class _CatalogRow extends StatelessWidget {
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          color: AppColors.primaryContainer,
+          color: context.colors.primaryContainer,
           shape: BoxShape.circle,
         ),
-        child: Icon(Icons.check, color: AppColors.onPrimary, size: 16),
+        child: Icon(Icons.check, color: context.colors.onPrimary, size: 16),
       );
     }
     return Icon(
       Icons.chevron_right,
       size: 20,
-      color: AppColors.onSurfaceVariant,
+      color: context.colors.onSurfaceVariant,
     );
   }
 }

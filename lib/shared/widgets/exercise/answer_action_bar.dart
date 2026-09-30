@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import '../../theme/app_theme_context.dart';
 import '../../theme/app_motion.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_tone.dart';
@@ -85,7 +85,7 @@ class AnswerActionBar extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: AppTypography.bodySm.copyWith(
-              color: AppColors.tertiaryBrand,
+              color: context.colors.tertiaryBrand,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceXs),
@@ -146,7 +146,9 @@ class _AnswerFeedbackPanelState extends State<AnswerFeedbackPanel>
     final correct = widget.grade == AnswerGrade.correct;
     final tone = correct ? AppTone.primary : AppTone.tertiary;
     final title = correct ? 'Correct!' : 'Not quite';
-    final ink = correct ? AppColors.primaryContainer : AppColors.tertiaryBrand;
+    final ink = correct
+        ? context.colors.primaryContainer
+        : context.colors.tertiaryBrand;
 
     return SizeTransition(
       sizeFactor: _curve,
@@ -165,11 +167,11 @@ class _AnswerFeedbackPanelState extends State<AnswerFeedbackPanel>
             ),
             decoration: BoxDecoration(
               color: correct
-                  ? AppColors.answerCorrect
-                  : AppColors.answerIncorrect,
+                  ? context.colors.answerCorrectFace
+                  : context.colors.answerIncorrectFace,
               borderRadius: BorderRadius.circular(AppRadii.card),
               border: Border.all(
-                color: tone.border,
+                color: context.tone(tone).border,
                 width: AnswerFeedbackPanel.borderWidth,
               ),
             ),

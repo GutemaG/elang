@@ -67,20 +67,6 @@ abstract final class AppShadows {
 
   /// Pressed: the shelf has collapsed.
   static const List<BoxShadow> none = [];
-
-  // The light shadows under the old names, until every screen reads
-  // `context.shadows` (bolt 067 removes these).
-  static final PaletteShadows _light = PaletteShadows(AppPalette.light);
-  static BoxShadow get soft => _light.soft;
-  static List<BoxShadow> get card => _light.card;
-  static List<BoxShadow> raised(Color shelfColor, {double visible = 1}) =>
-      _light.raised(shelfColor, visible: visible);
-  static List<BoxShadow> get badge => _light.badge;
-  static List<BoxShadow> get dialog => _light.dialog;
-  static List<BoxShadow> get tile => _light.tile;
-  static List<BoxShadow> tileRaised(Color rim, {double visible = 1}) =>
-      _light.tileRaised(rim, visible: visible);
-  static List<BoxShadow> get overlay => _light.overlay;
 }
 
 /// The shadows whose colours come from a palette.

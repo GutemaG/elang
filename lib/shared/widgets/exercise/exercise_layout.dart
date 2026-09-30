@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_theme_context.dart';
 import '../../theme/app_typography.dart';
@@ -166,7 +165,7 @@ class QuestionPrompt extends StatelessWidget {
       child: Text(
         headline,
         style: AppTypography.forText(
-          AppTypography.headlineMd.copyWith(color: AppColors.onSurface),
+          AppTypography.headlineMd.copyWith(color: context.colors.onSurface),
           headline,
         ),
       ),
@@ -179,7 +178,9 @@ class QuestionPrompt extends StatelessWidget {
           Text(
             instruction,
             style: AppTypography.forText(
-              AppTypography.labelLg.copyWith(color: AppColors.onSurfaceVariant),
+              AppTypography.labelLg.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
               instruction,
             ),
           ),
@@ -213,7 +214,9 @@ class QuestionPrompt extends StatelessWidget {
           Text(
             meaning,
             style: AppTypography.forText(
-              AppTypography.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+              AppTypography.bodyMd.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
               meaning,
             ),
           ),
