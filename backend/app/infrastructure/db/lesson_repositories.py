@@ -498,6 +498,26 @@ class SqlAlchemyAmoleTransactionRepository:
         result = await self._session.execute(stmt)
         return result.scalar() or 0
 
+    async def list_recent(self, user_id: str, limit: int) -> list[AmoleTransaction]:
+        stmt = (
+            select(AmoleTransactionModel)
+            .where(AmoleTransactionModel.user_id == user_id)
+            .order_by(AmoleTransactionModel.created_at.desc(), AmoleTransactionModel.id.desc())
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return [
+            AmoleTransaction(
+                id=model.id,
+                user_id=model.user_id,
+                amount=model.amount,
+                source=model.source,
+                reference_id=model.reference_id,
+                created_at=_ensure_utc(model.created_at),
+            )
+            for model in result.scalars()
+        ]
+
 
 class SqlAlchemyVocabItemRepository:
     """Implements `app.domain.lesson.repositories.VocabItemRepository`
@@ -672,6 +692,25 @@ class SqlAlchemyLessonAttemptRepository:
         )
         result = await self._session.execute(stmt)
         return result.scalar() or 0
+
+    async def list_practised_days(self, user_id: str) -> list[date]:
+        # One small pair per attempt; the dates are worked out here rather
+        # than in SQL, where "the UTC date of a timestamp" is spelled
+        # differently by SQLite and Postgres. `is_review` sits inside the
+        # `result` JSON, missing on rows from before reviews existed (none
+        # of which were reviews).
+        stmt = select(
+            LessonAttemptModel.completed_at, LessonAttemptModel.result["is_review"]
+        ).where(LessonAttemptModel.user_id == user_id)
+        result = await self._session.execute(stmt)
+        return sorted(
+            {
+                _ensure_utc(completed_at).astimezone(UTC).date()
+                for completed_at, is_review in result.all()
+                # SQLite hands the flag back as 1 or 0, Postgres as a bool.
+                if not is_review
+            }
+        )
 
 
 def _practice_attempt_model_to_domain(model: PracticeAttemptModel) -> PracticeAttempt:

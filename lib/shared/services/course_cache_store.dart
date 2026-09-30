@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
+import '../models/beans_status.dart';
 import '../models/course.dart';
 import '../models/lesson_content.dart';
 import '../models/skill_tree.dart';
@@ -15,6 +16,7 @@ class CachedDashboard {
     required this.tree,
     required this.amoleBalance,
     this.dueCount = 0,
+    this.beansStatus,
   });
 
   final SkillTreeResponse tree;
@@ -23,6 +25,11 @@ class CachedDashboard {
   /// The Practice badge's count as last seen; 0 for an entry saved before
   /// this was stored.
   final int dueCount;
+
+  /// The beans as last seen, with when the next one comes and the refill
+  /// price, so the beans sheet can count down offline (bolt 060). `null`
+  /// for an entry saved before this was stored.
+  final BeansStatus? beansStatus;
 }
 
 /// A lesson's content as last fetched, so opening it again is instant
@@ -62,6 +69,7 @@ abstract class CourseCacheStore {
     SkillTreeResponse tree, {
     required int amoleBalance,
     int dueCount = 0,
+    BeansStatus? beansStatus,
   });
 
   /// `null` if [courseId] was never cached (or the cache is unreadable).
@@ -131,12 +139,14 @@ abstract class MapBackedCourseCacheStore implements CourseCacheStore {
     SkillTreeResponse tree, {
     required int amoleBalance,
     int dueCount = 0,
+    BeansStatus? beansStatus,
   }) => _mutate((state) async {
     final dashboards = _map(state['dashboards']);
     dashboards[courseId] = {
       'tree': tree.toJson(),
       'amole_balance': amoleBalance,
       'due_count': dueCount,
+      'beans_status': ?beansStatus?.toJson(),
     };
     state['dashboards'] = dashboards;
   });
@@ -153,6 +163,7 @@ abstract class MapBackedCourseCacheStore implements CourseCacheStore {
       tree: tree,
       amoleBalance: amole,
       dueCount: due is int ? due : 0,
+      beansStatus: BeansStatus.fromJson(entry['beans_status']),
     );
   }
 
@@ -247,8 +258,7 @@ class FileCourseCacheStore extends MapBackedCourseCacheStore {
   }
 
   @override
-  Future<Map<String, dynamic>> readState() async =>
-      _memo ??= await _readFile();
+  Future<Map<String, dynamic>> readState() async => _memo ??= await _readFile();
 
   Future<Map<String, dynamic>> _readFile() async {
     try {

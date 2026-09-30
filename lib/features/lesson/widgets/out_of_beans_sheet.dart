@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/beans_status.dart';
-import '../../../shared/theme/app_colors.dart';
-import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
-import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_status.dart';
+import 'bean_timer_card.dart';
 
 /// Story 003's out-of-beans modal — maps to `out_of_beans_refill_modal/`.
 ///
@@ -37,17 +34,6 @@ class OutOfBeansSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final remaining = status.nextBeanAt?.difference(DateTime.now());
-    final String countdown = remaining == null
-        ? '--:--'
-        : _formatDuration(remaining);
-    final period = Duration(minutes: status.regenMinutesPerBean);
-    // How far the next bean has come: the part of its period already gone.
-    final brewed = remaining == null || period.inSeconds == 0
-        ? 0.0
-        : 1 - remaining.inSeconds / period.inSeconds;
-    final every = status.regenMinutesPerBean;
-
     return SheetHero(
       illustration: const Icon(Icons.local_cafe_outlined),
       illustrationBadge: CountBadge(
@@ -60,50 +46,7 @@ class OutOfBeansSheet extends StatelessWidget {
       body:
           "Don't worry, mistakes help you brew fluency! Beans refill "
           'automatically over time so you can continue your lessons.',
-      content: AppCard(
-        topStripe: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                const IconBadge(
-                  icon: Icons.hourglass_top,
-                  tone: AppTone.tertiary,
-                  square: true,
-                ),
-                const SizedBox(width: AppSpacing.spaceXs),
-                Expanded(
-                  child: Text(
-                    'Next bean in',
-                    style: AppTypography.labelMd.copyWith(
-                      color: AppColors.onSurface,
-                    ),
-                  ),
-                ),
-                Text(
-                  countdown,
-                  semanticsLabel: 'Next bean in $countdown',
-                  style: AppTypography.headlineSm.copyWith(
-                    color: AppColors.tertiaryBrand,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.spaceSm),
-            AppProgressBar(
-              value: brewed,
-              tone: AppTone.secondary,
-              gradient: true,
-              startLabel: every > 0
-                  ? 'Refills 1 bean every $every '
-                        '${every == 1 ? 'minute' : 'minutes'}'
-                  : null,
-              semanticLabel: 'Next bean',
-            ),
-          ],
-        ),
-      ),
+      content: BeanTimerCard(status: status, now: DateTime.now()),
       primaryAction: AppButton.accent(
         label: status.canAffordRefill
             ? 'Refill with Amole'
@@ -117,13 +60,6 @@ class OutOfBeansSheet extends StatelessWidget {
       ),
       textAction: AppButton.text(label: 'Not now', onPressed: onDismiss),
     );
-  }
-
-  static String _formatDuration(Duration d) {
-    final clamped = d.isNegative ? Duration.zero : d;
-    final minutes = clamped.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = clamped.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
   }
 }
 

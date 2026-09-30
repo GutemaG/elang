@@ -25,6 +25,7 @@ class _StatusGallerySectionState extends State<StatusGallerySection> {
   double _progress = 0.3;
   int _page = 0;
   String _speak = 'English';
+  StatKind _pill = StatKind.beans;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +45,41 @@ class _StatusGallerySectionState extends State<StatusGallerySection> {
               StatPill(kind: StatKind.beans, value: 3, max: 5),
               StatPill(kind: StatKind.xp, value: 12340),
               StatPill(kind: StatKind.amole, value: 420),
+            ],
+          ),
+        ),
+        const GalleryCase(
+          label: 'CalendarDay: done, today, today done, missed, not yet',
+          child: Wrap(
+            spacing: AppSpacing.spaceXs,
+            children: [
+              CalendarDay(day: 3, label: '3, done', filled: true),
+              CalendarDay(day: 4, label: '4, today', ringed: true),
+              CalendarDay(
+                day: 5,
+                label: '5, today, done',
+                filled: true,
+                ringed: true,
+              ),
+              CalendarDay(day: 6, label: '6, missed'),
+              CalendarDay(day: 7, label: '7, not yet', faded: true),
+            ],
+          ),
+        ),
+        GalleryCase(
+          label: 'StatPill as a button and as a chosen tab (tap one)',
+          child: Wrap(
+            spacing: AppSpacing.spaceXs,
+            children: [
+              for (final kind in StatKind.values)
+                StatPill(
+                  kind: kind,
+                  value: 6,
+                  max: kind == StatKind.beans ? 5 : null,
+                  selected: _pill == kind,
+                  tapHeight: 48,
+                  onPressed: () => setState(() => _pill = kind),
+                ),
             ],
           ),
         ),

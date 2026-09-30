@@ -157,6 +157,12 @@ class AmoleTransactionRepository(Protocol):
         """The account's Amole balance -- always computed, never cached."""
         ...
 
+    async def list_recent(self, user_id: str, limit: int) -> list[AmoleTransaction]:
+        """The account's newest `limit` rows, newest first; ties on
+        `created_at` in a stable order (bolt `059-stat-pill-service`).
+        """
+        ...
+
 
 class UserStreakRepository(Protocol):
     """Entity: `UserStreak`."""
@@ -230,5 +236,13 @@ class LessonAttemptRepository(Protocol):
     async def sum_xp_by_user_between(self, user_id: str, start: date, end: date) -> int:
         """XP total for attempts with `completed_at` in `[start, end)`
         (UTC calendar-day boundaries) -- for `daily_xp_total`.
+        """
+        ...
+
+    async def list_practised_days(self, user_id: str) -> list[date]:
+        """Every UTC day with at least one attempt that is not a review,
+        sorted, each once (bolt `059-stat-pill-service`). A review (a
+        replayed skill) leaves the streak alone, so it does not make a day
+        practised either.
         """
         ...

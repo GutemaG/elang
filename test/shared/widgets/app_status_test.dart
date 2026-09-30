@@ -596,4 +596,142 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('StatPill as a button (bolt 060)', () {
+    testWidgets('without onPressed it is not a button', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        _center(const StatPill(kind: StatKind.streak, value: 5)),
+      );
+
+      expect(
+        tester.getSemantics(find.byType(StatPill)),
+        isSemantics(label: '5 day streak', isButton: false),
+      );
+      expect(find.byType(GestureDetector), findsNothing);
+      semantics.dispose();
+    });
+
+    testWidgets('with onPressed it is one button with the same label', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      var taps = 0;
+      await tester.pumpWidget(
+        _center(
+          StatPill(kind: StatKind.streak, value: 5, onPressed: () => taps++),
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.byType(StatPill)),
+        isSemantics(label: '5 day streak', isButton: true, hasTapAction: true),
+      );
+      await tester.tap(find.byType(StatPill));
+      expect(taps, 1);
+      semantics.dispose();
+    });
+
+    testWidgets('dips while pressed, and not with reduced motion', (
+      tester,
+    ) async {
+      double scale() =>
+          tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale;
+      for (final reduced in [false, true]) {
+        await tester.pumpWidget(
+          _host(
+            Center(
+              child: StatPill(kind: StatKind.xp, value: 1, onPressed: () {}),
+            ),
+            reduceMotion: reduced,
+          ),
+        );
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.byType(StatPill)),
+        );
+        await tester.pump();
+        expect(scale(), reduced ? 1 : StatPill.pressedScale);
+        await gesture.up();
+        await tester.pumpAndSettle();
+        expect(scale(), 1);
+      }
+    });
+
+    testWidgets('pressed shows the dip without a finger on it', (tester) async {
+      await tester.pumpWidget(
+        _center(
+          StatPill(
+            kind: StatKind.xp,
+            value: 1,
+            onPressed: () {},
+            pressed: true,
+          ),
+        ),
+      );
+      expect(
+        tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale,
+        StatPill.pressedScale,
+      );
+    });
+
+    testWidgets('selected adds a ring and is announced as selected', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        _center(
+          StatPill(
+            kind: StatKind.amole,
+            value: 1,
+            selected: true,
+            onPressed: () {},
+          ),
+        ),
+      );
+
+      final decoration =
+          tester
+                  .widget<Container>(
+                    find
+                        .descendant(
+                          of: find.byType(StatPill),
+                          matching: find.byType(Container),
+                        )
+                        .first,
+                  )
+                  .decoration!
+              as BoxDecoration;
+      expect(decoration.boxShadow, hasLength(1));
+      expect(
+        tester.getSemantics(find.byType(StatPill)),
+        isSemantics(label: '1 Amole', isButton: true, isSelected: true),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('tapHeight answers taps above and below the pill', (
+      tester,
+    ) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        _center(
+          StatPill(
+            kind: StatKind.beans,
+            value: 3,
+            max: 5,
+            tapHeight: 48,
+            onPressed: () => taps++,
+          ),
+        ),
+      );
+
+      final area = tester.getRect(find.byType(StatPill));
+      expect(area.height, 48);
+      final drawn = tester.getRect(find.byType(Container).first);
+      expect(drawn.height, lessThan(48));
+      await tester.tapAt(Offset(area.center.dx, area.top + 2));
+      await tester.tapAt(Offset(area.center.dx, area.bottom - 2));
+      expect(taps, 2);
+    });
+  });
 }

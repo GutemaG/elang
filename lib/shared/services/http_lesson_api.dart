@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/auth_config.dart';
 import '../models/beans_status.dart';
+import '../models/stat_history.dart';
 import '../models/course.dart';
 import '../models/due_item.dart';
 import '../models/exercise.dart';
@@ -486,6 +487,31 @@ class HttpLessonApi implements LessonApi {
       amoleBalance: json['amole_balance'] as int,
       refillCostAmole: json['refill_cost_amole'] as int,
     );
+  }
+
+  @override
+  Future<StreakHistory> getStreakHistory({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    String day(DateTime d) => utcDay(d).toIso8601String().substring(0, 10);
+    final json = _decodeOrThrow(
+      await _get('/api/v1/streak/history?from=${day(from)}&to=${day(to)}'),
+    );
+    return StreakHistory.fromJson(json) ??
+        (throw const LessonApiException('Unexpected streak history'));
+  }
+
+  @override
+  Future<List<AmoleEntry>> getAmoleHistory({int limit = 20}) async {
+    final json = _decodeOrThrow(
+      await _get('/api/v1/amole/transactions?limit=$limit'),
+    );
+    final entries = json['entries'];
+    if (entries is! List) {
+      throw const LessonApiException('Unexpected Amole history');
+    }
+    return [for (final raw in entries) ?AmoleEntry.fromJson(raw)];
   }
 
   @override

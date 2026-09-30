@@ -224,6 +224,29 @@ class RefillResponse(BaseModel):
     amole_balance: int
 
 
+class StreakHistoryResponse(BaseModel):
+    """Bolt `059-stat-pill-service`: dates are UTC, `YYYY-MM-DD`."""
+
+    from_: str = Field(serialization_alias="from")
+    to: str
+    practised_days: list[str]
+    current_streak: int
+    longest_streak: int
+    joined_on: str
+
+
+class AmoleEntryResponse(BaseModel):
+    amount: int
+    source: str
+    created_at: str
+
+
+class AmoleHistoryResponse(BaseModel):
+    """Bolt `059-stat-pill-service`: newest first."""
+
+    entries: list[AmoleEntryResponse]
+
+
 class CompleteLessonRequest(BaseModel):
     attempt_id: str
     correct_count: int

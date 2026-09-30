@@ -4,6 +4,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/course.dart';
 import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_content.dart';
@@ -56,6 +57,39 @@ void main() {
     expect(node.contentVersion, DateTime.utc(2026, 9, 1, 12));
     expect(cached.tree.totalXp, 10);
     expect(cached.tree.streakCount, 3);
+  });
+
+  test('the beans timing round-trips (bolt 060)', () async {
+    final store = InMemoryCourseCacheStore();
+    final next = DateTime.utc(2026, 9, 30, 12, 15);
+    await store.saveDashboard(
+      'a',
+      _tree('a', 'Akkam'),
+      amoleBalance: 120,
+      beansStatus: BeansStatus(
+        beans: 4,
+        beansMax: 5,
+        regenMinutesPerBean: 30,
+        amoleBalance: 120,
+        refillCostAmole: 350,
+        nextBeanAt: next,
+      ),
+    );
+
+    final beans = (await store.loadDashboard('a'))!.beansStatus!;
+    expect(beans.beans, 4);
+    expect(beans.nextBeanAt, next);
+    expect(beans.regenMinutesPerBean, 30);
+    expect(beans.refillCostAmole, 350);
+  });
+
+  test('an entry saved before the beans timing still loads', () async {
+    final store = InMemoryCourseCacheStore();
+    await store.saveDashboard('a', _tree('a', 'Akkam'), amoleBalance: 120);
+
+    final cached = (await store.loadDashboard('a'))!;
+    expect(cached.tree.nodes.single.title, 'Akkam');
+    expect(cached.beansStatus, isNull);
   });
 
   test('two courses are kept apart and never mixed', () async {
@@ -180,7 +214,11 @@ void main() {
     await store.saveDashboard('a', _tree('a', 'Akkam'), amoleBalance: 1);
     await store.saveDashboard('b', _tree('b', 'Hello'), amoleBalance: 2);
 
-    expect(await store.cachedCourseIds()..sort(), ['a', 'b']);
+    expect(
+      await store.cachedCourseIds()
+        ..sort(),
+      ['a', 'b'],
+    );
   });
 
   test('cachedCourseIds reads a corrupt cache as nothing opened', () async {
@@ -192,7 +230,12 @@ void main() {
   test('the Practice due count is kept with the dashboard', () async {
     final store = InMemoryCourseCacheStore();
 
-    await store.saveDashboard('a', _tree('a', 'x'), amoleBalance: 1, dueCount: 7);
+    await store.saveDashboard(
+      'a',
+      _tree('a', 'x'),
+      amoleBalance: 1,
+      dueCount: 7,
+    );
 
     expect((await store.loadDashboard('a'))?.dueCount, 7);
   });
@@ -234,15 +277,18 @@ void main() {
       expect(await InMemoryCourseCacheStore().loadLesson('nope'), isNull);
     });
 
-    test('a copy is fresh only for the skill version it was saved at', () async {
-      final store = InMemoryCourseCacheStore();
-      await store.saveLesson(lesson, skillVersion: v1);
-      final cached = await store.loadLesson('l-1');
+    test(
+      'a copy is fresh only for the skill version it was saved at',
+      () async {
+        final store = InMemoryCourseCacheStore();
+        await store.saveLesson(lesson, skillVersion: v1);
+        final cached = await store.loadLesson('l-1');
 
-      expect(cached!.isFreshFor(v1), isTrue);
-      expect(cached.isFreshFor(v2), isFalse);
-      expect(cached.isFreshFor(null), isTrue);
-    });
+        expect(cached!.isFreshFor(v1), isTrue);
+        expect(cached.isFreshFor(v2), isFalse);
+        expect(cached.isFreshFor(null), isTrue);
+      },
+    );
 
     test('lessons do not disturb the dashboards beside them', () async {
       final store = InMemoryCourseCacheStore();
@@ -250,7 +296,10 @@ void main() {
 
       await store.saveLesson(lesson);
 
-      expect((await store.loadDashboard('a'))?.tree.nodes.single.title, 'Akkam');
+      expect(
+        (await store.loadDashboard('a'))?.tree.nodes.single.title,
+        'Akkam',
+      );
       expect(await store.cachedCourseIds(), ['a']);
     });
   });

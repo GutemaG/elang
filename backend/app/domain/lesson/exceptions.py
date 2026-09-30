@@ -62,6 +62,14 @@ class InvalidCompletionError(LessonDomainError):
     error_code = "invalid_completion"
 
 
+class InvalidRangeError(LessonDomainError):
+    """A streak-history range that runs backwards or is longer than the
+    read allows (bolt `059-stat-pill-service`).
+    """
+
+    error_code = "invalid_range"
+
+
 class InsufficientAmoleError(LessonDomainError):
     """A Beans refill was attempted without enough Amole balance."""
 

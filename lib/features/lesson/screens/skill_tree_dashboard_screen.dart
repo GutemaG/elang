@@ -45,6 +45,7 @@ import '../widgets/lesson_hud.dart';
 import '../widgets/pinned_header_sliver.dart';
 import '../widgets/review_skill_sheet.dart';
 import '../widgets/skill_path_node.dart';
+import '../widgets/stat_sheet.dart';
 import '../widgets/sync_status_banner.dart';
 import 'download_management_screen.dart';
 import 'lesson_screen.dart';
@@ -135,6 +136,13 @@ class _DashboardData {
   /// known to be offline, so without the offline note.
   _DashboardData get whileRefreshing =>
       _DashboardData(tree: tree, beansStatus: beansStatus, dueCount: dueCount);
+
+  _DashboardData withBeans(BeansStatus beans) => _DashboardData(
+    tree: tree,
+    beansStatus: beans,
+    dueCount: dueCount,
+    fromCache: fromCache,
+  );
 }
 
 /// How many lessons one dashboard load may fetch ahead of a tap. Each is two
@@ -203,6 +211,16 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   /// The index of the section holding the active node; -1 when none.
   int _activeSection = -1;
 
+  /// Beans changed by the stats sheet -- a bean that came, or a refill --
+  /// shown over the loaded data until the next load brings the server's
+  /// (013-stat-pill-interactions, bolt 060).
+  BeansStatus? _sheetBeans;
+
+  _DashboardData _withSheetBeans(_DashboardData data) {
+    final beans = _sheetBeans;
+    return beans == null ? data : data.withBeans(beans);
+  }
+
   GlobalKey _dividerKey(int index) =>
       _dividerKeys.putIfAbsent(index, GlobalKey.new);
 
@@ -263,6 +281,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
         beansStatus: results[1] as BeansStatus,
         dueCount: results[2] as int,
       );
+      _sheetBeans = null;
       widget.lessonPackDownloader.currentCourse = data.tree.course;
       unawaited(_saveToCache(data));
       unawaited(_prefetchLessons(data.tree));
@@ -333,6 +352,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
         data.tree,
         amoleBalance: data.beansStatus.amoleBalance,
         dueCount: data.dueCount,
+        beansStatus: data.beansStatus,
       );
       await cache.setActiveCourseId(course.id);
     } on Object {
@@ -350,15 +370,20 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
       if (cached == null) return null;
       final tree = cached.tree;
       widget.lessonPackDownloader.currentCourse = tree.course;
+      // The saved beans, brought up to now: they came back while the app
+      // was closed just as they do on the server.
+      final saved = cached.beansStatus?.at(DateTime.now());
       return _DashboardData(
         tree: tree,
-        beansStatus: BeansStatus(
-          beans: tree.beans,
-          beansMax: tree.beansMax,
-          regenMinutesPerBean: 0,
-          amoleBalance: cached.amoleBalance,
-          refillCostAmole: 0,
-        ),
+        beansStatus:
+            saved ??
+            BeansStatus(
+              beans: tree.beans,
+              beansMax: tree.beansMax,
+              regenMinutesPerBean: 0,
+              amoleBalance: cached.amoleBalance,
+              refillCostAmole: 0,
+            ),
         dueCount: cached.dueCount,
         fromCache: true,
       );
@@ -483,6 +508,26 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
         .pushNamedAndRemoveUntil(AuthRoutes.signIn, (route) => false);
   }
 
+  /// The stats sheet on [kind]'s tab (013-stat-pill-interactions).
+  void _openStats(StatKind kind, _DashboardData data) {
+    unawaited(
+      showStatSheet(
+        context,
+        initial: kind,
+        streakCount: data.tree.streakCount,
+        totalXp: data.tree.totalXp,
+        beans: data.beansStatus,
+        offline: data.fromCache,
+        refill: widget.lessonApi.refillBeansWithAmole,
+        onBeansChanged: (beans) {
+          if (mounted) setState(() => _sheetBeans = beans);
+        },
+        loadStreak: widget.lessonApi.getStreakHistory,
+        loadAmole: widget.lessonApi.getAmoleHistory,
+      ),
+    );
+  }
+
   /// [scrollToTop] belongs to a course change: the new course's tree has
   /// nothing to do with where the learner was. A reload after a lesson keeps
   /// its position, so the learner comes back to the node they just finished.
@@ -522,7 +567,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           lessonCache: widget.courseCache,
           mediaCache: widget.mediaCache,
           skillVersion: node.contentVersion,
-          beansNow: _lastData?.beansStatus.beans,
+          beansNow: (_sheetBeans ?? _lastData?.beansStatus)?.beans,
           isReview: isReview,
           skillProgress: SkillLessonProgress.forNode(node),
         ),
@@ -604,7 +649,8 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   /// pinned, then the banners, the Practice card, and for each category its
   /// own pinned banner followed by its own nodes. Nothing else is fixed, so
   /// the skill path is what fills the screen.
-  Widget _dashboard(BuildContext context, _DashboardData data) {
+  Widget _dashboard(BuildContext context, _DashboardData loaded) {
+    final data = _withSheetBeans(loaded);
     // The panel floats over the path rather than pushing it down, so opening
     // it never reflows the tree. It hangs from the header, whose height the
     // header itself is the authority on.
@@ -764,10 +810,11 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                 ),
                 hud: LessonHud(
                   streakCount: tree.streakCount,
-                  beans: tree.beans,
-                  beansMax: tree.beansMax,
+                  beans: data.beansStatus.beans,
+                  beansMax: data.beansStatus.beansMax,
                   totalXp: tree.totalXp,
                   amoleBalance: data.beansStatus.amoleBalance,
+                  onOpen: (kind) => _openStats(kind, data),
                 ),
               ),
             ),

@@ -1,4 +1,5 @@
 import '../models/beans_status.dart';
+import '../models/stat_history.dart';
 import '../models/due_item.dart';
 import '../models/lesson_completion_result.dart';
 import '../models/lesson_content.dart';
@@ -66,6 +67,17 @@ abstract class LessonApi {
 
   /// Attempts an immediate refill using the account's Amole balance.
   Future<RefillResult> refillBeansWithAmole();
+
+  /// Bolt 061 (013-stat-pill-interactions): the practised days from [from]
+  /// to [to] (UTC days, at most 186 of them), with the current and longest
+  /// streak, for the streak calendar.
+  Future<StreakHistory> getStreakHistory({
+    required DateTime from,
+    required DateTime to,
+  });
+
+  /// Bolt 061: the account's newest Amole entries, newest first.
+  Future<List<AmoleEntry>> getAmoleHistory({int limit = 20});
 
   /// Bolt 020-practice-ui, story 001: the Practice entry point's due-count
   /// badge.

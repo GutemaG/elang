@@ -5,6 +5,7 @@ Pure domain orchestration -- no FastAPI, SQLAlchemy, or storage imports.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 
@@ -355,6 +356,21 @@ class StreakPolicy:
             )
         # Gap too large (or no freeze available) -- start over at day 1.
         return StreakEvaluation(new_streak_count=1, freeze_consumed=False, increased_today=True)
+
+
+def longest_streak(days: Iterable[date]) -> int:
+    """The longest run of consecutive practised days (bolt
+    `059-stat-pill-service`). Nothing stores it; it is worked out from the
+    days themselves. No freeze is ever granted today, so a run is plain
+    consecutive dates. Order and repeats in `days` do not matter.
+    """
+    best = run = 0
+    previous: date | None = None
+    for day in sorted(set(days)):
+        run = run + 1 if previous is not None and day - previous == timedelta(days=1) else 1
+        best = max(best, run)
+        previous = day
+    return best
 
 
 @dataclass(frozen=True)

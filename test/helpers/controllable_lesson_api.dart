@@ -8,6 +8,7 @@
 // `LessonController` always runs for real against this double.
 
 import 'package:elang/shared/models/beans_status.dart';
+import 'package:elang/shared/models/stat_history.dart';
 import 'package:elang/shared/models/due_item.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
@@ -136,6 +137,31 @@ class ControllableLessonApi implements LessonApi {
 
   @override
   Future<BeansStatus> getBeansStatus() async => beansStatus!;
+
+  /// Bolt 061: what the stats sheet's streak and Amole tabs load.
+  StreakHistory? streakHistory;
+  Object? streakHistoryError;
+  final List<(DateTime, DateTime)> streakHistoryCalls = [];
+  List<AmoleEntry>? amoleHistory;
+  Object? amoleHistoryError;
+  int amoleHistoryCallCount = 0;
+
+  @override
+  Future<StreakHistory> getStreakHistory({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    streakHistoryCalls.add((from, to));
+    if (streakHistoryError != null) throw streakHistoryError!;
+    return streakHistory!;
+  }
+
+  @override
+  Future<List<AmoleEntry>> getAmoleHistory({int limit = 20}) async {
+    amoleHistoryCallCount++;
+    if (amoleHistoryError != null) throw amoleHistoryError!;
+    return amoleHistory!;
+  }
 
   @override
   Future<RefillResult> refillBeansWithAmole() async {

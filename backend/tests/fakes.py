@@ -365,6 +365,15 @@ class FakeLessonAttemptRepository:
             if a.user_id == user_id and start <= a.completed_at.date() < end
         )
 
+    async def list_practised_days(self, user_id: str) -> list[date]:
+        return sorted(
+            {
+                a.completed_at.astimezone(UTC).date()
+                for a in self._rows.values()
+                if a.user_id == user_id and not a.outcome.is_review
+            }
+        )
+
 
 class FakeAmoleTransactionRepository:
     """In-memory stand-in for
@@ -388,6 +397,11 @@ class FakeAmoleTransactionRepository:
 
     async def sum_by_user(self, user_id: str) -> int:
         return sum(t.amount for t in self._rows.values() if t.user_id == user_id)
+
+    async def list_recent(self, user_id: str, limit: int) -> list[AmoleTransaction]:
+        own = [t for t in self._rows.values() if t.user_id == user_id]
+        own.sort(key=lambda t: (t.created_at, t.id), reverse=True)
+        return own[:limit]
 
 
 class FakeVocabItemRepository:

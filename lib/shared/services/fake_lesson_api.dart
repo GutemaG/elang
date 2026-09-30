@@ -1,4 +1,5 @@
 import '../models/beans_status.dart';
+import '../models/stat_history.dart';
 import '../models/due_item.dart';
 import '../models/exercise.dart';
 import '../models/lesson_completion_result.dart';
@@ -451,6 +452,60 @@ class FakeLessonApi implements LessonApi {
       crownLeveledUp: crownLeveledUp,
       streakFreezeUnlocked: streakFreezeUnlocked,
     );
+  }
+
+  @override
+  Future<StreakHistory> getStreakHistory({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    await Future<void>.delayed(latency);
+    // The current streak's days, and an older run of 9 with a gap before
+    // it, so the calendar has something to show.
+    final today = utcDay(DateTime.now());
+    final days = [
+      for (var i = 0; i < _streakCount; i++) today.subtract(Duration(days: i)),
+      for (var i = 0; i < 9; i++)
+        today.subtract(Duration(days: _streakCount + 4 + i)),
+    ];
+    final start = utcDay(from);
+    final end = utcDay(to);
+    return StreakHistory(
+      practisedDays: days.where((d) => !d.isBefore(start) && !d.isAfter(end)),
+      currentStreak: _streakCount,
+      longestStreak: _streakCount > 9 ? _streakCount : 9,
+      joinedOn: today.subtract(const Duration(days: 90)),
+    );
+  }
+
+  @override
+  Future<List<AmoleEntry>> getAmoleHistory({int limit = 20}) async {
+    await Future<void>.delayed(latency);
+    final now = DateTime.now();
+    final entries = [
+      AmoleEntry(amount: 10, source: 'lesson_completion', createdAt: now),
+      AmoleEntry(
+        amount: 5,
+        source: 'perfect_lesson',
+        createdAt: now.subtract(const Duration(minutes: 1)),
+      ),
+      AmoleEntry(
+        amount: -_refillCostAmole,
+        source: 'bean_refill',
+        createdAt: now.subtract(const Duration(days: 2)),
+      ),
+      AmoleEntry(
+        amount: 50,
+        source: 'streak_milestone_7',
+        createdAt: now.subtract(const Duration(days: 3)),
+      ),
+      AmoleEntry(
+        amount: 500,
+        source: 'wallet_created',
+        createdAt: now.subtract(const Duration(days: 90)),
+      ),
+    ];
+    return entries.take(limit).toList();
   }
 
   @override

@@ -8,9 +8,9 @@ maps the result to the HTTP response shapes in this bolt's
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.application.lesson_use_cases import (
     LessonContentResult,
@@ -21,6 +21,7 @@ from app.application.lesson_use_cases import (
     get_skill_tree,
     refill_beans,
 )
+from app.application.stat_use_cases import get_amole_history, get_streak_history
 from app.domain.course import CourseRepository
 from app.domain.entities import User
 from app.domain.lesson.repositories import (
@@ -51,6 +52,8 @@ from app.infrastructure.api.lesson_dependencies import (
     get_user_vocab_progress_repository,
 )
 from app.infrastructure.api.lesson_schemas import (
+    AmoleEntryResponse,
+    AmoleHistoryResponse,
     BeansStatusResponse,
     CategoryResponse,
     CompleteLessonRequest,
@@ -60,6 +63,7 @@ from app.infrastructure.api.lesson_schemas import (
     RefillResponse,
     SkillTreeEntryResponse,
     SkillTreeResponse,
+    StreakHistoryResponse,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["lessons"])
@@ -206,6 +210,59 @@ async def refill_beans_endpoint(
     """
     result = await refill_beans(user.id, beans_repo, amole_repo, datetime.now(UTC))
     return RefillResponse(beans=result.beans, amole_balance=result.amole_balance)
+
+
+@router.get("/streak/history", response_model=StreakHistoryResponse)
+async def get_streak_history_endpoint(
+    start: date = Query(alias="from"),
+    end: date = Query(alias="to"),
+    user: User = Depends(get_current_user),
+    attempt_repo: LessonAttemptRepository = Depends(get_lesson_attempt_repository),
+    streak_repo: UserStreakRepository = Depends(get_user_streak_repository),
+) -> StreakHistoryResponse:
+    """Bolt `059-stat-pill-service`: the days in `[from, to]` with a
+    finished lesson (not a replay), the streak as the dashboard shows it,
+    the longest streak, and the join date. 422 `invalid_range` for a range
+    that runs backwards or is over 186 days.
+    """
+    history = await get_streak_history(
+        user.id,
+        user.created_at.astimezone(UTC).date(),
+        start,
+        end,
+        attempt_repo,
+        streak_repo,
+    )
+    return StreakHistoryResponse(
+        from_=history.start.isoformat(),
+        to=history.end.isoformat(),
+        practised_days=[day.isoformat() for day in history.practised_days],
+        current_streak=history.current_streak,
+        longest_streak=history.longest_streak,
+        joined_on=history.joined_on.isoformat(),
+    )
+
+
+@router.get("/amole/transactions", response_model=AmoleHistoryResponse)
+async def get_amole_history_endpoint(
+    limit: int = Query(default=20, ge=1, le=50),
+    user: User = Depends(get_current_user),
+    amole_repo: AmoleTransactionRepository = Depends(get_amole_transaction_repository),
+) -> AmoleHistoryResponse:
+    """Bolt `059-stat-pill-service`: the account's newest Amole ledger
+    entries, newest first. `source` is the raw ledger value.
+    """
+    entries = await get_amole_history(user.id, limit, amole_repo)
+    return AmoleHistoryResponse(
+        entries=[
+            AmoleEntryResponse(
+                amount=entry.amount,
+                source=entry.source,
+                created_at=entry.created_at.isoformat(),
+            )
+            for entry in entries
+        ]
+    )
 
 
 @router.post("/lessons/{lesson_id}/complete", response_model=CompleteLessonResponse)

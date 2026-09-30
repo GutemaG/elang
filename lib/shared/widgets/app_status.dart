@@ -22,12 +22,20 @@ enum StatKind { streak, beans, xp, amole }
 /// a translucent white pill with a tinted border, a coloured icon and the
 /// number in `label-md`. A screen reader hears one phrase, such as
 /// "5 day streak".
-class StatPill extends StatelessWidget {
+///
+/// With [onPressed] it is a button (013-stat-pill-interactions, bolt 060):
+/// still one phrase, now announced as a button, and it dips a little when
+/// pressed (not with reduced motion). Without it, it is the plain counter.
+class StatPill extends StatefulWidget {
   const StatPill({
     super.key,
     required this.kind,
     required this.value,
     this.max,
+    this.onPressed,
+    this.selected = false,
+    this.pressed = false,
+    this.tapHeight = 0,
   });
 
   final StatKind kind;
@@ -36,6 +44,19 @@ class StatPill extends StatelessWidget {
   /// Beans only: the most the learner can hold, for "3 of 5 beans
   /// remaining".
   final int? max;
+
+  final VoidCallback? onPressed;
+
+  /// The chosen tab in the stats sheet: a ring in the counter's colour.
+  final bool selected;
+
+  /// Shows the pressed look, for a parent that takes the tap itself (the
+  /// dashboard's row, whose tap area is larger than the pills).
+  final bool pressed;
+
+  /// The height the pill answers taps in, when that is more than it draws;
+  /// the extra is empty space above and below it.
+  final double tapHeight;
 
   static const double iconSize = 18;
   static const double borderWidth = 1;
@@ -49,6 +70,24 @@ class StatPill extends StatelessWidget {
                 style.height!)
             .ceilToDouble();
     return AppSpacing.space2xs * 2 + math.max(iconSize, line) + 2 * borderWidth;
+  }
+
+  /// How far a pressed pill shrinks.
+  static const double pressedScale = 0.94;
+
+  @override
+  State<StatPill> createState() => _StatPillState();
+}
+
+class _StatPillState extends State<StatPill> {
+  bool _down = false;
+
+  StatKind get kind => widget.kind;
+  int get value => widget.value;
+  int? get max => widget.max;
+
+  void _setDown(bool down) {
+    if (_down != down) setState(() => _down = down);
   }
 
   (IconData, Color icon, Color text, Color border) get _look => switch (kind) {
@@ -89,31 +128,120 @@ class StatPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, iconColor, textColor, border) = _look;
+    final onPressed = widget.onPressed;
+    Widget pill = Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.spaceXs,
+        vertical: AppSpacing.space2xs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(AppRadii.full),
+        border: Border.all(color: border, width: StatPill.borderWidth),
+        // A ring outside the border, so choosing a tab never moves it.
+        boxShadow: widget.selected
+            ? [BoxShadow(color: border, spreadRadius: 2)]
+            : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: StatPill.iconSize, color: iconColor),
+          const SizedBox(width: AppSpacing.space2xs),
+          Text(
+            groupDigits(value),
+            style: AppTypography.labelMd.copyWith(color: textColor),
+          ),
+        ],
+      ),
+    );
+    if (onPressed != null) {
+      final pressed = (_down || widget.pressed) && !AppMotion.reduced(context);
+      pill = AnimatedScale(
+        scale: pressed ? StatPill.pressedScale : 1,
+        duration: pressed ? AppMotion.pressIn : AppMotion.pressOut,
+        curve: pressed ? AppMotion.pressInCurve : AppMotion.pressOutCurve,
+        child: pill,
+      );
+      if (widget.tapHeight > 0) {
+        pill = ConstrainedBox(
+          constraints: BoxConstraints(minHeight: widget.tapHeight),
+          child: Center(widthFactor: 1, child: pill),
+        );
+      }
+      pill = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _setDown(true),
+        onTapUp: (_) => _setDown(false),
+        onTapCancel: () => _setDown(false),
+        onTap: onPressed,
+        child: pill,
+      );
+    }
     return Semantics(
       label: _semanticLabel,
       container: true,
+      button: onPressed != null,
+      selected: onPressed != null && widget.selected ? true : null,
+      onTap: onPressed,
+      excludeSemantics: true,
+      child: pill,
+    );
+  }
+}
+
+/// One day of a calendar as a small circle (013-stat-pill-interactions,
+/// bolt 061): filled in the streak colour for a day done, ringed for today,
+/// and faded for a day that was not possible. The caller gives the
+/// screen-reader phrase; the number itself is not read twice.
+class CalendarDay extends StatelessWidget {
+  const CalendarDay({
+    super.key,
+    required this.day,
+    required this.label,
+    this.filled = false,
+    this.ringed = false,
+    this.faded = false,
+  });
+
+  final int day;
+  final String label;
+  final bool filled;
+  final bool ringed;
+  final bool faded;
+
+  static const double size = 34;
+  static const double ringWidth = 2;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color ink;
+    if (filled) {
+      ink = AppColors.onPrimary;
+    } else if (faded) {
+      ink = AppColors.outlineVariant;
+    } else {
+      ink = AppColors.onSurface;
+    }
+    return Semantics(
+      label: label,
+      container: true,
       excludeSemantics: true,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.spaceXs,
-          vertical: AppSpacing.space2xs,
-        ),
+        width: size,
+        height: size,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(AppRadii.full),
-          border: Border.all(color: border, width: borderWidth),
+          shape: BoxShape.circle,
+          color: filled ? AppColors.streak : null,
+          border: ringed
+              ? Border.all(
+                  color: filled ? AppColors.streakRim : AppColors.streak,
+                  width: ringWidth,
+                )
+              : null,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: iconSize, color: iconColor),
-            const SizedBox(width: AppSpacing.space2xs),
-            Text(
-              groupDigits(value),
-              style: AppTypography.labelMd.copyWith(color: textColor),
-            ),
-          ],
-        ),
+        child: Text('$day', style: AppTypography.labelMd.copyWith(color: ink)),
       ),
     );
   }
