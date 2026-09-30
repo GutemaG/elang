@@ -26,6 +26,7 @@ class SessionUser {
     required this.dailyXpTarget,
     required this.notificationEnabled,
     this.activeCourseId,
+    this.settings = const {},
   });
 
   final String id;
@@ -39,6 +40,11 @@ class SessionUser {
   /// New in `013-user-preferences-service`. Stored, functionally inert —
   /// see `005-profile-and-settings`'s requirements for why.
   final bool notificationEnabled;
+
+  /// The account settings as the server resolved them
+  /// (022-light-and-dark-themes, FR-8); empty from an older backend. Read
+  /// them through `RemoteSettings`, which supplies the app's defaults.
+  final Map<String, Object?> settings;
 }
 
 /// Result of a session-validation call.
@@ -135,6 +141,9 @@ class SessionApi {
           activeCourseId: user['active_course_id'] is String
               ? user['active_course_id'] as String
               : null,
+          settings: user['settings'] is Map<String, dynamic>
+              ? user['settings'] as Map<String, dynamic>
+              : const {},
         ),
         expiresAt: decoded['expires_at'] is String
             ? DateTime.tryParse(decoded['expires_at'] as String)

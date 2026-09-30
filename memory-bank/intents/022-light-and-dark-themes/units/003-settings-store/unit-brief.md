@@ -4,7 +4,7 @@ intent: 022-light-and-dark-themes
 unit_type: fullstack
 default_bolt_type: simple-construction-bolt
 phase: inception
-status: ready
+status: complete
 created: '2026-09-30T13:52:00Z'
 updated: '2026-09-30T13:52:00Z'
 ---
@@ -61,7 +61,7 @@ seed or a backfill again.
 |----------|-------|----------|--------|
 | 007-account-settings-json | Account settings in one JSON column | Must | Complete (bolt 071) |
 | 008-app-config | App configuration rows with defaults | Should | Complete (bolt 071) |
-| 009-app-reads-settings | The app reads settings and configuration | Must | Planned (bolt 072) |
+| 009-app-reads-settings | The app reads settings and configuration | Must | Complete (bolt 072) |
 
 ### 007-account-settings-json (FR-8)
 
@@ -93,11 +93,11 @@ code, **so that** changing one needs no deploy and nothing is seeded.
 **As a** learner on an older app, **I want** the app to keep working when
 the backend adds a setting, **so that** updates never break it.
 
-- [ ] The app lists the keys it knows with defaults; a missing key uses
+- [x] The app lists the keys it knows with defaults; a missing key uses
   the default, an unknown one is ignored.
-- [ ] Settings come from the session check, configuration from
+- [x] Settings come from the session check, configuration from
   `GET /api/v1/config`; the last copy is kept on the phone for offline.
-- [ ] Adding a key in the app is one line plus the code that uses it.
+- [x] Adding a key in the app is one line plus the code that uses it.
 
 ---
 

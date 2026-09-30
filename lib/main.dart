@@ -12,9 +12,12 @@ import 'features/settings/settings_dependencies.dart';
 import 'shared/licences/picture_credits.dart';
 import 'shared/services/reminders/reminder_scheduler.dart';
 import 'shared/services/reminders/reminder_service.dart';
+import 'shared/services/app_config_api.dart';
 import 'shared/services/appearance_repository.dart';
 import 'shared/services/secure_storage_service.dart';
 import 'shared/services/sound_preference_repository.dart';
+import 'shared/settings/remote_settings_controller.dart';
+import 'shared/settings/remote_settings_store.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/app_theme_context.dart';
 import 'shared/theme/appearance.dart';
@@ -35,13 +38,28 @@ Future<void> main() async {
     scheduler: kIsWeb ? const NoReminderScheduler() : LocalReminderScheduler(),
     store: ReminderStore(storage: storage),
   );
+  // Account settings and app configuration (022-light-and-dark-themes,
+  // FR-10), from the copies saved on the phone, so they work offline.
+  final remoteSettings = await RemoteSettingsController.load(
+    store: RemoteSettingsStore(storage: storage),
+    configApi: AppConfigApi(),
+  );
   final authDependencies = AuthDependencies(
     storage: storage,
     // Each launch's session check brings the Notifications switch as the
-    // server has it, so a switch turned off on another phone applies here.
-    onSessionChecked: (user) =>
-        unawaited(reminders.setEnabled(user.notificationEnabled)),
+    // server has it, so a switch turned off on another phone applies here,
+    // and the account's settings.
+    onSessionChecked: (user) {
+      unawaited(reminders.setEnabled(user.notificationEnabled));
+      unawaited(remoteSettings.applySession(user));
+    },
   );
+  // One learner's settings are never read for another.
+  authDependencies.sessionRepository.addAccountChangedListener(
+    () => unawaited(remoteSettings.forgetAccount()),
+  );
+  // In the background: opening the app never waits for the network.
+  unawaited(remoteSettings.refreshConfig());
   // Shared with both LessonDependencies (gates AnswerFeedbackPlayer) and
   // SettingsDependencies (the toggle UI) -- same instance, so a flip is
   // visible on the very next graded answer, no restart needed.
@@ -54,17 +72,20 @@ Future<void> main() async {
     AppearanceRepository(storage: storage),
   );
   runApp(
-    BunaApp(
-      appearance: appearance,
-      authDependencies: authDependencies,
-      lessonDependencies: LessonDependencies(
-        sessionRepository: authDependencies.sessionRepository,
-        soundPreferenceRepository: soundPreferenceRepository,
-        reminders: reminders,
-      ),
-      settingsDependencies: SettingsDependencies(
-        sessionRepository: authDependencies.sessionRepository,
-        soundPreferenceRepository: soundPreferenceRepository,
+    RemoteSettingsScope(
+      controller: remoteSettings,
+      child: BunaApp(
+        appearance: appearance,
+        authDependencies: authDependencies,
+        lessonDependencies: LessonDependencies(
+          sessionRepository: authDependencies.sessionRepository,
+          soundPreferenceRepository: soundPreferenceRepository,
+          reminders: reminders,
+        ),
+        settingsDependencies: SettingsDependencies(
+          sessionRepository: authDependencies.sessionRepository,
+          soundPreferenceRepository: soundPreferenceRepository,
+        ),
       ),
     ),
   );
