@@ -1,6 +1,7 @@
 // The Notifications switch controls the 8 pm reminder (021-daily-reminder,
-// bolt 064): it shows on only when saved on and allowed by the phone, asks
-// only when turned on, and turning it off or logging out cancels.
+// bolts 064 and 065): it shows the saved value, with a blocked line when the
+// phone doesn't allow notifications; turning it on asks if needed, and
+// turning it off or logging out cancels.
 
 import 'dart:convert';
 
@@ -106,11 +107,11 @@ void main() {
       expect(rig.scheduler.scheduled, isNotEmpty);
     });
 
-    test('saved on but not allowed: off, blocked, and never asks', () async {
+    test('saved on but not allowed: on, blocked, and never asks', () async {
       final rig = _Rig(permitted: false);
       final controller = await rig.load();
 
-      expect(controller.notificationEnabled, isFalse);
+      expect(controller.notificationEnabled, isTrue);
       expect(controller.notificationsBlocked, isTrue);
       expect(rig.scheduler.requestCount, 0);
       expect(rig.scheduler.scheduled, isEmpty);
@@ -142,7 +143,7 @@ void main() {
       expect(rig.scheduler.scheduled, isNotEmpty);
     });
 
-    test('a refusal leaves it off and blocked, with "on" saved', () async {
+    test('a refusal saves on, and shows the blocked line', () async {
       final rig = _Rig(serverOn: false, permitted: false, grant: false);
       final controller = await rig.load();
       rig.preferences.nextResult = _saved(true);
@@ -151,12 +152,13 @@ void main() {
       await rig.reminders.reschedule();
 
       expect(rig.scheduler.requestCount, 1);
-      expect(controller.notificationEnabled, isFalse);
+      expect(rig.preferences.calls.single.notificationEnabled, isTrue);
+      expect(controller.notificationEnabled, isTrue);
       expect(controller.notificationsBlocked, isTrue);
       expect(rig.scheduler.scheduled, isEmpty);
     });
 
-    test('allowed in the phone settings afterwards: on by itself', () async {
+    test('allowed in the phone settings afterwards: unblocked', () async {
       final rig = _Rig(permitted: false);
       final controller = await rig.load();
 

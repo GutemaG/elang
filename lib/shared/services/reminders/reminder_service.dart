@@ -15,6 +15,7 @@ class ReminderStore {
   static const _practisedDayKey = 'reminder_practised_day';
   static const _streakKey = 'reminder_streak_count';
   static const _signedOutKey = 'reminder_signed_out';
+  static const _askedKey = 'reminder_asked';
 
   final SecureStorageService _storage;
 
@@ -55,6 +56,13 @@ class ReminderStore {
   }
 
   Future<void> markSignedIn() => _storage.delete(_signedOutKey);
+
+  /// Whether this install has asked for notification permission on first
+  /// launch (bolt 065). Kept across sign-out: it belongs to the phone.
+  Future<bool> askedOnFirstLaunch() async =>
+      (await _storage.read(_askedKey)) == 'true';
+
+  Future<void> markAskedOnFirstLaunch() => _storage.write(_askedKey, 'true');
 }
 
 /// Keeps the phone's reminders in step with what the app knows: the
@@ -111,8 +119,8 @@ class ReminderService {
     }
   }
 
-  /// Asks the phone to allow notifications; only the Settings switch calls
-  /// this (bolt 064, FR-5). Whether they are allowed afterwards.
+  /// Asks the phone to allow notifications, from the Settings switch
+  /// (bolt 064). Whether they are allowed afterwards.
   Future<bool> requestPermission() async {
     try {
       return await _scheduler.requestPermission();
@@ -129,6 +137,21 @@ class ReminderService {
       // Nothing more to offer; the blocked line stays.
     }
   }
+
+  /// Asks for notification permission once per install, after the first
+  /// dashboard (bolt 065, FR-5): only on a phone, with the switch on and
+  /// signed in, and only if the phone doesn't allow them yet.
+  Future<void> askOnFirstLaunch() => _run(() async {
+    if (!_scheduler.supported ||
+        await _store.askedOnFirstLaunch() ||
+        await _store.signedOut() ||
+        !await _store.enabled()) {
+      return;
+    }
+    await _store.markAskedOnFirstLaunch();
+    if (await _scheduler.isPermitted()) return;
+    await _scheduler.requestPermission();
+  });
 
   /// The Notifications switch's value, from the server or the learner.
   Future<void> setEnabled(bool enabled) =>

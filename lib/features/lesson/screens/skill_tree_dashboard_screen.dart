@@ -295,6 +295,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           practisedToday: data.tree.practisedToday,
         ),
       );
+      unawaited(widget.reminders?.askOnFirstLaunch());
       widget.lessonPackDownloader.currentCourse = data.tree.course;
       unawaited(_saveToCache(data));
       unawaited(_prefetchLessons(data.tree));
@@ -309,6 +310,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
       unawaited(
         widget.reminders?.refresh(streakCount: cached.tree.streakCount),
       );
+      unawaited(widget.reminders?.askOnFirstLaunch());
       _lastData = cached;
       return cached;
     }

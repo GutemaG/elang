@@ -79,13 +79,11 @@ class SettingsController extends ChangeNotifier {
   String? get selectedLanguage => _selectedLanguage;
   Course? get activeCourse => _activeCourse;
 
-  /// What the switch shows: saved on **and** allowed by the phone, so a
-  /// learner who never allowed notifications sees it off (FR-5).
-  bool get notificationEnabled =>
-      _notificationEnabled && _notificationsPermitted;
+  /// What the switch shows: the saved value (bolt 065), on by default.
+  bool get notificationEnabled => _notificationEnabled;
 
   /// The switch is saved on but the phone blocks notifications: Settings
-  /// offers the phone's settings.
+  /// shows a line under it that opens the phone's settings.
   bool get notificationsBlocked =>
       _notificationEnabled && !_notificationsPermitted;
   bool get soundEnabled => _soundEnabled;
@@ -170,10 +168,9 @@ class SettingsController extends ChangeNotifier {
   Future<void> updateNotificationEnabled(bool enabled) async {
     final reminders = _reminders;
     if (enabled && reminders != null && reminders.supported) {
-      // Only here does the app ask (FR-5). The learner's "on" is saved
-      // either way: after a refusal the switch still shows off, and the
-      // blocked line offers the phone's settings, from which it comes on
-      // by itself (see [recheckNotificationPermission]).
+      // Asks again if the phone still blocks them. The learner's "on" is
+      // saved either way; after a refusal the blocked line offers the
+      // phone's settings (see [recheckNotificationPermission]).
       _notificationsPermitted = await reminders.requestPermission();
     }
     final previous = _notificationEnabled;

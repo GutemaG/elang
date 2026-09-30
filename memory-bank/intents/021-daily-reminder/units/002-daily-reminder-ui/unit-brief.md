@@ -61,6 +61,7 @@ NFR-1 to NFR-5 apply.
 | 002-skip-practised-day | No reminder on a day already practised | Must | Complete (bolt 063) |
 | 003-reminder-message | The message names the streak | Must | Complete (bolt 063) |
 | 004-settings-switch | The switch controls reminders | Must | Complete (bolt 064) |
+| 005-first-launch-prompt | Ask once on first launch; the switch shows the saved value | Must | Complete (bolt 065) |
 
 ### 001-schedule-reminders (FR-1)
 
@@ -106,6 +107,18 @@ reminder, **so that** I decide whether I get it.
 - [x] The app never asks for permission on its own; with the stored value
   on but no permission, the switch shows off with the same line.
 - [x] The subtitle reads "A reminder at 8 pm if you haven't practised".
+
+### 005-first-launch-prompt (FR-5, changed 2026-09-30)
+
+**As a** learner, **I want** reminders on from the start, **so that** I
+don't have to find the switch.
+
+- [x] The first dashboard after install asks for notification permission
+  once, when the saved value is on; never again on its own.
+- [x] The switch shows the saved value, on by default; on but blocked by
+  the phone shows the switch on with the blocked line.
+- [x] Turning it on asks if permission is still missing; turning it off
+  saves off.
 
 ---
 

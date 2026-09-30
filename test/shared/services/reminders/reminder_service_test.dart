@@ -199,6 +199,72 @@ void main() {
     });
   });
 
+  group('bolt 065: asking on first launch', () {
+    test('asks once, then schedules the week', () async {
+      scheduler.permitted = false;
+      final reminders = service();
+      await reminders.refresh(streakCount: 5);
+
+      await reminders.askOnFirstLaunch();
+      await reminders.askOnFirstLaunch();
+
+      expect(scheduler.requestCount, 1);
+      expect(scheduler.scheduled, hasLength(7));
+    });
+
+    test('already allowed: no prompt', () async {
+      final reminders = service();
+      await reminders.refresh(streakCount: 5);
+
+      await reminders.askOnFirstLaunch();
+
+      expect(scheduler.requestCount, 0);
+      expect(scheduler.scheduled, hasLength(7));
+    });
+
+    test('a refusal is not asked again', () async {
+      scheduler
+        ..permitted = false
+        ..grantOnRequest = false;
+      await service().askOnFirstLaunch();
+      await service().askOnFirstLaunch();
+
+      expect(scheduler.requestCount, 1);
+      expect(scheduler.scheduled, isEmpty);
+    });
+
+    test('not with the switch off', () async {
+      scheduler.permitted = false;
+      await ReminderStore(storage: storage).setEnabled(false);
+
+      await service().askOnFirstLaunch();
+
+      expect(scheduler.requestCount, 0);
+    });
+
+    test('not on the web', () async {
+      scheduler
+        ..permitted = false
+        ..supported = false;
+
+      await service().askOnFirstLaunch();
+
+      expect(scheduler.requestCount, 0);
+    });
+
+    test('signing out keeps the phone asked', () async {
+      scheduler.permitted = false;
+      final reminders = service();
+      await reminders.askOnFirstLaunch();
+
+      await reminders.signedOut();
+      await reminders.refresh(streakCount: 1);
+      await reminders.askOnFirstLaunch();
+
+      expect(scheduler.requestCount, 1);
+    });
+  });
+
   test('the switch reads on when never set', () async {
     expect(await ReminderStore(storage: storage).enabled(), isTrue);
   });

@@ -100,13 +100,13 @@ void main() {
     expect(_blockedRow, findsNothing);
   });
 
-  testWidgets('blocked by the phone: off, with a row to its settings', (
+  testWidgets('blocked by the phone: on, with a row to its settings', (
     tester,
   ) async {
     final scheduler = FakeReminderScheduler(permitted: false);
     await _pump(tester, scheduler);
 
-    expect(tester.widget<SwitchRow>(_switch).value, isFalse);
+    expect(tester.widget<SwitchRow>(_switch).value, isTrue);
     expect(find.text("Blocked in your phone's settings"), findsOneWidget);
     expect(scheduler.requestCount, 0);
 
@@ -115,7 +115,7 @@ void main() {
     expect(scheduler.openSettingsCount, 1);
   });
 
-  testWidgets('back from the phone settings, allowed: the switch comes on', (
+  testWidgets('back from the phone settings, allowed: the row goes', (
     tester,
   ) async {
     final scheduler = FakeReminderScheduler(permitted: false);
@@ -144,8 +144,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(scheduler.requestCount, 1);
-    expect(tester.widget<SwitchRow>(_switch).value, isFalse);
+    expect(tester.widget<SwitchRow>(_switch).value, isTrue);
     expect(_blockedRow, findsOneWidget);
+  });
+
+  testWidgets('saved off: off, and no blocked row', (tester) async {
+    await _pump(
+      tester,
+      FakeReminderScheduler(permitted: false),
+      serverOn: false,
+    );
+
+    expect(tester.widget<SwitchRow>(_switch).value, isFalse);
+    expect(_blockedRow, findsNothing);
   });
 
   testWidgets('logging out cancels every reminder', (tester) async {

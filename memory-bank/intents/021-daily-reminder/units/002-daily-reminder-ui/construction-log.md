@@ -2,7 +2,7 @@
 unit: 002-daily-reminder-ui
 intent: 021-daily-reminder
 created: '2026-09-30T08:40:29Z'
-last_updated: '2026-09-30T12:38:17Z'
+last_updated: '2026-09-30T13:11:07Z'
 ---
 
 # Construction Log: daily-reminder-ui
@@ -21,6 +21,7 @@ last_updated: '2026-09-30T12:38:17Z'
 
 | Date | Action | Change | Reason | Approved |
 |------|--------|--------|--------|----------|
+| 2026-09-30 | Add bolt | 065-reminder-first-launch-prompt (story 005) | Learner asked for reminders on by default and a prompt on first launch; FR-5 changed | Yes (requested) |
 
 ## Execution Log
 
@@ -32,3 +33,7 @@ last_updated: '2026-09-30T12:38:17Z'
 - **2026-09-30T12:33:00Z**: 064-reminder-settings-switch stage-complete - plan → implement
 - **2026-09-30T12:37:51Z**: 064-reminder-settings-switch stage-complete - implement → test
 - **2026-09-30T12:38:17Z**: 064-reminder-settings-switch completed - All 3 stages done
+- **2026-09-30T12:52:24Z**: 065-reminder-first-launch-prompt started - Stage 1: plan
+- **2026-09-30T12:54:00Z**: 065-reminder-first-launch-prompt stage-complete - plan → implement
+- **2026-09-30T13:00:30Z**: 065-reminder-first-launch-prompt stage-complete - implement → test
+- **2026-09-30T13:11:07Z**: 065-reminder-first-launch-prompt completed - All 3 stages done

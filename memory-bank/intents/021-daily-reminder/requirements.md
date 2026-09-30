@@ -3,7 +3,7 @@ intent: 021-daily-reminder
 phase: inception
 status: complete
 created: '2026-09-30T08:33:43Z'
-updated: '2026-09-30T08:40:29Z'
+updated: '2026-09-30T12:52:24Z'
 ---
 
 # Requirements: Daily Reminder
@@ -106,14 +106,19 @@ the unit briefs will hold their stories (as in intent 013).
     sign-in the app schedules or cancels to match it.
   - Signing out cancels every reminder.
 
-### FR-5: No Surprise Permission Prompt
-- **Description**: The app never asks for permission on its own.
+### FR-5: Ask Once on First Launch
+- **Description** (changed 2026-09-30 at the learner's request; it used to
+  be "never asks on its own"): reminders are on by default, and the app
+  asks for permission once, the first time a signed-in learner reaches the
+  dashboard after installing.
 - **Acceptance Criteria**:
-  - The permission request appears only when the learner turns the switch
-    on.
-  - A learner whose switch is on (the default) but who never gave
-    permission gets no reminders and no prompt; the switch shows as off
-    until permission is given, with the same line as FR-4.
+  - The first dashboard after install asks for notification permission
+    once (Android 13+ and iOS), if the saved value is on and permission is
+    not given yet. It never asks again on its own.
+  - The switch shows the saved value (the one in the database), on by
+    default. If it is on but the phone blocks notifications, the switch
+    stays on and the FR-4 line appears under it.
+  - Turning the switch on also asks, if permission is still missing.
 
 ### FR-6: Backend `practised_today`
 - **Description**: The skill tree answer says whether today's streak day

@@ -1,6 +1,7 @@
 // The dashboard keeps the daily reminder in step (021-daily-reminder, bolt
 // 063): each load passes the streak, a fresh load also whether today is
-// practised, and a lesson started from it reports when it counts.
+// practised, and a lesson started from it reports when it counts. Each load
+// also offers the first-launch prompt (bolt 065), which asks only once.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,6 +88,10 @@ class _SpyReminders extends ReminderService {
   final refreshes = <({int? streak, bool? practisedToday})>[];
   final counted = <({DateTime at, int? streak})>[];
   var signedOutCount = 0;
+  var askCount = 0;
+
+  @override
+  Future<void> askOnFirstLaunch() async => askCount++;
 
   @override
   Future<void> signedOut() async => signedOutCount++;
@@ -167,6 +172,7 @@ void main() {
     await _pump(tester, _online(practisedToday: true), reminders);
 
     expect(reminders.refreshes, [(streak: 7, practisedToday: true)]);
+    expect(reminders.askCount, 1);
   });
 
   testWidgets('the saved copy passes only the streak', (tester) async {
@@ -185,6 +191,7 @@ void main() {
 
     expect(find.text('Offline, showing saved progress'), findsOneWidget);
     expect(reminders.refreshes, [(streak: 7, practisedToday: null)]);
+    expect(reminders.askCount, 1);
   });
 
   testWidgets('a lesson from the dashboard reports that it counted', (
