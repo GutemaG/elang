@@ -32,6 +32,7 @@ import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/fake_reminder_scheduler.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 const _course = Course(
   id: 'c-en-am',
@@ -212,8 +213,7 @@ void main() {
     final reminders = _SpyReminders();
     await _pump(tester, api, reminders);
 
-    await tester.tap(find.text('Greetings'));
-    await tester.pumpAndSettle();
+    await startSkill(tester, 'Greetings');
     await tester.tap(find.text('ha'));
     await tester.pump();
     await tester.tap(find.text('Continue'));

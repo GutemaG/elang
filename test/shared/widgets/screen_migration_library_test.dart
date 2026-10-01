@@ -520,15 +520,16 @@ void main() {
       PathNodeState state = PathNodeState.active,
       double? progress,
       int crownLevel = 0,
+      String? callout,
       VoidCallback? onTap,
     }) => _host(
       Center(
         child: PathNode(
           state: state,
-          label: 'Numbers · 1/2',
           semanticLabel: 'Numbers, active',
           progress: progress,
           crownLevel: crownLevel,
+          callout: callout,
           onTap: onTap,
         ),
       ),
@@ -549,13 +550,13 @@ void main() {
         AppPalette.light.lockedNodeIcon,
       ),
       PathNodeState.active: (
-        Icons.play_arrow,
+        Icons.star_rounded,
         PathNode.activeSize,
         AppPalette.light.secondaryContainer,
         AppPalette.light.activeNodeShelf,
       ),
       PathNodeState.completed: (
-        Icons.check,
+        Icons.check_rounded,
         PathNode.size,
         AppPalette.light.primaryContainer,
         AppPalette.light.primaryShelf,
@@ -606,23 +607,62 @@ void main() {
       expect(find.textContaining('Lv'), findsNothing);
     });
 
-    testWidgets('the node and its label are one tap target', (tester) async {
+    testWidgets('no title under the node: the node and its bubble are one '
+        'tap target', (tester) async {
       var taps = 0;
-      await tester.pumpWidget(node(onTap: () => taps++));
-      await tester.tap(find.text('Numbers · 1/2'));
-      await tester.tap(find.byIcon(Icons.play_arrow));
+      await tester.pumpWidget(node(callout: 'Start', onTap: () => taps++));
+      expect(find.text('Numbers · 1/2'), findsNothing);
+      await tester.tap(find.text('START'));
+      await tester.tap(find.byIcon(Icons.star_rounded));
       expect(taps, 2);
     });
 
-    testWidgets('a locked node never takes a tap, even with onTap', (
-      tester,
-    ) async {
+    testWidgets('a locked node takes a tap too, so its popover can say '
+        'what it is', (tester) async {
       var taps = 0;
       await tester.pumpWidget(
         node(state: PathNodeState.locked, onTap: () => taps++),
       );
-      await tester.tap(find.byIcon(Icons.lock_outline), warnIfMissed: false);
-      expect(taps, 0);
+      await tester.tap(find.byIcon(Icons.lock_outline));
+      expect(taps, 1);
+    });
+
+    testWidgets('the callout shows only on an active node', (tester) async {
+      await tester.pumpWidget(node(callout: 'Start'));
+      expect(find.byKey(PathNode.calloutKey), findsOneWidget);
+      for (final state in [PathNodeState.locked, PathNodeState.completed]) {
+        await tester.pumpWidget(node(state: state, callout: 'Start'));
+        expect(find.byKey(PathNode.calloutKey), findsNothing);
+      }
+    });
+
+    testWidgets('the current node bobs and pulses while loops run, and '
+        'stays still under reduced motion', (tester) async {
+      AppMotion.loopsEnabled = true;
+      addTearDown(() => AppMotion.loopsEnabled = false);
+      double bubbleY() => tester.getTopLeft(find.text('START')).dy;
+
+      await tester.pumpWidget(node(callout: 'Start'));
+      final rest = bubbleY();
+      expect(find.byKey(PathNode.pulseKey), findsOneWidget);
+      await tester.pump(AppMotion.bob);
+      expect(bubbleY(), lessThan(rest));
+
+      await tester.pumpWidget(
+        _host(
+          const Center(
+            child: PathNode(
+              state: PathNodeState.active,
+              semanticLabel: 'Numbers, active',
+              callout: 'Start',
+            ),
+          ),
+          reduceMotion: true,
+        ),
+      );
+      await tester.pump(AppMotion.bob);
+      expect(find.byKey(PathNode.pulseKey), findsNothing);
+      expect(tester.hasRunningAnimations, isFalse);
     });
 
     testWidgets('a screen reader hears its label as one button', (

@@ -27,6 +27,7 @@ import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 const _course = Course(
   id: 'c-en-am',
@@ -149,14 +150,12 @@ Widget _reviewLesson(ControllableLessonApi api, {bool online = true}) {
 }
 
 void main() {
-  testWidgets('tapping a completed skill asks to Review before starting', (
-    tester,
-  ) async {
+  testWidgets("tapping a completed skill's node offers Review before "
+      'starting', (tester) async {
     await tester.pumpWidget(_dashboard(_api(SkillNodeState.completed)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Greetings'));
-    await tester.pumpAndSettle();
+    await openSkill(tester, 'Greetings');
 
     expect(find.text('Review'), findsOneWidget);
     expect(find.text('ሀ'), findsNothing); // not in the lesson yet
@@ -167,50 +166,48 @@ void main() {
     expect(find.text('ሀ'), findsOneWidget);
   });
 
-  testWidgets('dismissing the Review sheet stays on the dashboard', (
-    tester,
-  ) async {
+  testWidgets('closing the popover stays on the dashboard', (tester) async {
     await tester.pumpWidget(_dashboard(_api(SkillNodeState.completed)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Greetings'));
-    await tester.pumpAndSettle();
-    await tester.tapAt(const Offset(10, 10)); // the scrim
+    await openSkill(tester, 'Greetings');
+    await tester.tapAt(const Offset(10, 10)); // outside the bubble
     await tester.pumpAndSettle();
 
     expect(find.text('Review'), findsNothing);
     expect(find.text('ሀ'), findsNothing);
   });
 
-  testWidgets('an active skill still starts its lesson straight away', (
+  testWidgets("an active skill's popover starts it, not as a review", (
     tester,
   ) async {
     await tester.pumpWidget(_dashboard(_api(SkillNodeState.active)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Greetings'));
+    await openSkill(tester, 'Greetings');
+    expect(find.text('Review'), findsNothing);
+    expect(find.text('Start'), findsOneWidget);
+    await tester.tap(find.text('Start'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Review'), findsNothing);
     expect(find.text('ሀ'), findsOneWidget);
   });
 
-  testWidgets(
-    'a wrong answer in a review spends no beans, even the last one',
-    (tester) async {
-      final api = _api(SkillNodeState.completed);
-      await tester.pumpWidget(_reviewLesson(api));
-      await tester.pumpAndSettle();
+  testWidgets('a wrong answer in a review spends no beans, even the last one', (
+    tester,
+  ) async {
+    final api = _api(SkillNodeState.completed);
+    await tester.pumpWidget(_reviewLesson(api));
+    await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.favorite), findsNothing); // no beans shown
+    expect(find.byIcon(Icons.favorite), findsNothing); // no beans shown
 
-      await tester.tap(find.text('le')); // wrong, with 1 bean at start
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('le')); // wrong, with 1 bean at start
+    await tester.pumpAndSettle();
 
-      expect(find.text('Out of Beans!'), findsNothing);
-      expect(find.text('Continue'), findsOneWidget);
-    },
-  );
+    expect(find.text('Out of Beans!'), findsNothing);
+    expect(find.text('Continue'), findsOneWidget);
+  });
 
   testWidgets('a finished review shows how it went, not XP', (tester) async {
     final api = _api(SkillNodeState.completed);
@@ -228,9 +225,7 @@ void main() {
     expect(find.text('XP EARNED'), findsNothing);
   });
 
-  testWidgets('offline, a review is queued and promises no XP', (
-    tester,
-  ) async {
+  testWidgets('offline, a review is queued and promises no XP', (tester) async {
     final api = _api(SkillNodeState.completed);
     await tester.pumpWidget(_reviewLesson(api, online: false));
     await tester.pumpAndSettle();

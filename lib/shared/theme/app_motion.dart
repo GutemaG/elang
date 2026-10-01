@@ -30,8 +30,23 @@ abstract final class AppMotion {
   static const Duration progress = Duration(milliseconds: 400);
   static const Curve progressCurve = Curves.easeOutCubic;
 
+  /// A pop-up growing out of what was tapped (the path node's popover).
+  static const Duration popover = Duration(milliseconds: 220);
+  static const Curve popoverCurve = Curves.easeOutBack;
+
+  /// One bob of the current skill's "Start" bubble, there and back.
+  static const Duration bob = Duration(milliseconds: 900);
+
   /// Whether the system asks for less motion. Components then skip
   /// movement (press travel, shake) and keep only colour changes.
   static bool reduced(BuildContext context) =>
       MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+  /// Turns off looping decoration everywhere. Widget tests set it to false
+  /// (`test/flutter_test_config.dart`) because a loop never settles.
+  static bool loopsEnabled = true;
+
+  /// Whether looping decoration (the bobbing "Start" bubble, the pulse
+  /// around the current skill) should run here.
+  static bool loops(BuildContext context) => loopsEnabled && !reduced(context);
 }

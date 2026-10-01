@@ -2,53 +2,60 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../theme/app_motion.dart';
 import '../theme/app_theme_context.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import 'path_popover.dart';
 
 /// Where a skill stands on the path.
 enum PathNodeState {
-  /// Not reachable yet: grey, a lock, and no tap.
+  /// Not reachable yet: grey and a lock. A tap only says what it is.
   locked,
 
-  /// The next thing to learn: large, Simien Gold, a play mark.
+  /// The next thing to learn: large, Simien Gold, a star.
   active,
 
   /// Done: Highland Green with a check, tapped to review.
   completed,
 }
 
-/// DESIGN.md component 2, "Gamified Path Node", as the dashboard mockup
-/// draws it (018-mobile-design-system, bolt 047): a round node on a solid
-/// shelf, with its label in a pill underneath.
+/// DESIGN.md component 2, "Gamified Path Node", drawn the way the Duolingo
+/// path draws it: a round node on a solid shelf and nothing else, no title
+/// under it. A tap opens the node's popover ([showPathPopover]), which is
+/// where the skill is named.
+///
+/// The learner's current node is larger, wears a [callout] bubble ("Start")
+/// that bobs above it and a soft pulse around it, so it is the first thing
+/// the eye finds on the path. Under reduced motion both stay still.
 ///
 /// A [progress] draws a ring around the node, filled clockwise from the top,
 /// for a skill part-way through its lessons. A completed node with a
-/// [crownLevel] wears a small "Lv N" badge above it. The node and its label
-/// are one tap target and one phrase for a screen reader ([semanticLabel]).
-class PathNode extends StatelessWidget {
+/// [crownLevel] wears a small "Lv N" badge above it. The node is one tap target and one phrase for a
+/// screen reader ([semanticLabel]); every state takes a tap, even locked,
+/// so a learner can see what is coming.
+class PathNode extends StatefulWidget {
   const PathNode({
     super.key,
     required this.state,
-    required this.label,
     required this.semanticLabel,
     this.progress,
     this.crownLevel = 0,
+    this.callout,
     this.onTap,
   });
 
   final PathNodeState state;
-
-  /// What the pill says, e.g. "Numbers · 1/2".
-  final String label;
   final String semanticLabel;
 
   /// From 0 to 1; `null` for no ring.
   final double? progress;
   final int crownLevel;
 
-  /// Ignored for a locked node, which never takes a tap.
+  /// The bubble over an active node, e.g. "Start"; ignored otherwise.
+  final String? callout;
+
   final VoidCallback? onTap;
 
   static const double activeSize = 80;
@@ -60,82 +67,125 @@ class PathNode extends StatelessWidget {
   /// Finds the ring in tests.
   static const Key progressRingKey = ValueKey('skill-progress-ring');
 
-  bool get _tappable => state != PathNodeState.locked;
+  /// Finds the "Start" bubble and the pulse in tests.
+  static const Key calloutKey = ValueKey('path-node-callout');
+  static const Key pulseKey = ValueKey('path-node-pulse');
+
+  @override
+  State<PathNode> createState() => _PathNodeState();
+}
+
+class _PathNodeState extends State<PathNode>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _loop = AnimationController(
+    vsync: this,
+    duration: AppMotion.bob * 2,
+  );
+
+  bool get _active => widget.state == PathNodeState.active;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncLoop();
+  }
+
+  @override
+  void didUpdateWidget(covariant PathNode oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncLoop();
+  }
+
+  void _syncLoop() {
+    final run = _active && AppMotion.loops(context);
+    if (run && !_loop.isAnimating) {
+      _loop.repeat();
+    } else if (!run && _loop.isAnimating) {
+      _loop
+        ..stop()
+        ..value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _loop.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final active = state == PathNodeState.active;
-    final diameter = active ? activeSize : size;
+    final state = widget.state;
+    final active = _active;
+    final diameter = active ? PathNode.activeSize : PathNode.size;
     final locked = state == PathNodeState.locked;
-    // One phrase: the label pill's text is already in [semanticLabel], so
-    // it is not read a second time.
+    final callout = widget.callout;
+
+    final circle = Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: _face(context.colors),
+        border: Border.all(
+          color: locked
+              ? context.colors.outline
+              : context.colors.outlineVariant,
+          width: active ? 4 : 2,
+        ),
+        boxShadow: [
+          AppShadows.shelf(_shelf(context.colors), depth: PathNode.shelfDepth),
+        ],
+      ),
+      child: Icon(
+        _icon,
+        color: _foreground(context.colors),
+        size: active ? 40 : 30,
+      ),
+    );
+
     return Semantics(
       button: true,
-      enabled: _tappable,
-      label: semanticLabel,
+      enabled: widget.onTap != null,
+      label: widget.semanticLabel,
       excludeSemantics: true,
-      onTap: _tappable ? onTap : null,
-      child: InkWell(
-        onTap: _tappable ? onTap : null,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
+      onTap: widget.onTap,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.space2xs),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              if (state == PathNodeState.completed && crownLevel > 0)
+              if (state == PathNodeState.completed && widget.crownLevel > 0)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.space2xs),
-                  child: _CrownBadge(level: crownLevel),
+                  child: _CrownBadge(level: widget.crownLevel),
                 ),
-              _ProgressRing(
-                fraction: progress,
-                child: Container(
-                  width: diameter,
-                  height: diameter,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _face(context.colors),
-                    border: Border.all(
-                      color: locked
-                          ? context.colors.outline
-                          : context.colors.outlineVariant,
-                      width: active ? 4 : 2,
-                    ),
-                    boxShadow: [
-                      AppShadows.shelf(
-                        _shelf(context.colors),
-                        depth: shelfDepth,
+              if (active && callout != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.spaceXs),
+                  child: _Callout(
+                    key: PathNode.calloutKey,
+                    label: callout,
+                    loop: _loop,
+                  ),
+                ),
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  if (active && AppMotion.loops(context))
+                    Positioned.fill(
+                      key: PathNode.pulseKey,
+                      child: _Pulse(
+                        loop: _loop,
+                        color: context.colors.secondaryContainer,
                       ),
-                    ],
-                  ),
-                  child: Icon(
-                    _icon,
-                    color: _foreground(context.colors),
-                    size: active ? 34 : 28,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.space2xs),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.spaceXs,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: locked
-                      ? context.colors.surfaceContainer
-                      : context.colors.surfaceContainerLowest,
-                  borderRadius: BorderRadius.circular(AppRadii.full),
-                  border: Border.all(color: context.colors.outlineVariant),
-                ),
-                child: Text(
-                  label,
-                  style: AppTypography.labelMd.copyWith(
-                    color: locked
-                        ? context.colors.onSurfaceVariant
-                        : context.colors.onSurface,
-                  ),
-                ),
+                    ),
+                  _ProgressRing(fraction: widget.progress, child: circle),
+                ],
               ),
             ],
           ),
@@ -144,29 +194,117 @@ class PathNode extends StatelessWidget {
     );
   }
 
-  Color _face(AppPalette colors) => switch (state) {
+  Color _face(AppPalette colors) => switch (widget.state) {
     PathNodeState.locked => colors.surfaceDim,
     PathNodeState.active => colors.secondaryContainer,
     PathNodeState.completed => colors.primaryContainer,
   };
 
-  Color _foreground(AppPalette colors) => switch (state) {
+  Color _foreground(AppPalette colors) => switch (widget.state) {
     PathNodeState.locked => colors.outlineVariant,
     PathNodeState.active => colors.onSecondary,
     PathNodeState.completed => colors.onPrimary,
   };
 
-  Color _shelf(AppPalette colors) => switch (state) {
+  Color _shelf(AppPalette colors) => switch (widget.state) {
     PathNodeState.locked => colors.lockedNodeIcon,
     PathNodeState.active => colors.activeNodeShelf,
     PathNodeState.completed => colors.primaryShelf,
   };
 
-  IconData get _icon => switch (state) {
+  IconData get _icon => switch (widget.state) {
     PathNodeState.locked => Icons.lock_outline,
-    PathNodeState.active => Icons.play_arrow,
-    PathNodeState.completed => Icons.check,
+    PathNodeState.active => Icons.star_rounded,
+    PathNodeState.completed => Icons.check_rounded,
   };
+}
+
+/// The "Start" bubble over the current node: white, edged in the node's
+/// gold, pointing down at it and bobbing gently with [loop].
+class _Callout extends StatelessWidget {
+  const _Callout({super.key, required this.label, required this.loop});
+
+  final String label;
+  final Animation<double> loop;
+
+  /// How far the bubble rises at the top of a bob.
+  static const double _rise = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final bubble = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.spaceSm,
+            vertical: AppSpacing.space2xs + 2,
+          ),
+          decoration: BoxDecoration(
+            color: colors.onPrimary,
+            borderRadius: BorderRadius.circular(AppRadii.sm),
+            border: Border.all(color: colors.secondaryContainer, width: 2),
+          ),
+          child: Text(
+            label.toUpperCase(),
+            style: AppTypography.labelLg.copyWith(
+              color: colors.onSecondaryContainer,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+        BubbleTail(
+          color: colors.onPrimary,
+          border: colors.secondaryContainer,
+          width: 16,
+          height: 8,
+        ),
+      ],
+    );
+    return AnimatedBuilder(
+      animation: loop,
+      builder: (context, child) => Transform.translate(
+        // Up and back down once per loop, easing at both ends.
+        offset: Offset(
+          0,
+          -_rise * (1 - math.cos(2 * math.pi * loop.value)) / 2,
+        ),
+        child: child,
+      ),
+      child: bubble,
+    );
+  }
+}
+
+/// A disc of the node's colour that grows out from behind it and fades,
+/// once per [loop].
+class _Pulse extends StatelessWidget {
+  const _Pulse({required this.loop, required this.color});
+
+  final Animation<double> loop;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: loop,
+        builder: (context, _) {
+          final t = Curves.easeOut.transform(loop.value);
+          return Transform.scale(
+            scale: 1 + 0.45 * t,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.4 * (1 - t)),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 /// A ring around a node's circle, filled clockwise from the top to

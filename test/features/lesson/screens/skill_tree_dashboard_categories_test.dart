@@ -23,6 +23,7 @@ import 'package:elang/shared/services/sync_engine.dart';
 import 'package:elang/shared/theme/app_tone.dart';
 import 'package:elang/shared/widgets/app_card.dart';
 import 'package:elang/shared/widgets/app_status.dart';
+import 'package:elang/shared/widgets/path_popover.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
 import '../../../helpers/fake_answer_feedback_player.dart';
@@ -31,6 +32,7 @@ import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 const _beans = BeansStatus(
   beans: 5,
@@ -158,11 +160,11 @@ void main() {
 
     double y(Finder f) => tester.getTopLeft(f).dy;
     Finder divider(String t) => find.widgetWithText(PathSectionDivider, t);
-    expect(y(header), lessThan(y(find.text('Skill a'))));
-    expect(y(find.text('Skill b')), lessThan(y(divider('Family & People'))));
-    expect(y(divider('Family & People')), lessThan(y(find.text('Skill c'))));
-    expect(y(find.text('Skill d')), lessThan(y(divider('Numbers & Time'))));
-    expect(y(divider('Numbers & Time')), lessThan(y(find.text('Skill e'))));
+    expect(y(header), lessThan(y(findSkill('Skill a'))));
+    expect(y(findSkill('Skill b')), lessThan(y(divider('Family & People'))));
+    expect(y(divider('Family & People')), lessThan(y(findSkill('Skill c'))));
+    expect(y(findSkill('Skill d')), lessThan(y(divider('Numbers & Time'))));
+    expect(y(divider('Numbers & Time')), lessThan(y(findSkill('Skill e'))));
   });
 
   testWidgets('the zig-zag restarts at the top of every category', (
@@ -188,9 +190,9 @@ void main() {
 
     // Overall, e is the 5th node (would be right-aligned); as the first
     // node of its category it must sit centred like a, and f to its right.
-    final centreA = tester.getCenter(find.text('Skill a')).dx;
-    final centreE = tester.getCenter(find.text('Skill e')).dx;
-    final centreF = tester.getCenter(find.text('Skill f')).dx;
+    final centreA = tester.getCenter(findSkill('Skill a')).dx;
+    final centreE = tester.getCenter(findSkill('Skill e')).dx;
+    final centreF = tester.getCenter(findSkill('Skill f')).dx;
     expect(centreE, closeTo(centreA, 1));
     expect(centreF, greaterThan(centreE));
   });
@@ -243,11 +245,17 @@ void main() {
       await tester.pumpWidget(_dashboard(api));
       await tester.pumpAndSettle();
 
-      // Completed and active nodes have a badge; the locked one does not.
-      expect(find.byIcon(Icons.download_outlined), findsNWidgets(2));
-      await tester.tap(find.text('Skill c'));
+      // Completed and active popovers offer the download; the locked one
+      // does not, and its button starts nothing.
+      await openSkill(tester, 'Skill b');
+      expect(find.text('Download for offline use'), findsOneWidget);
+      await tester.tapAt(const Offset(10, 10));
       await tester.pumpAndSettle();
-      expect(find.text('Skill c'), findsOneWidget); // still on the dashboard
+      await openSkill(tester, 'Skill c');
+      expect(find.text('Download for offline use'), findsNothing);
+      await tester.tap(find.byKey(PathPopover.actionKey));
+      await tester.pumpAndSettle();
+      expect(findSkill('Skill c'), findsOneWidget); // still on the dashboard
     },
   );
 

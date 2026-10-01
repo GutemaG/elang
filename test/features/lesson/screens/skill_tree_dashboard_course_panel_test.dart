@@ -25,6 +25,7 @@ import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 const _beans = BeansStatus(
   beans: 5,
@@ -189,8 +190,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(rig.courseApi.switchCalls, ['c-en-om']);
-    expect(find.text('Akkam'), findsOneWidget);
-    expect(find.text('Greetings'), findsNothing);
+    expect(findSkill('Akkam'), findsOneWidget);
+    expect(findSkill('Greetings'), findsNothing);
     // The panel closed and the badge followed the switch.
     expect(find.text('Course settings'), findsNothing);
     expect(find.text('Afaan Oromo'), findsOneWidget);
@@ -207,7 +208,7 @@ void main() {
 
     expect(rig.courseApi.switchCalls, isEmpty);
     expect(find.text('Course settings'), findsNothing);
-    expect(find.text('Greetings'), findsOneWidget);
+    expect(findSkill('Greetings'), findsOneWidget);
   });
 
   testWidgets('Manage downloads opens the downloads screen', (tester) async {

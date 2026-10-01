@@ -34,6 +34,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_icon_button.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_status.dart';
+import '../../../shared/widgets/path_popover.dart';
 import '../../auth/auth_routes.dart';
 import '../../courses/course_badge.dart';
 import '../../courses/course_panel.dart';
@@ -50,7 +51,6 @@ import '../widgets/category_banner.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/lesson_hud.dart';
 import '../widgets/pinned_header_sliver.dart';
-import '../widgets/review_skill_sheet.dart';
 import '../widgets/skill_path_node.dart';
 import '../widgets/stat_sheet.dart';
 import '../widgets/sync_status_banner.dart';
@@ -622,15 +622,24 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     }
   }
 
-  /// An active skill starts its lesson. A completed one asks first, because
-  /// replaying it is a review -- nothing earned, nothing spent -- and the
-  /// learner should know that before starting, not find out at the end.
-  Future<void> _onNodeTap(SkillTreeNode node) async {
+  /// A tapped node opens its popover (the path shows no titles, so that is
+  /// where the skill is named); its button starts the lesson. A completed
+  /// skill's popover says a review earns and spends nothing; a locked one
+  /// only says how to unlock it.
+  Future<void> _onNodeTap(SkillTreeNode node, Rect anchor) async {
+    final start = await showSkillPopover(
+      context,
+      node: node,
+      anchor: anchor,
+      footer: node.state == SkillNodeState.locked
+          ? null
+          : _DownloadNote(
+              lessonId: node.lessonId,
+              downloader: widget.lessonPackDownloader,
+            ),
+    );
+    if (start != true || !mounted) return;
     final isReview = node.state == SkillNodeState.completed;
-    if (isReview) {
-      final review = await showReviewSkillSheet(context, node.title);
-      if (review != true || !mounted) return;
-    }
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => LessonScreen(
@@ -995,7 +1004,6 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                 child: _CategoryNodes(
                   nodes: tree.nodesIn(categories[i]),
                   onNodeTap: _onNodeTap,
-                  downloader: widget.lessonPackDownloader,
                   activeNodeId: i == activeSection ? active?.id : null,
                   activeNodeKey: _activeNodeKey,
                 ),
@@ -1060,6 +1068,15 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
       if (line - offset <= _pinnedExtent && index > section) {
         section = index;
       }
+      // At the end of the path a short last section can never scroll up
+      // under the header; once its divider is on screen, it is current. A
+      // path that does not scroll at all keeps naming the first section.
+      if (position.maxScrollExtent > 0 &&
+          offset >= position.maxScrollExtent - 0.5 &&
+          line - offset < position.viewportDimension &&
+          index > section) {
+        section = index;
+      }
     }
 
     AxisDirection? jumpTo;
@@ -1121,14 +1138,14 @@ class _CategoryNodes extends StatelessWidget {
   const _CategoryNodes({
     required this.nodes,
     required this.onNodeTap,
-    required this.downloader,
     required this.activeNodeKey,
     this.activeNodeId,
   });
 
   final List<SkillTreeNode> nodes;
-  final ValueChanged<SkillTreeNode> onNodeTap;
-  final LessonPackDownloader downloader;
+
+  /// A node and where it is on screen, for its popover to point at.
+  final void Function(SkillTreeNode node, Rect anchor) onNodeTap;
 
   /// The learner's current node in this section, if it is here; it gets
   /// [activeNodeKey] so the jump button can find it.
@@ -1149,26 +1166,12 @@ class _CategoryNodes extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceMd),
               child: Align(
                 alignment: _lateralOffset(i),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    SkillPathNode(
-                      key: nodes[i].id == activeNodeId ? activeNodeKey : null,
-                      node: nodes[i],
-                      onTap: nodes[i].state == SkillNodeState.locked
-                          ? null
-                          : () => onNodeTap(nodes[i]),
-                    ),
-                    if (nodes[i].state != SkillNodeState.locked)
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: _DownloadAffordance(
-                          lessonId: nodes[i].lessonId,
-                          downloader: downloader,
-                        ),
-                      ),
-                  ],
+                child: Builder(
+                  builder: (nodeContext) => SkillPathNode(
+                    key: nodes[i].id == activeNodeId ? activeNodeKey : null,
+                    node: nodes[i],
+                    onTap: () => onNodeTap(nodes[i], _rectOf(nodeContext)),
+                  ),
                 ),
               ),
             ),
@@ -1177,13 +1180,19 @@ class _CategoryNodes extends StatelessWidget {
     );
   }
 
-  /// A gentle left/center/right alternation so the path reads as a
+  static Rect _rectOf(BuildContext context) {
+    final box = context.findRenderObject()! as RenderBox;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  /// A gentle center/right/center/left wave so the path reads as a
   /// serpentine trail (`DESIGN.md`'s node-offset-lateral) rather than a
   /// flat vertical list, without needing a fixed-height custom-paint path.
-  static Alignment _lateralOffset(int index) => switch (index % 3) {
+  static Alignment _lateralOffset(int index) => switch (index % 4) {
     0 => Alignment.center,
-    1 => Alignment.centerRight,
-    _ => Alignment.centerLeft,
+    1 => const Alignment(0.45, 0),
+    2 => Alignment.center,
+    _ => const Alignment(-0.45, 0),
   };
 }
 
@@ -1311,12 +1320,12 @@ class LeagueCard extends StatelessWidget {
   }
 }
 
-/// A small icon-button overlay on a skill-tree node letting the user
-/// download that lesson for offline use (009-offline-caching-and-sync-ui,
-/// story 001): an [IconBadge] per state, or a spinner while downloading,
-/// in a 48dp tap target (018-mobile-design-system, bolt 047).
-class _DownloadAffordance extends StatelessWidget {
-  const _DownloadAffordance({required this.lessonId, required this.downloader});
+/// The download line at the foot of a skill's popover
+/// (009-offline-caching-and-sync-ui, story 001): download the lesson for
+/// offline use, its progress, a retry, or that it is already saved. It
+/// follows the download live while the popover is open.
+class _DownloadNote extends StatelessWidget {
+  const _DownloadNote({required this.lessonId, required this.downloader});
 
   final String lessonId;
   final LessonPackDownloader downloader;
@@ -1326,94 +1335,29 @@ class _DownloadAffordance extends StatelessWidget {
     return ListenableBuilder(
       listenable: downloader,
       builder: (context, _) {
-        final status = downloader.statusFor(lessonId);
-        return _iconFor(
-          context,
-          status,
-          onTap: () => downloader.downloadLesson(lessonId),
-        );
-      },
-    );
-  }
-
-  Widget _iconFor(
-    BuildContext context,
-    LessonDownloadStatus status, {
-    required VoidCallback onTap,
-  }) {
-    switch (status) {
-      case LessonDownloadStatus.downloaded:
-        return const _AffordanceBadge(
-          label: 'Downloaded for offline use',
-          child: IconBadge(
+        void download() => downloader.downloadLesson(lessonId);
+        return switch (downloader.statusFor(lessonId)) {
+          LessonDownloadStatus.downloaded => const PathPopoverNote(
             icon: Icons.download_done,
-            tone: AppTone.primary,
-            size: _AffordanceBadge.badgeSize,
+            label: 'Downloaded for offline use',
           ),
-        );
-      case LessonDownloadStatus.downloading:
-        return _AffordanceBadge(
-          label: 'Downloading',
-          child: SizedBox.square(
-            dimension: _AffordanceBadge.badgeSize,
-            child: Center(
-              child: AppSpinner.small(color: context.colors.secondaryContainer),
-            ),
+          LessonDownloadStatus.downloading => const PathPopoverNote(
+            icon: Icons.downloading,
+            label: 'Downloading',
+            busy: true,
           ),
-        );
-      case LessonDownloadStatus.failed:
-        return _AffordanceBadge(
-          label: 'Download failed, tap to try again',
-          onTap: onTap,
-          child: const IconBadge(
+          LessonDownloadStatus.failed => PathPopoverNote(
             icon: Icons.error_outline,
-            tone: AppTone.tertiary,
-            size: _AffordanceBadge.badgeSize,
+            label: 'Download failed, tap to try again',
+            onTap: download,
           ),
-        );
-      case LessonDownloadStatus.notDownloaded:
-        return _AffordanceBadge(
-          label: 'Download for offline use',
-          onTap: onTap,
-          child: const IconBadge(
+          LessonDownloadStatus.notDownloaded => PathPopoverNote(
             icon: Icons.download_outlined,
-            size: _AffordanceBadge.badgeSize,
+            label: 'Download for offline use',
+            onTap: download,
           ),
-        );
-    }
-  }
-}
-
-/// The badge sits in the tap target's top-right corner, where the node's
-/// corner is, and the rest of the 48dp square extends into the node.
-class _AffordanceBadge extends StatelessWidget {
-  const _AffordanceBadge({
-    required this.label,
-    required this.child,
-    this.onTap,
-  });
-
-  final String label;
-  final Widget child;
-  final VoidCallback? onTap;
-
-  static const double badgeSize = 28;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: onTap != null,
-      label: label,
-      onTap: onTap,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: SizedBox.square(
-          dimension: AppButton.minTapTarget,
-          child: Align(alignment: Alignment.topRight, child: child),
-        ),
-      ),
+        };
+      },
     );
   }
 }

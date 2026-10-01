@@ -1,8 +1,8 @@
 // Lesson complete and the lesson pop-ups on the library
 // (018-mobile-design-system, bolt 048, story 003): the celebration page with
 // stat cards, progress cards and a docked Continue; level-up in the library
-// dialog; exit, review and out-of-beans in the library sheet, each
-// returning what it returned before; and small screens.
+// dialog; exit and out-of-beans in the library sheet, each returning what
+// it returned before; a skill's popover on the path; and small screens.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,12 +12,13 @@ import 'package:elang/features/lesson/screens/lesson_screen.dart';
 import 'package:elang/features/lesson/widgets/exit_lesson_sheet.dart';
 import 'package:elang/features/lesson/widgets/level_up_sheet.dart';
 import 'package:elang/features/lesson/widgets/out_of_beans_sheet.dart';
-import 'package:elang/features/lesson/widgets/review_skill_sheet.dart';
+import 'package:elang/features/lesson/widgets/skill_path_node.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/exercise.dart';
 import 'package:elang/shared/models/lesson_completion_result.dart';
 import 'package:elang/shared/models/lesson_content.dart';
 import 'package:elang/shared/models/skill_lesson_progress.dart';
+import 'package:elang/shared/models/skill_tree.dart';
 import 'package:elang/shared/services/sync_engine.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/app_tone.dart';
@@ -26,6 +27,7 @@ import 'package:elang/shared/widgets/app_card.dart';
 import 'package:elang/shared/widgets/app_page.dart';
 import 'package:elang/shared/widgets/app_sheet.dart';
 import 'package:elang/shared/widgets/app_status.dart';
+import 'package:elang/shared/widgets/path_popover.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
 import '../../../helpers/fake_answer_feedback_player.dart';
@@ -146,6 +148,22 @@ Future<void> _tapOutside(WidgetTester tester) async {
 
 AppButton _button(WidgetTester tester, String label) =>
     tester.widget<AppButton>(find.widgetWithText(AppButton, label));
+
+SkillTreeNode _skill(
+  SkillNodeState state, {
+  int done = 0,
+  String title = 'Greetings',
+}) => SkillTreeNode(
+  id: 's1',
+  lessonId: 'l1',
+  title: title,
+  subtitle: '',
+  state: state,
+  categoryId: 'c1',
+  crownLevel: state == SkillNodeState.completed ? 1 : 0,
+  lessonsDone: done,
+  lessonCount: 3,
+);
 
 void _size(WidgetTester tester, Size size) {
   tester.view.physicalSize = size;
@@ -379,47 +397,84 @@ void main() {
     }
   });
 
-  group('review a finished skill', () {
-    testWidgets('opens in the library sheet: primary Review, "Not now" as a '
-        'text link', (tester) async {
-      await _open(tester, (c) => showReviewSkillSheet(c, 'Greetings'));
+  group("a skill's popover", () {
+    Future<void> openFor(
+      WidgetTester tester,
+      SkillTreeNode node, {
+      Rect anchor = const Rect.fromLTWH(120, 120, 80, 80),
+    }) => _open(tester, (c) => showSkillPopover(c, node: node, anchor: anchor));
 
-      expect(find.byType(AppSheetFrame), findsOneWidget);
-      expect(
-        tester.widget<SheetHero>(find.byType(SheetHero)).title,
-        'Greetings',
-      );
-      expect(_button(tester, 'Review').variant, AppButtonVariant.primary);
-      expect(_button(tester, 'Not now').variant, AppButtonVariant.text);
+    testWidgets('an active skill: its title, the first lesson and Start, '
+        'which returns true', (tester) async {
+      await openFor(tester, _skill(SkillNodeState.active));
+
+      expect(find.byKey(PathPopover.bubbleKey), findsOneWidget);
+      expect(find.text('Greetings'), findsOneWidget);
+      expect(find.text('Lesson 1 of 3'), findsOneWidget);
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(find.text('returned true'), findsOneWidget);
     });
 
-    testWidgets('Review returns true', (tester) async {
-      await _open(tester, (c) => showReviewSkillSheet(c, 'Greetings'));
+    testWidgets('part-way through: the next lesson and Continue', (
+      tester,
+    ) async {
+      await openFor(tester, _skill(SkillNodeState.active, done: 1));
+
+      expect(find.text('Lesson 2 of 3'), findsOneWidget);
+      expect(find.text('Continue'), findsOneWidget);
+    });
+
+    testWidgets('a completed skill says a review earns and spends nothing; '
+        'Review returns true', (tester) async {
+      await openFor(tester, _skill(SkillNodeState.completed));
+
+      expect(find.textContaining("don't earn XP or use beans"), findsOneWidget);
       await tester.tap(find.text('Review'));
       await tester.pumpAndSettle();
       expect(find.text('returned true'), findsOneWidget);
     });
 
-    testWidgets('Not now, a tap outside and a swipe down return null', (
+    testWidgets('a locked skill says how to unlock it, and its button does '
+        'nothing', (tester) async {
+      await openFor(tester, _skill(SkillNodeState.locked));
+
+      expect(
+        find.text('Finish the skills above to unlock this one.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Locked'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(PathPopover.bubbleKey), findsOneWidget);
+    });
+
+    testWidgets('a tap outside closes it and returns null', (tester) async {
+      await openFor(tester, _skill(SkillNodeState.active));
+      await _tapOutside(tester);
+
+      expect(find.byKey(PathPopover.bubbleKey), findsNothing);
+      expect(find.text('returned null'), findsOneWidget);
+    });
+
+    testWidgets('it opens under the node, or above it near the bottom', (
       tester,
     ) async {
-      await _open(tester, (c) => showReviewSkillSheet(c, 'Greetings'));
-      await tester.tap(find.text('Not now'));
-      await tester.pumpAndSettle();
-      expect(find.text('returned null'), findsOneWidget);
+      _size(tester, const Size(360, 640));
+      const high = Rect.fromLTWH(140, 100, 80, 80);
+      await openFor(tester, _skill(SkillNodeState.active), anchor: high);
+      expect(
+        tester.getTopLeft(find.byKey(PathPopover.bubbleKey)).dy,
+        greaterThan(high.bottom),
+      );
 
-      await tester.tap(find.text('OPEN'));
-      await tester.pumpAndSettle();
       await _tapOutside(tester);
-      expect(find.byType(AppSheetFrame), findsNothing);
-      expect(find.text('returned null'), findsOneWidget);
-
-      await tester.tap(find.text('OPEN'));
-      await tester.pumpAndSettle();
-      await tester.drag(find.text('Greetings'), const Offset(0, 600));
-      await tester.pumpAndSettle();
-      expect(find.byType(AppSheetFrame), findsNothing);
-      expect(find.text('returned null'), findsOneWidget);
+      const low = Rect.fromLTWH(140, 520, 80, 80);
+      await tester.pumpWidget(const SizedBox());
+      await openFor(tester, _skill(SkillNodeState.active), anchor: low);
+      expect(
+        tester.getBottomLeft(find.byKey(PathPopover.bubbleKey)).dy,
+        lessThan(low.top),
+      );
     });
   });
 
@@ -703,7 +758,11 @@ void main() {
     };
     final popups = <String, Future<Object?> Function(BuildContext)>{
       'exit': showExitLessonSheet,
-      'review sheet': (c) => showReviewSkillSheet(c, 'Greetings & Basics'),
+      'skill popover': (c) => showSkillPopover(
+        c,
+        node: _skill(SkillNodeState.completed, title: 'Greetings & Basics'),
+        anchor: const Rect.fromLTWH(100, 100, 80, 80),
+      ),
       'out of beans': (c) => showOutOfBeansSheet(
         c,
         builder: (_) => OutOfBeansSheet(

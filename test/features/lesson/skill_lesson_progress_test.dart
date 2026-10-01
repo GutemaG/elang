@@ -98,12 +98,12 @@ void main() {
   });
 
   group('SkillPathNode', () {
-    testWidgets('a part-way skill shows a ring and its lesson count', (
+    testWidgets('a part-way skill shows a ring and says Continue', (
       tester,
     ) async {
       await tester.pumpWidget(_host(SkillPathNode(node: _node(done: 1))));
 
-      expect(find.text('Numbers · 1/2'), findsOneWidget);
+      expect(find.text('CONTINUE'), findsOneWidget);
       expect(find.byKey(const ValueKey('skill-progress-ring')), findsOneWidget);
       expect(
         find.bySemanticsLabel(RegExp('1 of 2 lessons done')),
@@ -113,13 +113,14 @@ void main() {
 
     testWidgets('an unstarted or finished skill shows neither', (tester) async {
       await tester.pumpWidget(_host(SkillPathNode(node: _node(done: 0))));
-      expect(find.text('Numbers'), findsOneWidget);
+      expect(find.text('START'), findsOneWidget);
       expect(find.byKey(const ValueKey('skill-progress-ring')), findsNothing);
 
       await tester.pumpWidget(
         _host(SkillPathNode(node: _node(state: SkillNodeState.completed))),
       );
-      expect(find.text('Numbers'), findsOneWidget);
+      expect(find.text('START'), findsNothing);
+      expect(find.text('Numbers'), findsNothing); // no title on the path
       expect(find.byKey(const ValueKey('skill-progress-ring')), findsNothing);
     });
   });

@@ -28,6 +28,7 @@ import 'package:elang/shared/services/lesson_pack_downloader.dart';
 import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/sync_engine.dart';
+import 'package:elang/shared/widgets/path_popover.dart';
 
 import '../../../helpers/controllable_lesson_api.dart';
 import '../../../helpers/fake_answer_feedback_player.dart';
@@ -36,6 +37,7 @@ import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 // The dashboard only threads these through to build `SettingsScreen` on
 // tap -- no test here opens Settings, so a real-but-unused
@@ -248,8 +250,7 @@ void main() {
         refillCostAmole: 350,
       );
 
-      await tester.tap(find.text('Skill A'));
-      await tester.pumpAndSettle();
+      await startSkill(tester, 'Skill A');
       await tester.tap(find.text('ha'));
       await tester.pump();
       await tester.tap(find.text('Continue'));
@@ -272,10 +273,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Alphabet & Fidel'), findsOneWidget);
-      expect(find.text('Basic Greetings'), findsOneWidget);
-      expect(find.text('Coffee & Hospitality'), findsOneWidget);
-      expect(find.text('Family & Introductions'), findsOneWidget);
+      expect(findSkill('Alphabet & Fidel'), findsOneWidget);
+      expect(findSkill('Basic Greetings'), findsOneWidget);
+      expect(findSkill('Coffee & Hospitality'), findsOneWidget);
+      expect(findSkill('Family & Introductions'), findsOneWidget);
 
       // Crown-level badges on the two completed nodes from seed data.
       expect(find.text('Lv 3'), findsOneWidget);
@@ -286,7 +287,7 @@ void main() {
     },
   );
 
-  testWidgets('tapping a locked node does nothing (not interactive)', (
+  testWidgets('a locked node only says how to unlock it; it never starts', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -297,11 +298,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Family & Introductions'), warnIfMissed: false);
+    await tester.ensureVisible(findSkill('Family & Introductions'));
+    await tester.pumpAndSettle();
+    await openSkill(tester, 'Family & Introductions');
+    expect(find.text('Family & Introductions'), findsOneWidget);
+    expect(
+      find.text('Finish the skills above to unlock this one.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(PathPopover.actionKey));
     await tester.pumpAndSettle();
 
     // Still on the dashboard — no lesson screen was pushed.
-    expect(find.text('Family & Introductions'), findsOneWidget);
+    expect(findSkill('Family & Introductions'), findsOneWidget);
     expect(find.text('Check'), findsNothing);
   });
 
@@ -318,10 +327,9 @@ void main() {
     // node list (010-offline-caching-and-sync-ui) push lower nodes far
     // enough down that they can sit outside the test window's fixed
     // viewport -- scroll this one into view before tapping it.
-    await tester.ensureVisible(find.text('Coffee & Hospitality'));
+    await tester.ensureVisible(findSkill('Coffee & Hospitality'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Coffee & Hospitality'));
-    await tester.pumpAndSettle();
+    await startSkill(tester, 'Coffee & Hospitality');
 
     // The active node's lesson content's first exercise is now showing.
     expect(find.text('ቡና'), findsOneWidget);
@@ -371,7 +379,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text("Couldn't load your skill tree"), findsNothing);
-    expect(find.text('Skill A'), findsOneWidget);
+    expect(findSkill('Skill A'), findsOneWidget);
   });
 
   testWidgets(
@@ -432,8 +440,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Skill A'));
-      await tester.pumpAndSettle();
+      await startSkill(tester, 'Skill A');
 
       // Answer correctly and finish the (single-exercise) lesson.
       await tester.tap(find.text('ha'));
@@ -449,7 +456,7 @@ void main() {
 
       // Back on the dashboard, and it re-fetched (getSkillTree called
       // again on return).
-      expect(find.text('Skill A'), findsOneWidget);
+      expect(findSkill('Skill A'), findsOneWidget);
     },
   );
 
@@ -511,9 +518,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Alphabet's already downloaded; greetings and coffee aren't.
-      expect(find.byIcon(Icons.download_done), findsOneWidget);
-      expect(find.byIcon(Icons.download_outlined), findsNWidgets(2));
+      // Alphabet's already downloaded; greetings isn't. Each popover says.
+      await openSkill(tester, 'Alphabet & Fidel');
+      expect(find.text('Downloaded for offline use'), findsOneWidget);
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+      await openSkill(tester, 'Basic Greetings');
+      expect(find.text('Download for offline use'), findsOneWidget);
     },
   );
 
@@ -553,17 +564,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.download_outlined), findsNWidgets(3));
-
-      // First node in seed order is the audio-free "Alphabet & Fidel"
-      // node -- tapping avoids exercising the audio-download path here,
-      // which is covered separately in lesson_pack_downloader_test.dart.
-      await tester.tap(find.byIcon(Icons.download_outlined).first);
+      // The audio-free "Alphabet & Fidel" node avoids exercising the
+      // audio-download path here, which is covered separately in
+      // lesson_pack_downloader_test.dart.
+      await openSkill(tester, 'Alphabet & Fidel');
+      await tester.tap(find.text('Download for offline use'));
       await tester.pumpAndSettle();
 
       expect(await packStore.listDownloadedLessonIds(), ['lesson-alphabet']);
-      expect(find.byIcon(Icons.download_done), findsOneWidget);
-      expect(find.byIcon(Icons.download_outlined), findsNWidgets(2));
+      // The popover follows the download while it is open.
+      expect(find.text('Downloaded for offline use'), findsOneWidget);
+      expect(find.byKey(PathPopover.bubbleKey), findsOneWidget);
     },
   );
 
@@ -625,7 +636,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Disabled -- no navigation happened, still on the dashboard.
-      expect(find.text('Skill A'), findsOneWidget);
+      expect(findSkill('Skill A'), findsOneWidget);
       expect(api.completePracticeSessionCalls, isEmpty);
     });
 
@@ -654,7 +665,7 @@ void main() {
       await tester.tap(find.text('Practice'), warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      expect(find.text('Skill A'), findsOneWidget);
+      expect(findSkill('Skill A'), findsOneWidget);
     });
 
     testWidgets(
@@ -709,7 +720,7 @@ void main() {
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Skill A'), findsOneWidget);
+        expect(findSkill('Skill A'), findsOneWidget);
         expect(
           find.text("You're all caught up -- nothing due today"),
           findsOneWidget,

@@ -7,6 +7,7 @@ import '../widgets/app_card.dart';
 import '../widgets/app_status.dart';
 import '../widgets/course_glyph.dart';
 import '../widgets/path_node.dart';
+import '../widgets/path_popover.dart';
 import 'component_gallery.dart';
 
 void _noop() {}
@@ -240,29 +241,60 @@ class _StatusGallerySectionState extends State<StatusGallerySection> {
             children: [
               PathNode(
                 state: PathNodeState.locked,
-                label: 'Numbers',
                 semanticLabel: 'Numbers, locked',
-              ),
-              PathNode(
-                state: PathNodeState.active,
-                label: 'Family',
-                semanticLabel: 'Family, active, tap to start',
                 onTap: _noop,
               ),
               PathNode(
                 state: PathNodeState.active,
-                label: 'Food · 1/2',
+                semanticLabel: 'Family, active, tap to start',
+                callout: 'Start',
+                onTap: _noop,
+              ),
+              PathNode(
+                state: PathNodeState.active,
                 semanticLabel:
                     'Food, active, tap to start, 1 of 2 lessons done',
                 progress: 0.5,
+                callout: 'Continue',
                 onTap: _noop,
               ),
               PathNode(
                 state: PathNodeState.completed,
-                label: 'Greetings',
-                semanticLabel: 'Greetings, completed, tap to replay',
+                semanticLabel: 'Greetings, completed, tap to review',
                 crownLevel: 2,
                 onTap: _noop,
+              ),
+            ],
+          ),
+        ),
+        const GalleryCase(
+          label: 'PathPopover: active, completed, locked',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PathPopover(
+                state: PathNodeState.active,
+                title: 'Family',
+                body: 'Lesson 1 of 3',
+                actionLabel: 'Start',
+                footer: PathPopoverNote(
+                  icon: Icons.download_outlined,
+                  label: 'Download for offline use',
+                  onTap: _noop,
+                ),
+              ),
+              SizedBox(height: AppSpacing.spaceMd),
+              PathPopover(
+                state: PathNodeState.completed,
+                title: 'Greetings',
+                body: "Reviews don't earn XP or use beans.",
+                actionLabel: 'Review',
+              ),
+              SizedBox(height: AppSpacing.spaceMd),
+              PathPopover(
+                state: PathNodeState.locked,
+                title: 'Numbers',
+                body: 'Finish the skills above to unlock this one.',
               ),
             ],
           ),

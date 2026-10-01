@@ -35,6 +35,7 @@ import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 const _beans = BeansStatus(
   beans: 5,
@@ -352,13 +353,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await _scrollBy(tester, -1200);
-    await tester.ensureVisible(find.text('Skill c2-4'));
+    await tester.ensureVisible(findSkill('Skill c2-4'));
     await tester.pumpAndSettle();
     final before = _offset(tester);
     expect(before, greaterThan(0));
 
-    await tester.tap(find.text('Skill c2-4'));
-    await tester.pumpAndSettle();
+    await startSkill(tester, 'Skill c2-4');
     expect(find.text('ሀ'), findsOneWidget); // in the lesson
 
     tester.state<NavigatorState>(find.byType(Navigator)).pop();
@@ -366,7 +366,7 @@ void main() {
 
     // The dashboard reloaded, but the learner is still where they were --
     // only a course change is a reason to jump to the top.
-    expect(find.text('Skill c2-4'), findsOneWidget);
+    expect(findSkill('Skill c2-4'), findsOneWidget);
     expect(_offset(tester), closeTo(before, 1));
   });
 }

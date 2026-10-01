@@ -34,7 +34,7 @@ import 'package:elang/features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'package:elang/features/lesson/widgets/exit_lesson_sheet.dart';
 import 'package:elang/features/lesson/widgets/level_up_sheet.dart';
 import 'package:elang/features/lesson/widgets/out_of_beans_sheet.dart';
-import 'package:elang/features/lesson/widgets/review_skill_sheet.dart';
+import 'package:elang/features/lesson/widgets/skill_path_node.dart';
 import 'package:elang/features/settings/screens/settings_screen.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/course.dart';
@@ -44,6 +44,7 @@ import 'package:elang/shared/models/lesson_content.dart';
 import 'package:elang/shared/models/session_state.dart';
 import 'package:elang/shared/models/skill_lesson_progress.dart';
 import 'package:elang/shared/models/skill_tree.dart';
+import 'package:elang/shared/widgets/path_popover.dart';
 import 'package:elang/shared/screens/home_placeholder_screen.dart';
 import 'package:elang/shared/services/auth_api.dart';
 import 'package:elang/shared/services/caching_course_api.dart';
@@ -809,10 +810,22 @@ final _scenes = <String, _Scene>{
     await tester.pumpAndSettle();
   },
   'exit sheet': (tester, scale) => _popup(tester, scale, showExitLessonSheet),
-  'review-skill sheet': (tester, scale) => _popup(
+  'skill popover': (tester, scale) => _popup(
     tester,
     scale,
-    (c) => showReviewSkillSheet(c, 'Greetings and farewells'),
+    (c) => showSkillPopover(
+      c,
+      node: const SkillTreeNode(
+        id: 's1',
+        lessonId: 'l1',
+        title: 'Greetings and farewells',
+        subtitle: '',
+        state: SkillNodeState.completed,
+        categoryId: 'c1',
+        crownLevel: 2,
+      ),
+      anchor: const Rect.fromLTWH(100, 120, 80, 80),
+    ),
   ),
   'out-of-beans sheet': (tester, scale) => _popup(
     tester,
@@ -972,7 +985,7 @@ final _shows = <String, Finder>{
   'lesson complete': find.textContaining('Greetings and farewells'),
   'lesson complete, offline': find.textContaining("You're offline"),
   'exit sheet': find.byType(AppSheetFrame),
-  'review-skill sheet': find.byType(AppSheetFrame),
+  'skill popover': find.byKey(PathPopover.bubbleKey),
   'out-of-beans sheet': find.byType(AppSheetFrame),
   'level-up dialog': find.byType(AppDialogFrame),
   'settings': find.text('Log out'),

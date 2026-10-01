@@ -26,6 +26,7 @@ import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 const _beans = BeansStatus(
   beans: 5,
@@ -188,7 +189,7 @@ void main() {
     final courseApi = _courseApi();
     await tester.pumpWidget(_dashboard(lessonApi, courseApi));
     await tester.pumpAndSettle();
-    expect(find.text('Greetings'), findsOneWidget);
+    expect(findSkill('Greetings'), findsOneWidget);
 
     // What the backend would now return for the newly active course.
     lessonApi.skillTree = _tree(_oromo, 'Nagaa', 'Akkam');
@@ -202,8 +203,8 @@ void main() {
     expect(courseApi.switchCalls, ['c-en-om']);
     expect(find.text('Choose a course'), findsNothing);
     expect(find.text('Afaan Oromo'), findsOneWidget); // the badge
-    expect(find.text('Akkam'), findsOneWidget);
-    expect(find.text('Greetings'), findsNothing);
+    expect(findSkill('Akkam'), findsOneWidget);
+    expect(findSkill('Greetings'), findsNothing);
   });
 
   testWidgets('a failed switch keeps the current course and its dashboard', (
@@ -230,7 +231,7 @@ void main() {
       find.text("Couldn't switch course. Please try again."),
       findsOneWidget,
     );
-    expect(find.text('Greetings'), findsOneWidget);
+    expect(findSkill('Greetings'), findsOneWidget);
     expect(courseApi.activeCourseId, 'c-en-am');
   });
 

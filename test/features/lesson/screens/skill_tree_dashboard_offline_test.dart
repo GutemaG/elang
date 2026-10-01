@@ -36,6 +36,7 @@ import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_media_cache.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 const _beans = BeansStatus(
   beans: 5,
@@ -202,7 +203,7 @@ void main() {
   ) async {
     await _offlineRig(tester);
 
-    expect(find.text('Greetings'), findsOneWidget);
+    expect(findSkill('Greetings'), findsOneWidget);
     expect(find.text('Offline, showing saved progress'), findsOneWidget);
     expect(find.text('Amharic'), findsOneWidget); // the chip
     expect(find.text("Couldn't load your skill tree"), findsNothing);
@@ -213,8 +214,8 @@ void main() {
   ) async {
     await _offlineRig(tester, active: 'c-en-om');
 
-    expect(find.text('Akkam'), findsOneWidget);
-    expect(find.text('Greetings'), findsNothing);
+    expect(findSkill('Akkam'), findsOneWidget);
+    expect(findSkill('Greetings'), findsNothing);
     expect(find.text('Afaan Oromo'), findsOneWidget);
   });
 
@@ -258,7 +259,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text("Couldn't load your skill tree"), findsOneWidget);
-    expect(find.text('Greetings'), findsNothing);
+    expect(findSkill('Greetings'), findsNothing);
   });
 
   testWidgets('offline, switching to a saved course opens it from its copy', (
@@ -272,8 +273,8 @@ void main() {
     await tester.tap(find.text('Afaan Oromo'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Akkam'), findsOneWidget);
-    expect(find.text('Greetings'), findsNothing);
+    expect(findSkill('Akkam'), findsOneWidget);
+    expect(findSkill('Greetings'), findsNothing);
     expect(find.text('Afaan Oromo'), findsOneWidget);
     expect(await rig.cache.pendingSwitchCourseId(), 'c-en-om');
   });
@@ -296,7 +297,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Greetings'), findsOneWidget);
+    expect(findSkill('Greetings'), findsOneWidget);
     expect(await rig.cache.activeCourseId(), 'c-en-am');
     expect(await rig.cache.pendingSwitchCourseId(), isNull);
   });
@@ -329,7 +330,7 @@ void main() {
     expect(inner.switchCalls, ['c-en-om']);
     expect(inner.activeCourseId, 'c-en-om');
     expect(await cache.pendingSwitchCourseId(), isNull);
-    expect(find.text('Akkam (live)'), findsOneWidget);
+    expect(findSkill('Akkam (live)'), findsOneWidget);
     expect(find.text('Offline, showing saved progress'), findsNothing);
   });
 
@@ -382,15 +383,15 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Greetings (saved)'), findsOneWidget);
+    expect(findSkill('Greetings (saved)'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('Offline, showing saved progress'), findsNothing);
 
     gate.complete();
     await tester.pumpAndSettle();
 
-    expect(find.text('Greetings (live)'), findsOneWidget);
-    expect(find.text('Greetings (saved)'), findsNothing);
+    expect(findSkill('Greetings (live)'), findsOneWidget);
+    expect(findSkill('Greetings (saved)'), findsNothing);
   });
 
   testWidgets('an online load keeps a copy of the lessons that can be opened', (
@@ -493,7 +494,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(lessonApi.completeLessonCalls, hasLength(1));
-    expect(find.text('After sync'), findsOneWidget);
+    expect(findSkill('After sync'), findsOneWidget);
   });
 
   for (final width in [360.0, 320.0]) {

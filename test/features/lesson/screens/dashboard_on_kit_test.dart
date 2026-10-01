@@ -49,6 +49,7 @@ import '../../../helpers/fake_lesson_audio_player.dart';
 import '../../../helpers/fake_lesson_pack_store.dart';
 import '../../../helpers/fake_pending_sync_queue_store.dart';
 import '../../../helpers/in_memory_secure_storage_service.dart';
+import '../../../helpers/skill_path.dart';
 
 const _beans = BeansStatus(
   beans: 3,
@@ -484,51 +485,37 @@ void main() {
     });
   });
 
-  group('the download badge', () {
-    Finder badgeFor(IconData icon) => find
-        .ancestor(of: find.byIcon(icon), matching: find.byType(GestureDetector))
-        .first;
-
-    testWidgets('sits in a 48 px tap target, with a label per state', (
-      tester,
-    ) async {
+  group("the download line in a skill's popover", () {
+    testWidgets('no badges on the path; the completed and active popovers '
+        'offer the download, the locked one does not', (tester) async {
       final semantics = tester.ensureSemantics();
       await _pump(tester, _Rig(_api()));
 
-      // The completed and active nodes have one; the locked node none.
-      expect(find.byIcon(Icons.download_outlined), findsNWidgets(2));
-      expect(
-        tester.getSize(badgeFor(Icons.download_outlined)),
-        const Size(48, 48),
-      );
-      expect(
-        tester
-            .widget<IconBadge>(
-              find.widgetWithIcon(IconBadge, Icons.download_outlined).first,
-            )
-            .size,
-        28,
-      );
-      expect(
-        find.bySemanticsLabel('Download for offline use'),
-        findsNWidgets(2),
-      );
+      expect(find.byIcon(Icons.download_outlined), findsNothing);
+      for (final title in ['Skill a', 'Skill b']) {
+        await openSkill(tester, title);
+        expect(
+          find.bySemanticsLabel('Download for offline use'),
+          findsOneWidget,
+        );
+        await tester.tapAt(const Offset(10, 10));
+        await tester.pumpAndSettle();
+      }
+      await openSkill(tester, 'Skill c');
+      expect(find.bySemanticsLabel('Download for offline use'), findsNothing);
       semantics.dispose();
     });
 
-    testWidgets('a failed download shows the terracotta error badge, which '
-        'tries again', (tester) async {
+    testWidgets('a failed download says so and tries again', (tester) async {
       final semantics = tester.ensureSemantics();
       final api = _api()..startLessonError = Exception('offline');
       await _pump(tester, _Rig(api));
 
-      await tester.tap(find.byIcon(Icons.download_outlined).first);
+      await openSkill(tester, 'Skill a');
+      await tester.tap(find.text('Download for offline use'));
       await tester.pumpAndSettle();
 
-      final failed = tester.widget<IconBadge>(
-        find.widgetWithIcon(IconBadge, Icons.error_outline),
-      );
-      expect(failed.tone, AppTone.tertiary);
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
       expect(
         find.bySemanticsLabel('Download failed, tap to try again'),
         findsOneWidget,
@@ -544,21 +531,14 @@ void main() {
           beansAtStart: 5,
           beansMax: 5,
         );
-      await tester.tap(find.byIcon(Icons.error_outline));
+      await tester.tap(find.text('Download failed, tap to try again'));
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.error_outline), findsNothing);
       expect(
         find.bySemanticsLabel('Downloaded for offline use'),
         findsOneWidget,
       );
-      expect(
-        tester
-            .widget<IconBadge>(
-              find.widgetWithIcon(IconBadge, Icons.download_done),
-            )
-            .tone,
-        AppTone.primary,
-      );
+      expect(find.byIcon(Icons.download_done), findsOneWidget);
       semantics.dispose();
     });
   });

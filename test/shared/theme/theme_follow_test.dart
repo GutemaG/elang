@@ -34,7 +34,6 @@ void main() {
       tester,
       const PathNode(
         state: PathNodeState.completed,
-        label: 'Numbers · 1/2',
         semanticLabel: 'Numbers, completed',
         progress: 0.5,
       ),
