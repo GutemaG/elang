@@ -23,6 +23,11 @@ enum AppButtonVariant {
   /// Ends or deletes something ("Leave lesson", "Delete download").
   destructive,
 
+  /// Leaves something but loses nothing ("Log out"): white face, red
+  /// border and red text, so it reads as a way out without shouting like
+  /// [destructive].
+  exit,
+
   /// Dismissal ("Skip", "Cancel", "Not now"): a flat text link.
   text,
 }
@@ -87,6 +92,18 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.size = AppButtonSize.regular,
   }) : variant = AppButtonVariant.destructive;
+
+  const AppButton.exit({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.leading,
+    this.trailing,
+    this.badge,
+    this.expand = true,
+    this.loading = false,
+    this.size = AppButtonSize.regular,
+  }) : variant = AppButtonVariant.exit;
 
   const AppButton.text({
     super.key,
@@ -357,6 +374,13 @@ class _TactileStyle {
           face: colors.tertiaryBrand,
           shelf: colors.tertiaryShelf,
           foreground: colors.onTertiary,
+        ),
+        AppButtonVariant.exit => _TactileStyle(
+          face: colors.surfaceContainerLowest,
+          border: colors.tertiaryAccent,
+          shelf: colors.tertiaryToneShelf,
+          shelfDepth: AppShadows.tileShelfDepth,
+          foreground: colors.tertiaryToneInk,
         ),
         AppButtonVariant.text => throw StateError('text has no tactile style'),
       };

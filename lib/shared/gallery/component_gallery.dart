@@ -467,6 +467,14 @@ class _ButtonsSection extends StatelessWidget {
           label: 'destructive',
           child: AppButton.destructive(label: 'Leave lesson', onPressed: _noop),
         ),
+        const GalleryCase(
+          label: 'exit',
+          child: AppButton.exit(
+            label: 'Log out',
+            leading: Icon(Icons.logout),
+            onPressed: _noop,
+          ),
+        ),
         GalleryCase(
           label: 'hugging their labels, compact',
           child: Wrap(

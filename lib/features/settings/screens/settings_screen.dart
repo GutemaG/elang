@@ -402,7 +402,11 @@ class _SettingsScreenState extends State<SettingsScreen>
               ],
             ),
             const SizedBox(height: AppSpacing.spaceLg),
-            AppButton.secondary(label: 'Log out', onPressed: _confirmLogout),
+            AppButton.exit(
+              label: 'Log out',
+              leading: const Icon(Icons.logout),
+              onPressed: _confirmLogout,
+            ),
           ],
         );
     }

@@ -337,15 +337,12 @@ void main() {
       semantics.dispose();
     });
 
-    testWidgets('Log out is a full-width secondary button at the very end, '
+    testWidgets('Log out is a full-width red-bordered exit button at the end, '
         'and asks in the library dialog with a plain primary', (tester) async {
       await _pumpSettings(tester);
 
       final logOut = find.widgetWithText(AppButton, 'Log out');
-      expect(
-        tester.widget<AppButton>(logOut).variant,
-        AppButtonVariant.secondary,
-      );
+      expect(tester.widget<AppButton>(logOut).variant, AppButtonVariant.exit);
       expect(tester.widget<AppButton>(logOut).expand, isTrue);
       await tester.ensureVisible(logOut);
       await tester.pumpAndSettle();
