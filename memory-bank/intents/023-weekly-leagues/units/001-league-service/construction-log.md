@@ -2,7 +2,7 @@
 unit: 001-league-service
 intent: 023-weekly-leagues
 created: '2026-10-01T06:14:45Z'
-last_updated: '2026-10-01T07:13:41Z'
+last_updated: '2026-10-01T08:02:11Z'
 ---
 
 # Construction Log: league-service
@@ -27,3 +27,7 @@ last_updated: '2026-10-01T07:13:41Z'
 - **2026-10-01T06:41:40Z**: 073-league-groups-and-ranking stage-complete - plan → implement
 - **2026-10-01T06:54:51Z**: 073-league-groups-and-ranking stage-complete - implement → test
 - **2026-10-01T07:13:41Z**: 073-league-groups-and-ranking completed - All 3 stages done
+- **2026-10-01T07:16:08Z**: 074-league-week-close started - Stage 1: plan
+- **2026-10-01T07:18:59Z**: 074-league-week-close stage-complete - plan → implement
+- **2026-10-01T07:51:35Z**: 074-league-week-close stage-complete - implement → test
+- **2026-10-01T08:02:11Z**: 074-league-week-close completed - All 3 stages done

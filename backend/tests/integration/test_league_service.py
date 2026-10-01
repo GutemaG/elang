@@ -22,6 +22,7 @@ from app.domain.value_objects import AuthProvider, DailyXPTarget, LanguageCode, 
 from app.infrastructure.db.league_models import LeagueGroupModel, LeagueMemberModel
 from app.infrastructure.db.league_repository import SqlAlchemyLeagueRepository
 from app.infrastructure.db.lesson_models import LessonAttemptModel, PracticeAttemptModel
+from app.infrastructure.db.lesson_repositories import SqlAlchemyAmoleTransactionRepository
 from app.infrastructure.db.repositories import SqlAlchemyUserRepository
 from tests.fakes import EN_AM_COURSE_ID
 
@@ -54,7 +55,11 @@ async def _user(
 async def _join(repo: SqlAlchemyLeagueRepository, user: User, **kw: Any) -> None:
     args: dict[str, Any] = {"xp_earned": 10, "completed_at": NOW, "now": NOW}
     args.update(kw)
-    await join_league_week(user=user, league_repo=repo, **args)
+    await join_league_week(user=user, league_repo=repo, amole_repo=_amole(repo), **args)
+
+
+def _amole(repo: SqlAlchemyLeagueRepository) -> SqlAlchemyAmoleTransactionRepository:
+    return SqlAlchemyAmoleTransactionRepository(repo._session)
 
 
 async def _members(session: AsyncSession) -> int:
@@ -232,7 +237,9 @@ class TestCurrentLeague:
         hidden = await _user(db_session, 2, settings={"show_in_leagues": False})
 
         for user, status in ((quiet, LeagueStatus.NOT_JOINED), (hidden, LeagueStatus.HIDDEN)):
-            league = await get_current_league(user=user, now=NOW, league_repo=repo)
+            league = await get_current_league(
+                user=user, now=NOW, league_repo=repo, amole_repo=_amole(repo)
+            )
             assert league.status is status
             assert league.tier is LeagueTier.GREEN_BEAN
             assert league.members == []
@@ -255,7 +262,9 @@ class TestCurrentLeague:
             db_session.add(_practice(user_id, 1, amount, at))
         await db_session.flush()
 
-        league = await get_current_league(user=me, now=NOW, league_repo=repo)
+        league = await get_current_league(
+            user=me, now=NOW, league_repo=repo, amole_repo=_amole(repo)
+        )
 
         assert league.status is LeagueStatus.JOINED
         assert [(m.rank, m.weekly_xp) for m in league.members] == [
@@ -284,7 +293,9 @@ class TestCurrentLeague:
         repo_users = SqlAlchemyUserRepository(db_session)
         await repo_users.set_settings(other.id, {"show_in_leagues": False})
 
-        league = await get_current_league(user=me, now=NOW, league_repo=repo)
+        league = await get_current_league(
+            user=me, now=NOW, league_repo=repo, amole_repo=_amole(repo)
+        )
 
         assert [m.is_me for m in league.members] == [True]
 
@@ -305,7 +316,9 @@ class TestVisibility:
         )
 
         assert await repo.get_membership(user.id, WEEK) is None
-        assert await repo.latest_tier(user.id) is LeagueTier.MEDIUM_ROAST
+        # Joining closed last week (alone, so first place moved up to Dark
+        # Roast, bolt 074); leaving this week keeps that.
+        assert await repo.latest_tier(user.id) is LeagueTier.DARK_ROAST
 
     async def test_switching_on_changes_nothing(self, db_session: AsyncSession) -> None:
         repo = SqlAlchemyLeagueRepository(db_session)

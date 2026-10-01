@@ -1,10 +1,9 @@
 """Response schema for `GET /api/v1/leagues/current` (023-weekly-leagues,
-bolt 073)."""
+bolts 073 and 074)."""
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -21,6 +20,21 @@ class LeagueMemberResponse(BaseModel):
     is_me: bool
 
 
+class LastResultResponse(BaseModel):
+    """How the learner's last closed week went (bolt 074)."""
+
+    week_start: date
+    tier: str
+    tier_after: str
+    # `up`, `down` or `stayed`.
+    movement: str
+    # Null if they had switched leagues off by the time it closed.
+    rank: int | None
+    group_size: int
+    weekly_xp: int
+    reward_amole: int
+
+
 class CurrentLeagueResponse(BaseModel):
     tier: str
     # `joined`, `not_joined` (no XP yet this week) or `hidden` (switched off).
@@ -32,5 +46,5 @@ class CurrentLeagueResponse(BaseModel):
     # Amole for 1st, 2nd and 3rd when the week closes.
     rewards: list[int]
     members: list[LeagueMemberResponse]
-    # The last closed week's result, until seen (bolt 074).
-    last_result: dict[str, Any] | None = None
+    # The last closed week's result, until the app marks it seen.
+    last_result: LastResultResponse | None = None

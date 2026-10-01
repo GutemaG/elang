@@ -1,17 +1,26 @@
 """Implements `app.domain.league.LeagueRepository` (023-weekly-leagues,
-bolt 073)."""
+bolts 073 and 074)."""
 
 from __future__ import annotations
 
 import uuid
 from datetime import UTC, date, datetime
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.league import GroupMember, LeagueMembership, LeagueTier, WeeklyXp
+from app.domain.league import (
+    EndedGroup,
+    GroupMember,
+    LastResult,
+    LeagueMembership,
+    LeagueTier,
+    MemberResult,
+    WeeklyXp,
+    movement,
+)
 from app.infrastructure.db.league_models import LeagueGroupModel, LeagueMemberModel
 from app.infrastructure.db.lesson_models import LessonAttemptModel, PracticeAttemptModel
 from app.infrastructure.db.models import UserModel
@@ -113,9 +122,95 @@ class SqlAlchemyLeagueRepository:
             )
         )
 
+    async def ended_open_groups(self, user_id: str, week: date) -> list[EndedGroup]:
+        stmt = (
+            select(LeagueGroupModel.id, LeagueGroupModel.week_start, LeagueGroupModel.tier)
+            .join(LeagueMemberModel, LeagueMemberModel.group_id == LeagueGroupModel.id)
+            .where(
+                LeagueMemberModel.user_id == user_id,
+                LeagueGroupModel.week_start < week,
+                LeagueGroupModel.closed_at.is_(None),
+            )
+            .order_by(LeagueGroupModel.week_start)
+        )
+        rows = (await self._session.execute(stmt)).all()
+        return [EndedGroup(group_id, start, LeagueTier(tier)) for group_id, start, tier in rows]
+
+    async def claim_group(self, group_id: str, now: datetime) -> bool:
+        # The conditional update is the lock: on Postgres a simultaneous
+        # second request waits for this row, then finds it closed.
+        result = await self._session.execute(
+            update(LeagueGroupModel)
+            .where(LeagueGroupModel.id == group_id, LeagueGroupModel.closed_at.is_(None))
+            .values(closed_at=now)
+        )
+        return bool(result.rowcount)  # type: ignore[attr-defined]
+
+    async def save_results(self, group_id: str, results: list[MemberResult]) -> None:
+        for r in results:
+            await self._session.execute(
+                update(LeagueMemberModel)
+                .where(
+                    LeagueMemberModel.group_id == group_id,
+                    LeagueMemberModel.user_id == r.user_id,
+                )
+                .values(
+                    final_xp=r.final_xp,
+                    final_rank=r.final_rank,
+                    tier_after=r.tier_after.value,
+                    reward_amole=r.reward_amole,
+                )
+            )
+
+    async def last_unseen_result(self, user_id: str) -> LastResult | None:
+        stmt = (
+            select(LeagueMemberModel, LeagueGroupModel.tier)
+            .join(LeagueGroupModel, LeagueGroupModel.id == LeagueMemberModel.group_id)
+            .where(
+                LeagueMemberModel.user_id == user_id,
+                LeagueMemberModel.tier_after.is_not(None),
+                LeagueMemberModel.result_seen_at.is_(None),
+            )
+            .order_by(LeagueMemberModel.week_start.desc())
+            .limit(1)
+        )
+        row = (await self._session.execute(stmt)).one_or_none()
+        if row is None:
+            return None
+        member, tier_value = row
+        size_stmt = select(func.count(LeagueMemberModel.id)).where(
+            LeagueMemberModel.group_id == member.group_id,
+            LeagueMemberModel.final_rank.is_not(None),
+        )
+        group_size = (await self._session.execute(size_stmt)).scalar_one()
+        tier = LeagueTier(tier_value)
+        tier_after = LeagueTier(member.tier_after)
+        return LastResult(
+            week_start=member.week_start,
+            tier=tier,
+            tier_after=tier_after,
+            movement=movement(tier, tier_after),
+            rank=member.final_rank,
+            group_size=group_size,
+            weekly_xp=member.final_xp or 0,
+            reward_amole=member.reward_amole or 0,
+        )
+
+    async def mark_results_seen(self, user_id: str, now: datetime) -> None:
+        await self._session.execute(
+            update(LeagueMemberModel)
+            .where(
+                LeagueMemberModel.user_id == user_id,
+                LeagueMemberModel.tier_after.is_not(None),
+                LeagueMemberModel.result_seen_at.is_(None),
+            )
+            .values(result_seen_at=now)
+        )
+
     async def list_members(self, group_id: str) -> list[GroupMember]:
         stmt = (
             select(
+                LeagueMemberModel.id,
                 LeagueMemberModel.user_id,
                 UserModel.first_name,
                 UserModel.settings,
@@ -127,12 +222,13 @@ class SqlAlchemyLeagueRepository:
         rows = (await self._session.execute(stmt)).all()
         return [
             GroupMember(
+                member_id=member_id,
                 user_id=user_id,
                 first_name=first_name,
                 settings=dict(settings or {}),
                 joined_at=_utc(joined_at),
             )
-            for user_id, first_name, settings, joined_at in rows
+            for member_id, user_id, first_name, settings, joined_at in rows
         ]
 
     async def weekly_xp(

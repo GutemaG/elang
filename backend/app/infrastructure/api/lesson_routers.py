@@ -321,6 +321,7 @@ async def complete_lesson_endpoint(
         completed_at=request.client_completed_at,
         now=now,
         league_repo=league_repo,
+        amole_repo=amole_repo,
     )
     return CompleteLessonResponse(
         xp_earned=outcome.xp_awarded,

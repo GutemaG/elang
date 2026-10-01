@@ -127,6 +127,65 @@ def rank(standings: Iterable[Standing]) -> list[Standing]:
     )
 
 
+class Movement(StrEnum):
+    UP = "up"
+    DOWN = "down"
+    STAYED = "stayed"
+
+
+def movement(tier: LeagueTier, tier_after: LeagueTier) -> Movement:
+    if TIERS.index(tier_after) > TIERS.index(tier):
+        return Movement.UP
+    if TIERS.index(tier_after) < TIERS.index(tier):
+        return Movement.DOWN
+    return Movement.STAYED
+
+
+@dataclass(frozen=True)
+class MemberResult:
+    """One member's stored result when their group closes (bolt 074)."""
+
+    user_id: str
+    final_xp: int
+    # `None` for a member who switched leagues off: not ranked.
+    final_rank: int | None
+    tier_after: LeagueTier
+    reward_amole: int
+
+
+def close_group(
+    tier: LeagueTier, standings: Iterable[Standing], hidden: frozenset[str] = frozenset()
+) -> list[MemberResult]:
+    """The final result of a group whose week has ended (FR-5).
+
+    Members who still show in leagues are ranked as the screen ranks them;
+    the top `promote` move up a tier and the bottom `demote` move down
+    (`zone_sizes`: small groups and the end tiers included), everyone else
+    stays, and places 1 to 3 earn `LEAGUE_REWARDS`. Members in `hidden`
+    (switched off after the week ended) keep their XP but get no place, no
+    move and no reward.
+    """
+    standings = list(standings)
+    ranked = rank(s for s in standings if s.user_id not in hidden)
+    zones = zone_sizes(len(ranked), tier)
+    results = []
+    for place, s in enumerate(ranked, start=1):
+        if place <= zones.promote:
+            after = tier_above(tier)
+        elif place > len(ranked) - zones.demote:
+            after = tier_below(tier)
+        else:
+            after = tier
+        reward = LEAGUE_REWARDS[place - 1] if place <= len(LEAGUE_REWARDS) else 0
+        results.append(MemberResult(s.user_id, s.weekly_xp, place, after, reward))
+    results.extend(
+        MemberResult(s.user_id, s.weekly_xp, None, tier, 0)
+        for s in standings
+        if s.user_id in hidden
+    )
+    return results
+
+
 def _id_hash(user_id: str) -> int:
     return int(hashlib.sha256(user_id.encode()).hexdigest(), 16)
 
@@ -156,9 +215,35 @@ class LeagueMembership:
 
 
 @dataclass(frozen=True)
-class GroupMember:
-    """A member as the league screen needs them."""
+class EndedGroup:
+    """A group of a week that has ended and isn't closed yet."""
 
+    group_id: str
+    week_start: date
+    tier: LeagueTier
+
+
+@dataclass(frozen=True)
+class LastResult:
+    """How the learner's last closed week went, until they have seen it."""
+
+    week_start: date
+    tier: LeagueTier
+    tier_after: LeagueTier
+    movement: Movement
+    # `None` if they had switched leagues off by the time it closed.
+    rank: int | None
+    group_size: int
+    weekly_xp: int
+    reward_amole: int
+
+
+@dataclass(frozen=True)
+class GroupMember:
+    """A member as the league screen and closing need them."""
+
+    # The membership row's id: the reference of a league reward.
+    member_id: str
     user_id: str
     first_name: str | None
     # The stored account settings, to leave out anyone who switched off.
@@ -197,6 +282,22 @@ class LeagueRepository(Protocol):
         ...
 
     async def remove_member(self, user_id: str, week: date) -> None: ...
+
+    async def ended_open_groups(self, user_id: str, week: date) -> list[EndedGroup]:
+        """The learner's groups from weeks before `week` not closed yet,
+        oldest first."""
+        ...
+
+    async def claim_group(self, group_id: str, now: datetime) -> bool:
+        """Marks the group closed unless it already is. True only for the
+        one caller that closed it; that caller then saves the results."""
+        ...
+
+    async def save_results(self, group_id: str, results: list[MemberResult]) -> None: ...
+
+    async def last_unseen_result(self, user_id: str) -> LastResult | None: ...
+
+    async def mark_results_seen(self, user_id: str, now: datetime) -> None: ...
 
     async def list_members(self, group_id: str) -> list[GroupMember]: ...
 

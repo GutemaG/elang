@@ -3,13 +3,22 @@ id: 074-league-week-close
 unit: 001-league-service
 intent: 023-weekly-leagues
 type: simple-construction-bolt
-status: planned
+status: complete
 stories: []
 created: '2026-10-01T06:14:45Z'
-started: null
-completed: null
+started: '2026-10-01T07:16:08Z'
+completed: '2026-10-01T08:02:11Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-10-01T07:18:59Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-10-01T07:51:35Z'
+    artifact: implementation-plan.md
+  - name: test
+    completed: '2026-10-01T08:02:11Z'
+    artifact: implementation-plan.md
 requires_bolts:
   - 073-league-groups-and-ranking
 enables_bolts:
@@ -34,7 +43,7 @@ An ended week is closed exactly once on the first league request after it: resul
 Written in the unit brief (`intents/023-weekly-leagues/units/001-league-service/unit-brief.md`), not
 as separate files, so `stories:` above is empty.
 
-- [ ] **005-close-a-week**
+- [x] **005-close-a-week**
 
 ## Bolt Type
 
@@ -43,9 +52,9 @@ as separate files, so `stories:` above is empty.
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

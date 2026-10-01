@@ -131,6 +131,7 @@ async def complete_practice_session_endpoint(
         completed_at=now,
         now=now,
         league_repo=league_repo,
+        amole_repo=amole_repo,
     )
     return CompletePracticeSessionResponse(
         xp_earned=result.xp_earned,

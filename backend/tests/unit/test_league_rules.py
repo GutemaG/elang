@@ -13,9 +13,13 @@ from app.domain.league import (
     LOWEST_TIER,
     TIERS,
     LeagueTier,
+    MemberResult,
+    Movement,
     Standing,
     Zones,
     avatar_colour,
+    close_group,
+    movement,
     rank,
     shown_name,
     tier_above,
@@ -145,3 +149,80 @@ class TestNamesAndColours:
         assert all(0 <= c < AVATAR_COLOURS for c in colours)
         assert set(colours) == set(range(AVATAR_COLOURS))
         assert avatar_colour("user-7") == avatar_colour("user-7")
+
+
+def _standings(xps: list[int]) -> list[Standing]:
+    """Members `m0`, `m1`, ... with these XP; earlier members reached their
+    total earlier, so ties keep this order."""
+    return [_s(f"m{i}", xp, i if xp else None, i) for i, xp in enumerate(xps)]
+
+
+def _moves(tier: LeagueTier, xps: list[int]) -> list[tuple[int | None, str, int]]:
+    by_user = {r.user_id: r for r in close_group(tier, _standings(xps))}
+    return [
+        (r.final_rank, movement(tier, r.tier_after).value, r.reward_amole)
+        for r in (by_user[f"m{i}"] for i in range(len(xps)))
+    ]
+
+
+class TestCloseGroup:
+    def test_alone_first_place_moves_up_and_earns_the_top_reward(self) -> None:
+        assert _moves(LeagueTier.LIGHT_ROAST, [5]) == [(1, "up", 100)]
+
+    def test_under_five_only_first_moves_and_only_existing_places_are_paid(self) -> None:
+        assert _moves(LeagueTier.LIGHT_ROAST, [10, 40, 20, 5]) == [
+            (3, "stayed", 40),
+            (1, "up", 100),
+            (2, "stayed", 60),
+            (4, "stayed", 0),
+        ]
+        assert _moves(LeagueTier.LIGHT_ROAST, [10, 20]) == [(2, "stayed", 60), (1, "up", 100)]
+
+    def test_five_move_one_up_and_one_down(self) -> None:
+        assert _moves(LeagueTier.MEDIUM_ROAST, [50, 40, 30, 20, 10]) == [
+            (1, "up", 100),
+            (2, "stayed", 60),
+            (3, "stayed", 40),
+            (4, "stayed", 0),
+            (5, "down", 0),
+        ]
+
+    def test_thirty_move_six_up_and_six_down(self) -> None:
+        results = close_group(LeagueTier.MEDIUM_ROAST, _standings(list(range(300, 0, -10))))
+        after = [r.tier_after for r in sorted(results, key=lambda r: r.final_rank or 0)]
+        assert after[:6] == [LeagueTier.DARK_ROAST] * 6
+        assert after[6:24] == [LeagueTier.MEDIUM_ROAST] * 18
+        assert after[24:] == [LeagueTier.LIGHT_ROAST] * 6
+        assert sum(r.reward_amole for r in results) == 200
+
+    def test_the_end_tiers_hold(self) -> None:
+        assert [m for _, m, _ in _moves(HIGHEST_TIER, [30, 20, 10, 5, 1])] == [
+            "stayed",
+            "stayed",
+            "stayed",
+            "stayed",
+            "down",
+        ]
+        assert [m for _, m, _ in _moves(LOWEST_TIER, [30, 20, 10, 5, 1])] == [
+            "up",
+            "stayed",
+            "stayed",
+            "stayed",
+            "stayed",
+        ]
+
+    def test_a_tie_goes_to_whoever_reached_it_first(self) -> None:
+        assert _moves(LeagueTier.LIGHT_ROAST, [20, 20]) == [(1, "up", 100), (2, "stayed", 60)]
+
+    def test_hidden_members_keep_their_xp_but_get_no_place_move_or_reward(self) -> None:
+        results = close_group(
+            LeagueTier.LIGHT_ROAST, _standings([50, 10]), hidden=frozenset({"m0"})
+        )
+        by_user = {r.user_id: r for r in results}
+        assert by_user["m0"] == MemberResult("m0", 50, None, LeagueTier.LIGHT_ROAST, 0)
+        assert by_user["m1"] == MemberResult("m1", 10, 1, LeagueTier.MEDIUM_ROAST, 100)
+
+    def test_movement(self) -> None:
+        assert movement(LeagueTier.GREEN_BEAN, LeagueTier.LIGHT_ROAST) is Movement.UP
+        assert movement(LeagueTier.LIGHT_ROAST, LeagueTier.GREEN_BEAN) is Movement.DOWN
+        assert movement(LeagueTier.LIGHT_ROAST, LeagueTier.LIGHT_ROAST) is Movement.STAYED

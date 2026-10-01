@@ -6,7 +6,7 @@ default_bolt_type: simple-construction-bolt
 phase: inception
 status: complete
 created: '2026-10-01T06:14:45Z'
-updated: '2026-10-01T07:13:41Z'
+updated: '2026-10-01T08:02:11Z'
 ---
 
 # Unit Brief: League Service
@@ -76,7 +76,7 @@ one endpoint's answer.
 | 002-join-a-weekly-group | Join a group of your tier with the week's first XP | Must | Complete (bolt 073) |
 | 003-ranking-and-league-endpoint | See your group ranked by the week's XP | Must | Complete (bolt 073) |
 | 004-show-in-leagues-setting | Stay out of leagues with one setting | Must | Complete (bolt 073) |
-| 005-close-a-week | Close an ended week with moves and rewards | Must | Planned |
+| 005-close-a-week | Close an ended week with moves and rewards | Must | Complete (bolt 074) |
 
 ### 001-first-name-from-google (FR-6)
 
@@ -143,21 +143,21 @@ sees my name if I don't want them to.
 **As a** learner, **I want** the week's result to be final and fair,
 **so that** moving up and the rewards mean something.
 
-- [ ] The first league request after a week ends closes its groups; no
+- [x] The first league request after a week ends closes its groups; no
   scheduler.
-- [ ] Each group is closed exactly once, also under simultaneous
+- [x] Each group is closed exactly once, also under simultaneous
   requests (enforced by the database).
-- [ ] Final XP and rank are stored; XP synced later for that week doesn't
+- [x] Final XP and rank are stored; XP synced later for that week doesn't
   change them.
-- [ ] Top 20% (rounded up) move up, bottom 20% (rounded up) move down,
+- [x] Top 20% (rounded up) move up, bottom 20% (rounded up) move down,
   within Green Bean and Golden Cup; groups under 5 move only first place
   up. All named constants.
-- [ ] 1st to 3rd receive 100, 60 and 40 Amole through the ledger
+- [x] 1st to 3rd receive 100, 60 and 40 Amole through the ledger
   (`league_reward`, unique per group and member); a smaller group pays
   only its places.
-- [ ] The endpoint returns the learner's last closed result until it is
+- [x] The endpoint returns the learner's last closed result until it is
   acknowledged, then never again.
-- [ ] A learner away for several weeks returns to the tier their last
+- [x] A learner away for several weeks returns to the tier their last
   closed week gave them.
 
 ---

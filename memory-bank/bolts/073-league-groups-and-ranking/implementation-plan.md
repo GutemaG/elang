@@ -310,3 +310,24 @@ intent needs only one migration.
   go-ahead, with checks before and after.
 - A real Google sign-in returning `given_name` (covered with the verifier's
   claims replaced, as for the email in bolt 034).
+
+---
+
+## Production (Neon), 2026-10-01
+
+Run with the owner's go-ahead, after the bolt was committed (2701420).
+The URL was read from `backend/.env copy` into the command's environment
+and never printed.
+
+- **Before**: revision `c8e1f4a7b2d5`, 3 users, 48 Amole rows, no
+  `users.first_name`, no league tables, `league_reward` not allowed.
+- **`alembic upgrade head`**: `c8e1f4a7b2d5 -> d3a7f2b9c6e1` in one
+  transaction.
+- **After**: revision `d3a7f2b9c6e1`, 3 users and 48 Amole rows
+  (unchanged); `users.first_name` is a nullable `character varying`;
+  `league_groups` and `league_members` exist with 0 rows; the unique
+  (user, week) constraint exists; `league_reward` is allowed.
+- **Still to do**: deploy the backend (push to GitHub) so the endpoint and
+  joining go live; then time `GET /api/v1/leagues/current` (NFR, p95 under
+  300 ms). The running backend ignores the new tables and column.
+
