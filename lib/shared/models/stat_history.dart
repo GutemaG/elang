@@ -81,6 +81,7 @@ class AmoleEntry {
     'streak_milestone_30' => '30-day streak',
     'bean_refill' => 'Bean refill',
     'practice_session' => 'Practice session',
+    'league_reward' => 'League reward',
     _ => 'Amole',
   };
 

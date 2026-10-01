@@ -21,6 +21,10 @@ class LeagueApiException implements Exception {
 abstract class LeagueApi {
   /// `GET /api/v1/leagues/current`. Throws [LeagueApiException].
   Future<CurrentLeague> current();
+
+  /// `POST /api/v1/leagues/last-result/seen`: the last-week result was
+  /// shown. Safe to repeat. Throws [LeagueApiException].
+  Future<void> markResultSeen();
 }
 
 /// The real [LeagueApi]. Like `HttpUserPreferencesApi`, it reads the
@@ -37,19 +41,40 @@ class HttpLeagueApi implements LeagueApi {
   final http.Client _client;
   final String _baseUrl;
 
-  @override
-  Future<CurrentLeague> current() async {
+  Future<Map<String, String>> _headers() async {
     final token = (await _sessionRepository.getSessionState()).token;
     if (token == null || token.isEmpty) {
       throw const LeagueApiException('No session token available');
     }
+    return {'Authorization': 'Bearer $token'};
+  }
+
+  @override
+  Future<void> markResultSeen() async {
+    final headers = await _headers();
     final http.Response response;
     try {
       response = await _client
-          .get(
-            Uri.parse('$_baseUrl/api/v1/leagues/current'),
-            headers: {'Authorization': 'Bearer $token'},
+          .post(
+            Uri.parse('$_baseUrl/api/v1/leagues/last-result/seen'),
+            headers: headers,
           )
+          .timeout(AuthConfig.requestTimeout);
+    } on Object {
+      throw const LeagueApiException('Network request failed');
+    }
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      throw LeagueApiException('Request failed (${response.statusCode})');
+    }
+  }
+
+  @override
+  Future<CurrentLeague> current() async {
+    final headers = await _headers();
+    final http.Response response;
+    try {
+      response = await _client
+          .get(Uri.parse('$_baseUrl/api/v1/leagues/current'), headers: headers)
           .timeout(AuthConfig.requestTimeout);
     } on Object {
       throw const LeagueApiException('Network request failed');

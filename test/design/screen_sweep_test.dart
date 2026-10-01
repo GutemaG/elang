@@ -22,7 +22,9 @@ import 'package:elang/features/auth/screens/onboarding_carousel_screen.dart';
 import 'package:elang/features/auth/screens/sign_in_screen.dart';
 import 'package:elang/features/auth/screens/splash_screen.dart';
 import 'package:elang/features/courses/course_picker.dart';
+import 'package:elang/features/league/league_dependencies.dart';
 import 'package:elang/features/league/league_models.dart';
+import 'package:elang/features/league/widgets/league_result_sheet.dart';
 import 'package:elang/features/league/league_store.dart';
 import 'package:elang/features/league/screens/league_screen.dart';
 import 'package:elang/features/lesson/screens/download_management_screen.dart';
@@ -217,6 +219,7 @@ Widget _dashboard(
   ControllableLessonApi api, {
   CourseApi? courseApi,
   CourseCacheStore? cache,
+  CurrentLeague? league,
 }) {
   final connectivity = FakeConnectivityMonitor();
   final packStore = FakeLessonPackStore();
@@ -243,8 +246,38 @@ Widget _dashboard(
     soundPreferenceRepository: SoundPreferenceRepository(
       storage: InMemorySecureStorageService(),
     ),
+    league: league == null
+        ? null
+        : LeagueDependencies(
+            storage: InMemorySecureStorageService(),
+            sessionRepository: session,
+            api: FakeLeagueApi(league),
+            accountSettingsApi: FakeAccountSettingsApi(),
+          ),
   );
 }
+
+/// A league with a long tier line: 30 members, ranked 28th.
+CurrentLeague _dashboardLeague({String status = 'joined'}) {
+  final json = leagueJson(
+    status: status,
+    members: 30,
+    me: 28,
+    tier: 'medium_roast',
+  );
+  ((json['members']! as List)[27] as Map<String, Object?>)['weekly_xp'] = 12345;
+  return CurrentLeague.fromJson(json)!;
+}
+
+LeagueResult _leagueResult(String tier, String after, {int reward = 60}) =>
+    LeagueResult.fromJson({
+      'tier': tier,
+      'tier_after': after,
+      'rank': 22,
+      'group_size': 30,
+      'weekly_xp': 12345,
+      'reward_amole': reward,
+    })!;
 
 // ---------------------------------------------------------------------------
 // The lesson: one question of each type, with long prompts and answers.
@@ -617,6 +650,55 @@ final _scenes = <String, _Scene>{
     await tester.pumpWidget(_app(_dashboard(_dashboardApi()), scale));
     await tester.pumpAndSettle();
   },
+  'dashboard, with the league card': (tester, scale) async {
+    await tester.pumpWidget(
+      _app(_dashboard(_dashboardApi(), league: _dashboardLeague()), scale),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(LeagueCard.cardKey),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+  },
+  'dashboard, the league card before joining': (tester, scale) async {
+    await tester.pumpWidget(
+      _app(
+        _dashboard(
+          _dashboardApi(),
+          league: _dashboardLeague(status: 'not_joined'),
+        ),
+        scale,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(LeagueCard.cardKey),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+  },
+  'league result, moved up': (tester, scale) => _popup(
+    tester,
+    scale,
+    (c) => showLeagueResultSheet(c, _leagueResult('dark_roast', 'golden_cup')),
+  ),
+  'league result, stayed': (tester, scale) => _popup(
+    tester,
+    scale,
+    (c) => showLeagueResultSheet(
+      c,
+      _leagueResult('medium_roast', 'medium_roast', reward: 0),
+    ),
+  ),
+  'league result, dropped': (tester, scale) => _popup(
+    tester,
+    scale,
+    (c) => showLeagueResultSheet(
+      c,
+      _leagueResult('medium_roast', 'light_roast', reward: 0),
+    ),
+  ),
   'dashboard, offline with a saved copy': (tester, scale) async {
     final cache = InMemoryCourseCacheStore();
     final inner = FakeCourseApi(courses: const [_amharic]);
@@ -868,6 +950,15 @@ final _shows = <String, Finder>{
   'dashboard, offline with a saved copy': find.text(
     'Offline, showing saved progress',
   ),
+  'dashboard, with the league card': find.text(
+    '28th of 30 · 12345 XP this week',
+  ),
+  'dashboard, the league card before joining': find.text(
+    "Join this week's league",
+  ),
+  'league result, moved up': find.text('You moved up to Golden Cup!'),
+  'league result, stayed': find.text('You stayed in Medium Roast'),
+  'league result, dropped': find.text('You dropped to Light Roast'),
   'dashboard, failed to load': find.text("Couldn't load your skill tree"),
   'course picker': find.text('Choose a course'),
   'home placeholder': find.byType(HomePlaceholderScreen),

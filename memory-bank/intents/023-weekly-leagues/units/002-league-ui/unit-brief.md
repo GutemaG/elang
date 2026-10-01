@@ -6,7 +6,7 @@ default_bolt_type: simple-construction-bolt
 phase: inception
 status: complete
 created: '2026-10-01T06:14:45Z'
-updated: '2026-10-01T08:49:46Z'
+updated: '2026-10-01T09:35:39Z'
 ---
 
 # Unit Brief: League UI
@@ -53,8 +53,8 @@ returns.
 |----------|-------|----------|--------|
 | 006-league-screen | The league screen | Must | Complete (bolt 075) |
 | 007-show-in-leagues-switch | The switch and the name notice | Must | Complete (bolt 075) |
-| 008-week-result-sheet | Last week's result, shown once | Must | Planned |
-| 009-dashboard-league-card | Tier and rank on the dashboard | Must | Planned |
+| 008-week-result-sheet | Last week's result, shown once | Must | Complete (bolt 076) |
+| 009-dashboard-league-card | Tier and rank on the dashboard | Must | Complete (bolt 076) |
 
 ### 006-league-screen (FR-9, FR-2)
 
@@ -92,10 +92,10 @@ stay out, **so that** I'm comfortable taking part.
 **As a** learner, **I want** to hear how last week went, **so that**
 moving up feels like an event.
 
-- [ ] When the endpoint returns a last-week result, a sheet shows it:
+- [x] When the endpoint returns a last-week result, a sheet shows it:
   moved up (to which tier), stayed, or moved down, with the place and any
   Amole earned.
-- [ ] Closing the sheet acknowledges it, so it is shown once; offline it
+- [x] Closing the sheet acknowledges it, so it is shown once; offline it
   waits for the next time.
 
 ### 009-dashboard-league-card (FR-10)
@@ -103,10 +103,10 @@ moving up feels like an event.
 **As a** learner, **I want** my tier and rank on the home screen, **so
 that** I'm reminded of the league every day.
 
-- [ ] The dashboard shows "Light Roast · 4th", or "Join this week's
+- [x] The dashboard shows "Light Roast · 4th", or "Join this week's
   league" before the first XP, or nothing when switched off; tapping it
   opens the league screen.
-- [ ] It refreshes after a lesson or practice session, without a restart.
+- [x] It refreshes after a lesson or practice session, without a restart.
 
 ---
 

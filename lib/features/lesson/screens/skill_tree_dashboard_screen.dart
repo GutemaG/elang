@@ -39,8 +39,12 @@ import '../../courses/course_badge.dart';
 import '../../courses/course_panel.dart';
 import '../../courses/course_picker.dart';
 import '../../courses/course_rail_source.dart';
+import '../../league/league_api.dart';
 import '../../league/league_dependencies.dart';
+import '../../league/league_models.dart';
 import '../../league/screens/league_screen.dart';
+import '../../league/widgets/league_result_sheet.dart';
+import '../../league/widgets/league_widgets.dart';
 import '../../settings/screens/settings_screen.dart';
 import '../widgets/category_banner.dart';
 import '../widgets/dashboard_header.dart';
@@ -237,12 +241,41 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   GlobalKey _dividerKey(int index) =>
       _dividerKeys.putIfAbsent(index, GlobalKey.new);
 
+  /// The learner's league for the card (023-weekly-leagues, story 009);
+  /// `null` shows no card.
+  CurrentLeague? _league;
+
+  /// Loads the league apart from the tree, so it never holds up or breaks
+  /// the dashboard: the saved copy first, then a fresh one (saved in turn),
+  /// which may carry last week's result to show. Offline, the saved copy
+  /// stays.
+  Future<void> _loadLeague() async {
+    final league = widget.league;
+    if (league == null) return;
+    if (_league == null) {
+      final saved = await league.store.read();
+      if (saved != null && mounted && _league == null) {
+        setState(() => _league = saved.league);
+      }
+    }
+    try {
+      final fresh = await league.api.current();
+      unawaited(league.store.save(fresh, DateTime.now()));
+      if (!mounted) return;
+      setState(() => _league = fresh);
+      await league.showResultOnce(context, fresh);
+    } on LeagueApiException {
+      // Offline: whatever is showing stays.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _pendingSeen = widget.syncEngine.pendingCount;
     widget.syncEngine.addListener(_onSyncChanged);
     _future = _load();
+    unawaited(_loadLeague());
     // So a previously-downloaded pack shows as downloaded immediately,
     // without the user re-tapping the download affordance.
     unawaited(widget.lessonPackDownloader.refreshDownloadedStatuses());
@@ -429,16 +462,18 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     );
   }
 
-  void _openLeague(LeagueDependencies league) {
-    Navigator.of(context).push<void>(
+  Future<void> _openLeague(LeagueDependencies league) async {
+    await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => LeagueScreen(
           api: league.api,
           store: league.store,
           accountSettingsApi: league.accountSettingsApi,
+          onLeague: league.showResultOnce,
         ),
       ),
     );
+    if (mounted) unawaited(_loadLeague());
   }
 
   void _openSettings() {
@@ -576,6 +611,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     setState(() {
       _future = _load();
     });
+    unawaited(_loadLeague());
     if (scrollToTop) _section = 0;
     if (scrollToTop && _scrollController.hasClients) {
       _scrollController.animateTo(
@@ -924,6 +960,23 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                 ),
               ),
             ),
+            // 023-weekly-leagues, story 009: none when switched off.
+            if ((widget.league, _league) case (final league?, final current?)
+                when current.status != LeagueStatus.hidden)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.marginMobile,
+                  0,
+                  AppSpacing.marginMobile,
+                  AppSpacing.spaceSm,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: LeagueCard(
+                    league: current,
+                    onTap: () => _openLeague(league),
+                  ),
+                ),
+              ),
             for (int i = 0; i < categories.length; i++) ...[
               // A quiet divider instead of a banner (FR-3). The first
               // section has none: the header names it at the top.
@@ -1201,6 +1254,59 @@ class _PracticeEntryCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// The learner's league on the dashboard (023-weekly-leagues, story 009):
+/// the tier with the place and the week's XP, or an invitation to join
+/// before the first XP of the week. Opens the league screen.
+class LeagueCard extends StatelessWidget {
+  const LeagueCard({super.key, required this.league, required this.onTap});
+
+  final CurrentLeague league;
+  final VoidCallback onTap;
+
+  static const cardKey = ValueKey('dashboard-league-card');
+
+  @override
+  Widget build(BuildContext context) {
+    final me = league.members.where((m) => m.isMe).firstOrNull;
+    final joined = league.status == LeagueStatus.joined && me != null;
+    final title = joined ? league.tier.title : "Join this week's league";
+    final subtitle = joined
+        ? '${ordinal(me.rank)} of ${league.members.length} · '
+              '${me.weeklyXp} XP this week'
+        : 'Earn XP to join · ${league.tier.title}';
+    return AppCard(
+      key: cardKey,
+      onTap: onTap,
+      child: Row(
+        children: [
+          TierBadge(tier: league.tier, size: IconBadge.defaultSize),
+          const SizedBox(width: AppSpacing.spaceSm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.headlineSm.copyWith(
+                    color: context.colors.onSurface,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: AppTypography.bodySm.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: context.colors.onSurfaceVariant),
+        ],
+      ),
     );
   }
 }

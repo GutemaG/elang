@@ -249,8 +249,8 @@
 
 - [x] **006-league-screen** (league-ui): The league screen - Must - ✅ COMPLETED (bolt 075-league-screen)
 - [x] **007-show-in-leagues-switch** (league-ui): The switch and the name notice - Must - ✅ COMPLETED (bolt 075-league-screen)
-- [ ] **008-week-result-sheet** (league-ui): Last week's result, shown once - Must - Planned (bolt 076-league-results-and-dashboard)
-- [ ] **009-dashboard-league-card** (league-ui): Tier and rank on the dashboard - Must - Planned (bolt 076-league-results-and-dashboard)
+- [x] **008-week-result-sheet** (league-ui): Last week's result, shown once - Must - ✅ COMPLETED (bolt 076-league-results-and-dashboard)
+- [x] **009-dashboard-league-card** (league-ui): Tier and rank on the dashboard - Must - ✅ COMPLETED (bolt 076-league-results-and-dashboard)
 
 ---
 

@@ -63,6 +63,15 @@ class FakeLeagueApi implements LeagueApi {
     if (offline) throw const LeagueApiException('offline');
     return next;
   }
+
+  /// How often the last-week result was marked seen.
+  int seenCalls = 0;
+
+  @override
+  Future<void> markResultSeen() async {
+    seenCalls++;
+    if (offline) throw const LeagueApiException('offline');
+  }
 }
 
 /// Saves whatever it is given, or fails when [fail].

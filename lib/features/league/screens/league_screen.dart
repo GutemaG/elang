@@ -34,12 +34,17 @@ class LeagueScreen extends StatefulWidget {
     required this.store,
     required this.accountSettingsApi,
     this.clock,
+    this.onLeague,
   });
 
   final LeagueApi api;
   final LeagueStore store;
   final AccountSettingsApi accountSettingsApi;
   final DateTime Function()? clock;
+
+  /// Called with each freshly fetched league, so the last-week result can
+  /// be shown (`LeagueDependencies.showResultOnce`).
+  final void Function(BuildContext context, CurrentLeague league)? onLeague;
 
   static const noticeKey = ValueKey('league-notice');
   static const offlineKey = ValueKey('league-offline');
@@ -70,7 +75,13 @@ class _LeagueScreenState extends State<LeagueScreen> {
     super.dispose();
   }
 
-  void _changed() => setState(() {});
+  void _changed() {
+    setState(() {});
+    final league = _controller.league;
+    if (_controller.state == LeagueLoadState.ready && league != null) {
+      widget.onLeague?.call(context, league);
+    }
+  }
 
   /// Turns "Show me in leagues" on or off, then reloads the league.
   Future<void> _setShowInLeagues(bool show) async {
