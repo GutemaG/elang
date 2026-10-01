@@ -321,14 +321,13 @@ class _Ranking extends StatelessWidget {
         );
       }
     }
+    // No padding around the rows, so the learner's highlighted row reaches
+    // the card's edges (the card clips it to its rounded corners).
     return AppCard(
       padding: AppCardPadding.none,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceXs),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: rows,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: rows,
       ),
     );
   }

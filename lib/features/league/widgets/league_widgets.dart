@@ -78,7 +78,7 @@ class LeagueRow extends StatelessWidget {
         color: me ? tone.surface : null,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.spaceMd,
-          vertical: AppSpacing.spaceXs,
+          vertical: AppSpacing.spaceSm,
         ),
         child: Row(
           children: [
