@@ -243,12 +243,12 @@
 - [x] **002-join-a-weekly-group** (league-service): Join a group of your tier with the week's first XP - Must - ✅ COMPLETED (bolt 073-league-groups-and-ranking)
 - [x] **003-ranking-and-league-endpoint** (league-service): See your group ranked by the week's XP - Must - ✅ COMPLETED (bolt 073-league-groups-and-ranking)
 - [x] **004-show-in-leagues-setting** (league-service): Stay out of leagues with one setting - Must - ✅ COMPLETED (bolt 073-league-groups-and-ranking)
-- [ ] **005-close-a-week** (league-service): Close an ended week with moves and rewards - Must - Planned (bolt 074-league-week-close)
+- [x] **005-close-a-week** (league-service): Close an ended week with moves and rewards - Must - ✅ COMPLETED (bolt 074-league-week-close)
 
 #### Unit: 002-league-ui
 
-- [ ] **006-league-screen** (league-ui): The league screen - Must - Planned (bolt 075-league-screen)
-- [ ] **007-show-in-leagues-switch** (league-ui): The switch and the name notice - Must - Planned (bolt 075-league-screen)
+- [x] **006-league-screen** (league-ui): The league screen - Must - ✅ COMPLETED (bolt 075-league-screen)
+- [x] **007-show-in-leagues-switch** (league-ui): The switch and the name notice - Must - ✅ COMPLETED (bolt 075-league-screen)
 - [ ] **008-week-result-sheet** (league-ui): Last week's result, shown once - Must - Planned (bolt 076-league-results-and-dashboard)
 - [ ] **009-dashboard-league-card** (league-ui): Tier and rank on the dashboard - Must - Planned (bolt 076-league-results-and-dashboard)
 

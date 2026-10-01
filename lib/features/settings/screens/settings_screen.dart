@@ -7,6 +7,9 @@ import '../../../shared/services/session_api.dart';
 import '../../../shared/services/session_repository.dart';
 import '../../../shared/services/sound_preference_repository.dart';
 import '../../../shared/services/user_preferences_api.dart';
+import '../../../shared/settings/account_settings_api.dart';
+import '../../../shared/settings/known_settings.dart';
+import '../../../shared/settings/remote_settings_controller.dart';
 import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
@@ -90,6 +93,7 @@ class SettingsScreen extends StatefulWidget {
     required this.soundPreferenceRepository,
     required this.sessionRepository,
     this.reminders,
+    this.accountSettingsApi,
   });
 
   final SessionApi sessionApi;
@@ -101,6 +105,13 @@ class SettingsScreen extends StatefulWidget {
   /// The 8 pm reminder the Notifications switch controls
   /// (021-daily-reminder); `null` keeps the switch a saved preference only.
   final ReminderService? reminders;
+
+  /// Saves account settings ("Show me in leagues", 023-weekly-leagues);
+  /// `null` leaves the League section out.
+  final AccountSettingsApi? accountSettingsApi;
+
+  /// The "Show me in leagues" switch.
+  static const showInLeaguesKey = ValueKey('settings-show-in-leagues');
 
   /// The Appearance row (System, Light or Dark).
   static const appearanceRowKey = ValueKey('settings-appearance');
@@ -173,6 +184,23 @@ class _SettingsScreenState extends State<SettingsScreen>
       builder: (context) => _AppearanceSheet(selected: appearance.value),
     );
     if (mode != null) await appearance.choose(mode);
+  }
+
+  Future<void> _setShowInLeagues(
+    RemoteSettingsController settings,
+    AccountSettingsApi api,
+    bool show,
+  ) async {
+    try {
+      await settings.updateAccount({
+        AccountSettings.showInLeagues.key: show,
+      }, api);
+    } on AccountSettingsException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't save. Check your connection.")),
+      );
+    }
   }
 
   Future<void> _pickCourse() async {
@@ -335,6 +363,27 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ),
               ],
             ),
+            // 023-weekly-leagues, story 007. The app always provides the
+            // settings scope; a screen pumped on its own may not.
+            if ((
+                  RemoteSettingsScope.maybeOf(context),
+                  widget.accountSettingsApi,
+                )
+                case (final settings?, final api?)) ...[
+              const SectionHeader(title: 'League'),
+              ListRowGroup(
+                children: [
+                  SwitchRow(
+                    key: SettingsScreen.showInLeaguesKey,
+                    icon: Icons.emoji_events,
+                    title: 'Show me in leagues',
+                    subtitle: 'Others in your league see your first name',
+                    value: settings.account.get(AccountSettings.showInLeagues),
+                    onChanged: (show) => _setShowInLeagues(settings, api, show),
+                  ),
+                ],
+              ),
+            ],
             const SectionHeader(title: 'About'),
             ListRowGroup(
               children: [

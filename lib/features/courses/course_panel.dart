@@ -28,6 +28,7 @@ class CoursePanel extends StatelessWidget {
     required this.onAddCourse,
     required this.onSettings,
     required this.onDownloads,
+    this.onLeague,
     this.loading = false,
     this.onRetry,
   });
@@ -39,6 +40,9 @@ class CoursePanel extends StatelessWidget {
   final VoidCallback onAddCourse;
   final VoidCallback onSettings;
   final VoidCallback onDownloads;
+
+  /// Opens the weekly league (023-weekly-leagues); no row without it.
+  final VoidCallback? onLeague;
   final bool loading;
 
   /// Non-null when the course list failed to load.
@@ -76,6 +80,13 @@ class CoursePanel extends StatelessWidget {
               title: 'Manage downloads',
               onTap: onDownloads,
             ),
+            if (onLeague != null)
+              ListRow(
+                key: const ValueKey('course-panel-league'),
+                icon: Icons.emoji_events_outlined,
+                title: 'Weekly league',
+                onTap: onLeague,
+              ),
           ],
         ),
       ),

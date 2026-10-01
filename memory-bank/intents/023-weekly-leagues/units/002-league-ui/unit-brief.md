@@ -6,7 +6,7 @@ default_bolt_type: simple-construction-bolt
 phase: inception
 status: complete
 created: '2026-10-01T06:14:45Z'
-updated: '2026-10-01T06:14:45Z'
+updated: '2026-10-01T08:49:46Z'
 ---
 
 # Unit Brief: League UI
@@ -51,8 +51,8 @@ returns.
 
 | Story ID | Title | Priority | Status |
 |----------|-------|----------|--------|
-| 006-league-screen | The league screen | Must | Planned |
-| 007-show-in-leagues-switch | The switch and the name notice | Must | Planned |
+| 006-league-screen | The league screen | Must | Complete (bolt 075) |
+| 007-show-in-leagues-switch | The switch and the name notice | Must | Complete (bolt 075) |
 | 008-week-result-sheet | Last week's result, shown once | Must | Planned |
 | 009-dashboard-league-card | Tier and rank on the dashboard | Must | Planned |
 
@@ -61,16 +61,16 @@ returns.
 **As a** learner, **I want** to see my group's ranking and the time left,
 **so that** I know what it takes to move up.
 
-- [ ] Rows show rank, avatar (initial on its colour), shown name and
+- [x] Rows show rank, avatar (initial on its colour), shown name and
   weekly XP; my row is highlighted; the top three show their Amole.
-- [ ] Dividers mark the move-up and move-down zones, sized by the
+- [x] Dividers mark the move-up and move-down zones, sized by the
   endpoint.
-- [ ] The tier (name, icon, palette colour) and the time left are shown.
-- [ ] Not joined yet: "Earn XP this week to join the league" and a button
+- [x] The tier (name, icon, palette colour) and the time left are shown.
+- [x] Not joined yet: "Earn XP this week to join the league" and a button
   to start a lesson.
-- [ ] Offline: the last saved copy, marked as not up to date; never an
+- [x] Offline: the last saved copy, marked as not up to date; never an
   error screen.
-- [ ] Both themes, design-system components and palette roles only; in
+- [x] Both themes, design-system components and palette roles only; in
   the screen sweep.
 
 ### 007-show-in-leagues-switch (FR-7, FR-6)
@@ -78,13 +78,13 @@ returns.
 **As a** learner, **I want** to know who sees my name and to be able to
 stay out, **so that** I'm comfortable taking part.
 
-- [ ] Settings has "Show me in leagues", read from the account settings
+- [x] Settings has "Show me in leagues", read from the account settings
   (`show_in_leagues` in `AccountSettings`, one line) and written with
   `PATCH /api/v1/users/me/settings`; a failed write puts the switch back
   and says so.
-- [ ] The first time the league screen opens, it explains that others in
+- [x] The first time the league screen opens, it explains that others in
   the group see your first name, with a link to the switch; shown once.
-- [ ] Switched off: the league screen explains it and offers to turn it
+- [x] Switched off: the league screen explains it and offers to turn it
   on.
 
 ### 008-week-result-sheet (FR-9)

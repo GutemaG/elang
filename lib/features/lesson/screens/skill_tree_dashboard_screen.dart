@@ -39,6 +39,8 @@ import '../../courses/course_badge.dart';
 import '../../courses/course_panel.dart';
 import '../../courses/course_picker.dart';
 import '../../courses/course_rail_source.dart';
+import '../../league/league_dependencies.dart';
+import '../../league/screens/league_screen.dart';
 import '../../settings/screens/settings_screen.dart';
 import '../widgets/category_banner.dart';
 import '../widgets/dashboard_header.dart';
@@ -80,6 +82,7 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     this.courseCache,
     this.mediaCache,
     this.reminders,
+    this.league,
   });
 
   final LessonApi lessonApi;
@@ -98,6 +101,9 @@ class SkillTreeDashboardScreen extends StatefulWidget {
   /// reminder skips a day already done (021-daily-reminder); `null` keeps
   /// no reminders.
   final ReminderService? reminders;
+
+  /// The weekly league (023-weekly-leagues); `null` hides its entry.
+  final LeagueDependencies? league;
 
   /// The course list and switching (010-multi-language-courses): opened from
   /// the course chip, and threaded down to Settings.
@@ -423,10 +429,23 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     );
   }
 
+  void _openLeague(LeagueDependencies league) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => LeagueScreen(
+          api: league.api,
+          store: league.store,
+          accountSettingsApi: league.accountSettingsApi,
+        ),
+      ),
+    );
+  }
+
   void _openSettings() {
     Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => SettingsScreen(
+          accountSettingsApi: widget.league?.accountSettingsApi,
           sessionApi: SessionApi(),
           userPreferencesApi: widget.userPreferencesApi,
           soundPreferenceRepository: widget.soundPreferenceRepository,
@@ -770,6 +789,13 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                 onDownloads: () {
                   _closePanel();
                   _openDownloadManagement();
+                },
+                onLeague: switch (widget.league) {
+                  final league? => () {
+                    _closePanel();
+                    _openLeague(league);
+                  },
+                  null => null,
                 },
                 onRetry: snapshot.hasError
                     ? () => setState(() => _railFuture = _loadRail())

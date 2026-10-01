@@ -22,6 +22,9 @@ import 'package:elang/features/auth/screens/onboarding_carousel_screen.dart';
 import 'package:elang/features/auth/screens/sign_in_screen.dart';
 import 'package:elang/features/auth/screens/splash_screen.dart';
 import 'package:elang/features/courses/course_picker.dart';
+import 'package:elang/features/league/league_models.dart';
+import 'package:elang/features/league/league_store.dart';
+import 'package:elang/features/league/screens/league_screen.dart';
 import 'package:elang/features/lesson/screens/download_management_screen.dart';
 import 'package:elang/features/lesson/screens/lesson_complete_screen.dart';
 import 'package:elang/features/lesson/screens/lesson_screen.dart';
@@ -53,6 +56,9 @@ import 'package:elang/shared/services/session_api.dart';
 import 'package:elang/shared/services/session_repository.dart';
 import 'package:elang/shared/services/sound_preference_repository.dart';
 import 'package:elang/shared/services/sync_engine.dart';
+import 'package:elang/shared/services/app_config_api.dart';
+import 'package:elang/shared/settings/remote_settings_controller.dart';
+import 'package:elang/shared/settings/remote_settings_store.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/appearance.dart';
 import 'package:elang/shared/widgets/app_sheet.dart';
@@ -67,6 +73,7 @@ import '../helpers/fake_lesson_audio_player.dart';
 import '../helpers/fake_lesson_pack_store.dart';
 import '../helpers/fake_native_sign_in.dart';
 import '../helpers/fake_pending_sync_queue_store.dart';
+import '../helpers/fake_league_api.dart';
 import '../helpers/fake_user_preferences_api.dart';
 import '../helpers/in_memory_secure_storage_service.dart';
 import '../helpers/test_appearance.dart';
@@ -457,7 +464,7 @@ SessionApi _sessionApi({bool fails = false}) => SessionApi(
   }),
 );
 
-Future<Widget> _settings({bool fails = false}) async {
+Future<Widget> _settings({bool fails = false, bool leagues = false}) async {
   final sessions = SessionRepository(storage: InMemorySecureStorageService());
   await sessions.saveSession(
     SessionState(
@@ -476,6 +483,7 @@ Future<Widget> _settings({bool fails = false}) async {
       storage: InMemorySecureStorageService(),
     ),
     sessionRepository: sessions,
+    accountSettingsApi: leagues ? FakeAccountSettingsApi() : null,
   );
 }
 
@@ -512,6 +520,37 @@ Future<Widget> _downloads({bool empty = false}) async {
       connectivityMonitor: FakeConnectivityMonitor(),
       queueStore: FakePendingSyncQueueStore(),
     ),
+  );
+}
+
+/// The weekly league (023-weekly-leagues, bolt 075): a full group of 30
+/// with long names, or another status; [offline] with a saved copy, or
+/// with nothing saved when [saved] is false.
+Future<Widget> _league({
+  String status = 'joined',
+  bool offline = false,
+  bool saved = true,
+  bool notice = true,
+}) async {
+  final json = leagueJson(status: status, members: 30, me: 12);
+  final members = json['members']! as List;
+  (members[0] as Map<String, Object?>)['name'] =
+      'Tsehaynesh Gebremariam Woldegiorgis';
+  (members[11] as Map<String, Object?>)['weekly_xp'] = 12345;
+  final api = FakeLeagueApi(CurrentLeague.fromJson(json))..offline = offline;
+  final store = LeagueStore(storage: InMemorySecureStorageService());
+  if (offline && saved) {
+    await store.save(
+      CurrentLeague.fromJson(json)!,
+      DateTime.utc(2026, 10, 2, 7),
+    );
+  }
+  if (!notice) await store.markNoticeSeen();
+  return LeagueScreen(
+    api: api,
+    store: store,
+    accountSettingsApi: FakeAccountSettingsApi(),
+    clock: () => DateTime.utc(2026, 10, 2, 9),
   );
 }
 
@@ -757,6 +796,52 @@ final _scenes = <String, _Scene>{
     await tester.pumpWidget(_app(await _downloads(), scale));
     await tester.pumpAndSettle();
   },
+  'league': (tester, scale) async {
+    await tester.pumpWidget(_app(await _league(), scale));
+    await tester.pumpAndSettle();
+  },
+  'league, scrolled to the bottom': (tester, scale) async {
+    await tester.pumpWidget(_app(await _league(notice: false), scale));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -4000));
+    await tester.pumpAndSettle();
+  },
+  'league, not joined': (tester, scale) async {
+    await tester.pumpWidget(_app(await _league(status: 'not_joined'), scale));
+    await tester.pumpAndSettle();
+  },
+  'league, switched off': (tester, scale) async {
+    await tester.pumpWidget(_app(await _league(status: 'hidden'), scale));
+    await tester.pumpAndSettle();
+  },
+  'league, offline with a saved copy': (tester, scale) async {
+    await tester.pumpWidget(_app(await _league(offline: true), scale));
+    await tester.pumpAndSettle();
+  },
+  'league, offline with nothing saved': (tester, scale) async {
+    await tester.pumpWidget(
+      _app(await _league(offline: true, saved: false), scale),
+    );
+    await tester.pumpAndSettle();
+  },
+  'settings, the league switch': (tester, scale) async {
+    final settings = RemoteSettingsController(
+      store: RemoteSettingsStore(storage: InMemorySecureStorageService()),
+      configApi: AppConfigApi(
+        client: MockClient((_) async => throw http.ClientException('x')),
+      ),
+    );
+    final screen = await _settings(leagues: true);
+    await tester.pumpWidget(
+      _app(RemoteSettingsScope(controller: settings, child: screen), scale),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(SettingsScreen.showInLeaguesKey),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+  },
   'downloads, empty': (tester, scale) async {
     await tester.pumpWidget(_app(await _downloads(empty: true), scale));
     await tester.pumpAndSettle();
@@ -806,6 +891,13 @@ final _shows = <String, Finder>{
   'settings, the log-out dialog': find.text('Log out?'),
   'downloads': find.textContaining('Akkam'),
   'downloads, empty': find.text('No downloaded lessons yet.'),
+  'league': find.byKey(LeagueScreen.noticeKey),
+  'league, scrolled to the bottom': find.text('Moving down'),
+  'league, not joined': find.text('Earn XP this week to join'),
+  'league, switched off': find.text("You're not in a league"),
+  'league, offline with a saved copy': find.byKey(LeagueScreen.offlineKey),
+  'league, offline with nothing saved': find.text('Connect to see your league'),
+  'settings, the league switch': find.text('Show me in leagues'),
   'downloads, the delete dialog': find.textContaining('Delete "Alphabet'),
 };
 

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../services/app_config_api.dart';
 import '../services/session_api.dart';
+import 'account_settings_api.dart';
 import 'known_settings.dart';
 import 'remote_settings_store.dart';
 
@@ -18,6 +19,7 @@ class RemoteSettingsController extends ChangeNotifier {
     required this._configApi,
     RemoteSettings? account,
     RemoteSettings? config,
+    this._accountUserId,
   }) : _account = account ?? RemoteSettings.empty,
        _config = config ?? RemoteSettings.empty;
 
@@ -26,18 +28,26 @@ class RemoteSettingsController extends ChangeNotifier {
   static Future<RemoteSettingsController> load({
     required RemoteSettingsStore store,
     required AppConfigApi configApi,
-  }) async => RemoteSettingsController(
-    store: store,
-    configApi: configApi,
-    account: (await store.readAccount())?.settings,
-    config: await store.readConfig(),
-  );
+  }) async {
+    final saved = await store.readAccount();
+    return RemoteSettingsController(
+      store: store,
+      configApi: configApi,
+      account: saved?.settings,
+      config: await store.readConfig(),
+      accountUserId: saved?.userId,
+    );
+  }
 
   final RemoteSettingsStore _store;
   final AppConfigApi _configApi;
 
   RemoteSettings _account;
   RemoteSettings _config;
+
+  /// The account [_account] belongs to, once known (the saved copy or a
+  /// session check); the copy on the phone is only kept with it.
+  String? _accountUserId;
 
   /// The signed-in learner's settings: read one with
   /// `account.get(AccountSettings.<name>)`.
@@ -49,11 +59,40 @@ class RemoteSettingsController extends ChangeNotifier {
   /// Takes the settings a session check returned, and keeps them.
   Future<void> applySession(SessionUser user) async {
     final received = RemoteSettings(user.settings);
+    _accountUserId = user.id;
     if (received != _account) {
       _account = received;
       notifyListeners();
     }
     await _store.saveAccount(user.id, received);
+  }
+
+  /// Changes account settings through [api] (023-weekly-leagues, story
+  /// 007): the change shows at once, then the stored map the backend
+  /// returns replaces it and is kept on the phone. If saving fails, the
+  /// change is put back and the [AccountSettingsException] rethrown.
+  Future<void> updateAccount(
+    Map<String, Object?> changes,
+    AccountSettingsApi api,
+  ) async {
+    final before = _account;
+    _account = RemoteSettings({...before.values, ...changes});
+    notifyListeners();
+    final Map<String, Object?> saved;
+    try {
+      saved = await api.update(changes);
+    } on AccountSettingsException {
+      _account = before;
+      notifyListeners();
+      rethrow;
+    }
+    final received = RemoteSettings(saved);
+    if (received != _account) {
+      _account = received;
+      notifyListeners();
+    }
+    final userId = _accountUserId;
+    if (userId != null) await _store.saveAccount(userId, received);
   }
 
   /// Fetches the app configuration; offline or on an error, the last copy
@@ -73,6 +112,7 @@ class RemoteSettingsController extends ChangeNotifier {
   /// signed-in account may have changed (sign-out, or a new sign-in), so
   /// one learner's settings are never read for another.
   Future<void> forgetAccount() async {
+    _accountUserId = null;
     if (_account != RemoteSettings.empty) {
       _account = RemoteSettings.empty;
       notifyListeners();
@@ -96,4 +136,10 @@ class RemoteSettingsScope extends InheritedNotifier<RemoteSettingsController> {
     assert(scope != null, 'No RemoteSettingsScope above this widget');
     return scope!.notifier!;
   }
+
+  /// Like [of], but `null` with no scope above (a screen pumped on its own
+  /// in a test).
+  static RemoteSettingsController? maybeOf(BuildContext context) => context
+      .dependOnInheritedWidgetOfExactType<RemoteSettingsScope>()
+      ?.notifier;
 }

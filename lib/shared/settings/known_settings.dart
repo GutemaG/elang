@@ -25,8 +25,12 @@ class KnownSetting<T extends Object> {
 /// then read it where it is used: `RemoteSettingsScope.of(context)
 /// .account.get(AccountSettings.reduceMotion)`.
 ///
-/// The backend's `ACCOUNT_SETTINGS` must list the same key. None yet.
-abstract final class AccountSettings {}
+/// The backend's `ACCOUNT_SETTINGS` must list the same key.
+abstract final class AccountSettings {
+  /// Off keeps the learner out of weekly leagues, so nobody sees their name
+  /// (023-weekly-leagues, story 007).
+  static const showInLeagues = KnownSetting<bool>('show_in_leagues', true);
+}
 
 /// **To add an app-wide value**, add one line here, then read it with
 /// `RemoteSettingsScope.of(context).config.get(AppConfig.<name>)`.

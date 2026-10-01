@@ -3,13 +3,22 @@ id: 075-league-screen
 unit: 002-league-ui
 intent: 023-weekly-leagues
 type: simple-construction-bolt
-status: planned
+status: complete
 stories: []
 created: '2026-10-01T06:14:45Z'
-started: null
-completed: null
+started: '2026-10-01T08:04:11Z'
+completed: '2026-10-01T08:49:46Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-10-01T08:29:24Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-10-01T08:39:25Z'
+    artifact: implementation-plan.md
+  - name: test
+    completed: '2026-10-01T08:49:46Z'
+    artifact: implementation-plan.md
 requires_bolts:
   - 073-league-groups-and-ranking
 enables_bolts:
@@ -34,8 +43,8 @@ The league screen with the group's ranking, zones, rewards and time left, a save
 Written in the unit brief (`intents/023-weekly-leagues/units/002-league-ui/unit-brief.md`), not
 as separate files, so `stories:` above is empty.
 
-- [ ] **006-league-screen**
-- [ ] **007-show-in-leagues-switch**
+- [x] **006-league-screen**
+- [x] **007-show-in-leagues-switch**
 
 ## Bolt Type
 
@@ -44,9 +53,9 @@ as separate files, so `stories:` above is empty.
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Expected Outputs
 

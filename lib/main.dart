@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'features/auth/auth_dependencies.dart';
 import 'features/auth/auth_routes.dart';
 import 'features/lesson/lesson_dependencies.dart';
+import 'features/league/league_dependencies.dart';
 import 'features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'features/settings/settings_dependencies.dart';
 import 'shared/licences/picture_credits.dart';
@@ -86,6 +87,11 @@ Future<void> main() async {
           sessionRepository: authDependencies.sessionRepository,
           soundPreferenceRepository: soundPreferenceRepository,
         ),
+        // The weekly league (023-weekly-leagues).
+        leagueDependencies: LeagueDependencies(
+          storage: storage,
+          sessionRepository: authDependencies.sessionRepository,
+        ),
       ),
     ),
   );
@@ -103,11 +109,15 @@ class BunaApp extends StatelessWidget {
     required this.lessonDependencies,
     required this.settingsDependencies,
     required this.appearance,
+    this.leagueDependencies,
   });
 
   final AuthDependencies authDependencies;
   final LessonDependencies lessonDependencies;
   final SettingsDependencies settingsDependencies;
+
+  /// The weekly league; `null` (tests) hides it.
+  final LeagueDependencies? leagueDependencies;
 
   /// System, Light or Dark: the learner's choice in Settings.
   final AppearanceController appearance;
@@ -155,6 +165,7 @@ class BunaApp extends StatelessWidget {
           userPreferencesApi: settingsDependencies.userPreferencesApi,
           soundPreferenceRepository:
               settingsDependencies.soundPreferenceRepository,
+          league: leagueDependencies,
         ),
       ),
     );
