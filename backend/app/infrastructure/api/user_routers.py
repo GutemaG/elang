@@ -7,10 +7,12 @@ shape. No business logic lives here.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends
 
+from app.application.league_use_cases import apply_league_visibility
 from app.application.use_cases import (
     read_app_config,
     update_account_settings,
@@ -21,6 +23,7 @@ from app.domain.services import UserPreferencesService
 from app.infrastructure.api.dependencies import (
     get_app_config_repository,
     get_current_user,
+    get_league_repository,
     get_user_preferences_service,
     get_user_repository,
 )
@@ -30,6 +33,7 @@ from app.infrastructure.api.user_schemas import (
     UserPreferencesResponse,
     UserPreferencesUpdateRequest,
 )
+from app.infrastructure.db.league_repository import SqlAlchemyLeagueRepository
 from app.infrastructure.db.repositories import (
     SqlAlchemyAppConfigRepository,
     SqlAlchemyUserRepository,
@@ -73,12 +77,17 @@ async def update_my_settings_endpoint(
     changes: dict[str, Any] = Body(...),
     user: User = Depends(get_current_user),
     user_repo: SqlAlchemyUserRepository = Depends(get_user_repository),
+    league_repo: SqlAlchemyLeagueRepository = Depends(get_league_repository),
 ) -> AccountSettingsResponse:
     """Bolt 071 (FR-8): merges a partial map of account settings and returns
     them all. An unknown key or a wrong type is `422 invalid_setting`, and
-    nothing is saved.
+    nothing is saved. Turning `show_in_leagues` off leaves this week's
+    league group at once (023-weekly-leagues, bolt 073).
     """
     settings = await update_account_settings(user_repo, user, changes)
+    await apply_league_visibility(
+        user=user, settings=settings, now=datetime.now(UTC), league_repo=league_repo
+    )
     return AccountSettingsResponse(settings=settings)
 
 

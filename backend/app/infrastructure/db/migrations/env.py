@@ -12,7 +12,10 @@ from app.config import get_settings
 # context's tables onto the shared `Base.metadata` -- required for Alembic
 # autogenerate to see them, since `env.py` only imports `models.py` (the
 # auth bounded context) directly otherwise.
-from app.infrastructure.db import lesson_models  # noqa: F401
+from app.infrastructure.db import (
+    league_models,  # noqa: F401
+    lesson_models,  # noqa: F401
+)
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.url import normalize_database_url
 

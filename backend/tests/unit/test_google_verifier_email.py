@@ -44,3 +44,29 @@ async def test_unverified_or_missing_email_is_dropped(
 ) -> None:
     verifier = _verifier_with_claims(monkeypatch, claims)
     assert await verifier.verify("t") == VerifiedIdentity("google-sub-1", None)
+
+
+# 023-weekly-leagues (bolt 073): Google's `given_name` becomes the first
+# name other learners see in a league.
+
+
+async def test_the_given_name_is_passed_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    verifier = _verifier_with_claims(monkeypatch, {"given_name": "  Abebe  "})
+    assert (await verifier.verify("t")).first_name == "Abebe"
+
+
+@pytest.mark.parametrize(
+    ("claims", "expected"),
+    [
+        ({}, None),
+        ({"given_name": "   "}, None),
+        ({"given_name": 42}, None),
+        ({"given_name": "A" * 150}, "A" * 100),
+        ({"given_name": "Tigist", "name": "Tigist Haile"}, "Tigist"),
+    ],
+)
+async def test_a_missing_blank_or_odd_given_name(
+    monkeypatch: pytest.MonkeyPatch, claims: dict[str, Any], expected: str | None
+) -> None:
+    verifier = _verifier_with_claims(monkeypatch, claims)
+    assert (await verifier.verify("t")).first_name == expected

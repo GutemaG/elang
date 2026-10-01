@@ -266,7 +266,7 @@ class AmoleTransactionModel(Base):
         CheckConstraint(
             "source IN ('wallet_created', 'migration_backfill', 'lesson_completion', "
             "'perfect_lesson', 'streak_milestone_7', 'streak_milestone_30', 'bean_refill', "
-            "'practice_session')",
+            "'practice_session', 'league_reward')",
             name="ck_amole_transactions_source",
         ),
         Index("ix_amole_transactions_user_id", "user_id"),

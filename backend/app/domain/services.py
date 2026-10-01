@@ -302,6 +302,9 @@ class AuthenticationService:
             # follows the account's Google email. Written only on change.
             if user.email != verified.email:
                 user = await self._user_repo.set_email(user.id, verified.email)
+            # Bolt 073: the league name follows the Google first name.
+            if user.first_name != verified.first_name:
+                user = await self._user_repo.set_first_name(user.id, verified.first_name)
         else:
             # Only ever consulted on the account-creation branch -- pending
             # selections on a returning-user sign-in are ignored entirely,
@@ -324,6 +327,7 @@ class AuthenticationService:
                     created_at=datetime.now(UTC),
                     active_course_id=course.id,
                     email=verified.email,
+                    first_name=verified.first_name,
                 ),
                 course,
             )

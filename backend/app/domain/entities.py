@@ -43,6 +43,10 @@ class User:
        `None` (ADR-16, bolt `034-admin-api-foundation`). Authentication is
        its only writer, and it is used only for the `ADMIN_EMAILS` check --
        never to find or merge accounts (invariant 1).
+    6. `first_name` is Google's verified `given_name` from the latest
+       sign-in, or `None` (023-weekly-leagues, bolt 073). Authentication is
+       its only writer; it is shown to other learners in a league and
+       nowhere else.
     """
 
     id: str
@@ -60,6 +64,7 @@ class User:
     # stored, a JSON map. Read them through `ACCOUNT_SETTINGS.resolve`, which
     # fills every known key missing here with its default.
     settings: dict[str, Any] = field(default_factory=dict)
+    first_name: str | None = None
 
 
 @dataclass

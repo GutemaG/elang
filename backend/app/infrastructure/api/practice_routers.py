@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Query
 
+from app.application.league_use_cases import join_league_week
 from app.application.lesson_use_cases import (
     complete_practice_session,
     get_due_count,
@@ -27,7 +28,7 @@ from app.domain.lesson.repositories import (
     UserVocabProgressRepository,
     VocabItemRepository,
 )
-from app.infrastructure.api.dependencies import get_current_user
+from app.infrastructure.api.dependencies import get_current_user, get_league_repository
 from app.infrastructure.api.exercise_mapping import to_exercise_response
 from app.infrastructure.api.lesson_dependencies import (
     get_amole_transaction_repository,
@@ -43,6 +44,7 @@ from app.infrastructure.api.lesson_schemas import (
     DueItemResponse,
     DueItemsResponse,
 )
+from app.infrastructure.db.league_repository import SqlAlchemyLeagueRepository
 
 router = APIRouter(prefix="/api/v1/practice", tags=["practice"])
 
@@ -104,21 +106,31 @@ async def complete_practice_session_endpoint(
     vocab_progress_repo: UserVocabProgressRepository = Depends(get_user_vocab_progress_repository),
     amole_repo: AmoleTransactionRepository = Depends(get_amole_transaction_repository),
     practice_attempt_repo: PracticeAttemptRepository = Depends(get_practice_attempt_repository),
+    league_repo: SqlAlchemyLeagueRepository = Depends(get_league_repository),
 ) -> CompletePracticeSessionResponse:
     """Story 002: a completed Practice session's account-ledger side --
     XP/Amole award and vocab-progress update. Idempotent on
     `request.session_id`. Deliberately does not touch streak or
     skill-progress (user decision, this bolt's Plan stage). 422
-    `invalid_practice_completion` for an empty result list.
+    `invalid_practice_completion` for an empty result list. The week's
+    first XP also joins the learner's league (023-weekly-leagues, bolt 073).
     """
+    now = datetime.now(UTC)
     result = await complete_practice_session(
         user_id=user.id,
         session_id=request.session_id,
         results=[(r.vocab_item_id, r.correct) for r in request.results],
-        now=datetime.now(UTC),
+        now=now,
         vocab_progress_repo=vocab_progress_repo,
         amole_repo=amole_repo,
         practice_attempt_repo=practice_attempt_repo,
+    )
+    await join_league_week(
+        user=user,
+        xp_earned=result.xp_earned,
+        completed_at=now,
+        now=now,
+        league_repo=league_repo,
     )
     return CompletePracticeSessionResponse(
         xp_earned=result.xp_earned,

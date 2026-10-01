@@ -111,12 +111,15 @@ class FakeTokenVerifier:
         subject: str | None = None,
         exception: Exception | None = None,
         email: str | None = None,
+        first_name: str | None = None,
     ) -> None:
         self.next_subject = subject
         self.next_exception = exception
         # The provider-verified email to vouch for (ADR-16); `None` is an
         # unverified or absent email.
         self.next_email = email
+        # Google's `given_name` to vouch for (bolt 073).
+        self.next_first_name = first_name
         self.calls: list[str] = []
 
     async def verify(self, token: str) -> VerifiedIdentity:
@@ -125,7 +128,9 @@ class FakeTokenVerifier:
             raise self.next_exception
         if self.next_subject is None:
             raise AssertionError("FakeTokenVerifier: no subject or exception configured")
-        return VerifiedIdentity(subject=self.next_subject, email=self.next_email)
+        return VerifiedIdentity(
+            subject=self.next_subject, email=self.next_email, first_name=self.next_first_name
+        )
 
     async def aclose(self) -> None:
         """No-op -- matches AppleTokenVerifier's interface for lifespan/teardown symmetry."""
@@ -165,6 +170,11 @@ class FakeUserRepository:
 
     async def set_email(self, user_id: str, email: str | None) -> User:
         user = replace(self._users[user_id], email=email)
+        self._users[user_id] = user
+        return user
+
+    async def set_first_name(self, user_id: str, first_name: str | None) -> User:
+        user = replace(self._users[user_id], first_name=first_name)
         self._users[user_id] = user
         return user
 

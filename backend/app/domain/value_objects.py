@@ -68,10 +68,13 @@ class VerifiedIdentity:
     `ProviderIdentity.provider_user_id`. `email` is set only when the
     provider itself verified it (Google's `email_verified`); it is used for
     the admin allow-list (ADR-16) and never for identifying an account.
+    `first_name` is Google's `given_name` (Apple's token carries no name),
+    shown to other learners in a league (023-weekly-leagues, bolt 073).
     """
 
     subject: str
     email: str | None = None
+    first_name: str | None = None
 
 
 @dataclass(frozen=True)

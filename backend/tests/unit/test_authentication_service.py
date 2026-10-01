@@ -241,3 +241,53 @@ class TestVerifiedEmail:
         result = await service.authenticate_with_apple("t", None, None)
 
         assert result.user.email is None
+
+
+class TestFirstName:
+    """023-weekly-leagues (bolt 073, story 001): sign-in records the Google
+    first name shown in leagues."""
+
+    async def test_new_user_is_created_with_it(self) -> None:
+        verifier = FakeTokenVerifier(subject="sub-name-1", first_name="Abebe")
+        service, _, _ = _make_service(google_verifier=verifier)
+
+        result = await service.authenticate_with_google("t", None, None)
+
+        assert result.user.first_name == "Abebe"
+
+    async def test_it_follows_the_latest_sign_in(self) -> None:
+        verifier = FakeTokenVerifier(subject="sub-name-2", first_name="Abebe")
+        service, user_repo, _ = _make_service(google_verifier=verifier)
+        first = await service.authenticate_with_google("t1", None, None)
+
+        verifier.next_first_name = "Abi"
+        changed = await service.authenticate_with_google("t2", None, None)
+
+        assert changed.user.id == first.user.id
+        assert user_repo._users[first.user.id].first_name == "Abi"
+        assert user_repo.update_calls == 0
+
+    async def test_unchanged_it_is_not_rewritten(self) -> None:
+        verifier = FakeTokenVerifier(subject="sub-name-3", first_name="Abebe")
+        user_repo = FakeUserRepository()
+        writes: list[str | None] = []
+        original = user_repo.set_first_name
+
+        async def counting(user_id: str, first_name: str | None) -> User:
+            writes.append(first_name)
+            return await original(user_id, first_name)
+
+        user_repo.set_first_name = counting  # type: ignore[method-assign]
+        service, _, _ = _make_service(google_verifier=verifier, user_repo=user_repo)
+
+        await service.authenticate_with_google("t1", None, None)
+        await service.authenticate_with_google("t2", None, None)
+
+        assert writes == []
+
+    async def test_apple_sign_in_has_none(self) -> None:
+        service, _, _ = _make_service(apple_verifier=FakeTokenVerifier(subject="apple-sub-9"))
+
+        result = await service.authenticate_with_apple("t", None, None)
+
+        assert result.user.first_name is None

@@ -32,6 +32,12 @@ class UserRepository(Protocol):
         field (User invariants 2 and 5)."""
         ...
 
+    async def set_first_name(self, user_id: str, first_name: str | None) -> User:
+        """Records the Google first name from a sign-in (bolt 073), the
+        authentication path's other write to an existing user (invariant
+        6)."""
+        ...
+
     async def set_settings(self, user_id: str, settings: dict[str, Any]) -> User:
         """Replaces the stored account settings (bolt 071). Callers merge
         and validate first (`update_account_settings`)."""

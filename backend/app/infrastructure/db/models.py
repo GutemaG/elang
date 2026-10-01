@@ -74,6 +74,9 @@ class UserModel(Base):
     settings: Mapped[dict[str, Any]] = mapped_column(
         JSON, nullable=False, default=dict, server_default=text("'{}'")
     )
+    # 023-weekly-leagues (bolt 073): Google's verified `given_name` from the
+    # latest sign-in, shown to the other learners in a league group.
+    first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
 
 class AppConfigModel(Base):

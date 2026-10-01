@@ -39,6 +39,7 @@ from sqlalchemy.ext.asyncio import (
 from app.infrastructure.api.admin_routers import router as admin_router
 from app.infrastructure.api.course_routers import router as course_router
 from app.infrastructure.api.error_handlers import register_exception_handlers
+from app.infrastructure.api.league_routers import router as league_router
 from app.infrastructure.api.lesson_routers import router as lesson_router
 from app.infrastructure.api.practice_routers import router as practice_router
 from app.infrastructure.api.routers import router as auth_router
@@ -48,7 +49,10 @@ from app.infrastructure.api.user_routers import router as user_router
 # Imported for its side effect of registering the lesson-content bounded
 # context's tables onto the shared `Base.metadata`, so `Base.metadata.create_all`
 # below (used by every DB-backed test in the suite) creates them too.
-from app.infrastructure.db import lesson_models  # noqa: F401
+from app.infrastructure.db import (
+    league_models,  # noqa: F401
+    lesson_models,  # noqa: F401
+)
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.session import get_db_session
 from tests.fakes import EN_AM_COURSE_ID
@@ -145,6 +149,7 @@ def make_client(app_engine: AsyncEngine) -> Generator[Any]:
         app.include_router(lesson_router)
         app.include_router(user_router)
         app.include_router(config_router)
+        app.include_router(league_router)
         app.include_router(practice_router)
         app.include_router(course_router)
         app.include_router(admin_router)

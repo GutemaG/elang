@@ -100,7 +100,9 @@ class TestDefinitions:
         with pytest.raises(ValueError, match="twice"):
             SettingsRegistry([Setting("a", "bool", True), Setting("a", "bool", False)])
 
-    def test_the_real_registries_start_empty(self) -> None:
-        # Nothing needs them yet (bolt 071, D3); adding a key is one line.
-        assert ACCOUNT_SETTINGS.keys == []
+    def test_the_real_registries(self) -> None:
+        # Bolt 073 (023-weekly-leagues) added the first account setting;
+        # app configuration still needs none.
+        assert ACCOUNT_SETTINGS.keys == ["show_in_leagues"]
+        assert ACCOUNT_SETTINGS.resolve({}) == {"show_in_leagues": True}
         assert APP_CONFIG.keys == []

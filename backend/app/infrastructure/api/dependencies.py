@@ -23,6 +23,7 @@ from app.domain.services import (
     SessionValidationService,
     UserPreferencesService,
 )
+from app.infrastructure.db.league_repository import SqlAlchemyLeagueRepository
 from app.infrastructure.db.lesson_repositories import SqlAlchemyCourseRepository
 from app.infrastructure.db.repositories import (
     SqlAlchemyAppConfigRepository,
@@ -64,6 +65,12 @@ async def get_user_repository(
     session: AsyncSession = Depends(get_db_session),
 ) -> SqlAlchemyUserRepository:
     return SqlAlchemyUserRepository(session)
+
+
+async def get_league_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> SqlAlchemyLeagueRepository:
+    return SqlAlchemyLeagueRepository(session)
 
 
 async def get_app_config_repository(

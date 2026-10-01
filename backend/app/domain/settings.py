@@ -16,8 +16,8 @@ default, so the new key works at once for every existing account.
 **Nothing secret may go in `APP_CONFIG`.** `GET /api/v1/config` returns it
 to anyone, signed in or not.
 
-Both start empty: no setting needs them yet (the Appearance choice stays on
-the phone, and the bean constants stay in code for now).
+`APP_CONFIG` starts empty (the bean constants stay in code for now). The
+Appearance choice stays on the phone.
 """
 
 from __future__ import annotations
@@ -114,7 +114,13 @@ class SettingsRegistry:
 
 
 # Account settings, stored in `users.settings`.
-ACCOUNT_SETTINGS = SettingsRegistry([])
+ACCOUNT_SETTINGS = SettingsRegistry(
+    [
+        # 023-weekly-leagues (bolt 073): off keeps the learner out of
+        # leagues, so nobody sees their name.
+        Setting("show_in_leagues", "bool", True),
+    ]
+)
 
 # App-wide configuration, stored in `app_config`. Never anything secret.
 APP_CONFIG = SettingsRegistry([])

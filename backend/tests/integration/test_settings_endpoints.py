@@ -169,9 +169,10 @@ class TestAppConfig:
         }
 
 
-def test_with_the_real_empty_registries_both_maps_are_empty(
+def test_with_the_real_registries_only_the_league_switch_is_listed(
     make_client: ClientFactory,
 ) -> None:
+    # Bolt 073 (023-weekly-leagues) added the first account setting.
     client, headers = _signed_in(make_client, f"{__name__}-6")
-    assert _session_settings(client, headers) == {}
+    assert _session_settings(client, headers) == {"show_in_leagues": True}
     assert client.get("/api/v1/config").json() == {"config": {}}

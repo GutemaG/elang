@@ -3,7 +3,9 @@ Security Design: the official `google-auth` package's
 `google.oauth2.id_token.verify_oauth2_token`, checking signature, issuer,
 audience (our OAuth client ID), and expiry. The verified `sub` claim becomes
 `provider_user_id`. Never trusts a client-asserted user ID. The `email` claim
-is passed on only when Google marks it `email_verified` (ADR-16).
+is passed on only when Google marks it `email_verified` (ADR-16). The
+`given_name` claim is passed on as the first name other learners see in a
+league (023-weekly-leagues, bolt 073).
 """
 
 from __future__ import annotations
@@ -22,6 +24,18 @@ from app.domain.exceptions import (
 from app.domain.value_objects import VerifiedIdentity
 
 _VALID_ISSUERS = ("accounts.google.com", "https://accounts.google.com")
+# `users.first_name` holds at most this many characters.
+_FIRST_NAME_MAX = 100
+
+
+def first_name_from_claims(claims: dict[str, object]) -> str | None:
+    """Google's `given_name`, trimmed and cut to fit; none when missing,
+    blank or not text."""
+    value = claims.get("given_name")
+    if not isinstance(value, str):
+        return None
+    trimmed = value.strip()[:_FIRST_NAME_MAX].strip()
+    return trimmed or None
 
 
 class GoogleTokenVerifier:
@@ -69,4 +83,6 @@ class GoogleTokenVerifier:
             raise InvalidTokenError("Google ID token missing 'sub' claim")
         email = claims.get("email")
         verified_email = email if email and claims.get("email_verified") is True else None
-        return VerifiedIdentity(subject=subject, email=verified_email)
+        return VerifiedIdentity(
+            subject=subject, email=verified_email, first_name=first_name_from_claims(claims)
+        )

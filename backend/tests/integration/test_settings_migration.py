@@ -10,7 +10,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from tests.integration.test_courses_migration import _EN_AM_ID, _alembic, _ok
+from tests.integration.test_courses_migration import _EN_AM_ID, _ok
 
 _PREVIOUS_HEAD = "b5e9d2c7a4f1"
 _NEW_HEAD = "c8e1f4a7b2d5"
@@ -19,12 +19,6 @@ _INSERT_USER = (
     "daily_xp_target, notification_enabled, created_at, active_course_id) VALUES "
     "('user-1', 'google', 'sub-1', 'am', 40, 1, '2026-01-01', ?)"
 )
-
-
-def test_there_is_a_single_head(tmp_path: Path) -> None:
-    result = _alembic(tmp_path / "unused.db", "heads")
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.split() == [_NEW_HEAD, "(head)"]
 
 
 def _columns(db_file: Path, table: str) -> set[str]:

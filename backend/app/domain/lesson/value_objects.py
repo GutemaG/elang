@@ -74,6 +74,9 @@ class AmoleSource(StrEnum):
     # bonus -- Practice deliberately does not touch streak/skill-progress,
     # so this is its only account-ledger effect.
     PRACTICE_SESSION = "practice_session"
+    # 023-weekly-leagues (bolts 073/074): 1st to 3rd place when a league
+    # week closes.
+    LEAGUE_REWARD = "league_reward"
 
 
 @dataclass(frozen=True)

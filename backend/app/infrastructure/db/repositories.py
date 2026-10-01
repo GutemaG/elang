@@ -60,6 +60,7 @@ def _user_model_to_domain(model: UserModel) -> User:
         active_course_id=model.active_course_id,
         email=model.email,
         settings=dict(model.settings or {}),
+        first_name=model.first_name,
     )
 
 
@@ -75,6 +76,7 @@ def _user_domain_to_model(user: User) -> UserModel:
         active_course_id=user.active_course_id,
         email=user.email,
         settings=dict(user.settings),
+        first_name=user.first_name,
     )
 
 
@@ -121,6 +123,15 @@ class SqlAlchemyUserRepository:
         model.active_course_id = user.active_course_id
         model.daily_xp_target = user.daily_xp_target.xp_per_day
         model.notification_enabled = user.notification_enabled
+        await self._session.flush()
+        return _user_model_to_domain(model)
+
+    async def set_first_name(self, user_id: str, first_name: str | None) -> User:
+        """Bolt 073: the Google first name from a sign-in (invariant 6)."""
+        stmt = select(UserModel).where(UserModel.id == user_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one()
+        model.first_name = first_name
         await self._session.flush()
         return _user_model_to_domain(model)
 

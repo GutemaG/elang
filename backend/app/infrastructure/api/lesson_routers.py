@@ -12,6 +12,7 @@ from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, Query
 
+from app.application.league_use_cases import join_league_week
 from app.application.lesson_use_cases import (
     LessonContentResult,
     SkillTreeSummary,
@@ -37,7 +38,7 @@ from app.domain.lesson.repositories import (
 )
 from app.domain.lesson.value_objects import BEAN_REGEN_MINUTES
 from app.infrastructure.api.course_schemas import CourseInfoResponse
-from app.infrastructure.api.dependencies import get_current_user
+from app.infrastructure.api.dependencies import get_current_user, get_league_repository
 from app.infrastructure.api.exercise_mapping import to_exercise_response
 from app.infrastructure.api.lesson_dependencies import (
     get_amole_transaction_repository,
@@ -65,6 +66,7 @@ from app.infrastructure.api.lesson_schemas import (
     SkillTreeResponse,
     StreakHistoryResponse,
 )
+from app.infrastructure.db.league_repository import SqlAlchemyLeagueRepository
 
 router = APIRouter(prefix="/api/v1", tags=["lessons"])
 
@@ -280,14 +282,17 @@ async def complete_lesson_endpoint(
     amole_repo: AmoleTransactionRepository = Depends(get_amole_transaction_repository),
     vocab_progress_repo: UserVocabProgressRepository = Depends(get_user_vocab_progress_repository),
     course_repo: CourseRepository = Depends(get_course_repository),
+    league_repo: SqlAlchemyLeagueRepository = Depends(get_league_repository),
 ) -> CompleteLessonResponse:
     """Stories 002/003/004: the account-ledger side of one completed lesson
     attempt (Beans consumption, XP award, skill-progress/crown-level
     update, streak update, bolt-017 Amole awards, and bolt-019 vocab
     progress -- ADR-10). Idempotent on `request.attempt_id`. 404 if the
     lesson doesn't exist; 422 `beans_exhausted`/`invalid_completion` for a
-    malformed or beans-implausible completion (ADR-5).
+    malformed or beans-implausible completion (ADR-5). The week's first XP
+    also joins the learner's league (023-weekly-leagues, bolt 073).
     """
+    now = datetime.now(UTC)
     outcome = await complete_lesson(
         user_id=user.id,
         lesson_id=lesson_id,
@@ -308,7 +313,14 @@ async def complete_lesson_endpoint(
         vocab_progress_repo=vocab_progress_repo,
         missed_exercise_ids=frozenset(request.missed_exercise_ids),
         course_repo=course_repo,
-        now=datetime.now(UTC),
+        now=now,
+    )
+    await join_league_week(
+        user=user,
+        xp_earned=outcome.xp_awarded,
+        completed_at=request.client_completed_at,
+        now=now,
+        league_repo=league_repo,
     )
     return CompleteLessonResponse(
         xp_earned=outcome.xp_awarded,
