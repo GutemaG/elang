@@ -14,6 +14,10 @@ export const COURSE: AdminCourse = {
   title: 'Amharic',
   learning_language: 'am',
   from_language: 'en',
+  learning_language_name: 'Amharic',
+  learning_language_native_name: 'አማርኛ',
+  from_language_name: 'English',
+  from_language_native_name: 'English',
   status: 'active',
   section_count: 2,
 }

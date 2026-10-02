@@ -53,9 +53,12 @@ class TestLanguageCode:
     def test_accepts_supported_code(self) -> None:
         assert LanguageCode(code="am").code == "am"
 
-    def test_rejects_unsupported_code(self) -> None:
+    def test_accepts_a_three_letter_code(self) -> None:
+        assert LanguageCode(code="sid").code == "sid"
+
+    def test_rejects_malformed_code(self) -> None:
         with pytest.raises(InvalidPendingSelectionError):
-            LanguageCode(code="xx")
+            LanguageCode(code="Amharic")
 
 
 class TestDailyGoalPreset:

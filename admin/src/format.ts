@@ -4,21 +4,18 @@ export function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? '' : 's'}`
 }
 
-// The languages Buna teaches or teaches from. Anything else shows its code.
-const LANGUAGES: Record<string, { name: string; glyph: string }> = {
-  am: { name: 'Amharic', glyph: 'አ' },
-  ti: { name: 'Tigrinya', glyph: 'ት' },
-  om: { name: 'Afaan Oromoo', glyph: 'O' },
-  en: { name: 'English', glyph: 'En' },
+/** The first letter of a language's own name, in its own script (አ for
+ * አማርኛ), for a course or language tile -- the same letter the app shows. */
+export function languageGlyph(nativeName: string): string {
+  return Array.from(nativeName.trim())[0] ?? '?'
 }
 
-export function languageName(code: string): string {
-  return LANGUAGES[code]?.name ?? code
-}
-
-/** A letter of the language's own script, for the course tile. */
-export function languageGlyph(code: string): string {
-  return LANGUAGES[code]?.glyph ?? code.slice(0, 2).toUpperCase()
+/** "Amharic for English speakers". */
+export function courseAudience(course: {
+  learning_language_name: string
+  from_language_name: string
+}): string {
+  return `${course.learning_language_name} for ${course.from_language_name} speakers`
 }
 
 // CourseStatus in backend/app/domain/course.py.

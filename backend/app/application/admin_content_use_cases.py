@@ -17,6 +17,7 @@ from typing import Any
 
 from app.domain.lesson.exceptions import (
     ConfirmationRequiredError,
+    ContentExistsError,
     ContentInUseError,
     ContentNotFoundError,
     InvalidContentError,
@@ -25,6 +26,7 @@ from app.domain.lesson.exceptions import (
     InvalidOrderError,
 )
 from app.domain.lesson.exercise_parts import validate_exercise
+from app.domain.value_objects import LANGUAGE_CODE_PATTERN
 from app.infrastructure.db.admin_content_repository import (
     EXERCISE,
     LESSON,
@@ -39,6 +41,7 @@ from app.infrastructure.db.lesson_models import (
     CategoryModel,
     CourseModel,
     ExerciseModel,
+    LanguageModel,
     LessonModel,
     SkillModel,
     VocabItemModel,
@@ -70,6 +73,7 @@ def _clean(field: str, value: str | None, *, required: bool = True) -> str:
 
 _NAMES: dict[type[Any], str] = {
     CourseModel: "course",
+    LanguageModel: "language",
     CategoryModel: "section",
     SkillModel: "skill",
     LessonModel: "lesson",
@@ -85,17 +89,181 @@ async def _require(repo: SqlAlchemyAdminContentRepository, model: type[Any], row
     return row
 
 
+# --- languages -----------------------------------------------------------
+
+LANGUAGE_NAME_MAX = 64
+
+
+def _language_name(field: str, value: str | None) -> str:
+    text = _clean(field, value)
+    if len(text) > LANGUAGE_NAME_MAX:
+        raise InvalidContentError(field, f"{field} must be at most {LANGUAGE_NAME_MAX} characters")
+    return text
+
+
+async def create_language(
+    repo: SqlAlchemyAdminContentRepository,
+    ctx: AdminContext,
+    *,
+    code: str,
+    name: str,
+    native_name: str,
+) -> LanguageModel:
+    """A new language courses can use. The code is its ISO 639 code, two
+    or three lowercase letters (`ti`, `sid`), and never changes."""
+    code = (code or "").strip().lower()
+    if not LANGUAGE_CODE_PATTERN.match(code):
+        raise InvalidContentError("code", "code must be two or three letters, e.g. ti or sid")
+    language = LanguageModel(
+        code=code,
+        name=_language_name("name", name),
+        native_name=_language_name("native_name", native_name),
+    )
+    if await repo.get(LanguageModel, code) is not None:
+        raise ContentExistsError(f"A language with code {code!r} already exists", code=code)
+    await repo.add(language)
+    _log(ctx, "create", "language", code)
+    return language
+
+
+async def update_language(
+    repo: SqlAlchemyAdminContentRepository,
+    ctx: AdminContext,
+    code: str,
+    *,
+    name: str | None = None,
+    native_name: str | None = None,
+) -> LanguageModel:
+    language = await _require(repo, LanguageModel, code)
+    if name is not None:
+        language.name = _language_name("name", name)
+    if native_name is not None:
+        language.native_name = _language_name("native_name", native_name)
+    await repo.flush()
+    _log(ctx, "update", "language", code)
+    return language
+
+
+async def delete_language(
+    repo: SqlAlchemyAdminContentRepository, ctx: AdminContext, code: str
+) -> None:
+    """Only a language no course uses can go."""
+    language = await _require(repo, LanguageModel, code)
+    courses = await repo.count_courses_using(code)
+    if courses:
+        raise ContentInUseError(
+            f"{courses} course(s) use this language, so it cannot be deleted", courses=courses
+        )
+    await repo.delete_row(language)
+    _log(ctx, "delete", "language", code)
+
+
 # --- courses -------------------------------------------------------------
 
+COURSE_STATUSES = ("available", "coming_soon")
 
-async def rename_course(
-    repo: SqlAlchemyAdminContentRepository, ctx: AdminContext, course_id: str, title: str
+
+async def _language_of(
+    repo: SqlAlchemyAdminContentRepository, field: str, code: str
+) -> LanguageModel:
+    code = (code or "").strip().lower()
+    language = await repo.get(LanguageModel, code) if code else None
+    if language is None:
+        raise InvalidContentError(field, f"{field} must be a known language")
+    return language
+
+
+async def create_course(
+    repo: SqlAlchemyAdminContentRepository,
+    ctx: AdminContext,
+    *,
+    learning_language: str,
+    from_language: str,
+    title: str | None = None,
 ) -> CourseModel:
+    """A new, empty course for a language pair, placed last. It starts as
+    coming soon, so learners only see it once it has content and is made
+    available. Without a title it is named "<from> to <learning>"."""
+    learning = await _language_of(repo, "learning_language", learning_language)
+    source = await _language_of(repo, "from_language", from_language)
+    if learning.code == source.code:
+        raise InvalidContentError(
+            "from_language", "A course must teach one language from a different one"
+        )
+    if await repo.course_for_pair(learning.code, source.code) is not None:
+        raise ContentExistsError(
+            f"There is already a course teaching {learning.name} from {source.name}",
+            learning_language=learning.code,
+            from_language=source.code,
+        )
+    course = CourseModel(
+        id=str(uuid.uuid4()),
+        learning_language=learning.code,
+        from_language=source.code,
+        title=_clean("title", title, required=False) or f"{source.name} to {learning.name}",
+        status="coming_soon",
+        order_index=await repo.next_course_order_index(),
+    )
+    await repo.add(course)
+    _log(ctx, "create", "course", course.id)
+    return course
+
+
+async def update_course(
+    repo: SqlAlchemyAdminContentRepository,
+    ctx: AdminContext,
+    course_id: str,
+    *,
+    title: str | None = None,
+    status: str | None = None,
+) -> CourseModel:
+    """Renames a course and/or changes its status. It can only become
+    available once it has an exercise to play, and only go back to coming
+    soon while no learner is studying it."""
     course = await _require(repo, CourseModel, course_id)
-    course.title = _clean("title", title)
+    if title is not None:
+        course.title = _clean("title", title)
+    if status is not None and status != course.status:
+        if status not in COURSE_STATUSES:
+            raise InvalidContentError("status", "status must be available or coming_soon")
+        if status == "available" and not await repo.count_course_exercises(course_id):
+            raise InvalidContentError(
+                "status", "Add at least one lesson with an exercise before making it available"
+            )
+        if status == "coming_soon":
+            learners = await repo.count_course_learners(course_id)
+            if learners:
+                raise ContentInUseError(
+                    f"{learners} learner(s) are studying this course, so it stays available",
+                    learners=learners,
+                )
+        course.status = status
     await repo.flush()
     _log(ctx, "update", "course", course_id)
     return course
+
+
+async def delete_course(
+    repo: SqlAlchemyAdminContentRepository, ctx: AdminContext, course_id: str
+) -> None:
+    """Only an empty course goes: no sections, no words, no learners."""
+    course = await _require(repo, CourseModel, course_id)
+    learners = await repo.count_course_learners(course_id)
+    if learners:
+        raise ContentInUseError(
+            f"{learners} learner(s) are studying this course, so it cannot be deleted",
+            learners=learners,
+        )
+    sections = len(await repo.children(SECTION, course_id))
+    words = await repo.count_course_words(course_id)
+    if sections or words:
+        raise ContentInUseError(
+            "Only an empty course can be deleted; remove its sections and words first",
+            sections=sections,
+            words=words,
+        )
+    await repo.delete_row(course)
+    _log(ctx, "delete", "course", course_id)
 
 
 # --- sections, skills, lessons --------------------------------------------
@@ -422,7 +590,12 @@ __all__ = [
     "delete_node",
     "list_exercises",
     "list_vocab",
-    "rename_course",
+    "create_course",
+    "create_language",
+    "delete_course",
+    "delete_language",
+    "update_course",
+    "update_language",
     "rename_node",
     "reorder_children",
     "update_exercise",

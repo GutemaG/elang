@@ -15,7 +15,7 @@ from dataclasses import replace
 from datetime import UTC, date, datetime
 from typing import Any
 
-from app.domain.course import Course, CourseStatus
+from app.domain.course import Course, CourseStatus, Language
 from app.domain.entities import AuthSession, User
 from app.domain.lesson.entities import (
     AmoleTransaction,
@@ -37,6 +37,14 @@ from app.domain.value_objects import AuthProvider, VerifiedIdentity
 # fixtures, the fake repositories and the real test database all agree.
 EN_AM_COURSE_ID = str(
     uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_DNS, "buna.app/lesson-content"), "course:en-am")
+)
+
+
+# The languages the fake courses use, named as the `languages` table names them.
+FAKE_LANGUAGES = (
+    Language(code="am", name="Amharic", native_name="አማርኛ"),
+    Language(code="en", name="English", native_name="English"),
+    Language(code="om", name="Afaan Oromo", native_name="Afaan Oromoo"),
 )
 
 
@@ -95,6 +103,9 @@ class FakeCourseRepository:
 
     async def count_completed_skills_by_course(self, user_id: str) -> dict[str, int]:
         return dict(self._completed_skills)
+
+    async def list_languages(self) -> list[Language]:
+        return list(FAKE_LANGUAGES)
 
 
 class FakeTokenVerifier:

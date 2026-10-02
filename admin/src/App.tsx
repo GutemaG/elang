@@ -5,6 +5,7 @@ import { useSession } from './auth/SessionContext'
 import { SignInScreen } from './auth/SignInScreen'
 import { ExerciseEditorRoute } from './exercises/ExerciseEditorPage'
 import { ImportPage } from './import/ImportPage'
+import { LanguagesPage } from './languages/LanguagesPage'
 import { AppShell } from './shell/AppShell'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
@@ -36,6 +37,7 @@ export function App() {
             <Route path="/courses/:courseId" element={<CourseTree />} />
             <Route path="/vocabulary" element={<CourseList key="vocabulary" purpose="vocabulary" />} />
             <Route path="/courses/:courseId/vocabulary" element={<VocabularyPage />} />
+            <Route path="/languages" element={<LanguagesPage />} />
             <Route
               path="/courses/:courseId/lessons/:lessonId/exercises/new/:type"
               element={<ExerciseEditorRoute />}

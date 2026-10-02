@@ -13,6 +13,7 @@ const isCurriculum = (path: string) => (path === '/' || path.startsWith('/course
 const NAV = [
   { to: '/', icon: 'menu_book', label: 'Curriculum', current: isCurriculum },
   { to: '/vocabulary', icon: 'translate', label: 'Vocabulary', current: isVocabulary },
+  { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
 ]
 
 function initialsOf(email: string): string {

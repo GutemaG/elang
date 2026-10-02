@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { messageOf, useSession } from '../auth/SessionContext'
-import { courseStatus, languageGlyph, languageName, plural } from '../format'
+import { courseAudience, courseStatus, languageGlyph, plural } from '../format'
 import { PageHeader, StatCard, StatRow } from '../shell/Page'
 import type { AdminCourse, AdminCourseList } from '../types'
 import { Badge } from '../ui/Badge'
@@ -10,6 +10,7 @@ import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 import { routes } from './levels'
+import { NewCourseDialog } from './NewCourseDialog'
 
 type Filter = 'all' | 'available' | 'coming_soon'
 
@@ -27,12 +28,14 @@ const PURPOSES = {
       'Every course learners can pick. Open one to shape its sections, skills and lessons — changes reach the app straight away.',
     open: 'Open curriculum',
     to: (id: string) => `/courses/${id}`,
+    canCreate: true,
   },
   vocabulary: {
     eyebrow: 'Vocabulary',
     description: 'The words Practice brings back to learners. Open a course to see and correct its words.',
     open: 'Open vocabulary',
     to: (id: string) => `/courses/${id}/vocabulary`,
+    canCreate: false,
   },
 }
 
@@ -42,6 +45,7 @@ export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof 
   const [courses, setCourses] = useState<AdminCourse[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
+  const [creating, setCreating] = useState(false)
 
   const load = useCallback(() => {
     let live = true
@@ -68,7 +72,20 @@ export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof 
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <PageHeader eyebrow={copy.eyebrow} title="Courses" description={copy.description} />
+      <PageHeader
+        eyebrow={copy.eyebrow}
+        title="Courses"
+        description={copy.description}
+        actions={
+          copy.canCreate && (
+            <Button variant="primary" disabled={!courses} onClick={() => setCreating(true)}>
+              <Icon name="add" className="text-lg" />
+              New course
+            </Button>
+          )
+        }
+      />
+      {creating && courses && <NewCourseDialog taken={courses} onClose={() => setCreating(false)} />}
 
       {error && (
         <div
@@ -138,7 +155,7 @@ export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof 
                   <span className="grid size-12 shrink-0 place-items-center rounded-md border border-line bg-inset text-center">
                     <span>
                       <span className="block text-lg leading-5 font-bold text-coffee">
-                        {languageGlyph(c.learning_language)}
+                        {languageGlyph(c.learning_language_native_name)}
                       </span>
                       <span className="block text-[0.625rem] font-semibold tracking-wider text-stone uppercase">
                         {c.learning_language}
@@ -154,7 +171,7 @@ export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof 
                     </span>
                     <span className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-stone">
                       <span>
-                        {languageName(c.learning_language)} for {languageName(c.from_language)} speakers
+                        {courseAudience(c)}
                       </span>
                       <span aria-hidden="true">•</span>
                       <span className="tnum">{plural(c.section_count, 'section')}</span>

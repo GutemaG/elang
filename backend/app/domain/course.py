@@ -38,6 +38,18 @@ class LanguagePair:
 
 
 @dataclass(frozen=True)
+class Language:
+    """A language a course can teach or teach from, e.g. `am` Amharic
+    (አማርኛ). Reference data, managed in the admin site: adding one makes it
+    available for new courses without a code change.
+    """
+
+    code: str
+    name: str
+    native_name: str
+
+
+@dataclass(frozen=True)
 class Course:
     """Aggregate Root. Content only -- no per-user state. Categories and
     vocab items reference it by `course_id`; it does not contain them.
@@ -122,5 +134,11 @@ class CourseRepository(Protocol):
     async def count_completed_skills_by_course(self, user_id: str) -> dict[str, int]:
         """How many skills `user_id` has completed, per course id (a course
         with none is absent).
+        """
+        ...
+
+    async def list_languages(self) -> list[Language]:
+        """Every known language, so responses can name a course's two
+        languages (a code with no row is shown as the code itself).
         """
         ...

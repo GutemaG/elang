@@ -15,12 +15,29 @@ export interface AdminCourse {
   title: string
   learning_language: string
   from_language: string
+  /** Each language's name and its own name, from the languages table. */
+  learning_language_name: string
+  learning_language_native_name: string
+  from_language_name: string
+  from_language_native_name: string
   status: string
   section_count: number
 }
 
 export interface AdminCourseList {
   courses: AdminCourse[]
+}
+
+/** A language courses can teach or teach from; `course_count` courses use it. */
+export interface AdminLanguage {
+  code: string
+  name: string
+  native_name: string
+  course_count: number
+}
+
+export interface AdminLanguageList {
+  languages: AdminLanguage[]
 }
 
 /** Exercises with a clip only (listening and audio image choice): the

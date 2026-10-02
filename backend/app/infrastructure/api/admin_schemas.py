@@ -20,6 +20,12 @@ class AdminCourse(BaseModel):
     title: str
     learning_language: str
     from_language: str
+    # Each language's name and its own name, from the `languages` table (the
+    # code itself for a code with no row).
+    learning_language_name: str
+    learning_language_native_name: str
+    from_language_name: str
+    from_language_native_name: str
     status: str
     section_count: int
 
@@ -76,6 +82,41 @@ class AdminCourseTree(BaseModel):
 
 class TitleRequest(BaseModel):
     title: str
+
+
+class CreateCourseRequest(BaseModel):
+    learning_language: str
+    from_language: str
+    # Empty means "<from> to <learning>".
+    title: str = ""
+
+
+class UpdateCourseRequest(BaseModel):
+    title: str | None = None
+    status: str | None = Field(default=None, description="available or coming_soon")
+
+
+class AdminLanguage(BaseModel):
+    code: str
+    name: str
+    native_name: str
+    # Courses teaching it or teaching from it; one in use cannot be deleted.
+    course_count: int
+
+
+class AdminLanguageList(BaseModel):
+    languages: list[AdminLanguage]
+
+
+class CreateLanguageRequest(BaseModel):
+    code: str
+    name: str
+    native_name: str
+
+
+class UpdateLanguageRequest(BaseModel):
+    name: str | None = None
+    native_name: str | None = None
 
 
 class CreateSectionRequest(BaseModel):

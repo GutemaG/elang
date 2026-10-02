@@ -158,6 +158,13 @@ class ContentInUseError(AdminContentError):
     error_code = "content_in_use"
 
 
+class ContentExistsError(AdminContentError):
+    """A create that would duplicate something unique: a language code
+    already in use, or a course for a language pair that already has one."""
+
+    error_code = "content_exists"
+
+
 class ConfirmationRequiredError(AdminContentError):
     """A delete of unused content that removes children too; repeat it with
     `confirm=true`. `details` says what would go."""

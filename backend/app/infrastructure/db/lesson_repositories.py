@@ -17,7 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.domain.course import Course, CourseStatus
+from app.domain.course import Course, CourseStatus, Language
 from app.domain.lesson.entities import (
     AmoleTransaction,
     Category,
@@ -44,6 +44,7 @@ from app.infrastructure.db.lesson_models import (
     CategoryModel,
     CourseModel,
     ExerciseModel,
+    LanguageModel,
     LessonAttemptModel,
     LessonModel,
     PracticeAttemptModel,
@@ -268,6 +269,13 @@ class SqlAlchemyCourseRepository:
         )
         result = await self._session.execute(stmt)
         return {course_id: count for course_id, count in result.all()}
+
+    async def list_languages(self) -> list[Language]:
+        result = await self._session.execute(select(LanguageModel).order_by(LanguageModel.code))
+        return [
+            Language(code=m.code, name=m.name, native_name=m.native_name)
+            for m in result.scalars().all()
+        ]
 
 
 class SqlAlchemyLessonRepository:

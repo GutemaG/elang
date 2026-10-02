@@ -4,13 +4,14 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { ApiError } from '../api'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { AddExerciseMenu } from '../exercises/AddExerciseMenu'
-import { courseStatus, languageName, plural } from '../format'
+import { courseAudience, courseStatus, plural } from '../format'
 import { LessonTools } from '../import/LessonTools'
 import { StatCard, StatRow } from '../shell/Page'
 import type { AdminCourseTree, DeleteDetails } from '../types'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Icon } from '../ui/Icon'
+import { Modal } from '../ui/Modal'
 import { DeleteDialog, type DeletePrompt } from './DeleteDialog'
 import { ExerciseList } from './ExerciseList'
 import { InlineForm } from './InlineForm'
@@ -89,6 +90,7 @@ function CoursePage({ courseId }: { courseId: string }) {
   const [busy, setBusy] = useState(false)
   const [deletePrompt, setDeletePrompt] = useState<DeletePrompt | null>(null)
   const [editing, setEditing] = useState<'course' | 'section' | null>(null)
+  const [deletingCourse, setDeletingCourse] = useState(false)
   const [open, setOpenIds] = useState(() => readOpen(courseId))
   // By the id of what holds each list: the course, a section, skill or lesson.
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
@@ -171,6 +173,20 @@ function CoursePage({ courseId }: { courseId: string }) {
     },
     [load],
   )
+
+  /** Only an empty course offers this; the server checks again. */
+  const deleteCourse = useCallback(async () => {
+    setBusy(true)
+    setWriteError(null)
+    try {
+      await api.delete(routes.course(courseId))
+      navigate('/')
+    } catch (e) {
+      setDeletingCourse(false)
+      setWriteError(messageOf(e))
+      setBusy(false)
+    }
+  }, [api, courseId, navigate])
 
   const requestDelete = useCallback(
     async (node: NodeRef) => {
@@ -287,6 +303,7 @@ function CoursePage({ courseId }: { courseId: string }) {
   const locked = busy || ordering
   const totals = totalsOf(tree)
   const status = courseStatus(tree.course.status)
+  const available = tree.course.status === 'available'
 
   return (
     <TreeActionsContext.Provider value={actions}>
@@ -322,7 +339,7 @@ function CoursePage({ courseId }: { courseId: string }) {
                 <Badge tone={status.tone} dot>
                   {status.label}
                 </Badge>
-                {languageName(tree.course.learning_language)} for {languageName(tree.course.from_language)} speakers
+                {courseAudience(tree.course)}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -336,6 +353,24 @@ function CoursePage({ courseId }: { courseId: string }) {
                   Rename course
                 </Button>
               )}
+              <Button
+                disabled={locked || (!available && totals.exercises === 0)}
+                title={
+                  ordering
+                    ? SAVE_ORDER_FIRST
+                    : !available && totals.exercises === 0
+                      ? 'Add a lesson with an exercise first'
+                      : undefined
+                }
+                onClick={() =>
+                  void run(() =>
+                    api.patch(routes.course(tree.course.id), { status: available ? 'coming_soon' : 'available' }),
+                  )
+                }
+              >
+                <Icon name={available ? 'schedule' : 'rocket_launch'} className="text-lg" />
+                {available ? 'Move to coming soon' : 'Make available'}
+              </Button>
               <Link
                 to={`/courses/${tree.course.id}/vocabulary`}
                 className="inline-flex h-11 items-center gap-2 rounded border border-line bg-surface px-4 text-sm font-semibold text-coffee hover:bg-inset sm:h-10"
@@ -352,6 +387,12 @@ function CoursePage({ courseId }: { courseId: string }) {
                 <Icon name="add" className="text-lg" />
                 Add section
               </Button>
+              {tree.sections.length === 0 && (
+                <Button variant="danger-ghost" disabled={locked} onClick={() => setDeletingCourse(true)}>
+                  <Icon name="delete" className="text-lg" />
+                  Delete course
+                </Button>
+              )}
             </div>
           </div>
 
@@ -537,6 +578,22 @@ function CoursePage({ courseId }: { courseId: string }) {
               </Button>
             </div>
           </div>
+        )}
+
+        {deletingCourse && (
+          <Modal title={`Delete course “${tree.course.title}”?`} onClose={() => !busy && setDeletingCourse(false)}>
+            <p className="mt-2 text-sm leading-6 text-coffee-soft">
+              It has no sections yet. Its language pair becomes free for a new course.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button className="justify-center" disabled={busy} onClick={() => setDeletingCourse(false)}>
+                Cancel
+              </Button>
+              <Button variant="danger" className="justify-center" disabled={busy} onClick={() => void deleteCourse()}>
+                Delete
+              </Button>
+            </div>
+          </Modal>
         )}
 
         {deletePrompt && (

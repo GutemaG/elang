@@ -32,6 +32,9 @@ export const routes = {
   course: (id: string) => `${ADMIN}/courses/${id}`,
   tree: (id: string) => `${ADMIN}/courses/${id}/tree`,
   courses: `${ADMIN}/courses`,
+  // Languages: the list courses pick from, and one language by its code.
+  languages: `${ADMIN}/languages`,
+  language: (code: string) => `${ADMIN}/languages/${code}`,
   // Exercises (bolt 038): a lesson's list, one exercise, and their order.
   exercises: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises`,
   exercise: (id: string) => `${ADMIN}/exercises/${id}`,

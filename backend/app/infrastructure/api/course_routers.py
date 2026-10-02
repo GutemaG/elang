@@ -19,6 +19,7 @@ from app.infrastructure.api.course_schemas import (
     CourseInfoResponse,
     CourseListResponse,
     CourseResponse,
+    language_names,
 )
 from app.infrastructure.api.dependencies import get_current_user, get_user_repository
 from app.infrastructure.api.lesson_dependencies import get_course_repository
@@ -35,6 +36,7 @@ async def course_catalog_endpoint(
     learner has an account. Read-only.
     """
     courses = await course_repo.list_all()
+    languages = await course_repo.list_languages()
     return CatalogResponse(
         courses=[
             CatalogCourseResponse(
@@ -44,6 +46,7 @@ async def course_catalog_endpoint(
                 title=c.title,
                 status=c.status.value,
                 order_index=c.order_index,
+                **language_names(c, languages),
             )
             for c in courses
         ]
@@ -59,6 +62,7 @@ async def list_courses_endpoint(
     the caller's active course marked and per-course skill progress.
     """
     result = await list_courses(user, course_repo)
+    languages = await course_repo.list_languages()
     return CourseListResponse(
         active_course_id=result.active_course_id,
         courses=[
@@ -72,6 +76,7 @@ async def list_courses_endpoint(
                 is_active=summary.is_active,
                 completed_skills=summary.completed_skills,
                 total_skills=summary.total_skills,
+                **language_names(summary.course, languages),
             )
             for summary in result.courses
         ],
@@ -98,5 +103,6 @@ async def activate_course_endpoint(
             learning_language=course.learning_language,
             from_language=course.from_language,
             title=course.title,
+            **language_names(course, await course_repo.list_languages()),
         ),
     )

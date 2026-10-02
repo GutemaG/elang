@@ -15,13 +15,14 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import delete, func, select, union
+from sqlalchemy import delete, func, or_, select, union
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.db.lesson_models import (
     CategoryModel,
     CourseModel,
     ExerciseModel,
+    LanguageModel,
     LessonAttemptModel,
     LessonModel,
     SkillModel,
@@ -29,6 +30,7 @@ from app.infrastructure.db.lesson_models import (
     UserVocabProgressModel,
     VocabItemModel,
 )
+from app.infrastructure.db.models import UserModel
 
 # Added to every sibling's `order_index` before the final values are
 # written, so no intermediate state collides with the per-parent unique
@@ -105,6 +107,64 @@ class SqlAlchemyAdminContentRepository:
             .order_by(CourseModel.order_index)
         )
         return [(course, n) for course, n in (await self._session.execute(stmt)).all()]
+
+    async def list_languages(self) -> list[tuple[LanguageModel, int]]:
+        """Every language by name, with how many courses teach it or teach
+        from it."""
+        stmt = select(LanguageModel).order_by(LanguageModel.name, LanguageModel.code)
+        languages = list((await self._session.execute(stmt)).scalars().all())
+        used: dict[str, int] = {}
+        for learning, from_language in (
+            await self._session.execute(
+                select(CourseModel.learning_language, CourseModel.from_language)
+            )
+        ).all():
+            used[learning] = used.get(learning, 0) + 1
+            used[from_language] = used.get(from_language, 0) + 1
+        return [(language, used.get(language.code, 0)) for language in languages]
+
+    async def language_map(self) -> dict[str, LanguageModel]:
+        """Every language by code, to name a course's two languages."""
+        rows = (await self._session.execute(select(LanguageModel))).scalars().all()
+        return {language.code: language for language in rows}
+
+    async def count_courses_using(self, code: str) -> int:
+        stmt = select(func.count()).where(
+            or_(CourseModel.learning_language == code, CourseModel.from_language == code)
+        )
+        return (await self._session.execute(stmt)).scalar_one()
+
+    async def course_for_pair(self, learning: str, from_language: str) -> CourseModel | None:
+        stmt = select(CourseModel).where(
+            CourseModel.learning_language == learning,
+            CourseModel.from_language == from_language,
+        )
+        return (await self._session.execute(stmt)).scalar_one_or_none()
+
+    async def next_course_order_index(self) -> int:
+        current = (
+            await self._session.execute(select(func.max(CourseModel.order_index)))
+        ).scalar_one()
+        return 1 if current is None else current + 1
+
+    async def count_course_exercises(self, course_id: str) -> int:
+        stmt = (
+            select(func.count(ExerciseModel.id))
+            .join(LessonModel, LessonModel.id == ExerciseModel.lesson_id)
+            .join(SkillModel, SkillModel.id == LessonModel.skill_id)
+            .join(CategoryModel, CategoryModel.id == SkillModel.category_id)
+            .where(CategoryModel.course_id == course_id)
+        )
+        return (await self._session.execute(stmt)).scalar_one()
+
+    async def count_course_learners(self, course_id: str) -> int:
+        """Learners whose active course this is."""
+        stmt = select(func.count()).where(UserModel.active_course_id == course_id)
+        return (await self._session.execute(stmt)).scalar_one()
+
+    async def count_course_words(self, course_id: str) -> int:
+        stmt = select(func.count()).where(VocabItemModel.course_id == course_id)
+        return (await self._session.execute(stmt)).scalar_one()
 
     async def get(self, model: type[Any], row_id: str) -> Any | None:
         return await self._session.get(model, row_id)

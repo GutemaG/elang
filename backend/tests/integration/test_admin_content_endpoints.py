@@ -225,10 +225,6 @@ class TestCreateAndRename:
         assert response.status_code == 422
         assert response.json()["details"] == {"field": "title"}
 
-    def test_there_is_no_course_create_or_delete(self, client: TestClient, h: dict) -> None:
-        assert client.post(f"{A}/courses", json={}, headers=h).status_code == 405
-        assert client.delete(f"{A}/courses/{EN_AM_COURSE_ID}", headers=h).status_code == 405
-
     def test_create_under_a_missing_parent_is_404(self, client: TestClient, h: dict) -> None:
         response = client.post(f"{A}/sections/nope/skills", json={"title": "x"}, headers=h)
         assert response.status_code == 404

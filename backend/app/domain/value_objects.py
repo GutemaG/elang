@@ -6,6 +6,7 @@ per `ddd-02-technical-design.md`'s layering rule.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
@@ -30,10 +31,12 @@ DEFAULT_DAILY_XP_TARGET = 40
 # language to learn (bolt `024-courses-service`, ADR-12).
 DEFAULT_FROM_LANGUAGE_CODE = "en"
 
-# Known language codes (Amharic, Afaan Oromo, English). Whether a language can
-# actually be *learned* is decided by a course existing for it (ADR-12), not by
-# this set -- e.g. no course teaches English, so learning `en` is rejected.
-SUPPORTED_LANGUAGE_CODES: frozenset[str] = frozenset({"am", "om", "en"})
+# The shape of a language code: ISO 639-1 (`am`) or 639-3 (`sid`). Which
+# languages exist is data (the `languages` table, managed in the admin site),
+# and whether one can actually be *learned* is decided by a course existing
+# for it (ADR-12) -- e.g. no course teaches English, so learning `en` is
+# rejected.
+LANGUAGE_CODE_PATTERN = re.compile(r"^[a-z]{2,3}$")
 
 
 class AuthProvider(StrEnum):
@@ -79,17 +82,18 @@ class VerifiedIdentity:
 
 @dataclass(frozen=True)
 class LanguageCode:
-    """A supported course language code (e.g. `am` for Amharic).
+    """A course language code (e.g. `am` for Amharic, `sid` for Sidama).
 
-    An unsupported/invalid code is rejected with `InvalidPendingSelectionError`
-    rather than silently defaulted, per the domain model's constraint on
-    `PendingOnboardingSelection`.
+    A malformed code is rejected with `InvalidPendingSelectionError` rather
+    than silently defaulted, per the domain model's constraint on
+    `PendingOnboardingSelection`. A well-formed code no course uses is
+    rejected later, when no course resolves for it.
     """
 
     code: str
 
     def __post_init__(self) -> None:
-        if self.code not in SUPPORTED_LANGUAGE_CODES:
+        if not isinstance(self.code, str) or not LANGUAGE_CODE_PATTERN.match(self.code):
             raise InvalidPendingSelectionError(f"Unsupported language code: {self.code!r}")
 
 

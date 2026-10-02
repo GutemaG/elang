@@ -60,11 +60,14 @@ class TestLanguagePairAndCourse:
         assert EN_AM.is_available is True
         assert OM_AM.is_available is False
 
-    def test_all_three_language_codes_are_valid_and_others_are_not(self) -> None:
-        for code in ("am", "om", "en"):
+    def test_two_and_three_letter_codes_are_valid_and_others_are_not(self) -> None:
+        # Which languages exist is data now; the code only has to be ISO 639
+        # shaped. A course still has to exist before one can be learned.
+        for code in ("am", "om", "en", "ti", "sid"):
             assert LanguageCode(code=code).code == code
-        with pytest.raises(InvalidPendingSelectionError):
-            LanguageCode(code="fr")
+        for code in ("", "a", "AM", "amha", "a1", "am "):
+            with pytest.raises(InvalidPendingSelectionError):
+                LanguageCode(code=code)
 
 
 class TestCourseSelectionPolicy:

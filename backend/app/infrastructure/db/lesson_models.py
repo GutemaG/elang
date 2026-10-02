@@ -38,6 +38,22 @@ def _uuid_str() -> str:
     return str(uuid.uuid4())
 
 
+class LanguageModel(Base):
+    """Backs `Language`: a language courses can teach or teach from, keyed by
+    its ISO 639 code. Managed in the admin site; a course's
+    `learning_language` and `from_language` name one of these rows.
+    """
+
+    __tablename__ = "languages"
+
+    code: Mapped[str] = mapped_column(String(8), primary_key=True)
+    name: Mapped[str] = mapped_column(String(64), nullable=False)
+    native_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
 class CourseModel(Base):
     """Backs the `Course` aggregate (bolt `024-courses-service`, ADR-12): a
     learning language taught from a given from-language, e.g. English to

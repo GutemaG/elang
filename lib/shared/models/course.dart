@@ -1,3 +1,5 @@
+import 'language_names.dart';
+
 /// Whether a [Course] can be studied or selected yet.
 enum CourseStatus { available, comingSoon }
 
@@ -36,12 +38,17 @@ class Course {
   bool get isAvailable => status == CourseStatus.available;
 
   /// The same shape [fromJson] reads, so a course round-trips through the
-  /// offline cache.
+  /// offline cache -- its languages' names included, so a language the
+  /// server added is still named offline after a restart.
   Map<String, dynamic> toJson() => {
     'id': id,
     'learning_language': learningLanguage,
     'from_language': fromLanguage,
     'title': title,
+    'learning_language_name': languageName(learningLanguage),
+    'learning_language_native_name': languageNativeName(learningLanguage),
+    'from_language_name': languageName(fromLanguage),
+    'from_language_native_name': languageNativeName(fromLanguage),
     'status': status == CourseStatus.comingSoon ? 'coming_soon' : 'available',
     'is_active': isActive,
     'completed_skills': completedSkills,
@@ -62,7 +69,8 @@ class Course {
   /// Parses a backend course object (catalog entry, list entry or the
   /// skill tree's `course`). Returns `null` if a required field is missing
   /// or of the wrong type, so a caller can treat that as a malformed
-  /// response rather than crash.
+  /// response rather than crash. The two languages' names, when present,
+  /// are remembered for [languageName] and [languageNativeName].
   static Course? fromJson(Map<String, dynamic> json) {
     final id = json['id'];
     final learning = json['learning_language'];
@@ -74,6 +82,16 @@ class Course {
         title is! String) {
       return null;
     }
+    _rememberNames(
+      learning,
+      json['learning_language_name'],
+      json['learning_language_native_name'],
+    );
+    _rememberNames(
+      from,
+      json['from_language_name'],
+      json['from_language_native_name'],
+    );
     final rawStatus = json['status'];
     return Course(
       id: id,
@@ -94,6 +112,12 @@ class Course {
   }
 }
 
+void _rememberNames(String code, Object? name, Object? nativeName) {
+  if (name is String && nativeName is String) {
+    rememberLanguageNames(code, name: name, nativeName: nativeName);
+  }
+}
+
 /// The signed-in learner's course list plus which one is active.
 class CourseList {
   const CourseList({required this.activeCourseId, required this.courses});
@@ -104,9 +128,7 @@ class CourseList {
   /// The same list with [courseId] marked active (and only it).
   CourseList withActive(String courseId) => CourseList(
     activeCourseId: courseId,
-    courses: [
-      for (final c in courses) c.copyWith(isActive: c.id == courseId),
-    ],
+    courses: [for (final c in courses) c.copyWith(isActive: c.id == courseId)],
   );
 
   Map<String, dynamic> toJson() => {
@@ -122,7 +144,9 @@ class CourseList {
     if (active is! String || list is! List) return null;
     final courses = <Course>[];
     for (final item in list) {
-      final course = item is Map<String, dynamic> ? Course.fromJson(item) : null;
+      final course = item is Map<String, dynamic>
+          ? Course.fromJson(item)
+          : null;
       if (course == null) return null;
       courses.add(course);
     }

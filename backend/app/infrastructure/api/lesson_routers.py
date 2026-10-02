@@ -8,6 +8,7 @@ maps the result to the HTTP response shapes in this bolt's
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, Query
@@ -23,7 +24,7 @@ from app.application.lesson_use_cases import (
     refill_beans,
 )
 from app.application.stat_use_cases import get_amole_history, get_streak_history
-from app.domain.course import CourseRepository
+from app.domain.course import CourseRepository, Language
 from app.domain.entities import User
 from app.domain.lesson.repositories import (
     AmoleTransactionRepository,
@@ -37,7 +38,7 @@ from app.domain.lesson.repositories import (
     UserVocabProgressRepository,
 )
 from app.domain.lesson.value_objects import BEAN_REGEN_MINUTES
-from app.infrastructure.api.course_schemas import CourseInfoResponse
+from app.infrastructure.api.course_schemas import CourseInfoResponse, language_names
 from app.infrastructure.api.dependencies import get_current_user, get_league_repository
 from app.infrastructure.api.exercise_mapping import to_exercise_response
 from app.infrastructure.api.lesson_dependencies import (
@@ -71,7 +72,9 @@ from app.infrastructure.db.league_repository import SqlAlchemyLeagueRepository
 router = APIRouter(prefix="/api/v1", tags=["lessons"])
 
 
-def _to_skill_tree_response(summary: SkillTreeSummary) -> SkillTreeResponse:
+def _to_skill_tree_response(
+    summary: SkillTreeSummary, languages: Sequence[Language]
+) -> SkillTreeResponse:
     return SkillTreeResponse(
         unit_title=summary.unit_title,
         unit_subtitle=summary.unit_subtitle,
@@ -85,6 +88,7 @@ def _to_skill_tree_response(summary: SkillTreeSummary) -> SkillTreeResponse:
                 learning_language=summary.course.learning_language,
                 from_language=summary.course.from_language,
                 title=summary.course.title,
+                **language_names(summary.course, languages),
             )
             if summary.course is not None
             else None
@@ -157,7 +161,7 @@ async def get_skill_tree_endpoint(
         course_repo=course_repo,
         active_course_id=user.active_course_id,
     )
-    return _to_skill_tree_response(summary)
+    return _to_skill_tree_response(summary, await course_repo.list_languages())
 
 
 @router.get("/lessons/{lesson_id}", response_model=LessonContentResponse)

@@ -117,17 +117,69 @@ void main() {
   });
 
   group('language names', () {
-    test('know the three languages, in English and in their own', () {
+    tearDown(forgetServerLanguageNames);
+
+    test("know Ethiopia's main languages, in English and in their own", () {
       expect(languageName('am'), 'Amharic');
       expect(languageName('om'), 'Afaan Oromo');
       expect(languageName('en'), 'English');
       expect(languageNativeName('am'), 'አማርኛ');
       expect(languageNativeName('om'), 'Afaan Oromoo');
+      expect(languageName('ti'), 'Tigrinya');
+      expect(languageNativeName('ti'), 'ትግርኛ');
+      expect(languageGlyph('ti'), 'ት');
+      expect(languageName('sid'), 'Sidama');
     });
 
     test('an unknown code is shown as itself', () {
       expect(languageName('xx'), 'xx');
       expect(languageNativeName('xx'), 'xx');
+    });
+
+    Map<String, dynamic> nuerCourse() => {
+      'id': 'c-nus',
+      'learning_language': 'nus',
+      'from_language': 'am',
+      'title': 'Amharic to Nuer',
+      'learning_language_name': 'Nuer',
+      'learning_language_native_name': 'Thok Naath',
+      'from_language_name': 'Amharic',
+      'from_language_native_name': 'አማርኛ',
+    };
+
+    test('a language the server added is named from its courses', () {
+      expect(languageName('nus'), 'nus');
+
+      Course.fromJson(nuerCourse());
+
+      expect(languageName('nus'), 'Nuer');
+      expect(languageNativeName('nus'), 'Thok Naath');
+      expect(languageGlyph('nus'), 'T');
+    });
+
+    test('the names survive the offline cache', () {
+      final cached = Course.fromJson(nuerCourse())!.toJson();
+      expect(cached['learning_language_name'], 'Nuer');
+      forgetServerLanguageNames(); // as after a restart
+
+      Course.fromJson(cached);
+
+      expect(languageName('nus'), 'Nuer');
+    });
+
+    test("the server's name wins, but a bare code never replaces a name", () {
+      Course.fromJson({
+        ...nuerCourse(),
+        'learning_language': 'am',
+        'learning_language_name': 'am',
+        'learning_language_native_name': 'am',
+        'from_language': 'om',
+        'from_language_name': 'Oromo',
+        'from_language_native_name': 'Oromoo',
+      });
+
+      expect(languageName('am'), 'Amharic');
+      expect(languageName('om'), 'Oromo');
     });
   });
 

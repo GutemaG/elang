@@ -51,7 +51,7 @@ class TestResolveSelectionForNewUser:
         malformed input must be silently ignored (see
         test_authentication_service.py's returning-user tests)."""
         with pytest.raises(InvalidPendingSelectionError):
-            policy.resolve_selection_for_new_user("xx", 10)
+            policy.resolve_selection_for_new_user("x-1", 10)
 
     def test_unsupported_minutes_on_new_user_path_raises(
         self, policy: OnboardingAttachmentPolicy

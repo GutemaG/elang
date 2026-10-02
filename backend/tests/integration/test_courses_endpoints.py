@@ -25,6 +25,7 @@ from app.infrastructure.db.lesson_models import (
     CategoryModel,
     CourseModel,
     ExerciseModel,
+    LanguageModel,
     LessonModel,
     SkillModel,
     UserVocabProgressModel,
@@ -50,6 +51,14 @@ _SKILLS = {
 def seeded_courses(db_path: Path) -> None:
     engine = create_engine(f"sqlite:///{db_path}")
     with SyncSession(engine) as session:
+        # English is left out on purpose: a code with no row is named by
+        # the code itself.
+        session.add_all(
+            [
+                LanguageModel(code="am", name="Amharic", native_name="አማርኛ"),
+                LanguageModel(code="om", name="Afaan Oromo", native_name="Afaan Oromoo"),
+            ]
+        )
         session.add_all(
             [
                 CourseModel(
@@ -241,6 +250,10 @@ class TestSwitchCourse:
             "learning_language": "om",
             "from_language": "am",
             "title": "Amharic to Afaan Oromo",
+            "learning_language_name": "Afaan Oromo",
+            "learning_language_native_name": "Afaan Oromoo",
+            "from_language_name": "Amharic",
+            "from_language_native_name": "አማርኛ",
         }
 
     def test_the_choice_persists_across_a_new_session(
@@ -626,6 +639,11 @@ class TestPublicCourseCatalog:
             "learning_language": "am",
             "from_language": "en",
             "title": "English to Amharic",
+            "learning_language_name": "Amharic",
+            "learning_language_native_name": "አማርኛ",
+            # No `en` row in this database, so English is named by its code.
+            "from_language_name": "en",
+            "from_language_native_name": "en",
             "status": "available",
             "order_index": 1,
         }

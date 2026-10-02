@@ -4,9 +4,33 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Literal
 
 from pydantic import BaseModel
+
+from app.domain.course import Course, Language
+
+
+def language_names(course: Course, languages: Iterable[Language]) -> dict[str, str]:
+    """The four name fields every course shape carries, so the app can name a
+    language added in the admin site without an update. A code with no
+    `languages` row is named by the code itself.
+    """
+    known = {language.code: language for language in languages}
+
+    def names(code: str) -> tuple[str, str]:
+        language = known.get(code)
+        return (language.name, language.native_name) if language else (code, code)
+
+    learning, learning_native = names(course.learning_language)
+    from_, from_native = names(course.from_language)
+    return {
+        "learning_language_name": learning,
+        "learning_language_native_name": learning_native,
+        "from_language_name": from_,
+        "from_language_native_name": from_native,
+    }
 
 
 class CourseInfoResponse(BaseModel):
@@ -16,6 +40,10 @@ class CourseInfoResponse(BaseModel):
     learning_language: str
     from_language: str
     title: str
+    learning_language_name: str
+    learning_language_native_name: str
+    from_language_name: str
+    from_language_native_name: str
 
 
 class CourseResponse(BaseModel):
@@ -23,6 +51,10 @@ class CourseResponse(BaseModel):
     learning_language: str
     from_language: str
     title: str
+    learning_language_name: str
+    learning_language_native_name: str
+    from_language_name: str
+    from_language_native_name: str
     status: Literal["available", "coming_soon"]
     order_index: int
     is_active: bool
@@ -37,6 +69,10 @@ class CatalogCourseResponse(BaseModel):
     learning_language: str
     from_language: str
     title: str
+    learning_language_name: str
+    learning_language_native_name: str
+    from_language_name: str
+    from_language_native_name: str
     status: Literal["available", "coming_soon"]
     order_index: int
 

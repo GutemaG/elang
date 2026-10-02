@@ -26,6 +26,8 @@ from app.infrastructure.api.admin_schemas import (
     AdminCourseTree,
     AdminExercise,
     AdminExerciseList,
+    AdminLanguage,
+    AdminLanguageList,
     AdminMeResponse,
     AdminNode,
     AdminNodeList,
@@ -41,6 +43,8 @@ from app.infrastructure.api.admin_schemas import (
     AudioStatus,
     AudioUploadRequest,
     AudioUploadResponse,
+    CreateCourseRequest,
+    CreateLanguageRequest,
     CreateSectionRequest,
     ExerciseImportCheck,
     ExerciseImportRequest,
@@ -49,6 +53,8 @@ from app.infrastructure.api.admin_schemas import (
     ImageUploadResponse,
     ReorderRequest,
     TitleRequest,
+    UpdateCourseRequest,
+    UpdateLanguageRequest,
     UpdateSectionRequest,
     UpdateTitleRequest,
     UpdateVocabRequest,
@@ -62,7 +68,12 @@ from app.infrastructure.db.admin_content_repository import (
     CourseOutline,
     SqlAlchemyAdminContentRepository,
 )
-from app.infrastructure.db.lesson_models import CourseModel, ExerciseModel, VocabItemModel
+from app.infrastructure.db.lesson_models import (
+    CourseModel,
+    ExerciseModel,
+    LanguageModel,
+    VocabItemModel,
+)
 from app.infrastructure.db.seed_category_content import PLACEHOLDER_AUDIO_URL
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.external.audio_link_checker import AudioLinkChecker
@@ -104,14 +115,33 @@ def get_audio_link_checker() -> AudioLinkChecker:
     return AudioLinkChecker()
 
 
-def _course(course: CourseModel, section_count: int) -> AdminCourse:
+def _course(
+    course: CourseModel, section_count: int, languages: dict[str, LanguageModel]
+) -> AdminCourse:
+    learning = languages.get(course.learning_language)
+    source = languages.get(course.from_language)
     return AdminCourse(
         id=course.id,
         title=course.title,
         learning_language=course.learning_language,
         from_language=course.from_language,
+        learning_language_name=learning.name if learning else course.learning_language,
+        learning_language_native_name=(
+            learning.native_name if learning else course.learning_language
+        ),
+        from_language_name=source.name if source else course.from_language,
+        from_language_native_name=source.native_name if source else course.from_language,
         status=course.status,
         section_count=section_count,
+    )
+
+
+def _language(language: LanguageModel, course_count: int) -> AdminLanguage:
+    return AdminLanguage(
+        code=language.code,
+        name=language.name,
+        native_name=language.native_name,
+        course_count=course_count,
     )
 
 
@@ -231,23 +261,97 @@ async def get_admin_me(admin: User = Depends(require_admin)) -> AdminMeResponse:
     return AdminMeResponse(email=admin.email or "")
 
 
+# --- languages -------------------------------------------------------------
+
+
+@router.get("/languages", response_model=AdminLanguageList)
+async def list_languages(
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+) -> AdminLanguageList:
+    return AdminLanguageList(
+        languages=[_language(row, n) for row, n in await repo.list_languages()]
+    )
+
+
+@router.post("/languages", response_model=AdminLanguage, status_code=201)
+async def create_language(
+    body: CreateLanguageRequest,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+) -> AdminLanguage:
+    language = await uc.create_language(
+        repo, ctx, code=body.code, name=body.name, native_name=body.native_name
+    )
+    return _language(language, 0)
+
+
+@router.patch("/languages/{code}", response_model=AdminLanguage)
+async def update_language(
+    code: str,
+    body: UpdateLanguageRequest,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+) -> AdminLanguage:
+    language = await uc.update_language(
+        repo, ctx, code, name=body.name, native_name=body.native_name
+    )
+    return _language(language, await repo.count_courses_using(code))
+
+
+@router.delete("/languages/{code}", status_code=204)
+async def delete_language(
+    code: str,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+) -> Response:
+    await uc.delete_language(repo, ctx, code)
+    return Response(status_code=204)
+
+
 # --- courses and the tree ---------------------------------------------------
 
 
 @router.get("/courses", response_model=AdminCourseList)
 async def list_courses(repo: SqlAlchemyAdminContentRepository = Depends(_repo)) -> AdminCourseList:
-    return AdminCourseList(courses=[_course(c, n) for c, n in await repo.list_courses()])
+    languages = await repo.language_map()
+    return AdminCourseList(courses=[_course(c, n, languages) for c, n in await repo.list_courses()])
 
 
-@router.patch("/courses/{course_id}", response_model=AdminCourse)
-async def rename_course(
-    course_id: str,
-    body: TitleRequest,
+@router.post("/courses", response_model=AdminCourse, status_code=201)
+async def create_course(
+    body: CreateCourseRequest,
     repo: SqlAlchemyAdminContentRepository = Depends(_repo),
     ctx: uc.AdminContext = Depends(_ctx),
 ) -> AdminCourse:
-    course = await uc.rename_course(repo, ctx, course_id, body.title)
-    return _course(course, len(await repo.children(SECTION, course_id)))
+    course = await uc.create_course(
+        repo,
+        ctx,
+        learning_language=body.learning_language,
+        from_language=body.from_language,
+        title=body.title,
+    )
+    return _course(course, 0, await repo.language_map())
+
+
+@router.patch("/courses/{course_id}", response_model=AdminCourse)
+async def update_course(
+    course_id: str,
+    body: UpdateCourseRequest,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+) -> AdminCourse:
+    course = await uc.update_course(repo, ctx, course_id, title=body.title, status=body.status)
+    return _course(course, len(await repo.children(SECTION, course_id)), await repo.language_map())
+
+
+@router.delete("/courses/{course_id}", status_code=204)
+async def delete_course(
+    course_id: str,
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    ctx: uc.AdminContext = Depends(_ctx),
+) -> Response:
+    await uc.delete_course(repo, ctx, course_id)
+    return Response(status_code=204)
 
 
 @router.get("/courses/{course_id}/tree", response_model=AdminCourseTree)
@@ -295,7 +399,7 @@ async def get_course_tree(
             )
         )
     return AdminCourseTree(
-        course=_course(course, len(sections)),
+        course=_course(course, len(sections), await repo.language_map()),
         sections=[
             AdminTreeSection(
                 id=s.id,
@@ -553,7 +657,7 @@ async def list_vocab(
     practised, and how many learners practise it."""
     course, outline, listing = await uc.list_vocab(repo, course_id)
     return AdminVocabList(
-        course=_course(course, len(outline[0])),
+        course=_course(course, len(outline[0]), await repo.language_map()),
         items=_vocab_items(outline, listing.items, listing.uses, listing.learners),
         learners=listing.learners_total,
     )
