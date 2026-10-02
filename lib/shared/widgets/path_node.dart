@@ -241,22 +241,24 @@ class _Callout extends StatelessWidget {
             horizontal: AppSpacing.spaceSm,
             vertical: AppSpacing.space2xs + 2,
           ),
+          // Green with white letters: a white bubble barely stood out from
+          // the cream page, and gold would melt into the gold node below.
           decoration: BoxDecoration(
-            color: colors.onPrimary,
+            color: colors.primaryContainer,
             borderRadius: BorderRadius.circular(AppRadii.sm),
-            border: Border.all(color: colors.secondaryContainer, width: 2),
+            border: Border.all(color: colors.primaryShelf, width: 2),
           ),
           child: Text(
             label.toUpperCase(),
             style: AppTypography.labelLg.copyWith(
-              color: colors.onSecondaryContainer,
+              color: colors.onPrimary,
               letterSpacing: 0.8,
             ),
           ),
         ),
         BubbleTail(
-          color: colors.onPrimary,
-          border: colors.secondaryContainer,
+          color: colors.primaryContainer,
+          border: colors.primaryShelf,
           width: 16,
           height: 8,
         ),

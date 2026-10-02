@@ -1,7 +1,7 @@
 // Language selection screen tests (010-multi-language-courses, bolt 026).
 //
-// The screen asks "I speak" and "I want to learn" from the public course
-// catalog: an Amharic speaker can pick Afaan Oromo and the reverse, coming-soon
+// The screen offers, from the public course catalog, one section per
+// language the learner may speak, each opening onto its courses: an Amharic speaker can pick Afaan Oromo and the reverse, coming-soon
 // courses are disabled, a catalog failure shows Retry with no silent default,
 // and both languages are what gets recorded for sign-in.
 
@@ -70,7 +70,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.catalogCalls, 1);
-    expect(find.text('I speak'), findsOneWidget);
+    expect(find.text('For English speakers'), findsOneWidget);
     expect(find.text('What do you want to learn?'), findsOneWidget);
   });
 
@@ -81,7 +81,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // From English: Amharic and Afaan Oromo, Amharic selected by default.
-    expect(find.text('English'), findsOneWidget);
+    expect(find.text('For English speakers'), findsOneWidget);
     expect(_cardFor(tester, 'Amharic').enabled, isTrue);
     expect(_cardFor(tester, 'Amharic').selected, isTrue);
     expect(_cardFor(tester, 'Afaan Oromo').enabled, isTrue);
@@ -94,7 +94,7 @@ void main() {
       await tester.pumpWidget(_wrapped(repo, FakeCourseApi()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('አማርኛ'));
+      await tester.tap(find.text('ለአማርኛ ተናጋሪዎች'));
       await tester.pumpAndSettle();
 
       // Only Afaan Oromo is taught from Amharic.
@@ -126,13 +126,72 @@ void main() {
       await tester.pumpWidget(_wrapped(repo, api));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Afaan Oromoo'));
+      await tester.tap(find.text('Afaan Oromoo dubbattootaaf'));
       await tester.pumpAndSettle();
 
       expect(_cardFor(tester, 'Amharic').selected, isTrue);
       expect(find.text('Afaan Oromo to Amharic'), findsOneWidget);
     },
   );
+
+  testWidgets('the sections are in their own language, one open at a time', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrapped(repo, FakeCourseApi()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('For English speakers'), findsOneWidget);
+    expect(find.text('ለአማርኛ ተናጋሪዎች'), findsOneWidget);
+    expect(find.text('What do you want to learn?'), findsOneWidget);
+    expect(find.text('English to Amharic'), findsOneWidget);
+
+    // Opening Amharic closes English and asks in Amharic.
+    await tester.tap(find.text('ለአማርኛ ተናጋሪዎች'));
+    await tester.pumpAndSettle();
+    expect(find.text('ምን መማር ይፈልጋሉ?'), findsOneWidget);
+    expect(find.text('What do you want to learn?'), findsNothing);
+    expect(find.text('English to Amharic'), findsNothing);
+
+    // Closing it keeps the choice.
+    await tester.tap(find.text('ለአማርኛ ተናጋሪዎች'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SelectableOptionCard), findsNothing);
+    expect(find.text('ምን መማር ይፈልጋሉ?'), findsOneWidget);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await _finishOnboardingGoal(tester, repo);
+    final pending = await repo.loadPendingSelection();
+    expect(pending!.fromLanguageCode, 'am');
+    expect(pending.languageCode, 'om');
+  });
+
+  testWidgets('a language without translations is named in English', (
+    tester,
+  ) async {
+    final api = FakeCourseApi(
+      courses: const [
+        Course(
+          id: 'c-en-am',
+          learningLanguage: 'am',
+          fromLanguage: 'en',
+          title: 'English to Amharic',
+        ),
+        Course(
+          id: 'c-so-am',
+          learningLanguage: 'am',
+          fromLanguage: 'so',
+          title: 'Somali to Amharic',
+        ),
+      ],
+    );
+    await tester.pumpWidget(_wrapped(repo, api));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('For Somali speakers'));
+    await tester.pumpAndSettle();
+    expect(find.text('What do you want to learn?'), findsOneWidget);
+    expect(find.text('Somali to Amharic'), findsOneWidget);
+  });
 
   testWidgets('a coming-soon course is disabled with a waitlist button', (
     tester,
@@ -199,8 +258,8 @@ void main() {
       await tester.pumpWidget(_wrapped(repo, api));
       await tester.pumpAndSettle();
 
-      expect(find.text('Afaan Oromoo'), findsNothing);
-      expect(find.text('English'), findsOneWidget);
+      expect(find.text('Afaan Oromoo dubbattootaaf'), findsNothing);
+      expect(find.text('For English speakers'), findsOneWidget);
     },
   );
 
@@ -214,7 +273,7 @@ void main() {
 
       expect(find.text("Couldn't load the courses."), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
-      expect(find.text('I speak'), findsNothing);
+      expect(find.text('For English speakers'), findsNothing);
 
       await tester.tap(find.text('Continue'), warnIfMissed: false);
       await tester.pump();
@@ -224,7 +283,7 @@ void main() {
       api.failWith = null;
       await tester.tap(find.text('Retry'));
       await tester.pumpAndSettle();
-      expect(find.text('I speak'), findsOneWidget);
+      expect(find.text('For English speakers'), findsOneWidget);
     },
   );
 
@@ -257,7 +316,7 @@ void main() {
   ) async {
     await tester.pumpWidget(_wrapped(repo, FakeCourseApi()));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('አማርኛ'));
+    await tester.tap(find.text('ለአማርኛ ተናጋሪዎች'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Continue'));

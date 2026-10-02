@@ -64,39 +64,58 @@ void main() {
   ) async {
     await _open(tester, FakeCourseApi());
 
+    // Each group is named in its own language.
     expect(find.text('Choose a course'), findsOneWidget);
     expect(find.text('For English speakers'), findsOneWidget);
-    expect(find.text('For Amharic speakers'), findsOneWidget);
-    expect(find.text('For Afaan Oromo speakers'), findsOneWidget);
+    expect(find.text('ለአማርኛ ተናጋሪዎች'), findsOneWidget);
+    expect(find.text('Afaan Oromoo dubbattootaaf'), findsOneWidget);
 
-    // Each row names the language taught; its course title says the pair.
-    expect(find.text('Amharic'), findsNWidgets(2)); // from English, from Oromo
-    expect(find.text('Afaan Oromo'), findsNWidgets(2));
+    // Only the active course's group is open. Each row names the language
+    // taught; its course title says the pair.
     expect(find.text('English to Amharic'), findsOneWidget);
+    expect(find.text('English to Afaan Oromo'), findsOneWidget);
+    expect(find.text('Amharic to Afaan Oromo'), findsNothing);
+
+    // Opening another closes it.
+    await tester.tap(find.text('ለአማርኛ ተናጋሪዎች'));
+    await tester.pumpAndSettle();
     expect(find.text('Amharic to Afaan Oromo'), findsOneWidget);
+    expect(find.text('English to Amharic'), findsNothing);
+
+    // And tapping the open one closes it too.
+    await tester.tap(find.text('ለአማርኛ ተናጋሪዎች'));
+    await tester.pumpAndSettle();
+    expect(find.text('Amharic to Afaan Oromo'), findsNothing);
   });
 
-  testWidgets('marks the active course, shows progress, and disables coming soon', (
-    tester,
-  ) async {
-    final handle = tester.ensureSemantics();
-    await _open(tester, FakeCourseApi());
+  testWidgets("opens on the active course's group", (tester) async {
+    await _open(tester, FakeCourseApi(activeCourseId: 'c-am-om'));
 
-    // The active course is the only one wearing the check.
-    expect(find.byIcon(Icons.check), findsOneWidget);
-    // Progress is a bar now, not a count in a sentence, but it still says so.
-    expect(find.bySemanticsLabel('3 of 10 skills'), findsOneWidget);
-    expect(find.bySemanticsLabel('0 of 2 skills'), findsNWidgets(2));
-
-    // Coming soon is named on the row and locked.
-    expect(
-      find.text('Afaan Oromo to Amharic · Coming soon'),
-      findsOneWidget,
-    );
-    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
-
-    handle.dispose();
+    expect(find.text('Amharic to Afaan Oromo'), findsOneWidget);
+    expect(find.text('English to Amharic'), findsNothing);
   });
+
+  testWidgets(
+    'marks the active course, shows progress, and disables coming soon',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await _open(tester, FakeCourseApi());
+
+      // The active course is the only one wearing the check.
+      expect(find.byIcon(Icons.check), findsOneWidget);
+      // Progress is a bar now, not a count in a sentence, but it still says so.
+      expect(find.bySemanticsLabel('3 of 10 skills'), findsOneWidget);
+      expect(find.bySemanticsLabel('0 of 2 skills'), findsOneWidget);
+
+      // Coming soon is named on the row and locked.
+      await tester.tap(find.text('Afaan Oromoo dubbattootaaf'));
+      await tester.pumpAndSettle();
+      expect(find.text('Afaan Oromo to Amharic · Coming soon'), findsOneWidget);
+      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+
+      handle.dispose();
+    },
+  );
 
   testWidgets('a load failure shows a message and Retry, which recovers', (
     tester,
@@ -157,6 +176,8 @@ void main() {
   testWidgets('a coming-soon course cannot be chosen', (tester) async {
     final api = FakeCourseApi();
     await _open(tester, api);
+    await tester.tap(find.text('Afaan Oromoo dubbattootaaf'));
+    await tester.pumpAndSettle();
 
     await tester.tap(
       find.text('Afaan Oromo to Amharic · Coming soon'),

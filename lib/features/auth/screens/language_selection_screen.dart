@@ -9,20 +9,25 @@ import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_status.dart';
 import '../../../shared/widgets/selectable_option_card.dart';
 import '../auth_routes.dart';
+import '../../../shared/models/learn_prompts.dart';
 
 /// Language-selection screen — maps to
 /// `stich-screens/.../3._language_selection/`.
 ///
-/// Asks two things (010-multi-language-courses): "I speak" and "I want to
-/// learn". Both come from the public course catalog
-/// ([CourseApi.getCatalog]) rather than a hardcoded list: "I speak" offers
-/// every language some available course is taught from, and "I want to learn"
-/// lists the courses taught from that language, with coming-soon ones
-/// disabled. So an Amharic speaker can start on Afaan Oromo and the reverse,
+/// Asks two things (010-multi-language-courses): the language the learner
+/// speaks and the course they want. Both come from the public course
+/// catalog ([CourseApi.getCatalog]) rather than a hardcoded list: one
+/// section per language some available course is taught from ("For English
+/// speakers", each in its own language), English first and open, the rest
+/// closed so the list stays short however many languages there are (after
+/// Duolingo's course list). Opening one closes the others and chooses its
+/// first course; the heading follows, in that language ([LearnPrompts]).
+/// Coming-soon courses are disabled. So an Amharic speaker can start on Afaan Oromo and the reverse,
 /// with no English involved, and a pair with no available course can never be
 /// continued. If the catalog cannot be loaded the screen says so and offers
 /// Retry — there is no silent default.
@@ -47,6 +52,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
   String? _fromCode;
   String? _learningCode;
 
+  /// The section that is open; null once the learner closes it. The choice
+  /// ([_fromCode], [_learningCode]) stays when it closes.
+  String? _openFrom;
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +74,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
         _catalog = catalog;
         _loading = false;
         _fromCode = _defaultFrom(catalog);
+        _openFrom = _fromCode;
         _learningCode = _firstAvailableLearning(catalog, _fromCode);
       });
     } on CourseApiException {
@@ -100,10 +110,20 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     return null;
   }
 
-  void _selectFrom(List<Course> catalog, String code) {
+  /// Opens [code]'s section, closing the others, and chooses its first
+  /// course unless a course from it is already chosen. Toggling the open
+  /// section closes it.
+  void _toggleFrom(List<Course> catalog, String code) {
     setState(() {
-      _fromCode = code;
-      _learningCode = _firstAvailableLearning(catalog, code);
+      if (_openFrom == code) {
+        _openFrom = null;
+        return;
+      }
+      _openFrom = code;
+      if (_fromCode != code) {
+        _fromCode = code;
+        _learningCode = _firstAvailableLearning(catalog, code);
+      }
     });
   }
 
@@ -162,74 +182,51 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
         retryLabel: 'Retry',
       );
     }
-    final coursesFromHere = [
-      for (final course in catalog)
-        if (course.fromLanguage == _fromCode) course,
-    ];
+    final prompts = LearnPrompts.of(_fromCode ?? 'en');
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'I speak',
-          style: AppTypography.headlineSm.copyWith(
-            color: context.colors.onSurface,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.spaceXs),
-        Wrap(
-          spacing: AppSpacing.spaceXs,
-          runSpacing: AppSpacing.spaceXs,
-          children: [
-            for (final code in _fromOptions(catalog))
-              ChoiceChip(
-                label: Text(languageNativeName(code)),
-                selected: _fromCode == code,
-                onSelected: (_) => _selectFrom(catalog, code),
+        Semantics(
+          header: true,
+          child: Text(
+            prompts.question,
+            style: AppTypography.forText(
+              AppTypography.headlineSm.copyWith(
+                color: context.colors.onSurface,
               ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.spaceLg),
-        Text(
-          'What do you want to learn?',
-          style: AppTypography.headlineSm.copyWith(
-            color: context.colors.onSurface,
+              prompts.question,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.space2xs),
         Text(
-          'Choose your journey to connect with heritage & family.',
-          style: AppTypography.bodySm.copyWith(
-            color: context.colors.onSurfaceVariant,
+          prompts.subtitle,
+          style: AppTypography.forText(
+            AppTypography.bodySm.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+            prompts.subtitle,
           ),
         ),
-        const SizedBox(height: AppSpacing.spaceMd),
-        for (final course in coursesFromHere)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.spaceMd),
-            child: SelectableOptionCard(
-              leading: _FlagBadge(available: course.isAvailable),
-              title:
-                  '${languageName(course.learningLanguage)} · '
-                  '${languageNativeName(course.learningLanguage)}',
-              subtitle: course.title,
-              badgeLabel: course.isAvailable ? null : 'COMING SOON',
-              selected: _learningCode == course.learningLanguage,
-              enabled: course.isAvailable,
-              onTap: course.isAvailable
-                  ? () =>
-                        setState(() => _learningCode = course.learningLanguage)
-                  : null,
-              trailingAction: course.isAvailable
-                  ? null
-                  : Align(
-                      alignment: Alignment.centerRight,
-                      child: AppButton.text(
-                        label: 'Join Waitlist',
-                        onPressed: () => _onJoinWaitlistPressed(course),
-                      ),
+        const SizedBox(height: AppSpacing.spaceSm),
+        for (final from in _fromOptions(catalog))
+          ExpandableSection(
+            title: LearnPrompts.of(from).forSpeakers,
+            expanded: _openFrom == from,
+            onToggle: () => _toggleFrom(catalog, from),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final course in catalog)
+                  if (course.fromLanguage == from)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.spaceSm),
+                      child: _courseCard(course),
                     ),
+              ],
             ),
           ),
+        const SizedBox(height: AppSpacing.spaceLg),
         Text(
           'You can always switch courses anytime from the home screen or '
           'your settings.',
@@ -239,6 +236,36 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           textAlign: TextAlign.center,
         ),
       ],
+    );
+  }
+
+  Widget _courseCard(Course course) {
+    return SelectableOptionCard(
+      leading: _FlagBadge(available: course.isAvailable),
+      title:
+          '${languageName(course.learningLanguage)} · '
+          '${languageNativeName(course.learningLanguage)}',
+      subtitle: course.title,
+      badgeLabel: course.isAvailable ? null : 'COMING SOON',
+      selected:
+          _fromCode == course.fromLanguage &&
+          _learningCode == course.learningLanguage,
+      enabled: course.isAvailable,
+      onTap: course.isAvailable
+          ? () => setState(() {
+              _fromCode = course.fromLanguage;
+              _learningCode = course.learningLanguage;
+            })
+          : null,
+      trailingAction: course.isAvailable
+          ? null
+          : Align(
+              alignment: Alignment.centerRight,
+              child: AppButton.text(
+                label: 'Join Waitlist',
+                onPressed: () => _onJoinWaitlistPressed(course),
+              ),
+            ),
     );
   }
 }

@@ -809,6 +809,8 @@ void main() {
       expect(other.tone, AppTone.neutral);
       expect(other.onTap, isNotNull);
 
+      await tester.tap(find.text('Afaan Oromoo dubbattootaaf'));
+      await tester.pumpAndSettle();
       final soon = rowFor(tester, 'Afaan Oromo to Amharic');
       expect(soon.onTap, isNull);
       expect(

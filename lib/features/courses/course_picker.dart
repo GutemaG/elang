@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../shared/models/course.dart';
 import '../../shared/models/language_names.dart';
+import '../../shared/models/learn_prompts.dart';
 import '../../shared/services/caching_course_api.dart';
 import '../../shared/services/course_api.dart';
 import '../../shared/theme/app_theme_context.dart';
@@ -53,9 +54,12 @@ Future<Course?> pickAndSwitchCourse(
 }
 
 /// The course catalog: every course grouped by the language the learner
-/// speaks ("For English speakers"), because that is the axis a learner
-/// chooses along -- they know what they speak and are shopping for what to
-/// learn. The active course is marked and coming-soon courses are disabled.
+/// speaks ("For English speakers", each in its own language), because that
+/// is the axis a learner chooses along -- they know what they speak and are
+/// shopping for what to learn. Each group opens and closes, one at a time,
+/// starting on the active course's, so the sheet stays short however many
+/// languages there are (after Duolingo's course list). The active course is
+/// marked and coming-soon courses are disabled.
 ///
 /// Pops with the tapped [Course] (not yet switched to); see
 /// [pickAndSwitchCourse]. Drawn inside the library's sheet, with a card per
@@ -134,39 +138,54 @@ class _CoursePickerSheetState extends State<CoursePickerSheet> {
   }
 }
 
-class _CourseGroups extends StatelessWidget {
+class _CourseGroups extends StatefulWidget {
   const _CourseGroups({required this.courses});
 
   final List<Course> courses;
+
+  @override
+  State<_CourseGroups> createState() => _CourseGroupsState();
+}
+
+class _CourseGroupsState extends State<_CourseGroups> {
+  /// The group that is open: at first the active course's, else the first.
+  late String? _open = _initialOpen();
+
+  String? _initialOpen() {
+    for (final course in widget.courses) {
+      if (course.isActive) return course.fromLanguage;
+    }
+    return widget.courses.firstOrNull?.fromLanguage;
+  }
 
   @override
   Widget build(BuildContext context) {
     // Grouped by the language the learner speaks, in the order each first
     // appears, so the catalog reads "I speak X -- what can I learn?".
     final groups = <String, List<Course>>{};
-    for (final course in courses) {
+    for (final course in widget.courses) {
       groups.putIfAbsent(course.fromLanguage, () => []).add(course);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final entry in groups.entries) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.spaceXs),
-            child: Text(
-              'For ${languageName(entry.key)} speakers',
-              style: AppTypography.labelSm.copyWith(
-                color: context.colors.onSurfaceVariant,
-              ),
+        for (final entry in groups.entries)
+          ExpandableSection(
+            title: LearnPrompts.of(entry.key).forSpeakers,
+            expanded: _open == entry.key,
+            onToggle: () =>
+                setState(() => _open = _open == entry.key ? null : entry.key),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final course in entry.value)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.spaceXs),
+                    child: _CatalogRow(course: course),
+                  ),
+              ],
             ),
           ),
-          for (final course in entry.value)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.spaceXs),
-              child: _CatalogRow(course: course),
-            ),
-          const SizedBox(height: AppSpacing.spaceMd),
-        ],
       ],
     );
   }

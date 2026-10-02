@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_motion.dart';
 import '../theme/app_theme_context.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
@@ -677,6 +678,102 @@ class SectionHeader extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// A heading that opens and closes the content under it, one of a stack
+/// separated by hairlines: "For English speakers" over that group's courses
+/// (after Duolingo's course list). The parent keeps which one is open, so
+/// it can let only one be open at a time.
+///
+/// The whole heading is one button, read as expanded or collapsed; the
+/// chevron turns to match.
+class ExpandableSection extends StatelessWidget {
+  const ExpandableSection({
+    super.key,
+    required this.title,
+    required this.expanded,
+    required this.onToggle,
+    required this.child,
+  });
+
+  final String title;
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  /// Shown under the heading while [expanded].
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MergeSemantics(
+          child: Semantics(
+            button: true,
+            expanded: expanded,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onToggle,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: ListRow.oneLineHeight,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.spaceSm,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: AppTypography.forText(
+                            AppTypography.labelLg.copyWith(
+                              color: expanded
+                                  ? context.colors.primaryAccent
+                                  : context.colors.onSurface,
+                            ),
+                            title,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.spaceSm),
+                      AnimatedRotation(
+                        turns: expanded ? 0.5 : 0,
+                        duration: AppMotion.state,
+                        curve: AppMotion.stateCurve,
+                        child: Icon(
+                          Icons.expand_more,
+                          size: 28,
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: AppMotion.state,
+          curve: AppMotion.stateCurve,
+          alignment: Alignment.topCenter,
+          child: expanded
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.spaceMd),
+                  child: child,
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+        SizedBox(
+          height: 1,
+          child: ColoredBox(color: context.colors.outlineVariant),
+        ),
+      ],
     );
   }
 }

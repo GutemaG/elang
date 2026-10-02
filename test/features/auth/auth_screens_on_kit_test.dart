@@ -226,7 +226,7 @@ void main() {
       await tester.tap(find.text('Retry'));
       await tester.pumpAndSettle();
       expect(find.byType(ErrorState), findsNothing);
-      expect(find.text('I speak'), findsOneWidget);
+      expect(find.text('For English speakers'), findsOneWidget);
     });
 
     testWidgets('loading and errors fill the page, centred above the dock', (
