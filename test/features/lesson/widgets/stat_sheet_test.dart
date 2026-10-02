@@ -536,6 +536,72 @@ void main() {
       expect(rig.amoleCalls, 2);
       expect(find.text('50 Amole'), findsOneWidget);
     });
+
+    testWidgets('a long list scrolls in its own box, so the sheet stays '
+        'short and closes with a tap above it', (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final many = [
+        for (var i = 0; i < 20; i++)
+          AmoleEntry(
+            amount: 10,
+            source: 'lesson_completion',
+            createdAt: DateTime.utc(2026, 9, 30 - i, 11),
+          ),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => showStatSheet(
+                    context,
+                    initial: StatKind.amole,
+                    streakCount: 1,
+                    totalXp: 0,
+                    beans: _beans(beans: 5, nextIn: null),
+                    offline: false,
+                    refill: () => Future.value(
+                      const RefillFailure(
+                        RefillFailureReason.insufficientAmole,
+                      ),
+                    ),
+                    onBeansChanged: (_) {},
+                    loadStreak: ({required from, required to}) async =>
+                        _streak(),
+                    loadAmole: ({int limit = 20}) async => many,
+                  ),
+                  child: const Text('OPEN'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('OPEN'));
+      await tester.pumpAndSettle();
+
+      final list = find.byKey(const ValueKey('stat-sheet-amole-scroll'));
+      expect(
+        tester.getSize(list).height,
+        lessThanOrEqualTo(640 * StatSheet.amoleListMaxHeightFraction),
+      );
+      // Close shows without scrolling the sheet, and the sheet leaves room
+      // above it.
+      expect(tester.getBottomLeft(find.text('Close')).dy, lessThan(640));
+      expect(tester.getTopLeft(find.byType(StatSheet)).dy, greaterThan(80));
+
+      // The list scrolls to its last entry.
+      await tester.drag(list, const Offset(0, -2000));
+      await tester.pumpAndSettle();
+      expect(find.byType(StatSheet), findsOneWidget);
+
+      await tester.tapAt(const Offset(180, 20));
+      await tester.pumpAndSettle();
+      expect(find.byType(StatSheet), findsNothing);
+    });
   });
 
   group('XP', () {

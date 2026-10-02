@@ -96,6 +96,10 @@ class StatSheet extends StatefulWidget {
   /// A tab's tap height.
   static const double tabHeight = 48;
 
+  /// The Amole list's tallest, as a share of the screen's height; longer
+  /// lists scroll inside it.
+  static const double amoleListMaxHeightFraction = 0.4;
+
   @override
   State<StatSheet> createState() => _StatSheetState();
 }
@@ -326,7 +330,23 @@ class _StatSheetState extends State<StatSheet> {
         offlineText: context.l10n.listNeedsConnection,
         errorTitle: context.l10n.listLoadFailed,
         onRetry: () => _retry(_amole),
-        builder: (entries) => AmoleHistoryList(entries: entries),
+        builder: (entries) => ConstrainedBox(
+          // Twenty entries would stretch the sheet to the top of the screen,
+          // where a drag down to close it pulls the phone's notifications
+          // instead: the list scrolls in its own box, and the sheet stays
+          // short enough to close with a tap above it.
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.sizeOf(context).height *
+                StatSheet.amoleListMaxHeightFraction,
+          ),
+          child: Scrollbar(
+            child: SingleChildScrollView(
+              key: const ValueKey('stat-sheet-amole-scroll'),
+              child: AmoleHistoryList(entries: entries),
+            ),
+          ),
+        ),
       ),
     );
   }
