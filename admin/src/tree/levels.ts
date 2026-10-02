@@ -35,6 +35,10 @@ export const routes = {
   // Languages: the list courses pick from, and one language by its code.
   languages: `${ADMIN}/languages`,
   language: (code: string) => `${ADMIN}/languages/${code}`,
+  // Learners and reports (026-learner-reports): read-only.
+  learners: `${ADMIN}/learners`,
+  learner: (id: string) => `${ADMIN}/learners/${id}`,
+  reports: `${ADMIN}/reports`,
   // Exercises (bolt 038): a lesson's list, one exercise, and their order.
   exercises: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises`,
   exercise: (id: string) => `${ADMIN}/exercises/${id}`,

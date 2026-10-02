@@ -248,3 +248,129 @@ export interface AudioLinkResponse {
   url: string
   content_type: string
 }
+
+// --- learners and reports (026-learner-reports) ------------------------------
+
+/** A learner with their all-time totals. `accuracy` is 0 to 1, null before
+ * any answer; `current_streak` is 0 once the streak has lapsed. */
+export interface AdminLearner {
+  id: string
+  name: string
+  email: string | null
+  joined_at: string
+  course_id: string
+  course_title: string
+  lessons: number
+  practice_sessions: number
+  xp: number
+  accuracy: number | null
+  skills_completed: number
+  current_streak: number
+  last_active_at: string | null
+}
+
+/** One page of the learners matching a search; the counts cover them all. */
+export interface AdminLearnerPage {
+  learners: AdminLearner[]
+  total: number
+  active_today: number
+  active_7_days: number
+  not_started: number
+}
+
+export interface AdminDayActivity {
+  date: string
+  lessons: number
+  practice_sessions: number
+  xp: number
+}
+
+export type SkillState = 'completed' | 'started' | 'not_started'
+
+export interface AdminSkillProgress {
+  id: string
+  title: string
+  state: SkillState
+  crown_level: number
+  lessons_total: number
+  lessons_done: number
+}
+
+export interface AdminCourseProgress {
+  course_id: string
+  title: string
+  /** The course the learner is on now. */
+  current: boolean
+  skills_total: number
+  skills_completed: number
+  lessons_total: number
+  lessons_done: number
+  sections: { id: string; title: string; skills: AdminSkillProgress[] }[]
+}
+
+export interface AdminRecentAttempt {
+  kind: 'lesson' | 'practice'
+  at: string
+  lesson_title: string | null
+  skill_title: string | null
+  course_title: string | null
+  correct: number
+  answered: number
+  xp: number
+}
+
+/** One learner: `activity` holds only the days they studied, from the last
+ * thirteen weeks. */
+export interface AdminLearnerDetail {
+  learner: AdminLearner
+  auth_provider: string
+  daily_xp_target: number
+  longest_streak: number
+  days_active: number
+  activity: AdminDayActivity[]
+  courses: AdminCourseProgress[]
+  recent: AdminRecentAttempt[]
+}
+
+export type ReportPeriod = 'day' | 'week' | 'month'
+
+export interface AdminTotals {
+  new_learners: number
+  active_learners: number
+  lessons: number
+  practice_sessions: number
+  xp: number
+  accuracy: number | null
+  skills_completed: number
+}
+
+/** A day, a week (from Monday) or a month; `partial` while it is still
+ * going on. Dates are UTC days, `YYYY-MM-DD`, both ends included. */
+export interface AdminBucket {
+  start: string
+  end: string
+  partial: boolean
+  totals: AdminTotals
+}
+
+export interface AdminReport {
+  period: ReportPeriod
+  course_id: string | null
+  start: string
+  end: string
+  totals: AdminTotals
+  /** The same number of days, weeks or months just before. */
+  previous: AdminTotals
+  buckets: AdminBucket[]
+  now: { total_learners: number; active_today: number; active_7_days: number; active_30_days: number }
+  courses: {
+    course_id: string
+    title: string
+    learners: number
+    active_learners: number
+    lessons: number
+    xp: number
+    skills_completed: number
+  }[]
+  top_learners: { id: string; name: string; email: string | null; xp: number; lessons: number; accuracy: number | null }[]
+}

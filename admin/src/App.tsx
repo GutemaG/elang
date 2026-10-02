@@ -7,6 +7,9 @@ import { ExerciseEditorRoute } from './exercises/ExerciseEditorPage'
 import { GuidePage } from './guide/GuidePage'
 import { ImportPage } from './import/ImportPage'
 import { LanguagesPage } from './languages/LanguagesPage'
+import { DashboardPage } from './learners/DashboardPage'
+import { LearnerPage } from './learners/LearnerPage'
+import { LearnersPage } from './learners/LearnersPage'
 import { AppShell } from './shell/AppShell'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
@@ -40,6 +43,9 @@ export function App() {
             <Route path="/courses/:courseId/vocabulary" element={<VocabularyPage />} />
             <Route path="/languages" element={<LanguagesPage />} />
             <Route path="/guide" element={<GuidePage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/learners" element={<LearnersPage />} />
+            <Route path="/learners/:learnerId" element={<LearnerPage />} />
             <Route
               path="/courses/:courseId/lessons/:lessonId/exercises/new/:type"
               element={<ExerciseEditorRoute />}

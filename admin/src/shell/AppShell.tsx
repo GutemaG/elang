@@ -10,11 +10,24 @@ const isCurriculum = (path: string) => (path === '/' || path.startsWith('/course
 
 /** The workspace's places. Curriculum covers the course list and every
  * course page except a course's words, which are Vocabulary's (bolt 040). */
-const NAV = [
-  { to: '/', icon: 'menu_book', label: 'Curriculum', current: isCurriculum },
-  { to: '/vocabulary', icon: 'translate', label: 'Vocabulary', current: isVocabulary },
-  { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
-  { to: '/guide', icon: 'help', label: 'Guide', current: (path: string) => path === '/guide' },
+const NAV_GROUPS = [
+  {
+    heading: 'Workspace',
+    items: [
+      { to: '/', icon: 'menu_book', label: 'Curriculum', current: isCurriculum },
+      { to: '/vocabulary', icon: 'translate', label: 'Vocabulary', current: isVocabulary },
+      { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
+      { to: '/guide', icon: 'help', label: 'Guide', current: (path: string) => path === '/guide' },
+    ],
+  },
+  {
+    // 026-learner-reports: who is learning and how it is going.
+    heading: 'Learners',
+    items: [
+      { to: '/dashboard', icon: 'monitoring', label: 'Dashboard', current: (path: string) => path === '/dashboard' },
+      { to: '/learners', icon: 'group', label: 'Learners', current: (path: string) => path.startsWith('/learners') },
+    ],
+  },
 ]
 
 function initialsOf(email: string): string {
@@ -78,27 +91,33 @@ export function AppShell({ email, onSignOut, children }: Props) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Sections">
-          <p className="px-2 pt-2 pb-2 text-[0.6875rem] font-bold tracking-[0.12em] text-stone uppercase">Workspace</p>
-          {NAV.map((item) => {
-            const current = item.current(pathname)
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={close}
-                aria-current={current ? 'page' : undefined}
-                className={cx(
-                  'mb-1 flex items-center gap-3 rounded border-l-[3px] px-3 py-2.5 text-sm font-semibold transition-colors',
-                  current
-                    ? 'border-l-forest bg-inset text-forest'
-                    : 'border-l-transparent text-coffee-soft hover:bg-inset hover:text-coffee',
-                )}
-              >
-                <Icon name={item.icon} className="text-xl" />
-                {item.label}
-              </Link>
-            )
-          })}
+          {NAV_GROUPS.map((group) => (
+            <div key={group.heading} className="mb-3">
+              <p className="px-2 pt-2 pb-2 text-[0.6875rem] font-bold tracking-[0.12em] text-stone uppercase">
+                {group.heading}
+              </p>
+              {group.items.map((item) => {
+                const current = item.current(pathname)
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={close}
+                    aria-current={current ? 'page' : undefined}
+                    className={cx(
+                      'mb-1 flex items-center gap-3 rounded border-l-[3px] px-3 py-2.5 text-sm font-semibold transition-colors',
+                      current
+                        ? 'border-l-forest bg-inset text-forest'
+                        : 'border-l-transparent text-coffee-soft hover:bg-inset hover:text-coffee',
+                    )}
+                  >
+                    <Icon name={item.icon} className="text-xl" />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="border-t border-line p-3">
