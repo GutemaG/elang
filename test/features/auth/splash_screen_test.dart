@@ -29,6 +29,7 @@ import '../../helpers/fake_answer_feedback_player.dart';
 import '../../helpers/fake_lesson_audio_player.dart';
 import '../../helpers/in_memory_secure_storage_service.dart';
 import '../../helpers/test_appearance.dart';
+import '../../helpers/test_app_language.dart';
 
 LessonDependencies _lessonDeps() => LessonDependencies(
   // Unused (a fake `lessonApi` is supplied below), but required by the
@@ -90,6 +91,7 @@ void main() {
     await tester.pumpWidget(
       BunaApp(
         appearance: testAppearance(),
+        appLanguage: testAppLanguage(),
         authDependencies: deps,
         lessonDependencies: _lessonDeps(),
         settingsDependencies: _settingsDeps(deps),
@@ -121,6 +123,7 @@ void main() {
       await tester.pumpWidget(
         BunaApp(
           appearance: testAppearance(),
+          appLanguage: testAppLanguage(),
           authDependencies: deps,
           lessonDependencies: _lessonDeps(),
           settingsDependencies: _settingsDeps(deps),
@@ -151,6 +154,7 @@ void main() {
       await tester.pumpWidget(
         BunaApp(
           appearance: testAppearance(),
+          appLanguage: testAppLanguage(),
           authDependencies: deps,
           lessonDependencies: _lessonDeps(),
           settingsDependencies: _settingsDeps(deps),

@@ -3,6 +3,9 @@
 /// `GET /amole/transactions` (bolt 059).
 library;
 
+import '../../l10n/app_localizations.dart';
+import '../../l10n/app_localizations_en.dart';
+
 /// The practised days in a range, with the streak as the dashboard shows
 /// it. Every date is a UTC calendar day, the rule the streak itself uses.
 class StreakHistory {
@@ -66,24 +69,28 @@ class AmoleEntry {
 
   final int amount;
 
-  /// The ledger's own name for why, e.g. `bean_refill`; see [reason].
+  /// The ledger's own name for why, e.g. `bean_refill`; see [reasonIn].
   final String source;
   final DateTime createdAt;
 
-  /// What the learner reads for [source]. A source this app does not know
-  /// yet (the server added one) reads as plain "Amole".
-  String get reason => switch (source) {
-    'wallet_created' => 'Welcome bonus',
-    'migration_backfill' => 'Starting balance',
-    'lesson_completion' => 'Lesson finished',
-    'perfect_lesson' => 'Perfect lesson',
-    'streak_milestone_7' => '7-day streak',
-    'streak_milestone_30' => '30-day streak',
-    'bean_refill' => 'Bean refill',
-    'practice_session' => 'Practice session',
-    'league_reward' => 'League reward',
-    _ => 'Amole',
+  /// What the learner reads for [source], in the app language [l]. A
+  /// source this app does not know yet (the server added one) reads as
+  /// plain "Amole".
+  String reasonIn(AppLocalizations l) => switch (source) {
+    'wallet_created' => l.reasonWelcome,
+    'migration_backfill' => l.reasonStartingBalance,
+    'lesson_completion' => l.reasonLessonFinished,
+    'perfect_lesson' => l.reasonPerfectLesson,
+    'streak_milestone_7' => l.reasonStreak7,
+    'streak_milestone_30' => l.reasonStreak30,
+    'bean_refill' => l.reasonBeanRefill,
+    'practice_session' => l.reasonPractice,
+    'league_reward' => l.reasonLeagueReward,
+    _ => l.amole,
   };
+
+  /// [reasonIn] English.
+  String get reason => reasonIn(AppLocalizationsEn());
 
   /// `null` for anything that is not one entry.
   static AmoleEntry? fromJson(Object? raw) {

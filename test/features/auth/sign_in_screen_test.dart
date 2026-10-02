@@ -40,6 +40,10 @@ class _Deps {
   final ControllableAuthApi authApi;
   late final OnboardingRepository onboardingRepository;
   late final SessionRepository sessionRepository;
+
+  /// Times the screen said a sign-in succeeded (024-app-localization: the
+  /// app checks the new session then, for the account's settings).
+  int signedIn = 0;
 }
 
 Widget _wrapped(_Deps deps) {
@@ -57,6 +61,7 @@ Widget _wrapped(_Deps deps) {
         // native step, matching this suite's pre-SDK behavior.
         googleSignIn: FakeNativeSignIn(),
         appleSignIn: FakeNativeSignIn(),
+        onSignedIn: () => deps.signedIn++,
       ),
       AuthRoutes.home: (_) => const Scaffold(body: Text('HOME_STUB')),
     },
@@ -212,5 +217,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('HOME_STUB'), findsOneWidget);
+    expect(deps.signedIn, 1);
   });
 }

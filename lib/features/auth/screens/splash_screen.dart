@@ -9,6 +9,7 @@ import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_status.dart';
 import '../auth_flow_controller.dart';
 import '../auth_routes.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Buna's splash screen — maps to
 /// `stich-screens/.../1._buna_splash_screen/`.
@@ -92,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen>
       scrollable: false,
       bottomDock: [
         AppButton.primary(
-          label: 'Get Started',
+          label: context.l10n.getStarted,
           onPressed: _onGetStartedPressed,
           trailing: const Icon(Icons.arrow_forward, size: 20),
         ),
@@ -119,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: AppSpacing.space2xs),
                     Text(
-                      'Learn Amharic, One Sip at a Time.',
+                      context.l10n.splashTagline,
                       style: AppTypography.bodyMd.copyWith(
                         color: context.colors.onSurfaceVariant,
                       ),
@@ -186,7 +187,7 @@ class _BrewingProgress extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Brewing your lessons...',
+                  context.l10n.splashBrewing,
                   style: AppTypography.labelMd.copyWith(
                     color: context.colors.onSurface,
                   ),
@@ -203,7 +204,7 @@ class _BrewingProgress extends StatelessWidget {
             value: value,
             gradient: true,
             animate: false,
-            semanticLabel: 'Brewing your lessons',
+            semanticLabel: context.l10n.splashBrewing,
           ),
         ],
       ),

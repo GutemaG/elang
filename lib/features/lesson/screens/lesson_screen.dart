@@ -40,6 +40,7 @@ import '../widgets/out_of_beans_sheet.dart';
 import '../widgets/spell_tiles_builder.dart';
 import '../widgets/word_bank_builder.dart';
 import 'lesson_complete_screen.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Thrown by [LessonScreen]'s content loader when the device is offline
 /// and this lesson was never downloaded (009-offline-caching-and-sync-ui,
@@ -448,8 +449,8 @@ class _LessonScreenState extends State<LessonScreen> {
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const _StatusPage(
-            child: LoadingState(message: 'Loading lesson'),
+          return _StatusPage(
+            child: LoadingState(message: context.l10n.loadingLesson),
           );
         }
         if (snapshot.hasError) {
@@ -458,8 +459,8 @@ class _LessonScreenState extends State<LessonScreen> {
           }
           return _StatusPage(
             child: ErrorState(
-              title: "Couldn't load this lesson.",
-              message: 'Check your connection and try again.',
+              title: context.l10n.lessonLoadFailed,
+              message: context.l10n.checkConnection,
               onRetry: _retryLoad,
             ),
           );
@@ -500,7 +501,7 @@ class _StatusPage extends StatelessWidget {
       topBar: AppTopBar(
         leading: AppIconButton(
           icon: Icons.close,
-          tooltip: 'Exit lesson',
+          tooltip: context.l10n.exitLesson,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -519,10 +520,10 @@ class _DownloadRequiredState extends StatelessWidget {
   Widget build(BuildContext context) {
     return EmptyState(
       icon: Icons.cloud_off,
-      title: "You're offline",
-      message: 'Download this lesson while online to take it offline.',
+      title: context.l10n.youreOffline,
+      message: context.l10n.downloadWhileOnline,
       action: AppButton.primary(
-        label: 'Go back',
+        label: context.l10n.goBack,
         expand: false,
         onPressed: () => Navigator.of(context).pop(),
       ),
@@ -597,8 +598,7 @@ class _MistakeReview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final missedCount = controller.wrongCount;
-    final noun = missedCount == 1 ? 'question' : 'questions';
-    final pronoun = missedCount == 1 ? 'it' : 'them';
+    final l = context.l10n;
 
     return AppPage(
       scrollable: false,
@@ -608,20 +608,18 @@ class _MistakeReview extends StatelessWidget {
           child: SheetHero(
             illustration: const Icon(Icons.replay),
             illustrationBadge: CountBadge(
-              label: missedCount == 1 ? '1 mistake' : '$missedCount mistakes',
+              label: l.mistakesCount(missedCount),
               tone: AppTone.tertiary,
             ),
             tone: AppTone.tertiary,
-            title: "Let's review your mistakes",
-            body:
-                'You missed $missedCount $noun earlier. '
-                "Let's get $pronoun right this time!",
+            title: l.reviewMistakesTitle,
+            body: l.reviewMistakesBody(missedCount),
           ),
         ),
       ),
       bottomDock: [
         AppButton.primary(
-          label: 'Continue',
+          label: l.continueButton,
           onPressed: controller.startRetryExercise,
         ),
       ],
@@ -765,7 +763,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
         onContinue: _continue,
         notice: controller.completionError == null
             ? null
-            : "Couldn't save your progress. Tap Continue to try again.",
+            : context.l10n.progressSaveFailed,
       ),
     );
   }
@@ -781,7 +779,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
       // that does not gets a generic one, rather than a second
       // "Translate:" stacked in front of the prompt's own.
       SentenceConstructionExercise e => _questionPrompt(
-        _translatePrompt(e.promptTranslation),
+        _translatePrompt(e.promptTranslation, context.l10n.translateSentence),
       ),
       MatchPairsExercise e => _questionPrompt(splitPrompt(e.prompt)),
       GapFillExercise e => _questionPrompt(splitPrompt(e.prompt)),
@@ -812,7 +810,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
         ),
         const SizedBox(height: AppSpacing.space2xs),
         Text(
-          'Tap to play/replay',
+          context.l10n.tapToPlay,
           textAlign: TextAlign.center,
           style: AppTypography.bodySm.copyWith(
             color: context.colors.onSurfaceVariant,
@@ -912,7 +910,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
               choices[i].imageUrl,
               cache: widget.mediaCache,
             ),
-            altText: choices[i].labelAt(i),
+            altText: choices[i].labelAt(i, context.l10n),
             state: choiceStateOf(
               chosen: chosen == i,
               feedback: controller.feedback,
@@ -945,8 +943,10 @@ Widget _choicePrompt(MultipleChoiceExercise exercise) {
 Widget _questionPrompt(PromptParts parts) =>
     QuestionPrompt(instruction: parts.instruction, question: parts.content);
 
-PromptParts _translatePrompt(String prompt) {
+/// [prompt] split into what to do and the sentence; one with no
+/// instruction of its own gets [instruction] ("Translate this sentence").
+PromptParts _translatePrompt(String prompt, String instruction) {
   final parts = splitPrompt(prompt);
   if (parts.content != null) return parts;
-  return PromptParts(instruction: 'Translate this sentence', content: prompt);
+  return PromptParts(instruction: instruction, content: prompt);
 }

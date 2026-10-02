@@ -261,3 +261,32 @@
 - **In Progress**: 0
 - **Completed**: 95
 - **Retired**: 1
+
+---
+
+### 024-app-localization
+
+#### Unit: 001-app-language-service
+
+- [x] **001-app-language-on-the-account** (app-language-service): Store and return the app language - Must - ✅ COMPLETED (bolt 077-app-language-service)
+
+#### Unit: 002-localization-foundation
+
+- [x] **002-arb-files-and-fallback** (localization-foundation): ARB files, generated strings, English fallback - Must - ✅ COMPLETED (bolt 078-localization-foundation)
+- [x] **003-app-language-on-the-phone** (localization-foundation): The choice kept on the phone - Must - ✅ COMPLETED (bolt 078-localization-foundation)
+- [x] **004-app-language-in-settings** (localization-foundation): Choose the app language in Settings - Must - ✅ COMPLETED (bolt 078-localization-foundation)
+- [x] **005-sign-up-sets-the-language** (localization-foundation): The "I speak" choice sets it at sign-up - Must - ✅ COMPLETED (bolt 078-localization-foundation)
+- [x] **006-app-language-follows-the-account** (localization-foundation): The choice follows the account - Must - ✅ COMPLETED (bolt 078-localization-foundation)
+- [x] **007-translation-guards** (localization-foundation): Tests that keep every string translated - Must - ✅ COMPLETED (bolt 078-localization-foundation)
+
+#### Unit: 003-screen-translations
+
+- [x] **008-onboarding-and-sign-in** (screen-translations): Onboarding and sign-in translated - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+- [x] **009-settings-and-feedback** (screen-translations): Settings, feedback and downloads translated - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+- [x] **010-daily-reminder** (screen-translations): The daily reminder in the app language - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+- [x] **011-dashboard-path-and-courses** (screen-translations): Dashboard, path and courses translated - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+- [x] **012-league-and-stat-sheets** (screen-translations): League and stat sheets translated - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+- [x] **013-dates-in-the-app-language** (screen-translations): Month and weekday names in the app language - Should - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+- [x] **014-lessons-exercises-and-practice** (screen-translations): Lessons, exercises and practice translated - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+- [x] **015-every-screen-in-every-language** (screen-translations): The sweep in every language; allow-list empty - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+- [x] **016-reviewer-guide** (screen-translations): A guide for the native-speaker reviewer - Should - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)

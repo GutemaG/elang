@@ -5,6 +5,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import 'answer_action_bar.dart';
 import 'answer_tile.dart';
+import '../../l10n/app_language.dart';
 
 /// Where an answer is built (018-mobile-design-system, FR-7): the ruled
 /// lines a sentence's word pills sit on, or the gap in a gap-fill sentence.
@@ -17,12 +18,13 @@ class AnswerSlotLine extends StatelessWidget {
   ///
   /// It always holds at least [minLines] lines, so the page does not jump as
   /// words are added, and grows a line at a time when they wrap. Empty, it
-  /// shows [hint] on the first line.
+  /// shows [hint] on the first line ("Tap words below to build your
+  /// answer" in the app language when null).
   const AnswerSlotLine.sentence({
     super.key,
     required List<Widget> this.children,
     this.grade,
-    this.hint = 'Tap words below to build your answer',
+    this.hint,
     this.minLines = 2,
   }) : before = null,
        after = null,
@@ -112,7 +114,7 @@ class AnswerSlotLine extends StatelessWidget {
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: Text(
-                        hint!,
+                        hint ?? context.l10n.buildAnswerHint,
                         style: AppTypography.bodySm.copyWith(
                           color: context.colors.textMuted,
                         ),
@@ -176,7 +178,9 @@ class AnswerSlotLine extends StatelessWidget {
               // word with no sign it is the answer slot.
               container: true,
               excludeSemantics: true,
-              label: word == null ? 'blank' : 'blank, filled with $word',
+              label: word == null
+                  ? context.l10n.blank
+                  : context.l10n.blankFilled(word),
               child: Container(
                 width: _gapWidth(context, style),
                 padding: const EdgeInsets.symmetric(horizontal: _gapPadding),

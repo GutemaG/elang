@@ -8,6 +8,7 @@ import '../../theme/app_shadows.dart';
 import '../../theme/app_spacing.dart';
 import '../app_button.dart';
 import '../tactile_pressable.dart';
+import '../../l10n/app_language.dart';
 
 /// How big an [AudioPlayButton] is.
 enum AudioPlayButtonSize {
@@ -33,7 +34,7 @@ class AudioPlayButton extends StatefulWidget {
     required this.onPressed,
     this.playing = false,
     this.size = AudioPlayButtonSize.large,
-    this.semanticLabel = 'Play audio',
+    this.semanticLabel,
   });
 
   final VoidCallback? onPressed;
@@ -42,7 +43,8 @@ class AudioPlayButton extends StatefulWidget {
 
   /// What a screen reader hears at rest; while [playing] it hears
   /// "Playing audio".
-  final String semanticLabel;
+  /// "Play audio" in the app language when null.
+  final String? semanticLabel;
 
   static const double largeFace = 88;
   static const double smallFace = 44;
@@ -143,7 +145,9 @@ class _AudioPlayButtonState extends State<AudioPlayButton>
       container: true,
       button: true,
       enabled: enabled,
-      label: playing ? 'Playing audio' : widget.semanticLabel,
+      label: playing
+          ? context.l10n.playingAudio
+          : widget.semanticLabel ?? context.l10n.playAudio,
       excludeSemantics: true,
       onTap: onPressed,
       child: Opacity(

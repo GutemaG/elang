@@ -8,6 +8,7 @@ import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_status.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// The tones the section header takes in turn, so the learner can see the
 /// header change as they scroll from one section into the next.
@@ -71,7 +72,11 @@ class CategoryBanner extends StatelessWidget {
         _lineHeight(context, category.title, AppTypography.labelLg) +
         _lineHeight(context, category.subtitle, AppTypography.bodySm);
     final count =
-        _lineHeight(context, '$_countProbe Completed', AppTypography.labelSm) +
+        _lineHeight(
+          context,
+          context.l10n.completedCount(_countProbe, _countProbe),
+          AppTypography.labelSm,
+        ) +
         CountBadge.verticalChrome();
     final content =
         (titleBlock > count ? titleBlock : count) +
@@ -99,7 +104,7 @@ class CategoryBanner extends StatelessWidget {
 
   /// Digits are the only part of the count that can vary in height, and every
   /// digit shares a line box, so any two will do.
-  static const String _countProbe = '0/0';
+  static const int _countProbe = 0;
 
   /// A mixed-script probe. An empty or all-Latin string can lay out shorter
   /// than the face Fidel falls back to, and an empty one shorter again, so the
@@ -139,7 +144,7 @@ class CategoryBanner extends StatelessWidget {
         excludeSemantics: true,
         label:
             '${category.title}, ${category.subtitle}, '
-            '$completed of $total completed',
+            '${context.l10n.completedOfTotal(completed, total)}',
         child: AppCard(
           tone: tone,
           filled: true,
@@ -185,7 +190,9 @@ class CategoryBanner extends StatelessWidget {
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerRight,
-                      child: CountBadge(label: '$completed/$total Completed'),
+                      child: CountBadge(
+                        label: context.l10n.completedCount(completed, total),
+                      ),
                     ),
                   ),
                 ],

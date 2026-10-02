@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/l10n/app_language.dart';
 import '../../../shared/models/course.dart';
 import '../../../shared/models/language_names.dart';
 import '../../../shared/services/course_api.dart';
@@ -131,6 +132,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     final learning = _learningCode;
     final from = _fromCode;
     if (learning == null || from == null) return;
+    // The app's own words switch to the language spoken, if the app has
+    // it and none is chosen yet (024-app-localization, story 005).
+    await AppLanguageScope.maybeOf(context)?.adoptSignUpLanguage(from);
     await widget.onboardingRepository.selectLanguage(
       learning,
       fromLanguageCode: from,
@@ -143,7 +147,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          "You're on the waitlist for ${languageName(course.learningLanguage)}.",
+          context.l10n.onWaitlist(languageName(course.learningLanguage)),
         ),
       ),
     );
@@ -159,7 +163,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
       scrollable: ready,
       bottomDock: [
         AppButton.primary(
-          label: 'Continue',
+          label: context.l10n.continueButton,
           onPressed: _learningCode == null ? null : _onContinuePressed,
           trailing: const Icon(Icons.arrow_forward, size: 20),
         ),
@@ -176,10 +180,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     if (catalog == null || _fromOptions(catalog).isEmpty) {
       return ErrorState(
         title: catalog == null
-            ? "Couldn't load the courses."
-            : 'No courses are available yet.',
+            ? context.l10n.coursesLoadFailed
+            : context.l10n.noCoursesYet,
         onRetry: _load,
-        retryLabel: 'Retry',
+        retryLabel: context.l10n.retry,
       );
     }
     final prompts = LearnPrompts.of(_fromCode ?? 'en');
@@ -228,8 +232,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           ),
         const SizedBox(height: AppSpacing.spaceLg),
         Text(
-          'You can always switch courses anytime from the home screen or '
-          'your settings.',
+          context.l10n.switchCoursesAnytime,
           style: AppTypography.bodySm.copyWith(
             color: context.colors.onSurfaceVariant,
           ),
@@ -246,7 +249,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           '${languageName(course.learningLanguage)} · '
           '${languageNativeName(course.learningLanguage)}',
       subtitle: course.title,
-      badgeLabel: course.isAvailable ? null : 'COMING SOON',
+      badgeLabel: course.isAvailable ? null : context.l10n.comingSoonBadge,
       selected:
           _fromCode == course.fromLanguage &&
           _learningCode == course.learningLanguage,
@@ -262,7 +265,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           : Align(
               alignment: Alignment.centerRight,
               child: AppButton.text(
-                label: 'Join Waitlist',
+                label: context.l10n.joinWaitlist,
                 onPressed: () => _onJoinWaitlistPressed(course),
               ),
             ),

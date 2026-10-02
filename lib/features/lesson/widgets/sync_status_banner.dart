@@ -6,6 +6,7 @@ import '../../../shared/services/sync_engine.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Connectivity/sync status indicator (010-offline-caching-and-sync-ui,
 /// story 004) -- shown only on the skill-tree dashboard, never on
@@ -91,30 +92,27 @@ class _Banner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final (icon, label, tone) = switch (state) {
       _IndicatorState.onlineSynced => (
         Icons.cloud_done,
-        'Synced',
+        l.synced,
         AppTone.primary,
       ),
       _IndicatorState.offlinePacksAvailable => (
         Icons.cloud_off,
-        'Offline -- downloaded lessons available',
+        l.offlineDownloadsAvailable,
         AppTone.neutral,
       ),
       _IndicatorState.offlineNothingDownloaded => (
         Icons.cloud_off,
-        'Offline -- nothing downloaded',
+        l.offlineNothingDownloaded,
         AppTone.tertiary,
       ),
-      _IndicatorState.syncing => (
-        Icons.sync,
-        'Syncing your offline progress...',
-        AppTone.primary,
-      ),
+      _IndicatorState.syncing => (Icons.sync, l.syncing, AppTone.primary),
       _IndicatorState.syncFailedRetrying => (
         Icons.sync_problem,
-        'Sync failed -- retrying...',
+        l.syncFailedRetrying,
         AppTone.tertiary,
       ),
     };
@@ -125,9 +123,7 @@ class _Banner extends StatelessWidget {
         icon: icon,
         tone: escalated ? AppTone.tertiary : tone,
         emphasis: escalated,
-        message: escalated
-            ? '$label (unsynced for 30+ days -- please reconnect soon)'
-            : label,
+        message: escalated ? l.unsyncedLong(label) : label,
       ),
     );
   }

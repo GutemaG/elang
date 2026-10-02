@@ -11,6 +11,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_status.dart';
 import '../widgets/level_up_sheet.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Story 004's lesson-complete summary — maps to
 /// `lesson_complete_summary_1/2/`. Always shows the base summary (XP,
@@ -56,11 +57,12 @@ class LessonCompleteScreen extends StatelessWidget {
         ? 0.0
         : (result.dailyXpTotal / result.dailyXpTarget).clamp(0, 1).toDouble();
 
+    final l = context.l10n;
     return AppPage(
       background: AppPageBackground.celebration,
       bottomDock: [
         AppButton.primary(
-          label: 'Continue',
+          label: l.continueButton,
           onPressed: () => _onContinue(context),
           trailing: const Icon(Icons.arrow_forward, size: 20),
         ),
@@ -78,7 +80,7 @@ class LessonCompleteScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.spaceMd),
           Text(
-            result.isReview ? 'Review Complete!' : 'Lesson Complete!',
+            result.isReview ? l.reviewComplete : l.lessonComplete,
             textAlign: TextAlign.center,
             style: AppTypography.displayLgMobile.copyWith(
               color: context.colors.primaryAccent,
@@ -103,25 +105,25 @@ class LessonCompleteScreen extends StatelessWidget {
                     icon: Icons.star,
                     tone: AppTone.secondary,
                     value: '+${result.xpEarned}',
-                    label: 'XP EARNED',
+                    label: l.xpEarned,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.spaceXs),
                 Expanded(
                   child: result.pendingSync
-                      ? const StatCard(
+                      ? StatCard(
                           icon: Icons.local_fire_department,
                           tone: AppTone.tertiary,
                           value: '--',
-                          label: 'SYNCS WHEN ONLINE',
+                          label: l.syncsWhenOnline,
                         )
                       : StatCard(
                           icon: Icons.local_fire_department,
                           tone: AppTone.tertiary,
-                          value: '${result.streakCount} Days',
-                          label: 'STREAK',
+                          value: l.streakDays(result.streakCount),
+                          label: l.streakLabel,
                           ribbon: result.streakIncreasedToday
-                              ? '+1 Today'
+                              ? l.plusOneToday
                               : null,
                         ),
                 ),
@@ -131,7 +133,7 @@ class LessonCompleteScreen extends StatelessWidget {
                     icon: Icons.verified,
                     tone: AppTone.primary,
                     value: '${result.accuracyPercent}%',
-                    label: 'ACCURACY',
+                    label: l.accuracy,
                   ),
                 ),
               ],
@@ -143,7 +145,7 @@ class LessonCompleteScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Daily Goal Progress',
+                    l.dailyGoalProgress,
                     style: AppTypography.labelLg.copyWith(
                       color: context.colors.onSurface,
                     ),
@@ -151,8 +153,7 @@ class LessonCompleteScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.spaceXs),
                   if (result.pendingSync)
                     Text(
-                      "You're offline -- this lesson's XP will sync and "
-                      'count toward today\'s goal once you\'re back online.',
+                      l.offlineXpWillSync,
                       style: AppTypography.bodySm.copyWith(
                         color: context.colors.onSurfaceVariant,
                       ),
@@ -162,11 +163,11 @@ class LessonCompleteScreen extends StatelessWidget {
                       value: progress,
                       tone: AppTone.secondary,
                       gradient: true,
-                      semanticLabel: 'Daily goal',
+                      semanticLabel: l.dailyGoal,
                     ),
                     const SizedBox(height: AppSpacing.space2xs),
                     Text(
-                      '${result.dailyXpTotal} / ${result.dailyXpTarget} XP today',
+                      l.xpToday(result.dailyXpTotal, result.dailyXpTarget),
                       style: AppTypography.bodySm.copyWith(
                         color: context.colors.onSurfaceVariant,
                       ),
@@ -192,20 +193,18 @@ class _SkillProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final left = progress.lessonsLeftAfter;
     final String headline;
     final String detail;
     if (progress.finishesSkill) {
-      headline = 'You finished ${progress.skillTitle}!';
+      headline = l.finishedSkill(progress.skillTitle);
       detail = unlockedTitle != null
-          ? '$unlockedTitle is now unlocked.'
-          : 'All ${progress.lessonCount} lessons done.';
+          ? l.skillUnlocked(unlockedTitle!)
+          : l.allLessonsDone(progress.lessonCount);
     } else {
-      headline =
-          'Lesson ${progress.lessonNumber} of ${progress.lessonCount} done';
-      detail =
-          '$left more ${left == 1 ? 'lesson' : 'lessons'} to finish '
-          '${progress.skillTitle}.';
+      headline = l.lessonNofMDone(progress.lessonNumber, progress.lessonCount);
+      detail = l.lessonsLeftInSkill(left, progress.skillTitle);
     }
     return AppCard(
       tone: AppTone.primary,
@@ -224,7 +223,7 @@ class _SkillProgressCard extends StatelessWidget {
                 ? 0
                 : progress.lessonNumber / progress.lessonCount,
             gradient: true,
-            semanticLabel: 'Lessons done in ${progress.skillTitle}',
+            semanticLabel: l.lessonsDoneIn(progress.skillTitle),
           ),
           const SizedBox(height: AppSpacing.space2xs),
           Text(
@@ -257,7 +256,7 @@ class _ReviewSummary extends StatelessWidget {
                 icon: Icons.check_circle,
                 tone: AppTone.primary,
                 value: '${result.correctCount}/${result.totalCount}',
-                label: 'CORRECT',
+                label: context.l10n.correctLabel,
               ),
             ),
             const SizedBox(width: AppSpacing.spaceXs),
@@ -266,18 +265,16 @@ class _ReviewSummary extends StatelessWidget {
                 icon: Icons.verified,
                 tone: AppTone.primary,
                 value: '${result.accuracyPercent}%',
-                label: 'ACCURACY',
+                label: context.l10n.accuracy,
               ),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.spaceMd),
-        const InfoBanner(
+        InfoBanner(
           icon: Icons.info_outline,
           tone: AppTone.neutral,
-          message:
-              "Reviews don't earn XP or use beans. They keep what you've "
-              'already learned fresh.',
+          message: context.l10n.reviewsNoXp,
         ),
       ],
     );

@@ -7,6 +7,7 @@ import '../../theme/app_tone.dart';
 import '../../theme/app_typography.dart';
 import '../app_button.dart';
 import '../app_status.dart';
+import '../../l10n/app_language.dart';
 
 /// How a checked answer was graded.
 enum AnswerGrade { correct, incorrect }
@@ -62,13 +63,19 @@ class AnswerActionBar extends StatelessWidget {
               ),
             )
           : AppButton.primary(
-              label: 'Check',
+              label: context.l10n.check,
               onPressed: canCheck ? check : null,
             );
     } else {
       button = graded == AnswerGrade.correct
-          ? AppButton.primary(label: 'Continue', onPressed: onContinue)
-          : AppButton.destructive(label: 'Continue', onPressed: onContinue);
+          ? AppButton.primary(
+              label: context.l10n.continueButton,
+              onPressed: onContinue,
+            )
+          : AppButton.destructive(
+              label: context.l10n.continueButton,
+              onPressed: onContinue,
+            );
     }
 
     final message = notice;
@@ -145,7 +152,7 @@ class _AnswerFeedbackPanelState extends State<AnswerFeedbackPanel>
   Widget build(BuildContext context) {
     final correct = widget.grade == AnswerGrade.correct;
     final tone = correct ? AppTone.primary : AppTone.tertiary;
-    final title = correct ? 'Correct!' : 'Not quite';
+    final title = correct ? context.l10n.correct : context.l10n.notQuite;
     final ink = correct
         ? context.colors.primaryAccent
         : context.colors.tertiaryAccent;

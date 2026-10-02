@@ -438,13 +438,13 @@ void main() {
   });
 
   group('downloads', () {
-    testWidgets('is an AppPage titled Manage Downloads, whose back arrow '
+    testWidgets('is an AppPage titled Manage downloads, whose back arrow '
         'pops it', (tester) async {
       await _pumpDownloads(tester, pushed: true);
 
       expect(
         tester.widget<AppTopBar>(find.byType(AppTopBar)).title,
-        'Manage Downloads',
+        'Manage downloads',
       );
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();

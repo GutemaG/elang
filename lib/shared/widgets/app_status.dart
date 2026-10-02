@@ -9,6 +9,7 @@ import '../theme/app_theme_context.dart';
 import '../theme/app_tone.dart';
 import '../theme/app_typography.dart';
 import 'app_button.dart';
+import '../l10n/app_language.dart';
 
 /// Status and feedback pieces (018-mobile-design-system, FR-6): the HUD
 /// pills, badges, the progress bar, icon badges, the spinner, and the empty,
@@ -117,13 +118,16 @@ class _StatPillState extends State<StatPill> {
     ),
   };
 
-  String get _semanticLabel => switch (kind) {
-    StatKind.streak => '$value day streak',
-    StatKind.beans =>
-      max == null ? '$value beans' : '$value of $max beans remaining',
-    StatKind.xp => '$value total XP',
-    StatKind.amole => '$value Amole',
-  };
+  String _semanticLabel(BuildContext context) {
+    final l = context.l10n;
+    return switch (kind) {
+      StatKind.streak => l.pillStreak(value),
+      StatKind.beans =>
+        max == null ? l.pillBeans(value) : l.pillBeansOf(value, max!),
+      StatKind.xp => l.pillXp(value),
+      StatKind.amole => l.pillAmole(value),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,7 +183,7 @@ class _StatPillState extends State<StatPill> {
       );
     }
     return Semantics(
-      label: _semanticLabel,
+      label: _semanticLabel(context),
       container: true,
       button: onPressed != null,
       selected: onPressed != null && widget.selected ? true : null,
@@ -637,7 +641,7 @@ class PageDots extends StatelessWidget {
         : AppMotion.state;
     return Semantics(
       container: true,
-      label: 'Page ${index + 1} of $count',
+      label: context.l10n.pageOf(index + 1, count),
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -737,7 +741,7 @@ class ErrorState extends StatelessWidget {
     this.message,
     this.icon = Icons.cloud_off,
     this.onRetry,
-    this.retryLabel = 'Try again',
+    this.retryLabel,
     this.action,
   });
 
@@ -749,7 +753,9 @@ class ErrorState extends StatelessWidget {
 
   /// Shows a primary "Try again" button.
   final VoidCallback? onRetry;
-  final String retryLabel;
+
+  /// The retry button's label; "Try again" in the app language if null.
+  final String? retryLabel;
 
   /// A different action, when retrying is not the way out.
   final Widget? action;
@@ -769,7 +775,7 @@ class ErrorState extends StatelessWidget {
           (onRetry == null
               ? null
               : AppButton.primary(
-                  label: retryLabel,
+                  label: retryLabel ?? context.l10n.tryAgain,
                   onPressed: onRetry,
                   expand: false,
                 )),
@@ -795,7 +801,7 @@ class LoadingState extends StatelessWidget {
     return Semantics(
       container: true,
       liveRegion: true,
-      label: message ?? 'Loading',
+      label: message ?? context.l10n.loading,
       excludeSemantics: true,
       child: _StatusLayout(
         badge: spin

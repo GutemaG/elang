@@ -66,6 +66,8 @@ import 'package:elang/shared/settings/remote_settings_controller.dart';
 import 'package:elang/shared/settings/remote_settings_store.dart';
 import 'package:elang/shared/theme/app_theme.dart';
 import 'package:elang/shared/theme/appearance.dart';
+import 'package:elang/l10n/app_localizations.dart';
+import 'package:elang/shared/l10n/app_language.dart';
 import 'package:elang/shared/widgets/app_sheet.dart';
 import 'package:elang/shared/widgets/exercise/answer_action_bar.dart';
 import 'package:elang/shared/widgets/exercise/answer_tile.dart';
@@ -81,6 +83,7 @@ import '../helpers/fake_pending_sync_queue_store.dart';
 import '../helpers/fake_league_api.dart';
 import '../helpers/fake_user_preferences_api.dart';
 import '../helpers/in_memory_secure_storage_service.dart';
+import '../helpers/test_app_language.dart';
 import '../helpers/test_appearance.dart';
 
 // ---------------------------------------------------------------------------
@@ -89,15 +92,32 @@ import '../helpers/test_appearance.dart';
 /// The theme the scenes are drawn in; each group sets it.
 ThemeData _theme = AppTheme.light;
 
-// Under an Appearance scope, as in the app, so Settings shows its
-// Appearance row.
-Widget _app(Widget home, double scale) => AppearanceScope(
-  controller: testAppearance(),
-  child: _materialApp(home, scale),
-);
+/// The app language the scenes are drawn in; each group sets it
+/// (024-app-localization, FR-9).
+String _language = 'en';
 
-Widget _materialApp(Widget home, double scale) => MaterialApp(
+/// The app's words in [_language], for finding what a scene taps.
+AppLocalizations get _l => lookupAppLocalizations(Locale(_language));
+
+// Under Appearance and app-language scopes, as in the app, so Settings
+// shows both rows; in [language] (024-app-localization), English by
+// default.
+Widget _app(Widget home, double scale, {String? language}) {
+  final appLanguage = testAppLanguage(code: language ?? _language);
+  return AppearanceScope(
+    controller: testAppearance(),
+    child: AppLanguageScope(
+      controller: appLanguage,
+      child: _materialApp(home, scale, locale: appLanguage.language.locale),
+    ),
+  );
+}
+
+Widget _materialApp(Widget home, double scale, {Locale? locale}) => MaterialApp(
   theme: _theme,
+  locale: locale,
+  localizationsDelegates: AppLanguage.delegates,
+  supportedLocales: AppLanguage.locales,
   builder: (context, child) => MediaQuery(
     data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
     child: child!,
@@ -174,7 +194,7 @@ Future<void> _carousel(WidgetTester tester, double scale, int page) async {
   await tester.pumpWidget(_app(const OnboardingCarouselScreen(), scale));
   await tester.pumpAndSettle();
   for (var i = 0; i < page; i++) {
-    await _tap(tester, find.text('Continue'));
+    await _tap(tester, find.text(_l.continueButton));
   }
 }
 
@@ -467,7 +487,7 @@ Future<void> _answerRight(WidgetTester tester, Exercise exercise) async {
       for (final word in e.correctSentence) {
         await _tap(tester, _tile(word).last);
       }
-      await _tap(tester, find.text('Check'));
+      await _tap(tester, find.text(_l.check));
     case MatchPairsExercise e:
       final text = {
         for (final t in [...e.leftTiles, ...e.rightTiles]) t.id: t.text,
@@ -484,7 +504,7 @@ Future<void> _answerRight(WidgetTester tester, Exercise exercise) async {
       for (final id in e.correctSequence) {
         await _tap(tester, find.byKey(ValueKey('bank-$id')));
       }
-      await _tap(tester, find.text('Check'));
+      await _tap(tester, find.text(_l.check));
   }
 }
 
@@ -619,7 +639,7 @@ final _scenes = <String, _Scene>{
     await tester.pump(const Duration(milliseconds: 700));
     // Checked mid-brew: once the animation ends the splash moves on.
     expect(tester.takeException(), isNull);
-    expect(find.text('Get Started'), findsOneWidget);
+    expect(find.text(_l.getStarted), findsOneWidget);
     await tester.pumpAndSettle();
   },
   'carousel, page 1': (tester, scale) => _carousel(tester, scale, 0),
@@ -653,7 +673,7 @@ final _scenes = <String, _Scene>{
   'sign-in with its error': (tester, scale) async {
     final api = ControllableAuthApi();
     await tester.pumpWidget(_app(_signIn(api), scale));
-    await _tap(tester, find.text('Continue with Google'));
+    await _tap(tester, find.text(_l.continueWithGoogle));
     api.completeNext(const AuthFailure(AuthFailureReason.networkError));
     await tester.pumpAndSettle();
   },
@@ -771,9 +791,9 @@ final _scenes = <String, _Scene>{
     await tester.pumpWidget(_app(_lesson([mc, gap]), scale));
     await tester.pumpAndSettle();
     await _tap(tester, _tile('Thank you very much'));
-    await _tap(tester, find.text('Continue'));
+    await _tap(tester, find.text(_l.continueButton));
     await _answerRight(tester, gap);
-    await _tap(tester, find.text('Continue'));
+    await _tap(tester, find.text(_l.continueButton));
   },
   'lesson, offline': (tester, scale) async {
     await tester.pumpWidget(
@@ -885,17 +905,27 @@ final _scenes = <String, _Scene>{
   'settings, the daily-goal sheet': (tester, scale) async {
     await tester.pumpWidget(_app(await _settings(), scale));
     await tester.pumpAndSettle();
-    await _tap(tester, find.text('Daily goal'));
+    await _tap(tester, find.text(_l.dailyGoal));
   },
   'settings, the appearance sheet': (tester, scale) async {
     await tester.pumpWidget(_app(await _settings(), scale));
     await tester.pumpAndSettle();
-    await _tap(tester, find.text('Appearance'));
+    await _tap(tester, find.text(_l.appearance));
+  },
+  'settings, the app-language sheet': (tester, scale) async {
+    await tester.pumpWidget(_app(await _settings(), scale));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(SettingsScreen.appLanguageRowKey));
+  },
+  'settings, the app-language sheet in Afaan Oromo': (tester, scale) async {
+    await tester.pumpWidget(_app(await _settings(), scale, language: 'om'));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(SettingsScreen.appLanguageRowKey));
   },
   'settings, the log-out dialog': (tester, scale) async {
     await tester.pumpWidget(_app(await _settings(), scale));
     await tester.pumpAndSettle();
-    await _tap(tester, find.text('Log out'));
+    await _tap(tester, find.text(_l.logOut));
   },
 
   // Downloads.
@@ -967,8 +997,8 @@ final _scenes = <String, _Scene>{
   'feedback, filled in': (tester, scale) async {
     await tester.pumpWidget(_app(FeedbackScreen(api: _SentFeedback()), scale));
     await tester.pumpAndSettle();
-    await _tap(tester, find.text('A lesson mistake'));
-    await _tap(tester, find.byTooltip('Rate 5 out of 5'));
+    await _tap(tester, find.text(_l.feedbackContent));
+    await _tap(tester, find.byTooltip(_l.rateStars(5)));
     await tester.enterText(
       find.byKey(FeedbackScreen.messageKey),
       'The audio for "Selam" is cut off. ' * 12,
@@ -978,7 +1008,7 @@ final _scenes = <String, _Scene>{
   'feedback, sent': (tester, scale) async {
     await tester.pumpWidget(_app(FeedbackScreen(api: _SentFeedback()), scale));
     await tester.pumpAndSettle();
-    await _tap(tester, find.text('An idea'));
+    await _tap(tester, find.text(_l.feedbackIdea));
     await tester.enterText(find.byKey(FeedbackScreen.messageKey), 'Tigrinya');
     await tester.pumpAndSettle();
     await _tap(tester, find.byKey(FeedbackScreen.sendKey));
@@ -1029,6 +1059,8 @@ final _shows = <String, Finder>{
   'settings, failed to load': find.text("Couldn't load your settings"),
   'settings, the daily-goal sheet': find.text('Casual · 5 min/day'),
   'settings, the appearance sheet': find.text('Match your phone'),
+  'settings, the app-language sheet': find.text('Afaan Oromo'),
+  'settings, the app-language sheet in Afaan Oromo': find.text('Afaan appii'),
   'settings, the log-out dialog': find.text('Log out?'),
   'downloads': find.textContaining('Akkam'),
   'downloads, empty': find.text('No downloaded lessons yet.'),
@@ -1050,28 +1082,38 @@ void main() {
     expect(_shows.keys.toSet(), _scenes.keys.toSet());
   });
 
-  for (final (mode, theme) in [
-    ('light', AppTheme.light),
-    ('dark', AppTheme.dark),
-  ]) {
-    for (final size in const [Size(360, 640), Size(430, 932)]) {
-      for (final scale in const [1.0, 1.3]) {
-        final at = '${size.width.toInt()}×${size.height.toInt()} at ${scale}x';
-        group('$mode, $at', () {
-          setUp(() => _theme = theme);
-          for (final MapEntry(key: name, value: scene) in _scenes.entries) {
-            testWidgets('$name lays out without overflow', (tester) async {
-              tester.view.physicalSize = size;
-              tester.view.devicePixelRatio = 1;
-              addTearDown(tester.view.reset);
-
-              await scene(tester, scale);
-
-              expect(tester.takeException(), isNull);
-              expect(_shows[name], findsWidgets);
+  // Every scene in every app language: Amharic is Fidel, and Afaan Oromo's
+  // words often run longer than English ones (024-app-localization, FR-9).
+  for (final language in AppLanguage.all.map((l) => l.code)) {
+    for (final (mode, theme) in [
+      ('light', AppTheme.light),
+      ('dark', AppTheme.dark),
+    ]) {
+      for (final size in const [Size(360, 640), Size(430, 932)]) {
+        for (final scale in const [1.0, 1.3]) {
+          final at =
+              '${size.width.toInt()}×${size.height.toInt()} at ${scale}x';
+          final where = language == 'en' ? '' : '$language, ';
+          group('$where$mode, $at', () {
+            setUp(() {
+              _theme = theme;
+              _language = language;
             });
-          }
-        });
+            for (final MapEntry(key: name, value: scene) in _scenes.entries) {
+              testWidgets('$name lays out without overflow', (tester) async {
+                tester.view.physicalSize = size;
+                tester.view.devicePixelRatio = 1;
+                addTearDown(tester.view.reset);
+
+                await scene(tester, scale);
+
+                expect(tester.takeException(), isNull);
+                // What a scene shows is named in English.
+                if (language == 'en') expect(_shows[name], findsWidgets);
+              });
+            }
+          });
+        }
       }
     }
   }

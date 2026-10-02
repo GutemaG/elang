@@ -10,6 +10,7 @@ import '../theme/app_typography.dart';
 import 'app_status.dart';
 import 'path_node.dart';
 import 'tactile_pressable.dart';
+import '../l10n/app_language.dart';
 
 /// The bubble a tapped path node opens (the Duolingo path's popover): it
 /// floats just under the node with a pointer at it, in the node's own
@@ -122,7 +123,7 @@ class PathPopover extends StatelessWidget {
                   const SizedBox(height: AppSpacing.spaceMd),
                   _PopoverButton(
                     key: actionKey,
-                    label: actionLabel ?? 'Locked',
+                    label: actionLabel ?? context.l10n.locked,
                     tone: tone,
                     onPressed: actionLabel == null
                         ? null

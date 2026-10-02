@@ -1,0 +1,9 @@
+# 024-app-localization: the app's own words, one ARB file per language.
+# English is the template; a key missing from another file shows the
+# English text. Run `flutter gen-l10n` (or any `flutter run`/`test`)
+# after editing an ARB file; the generated Dart is committed.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+untranslated-messages-file: build/untranslated-messages.txt

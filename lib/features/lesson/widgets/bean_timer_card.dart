@@ -7,6 +7,7 @@ import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_status.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// "Next bean in 12:34", with a bar for how far the next bean has come and
 /// how often beans come back. Shared by the out-of-beans sheet and the
@@ -47,7 +48,7 @@ class BeanTimerCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.spaceXs),
               Expanded(
                 child: Text(
-                  'Next bean in',
+                  context.l10n.nextBeanIn,
                   style: AppTypography.labelMd.copyWith(
                     color: context.colors.onSurface,
                   ),
@@ -55,7 +56,7 @@ class BeanTimerCard extends StatelessWidget {
               ),
               Text(
                 countdown,
-                semanticsLabel: 'Next bean in $countdown',
+                semanticsLabel: context.l10n.nextBeanInTime(countdown),
                 style: AppTypography.headlineSm.copyWith(
                   color: context.colors.tertiaryAccent,
                 ),
@@ -67,11 +68,8 @@ class BeanTimerCard extends StatelessWidget {
             value: brewed,
             tone: AppTone.secondary,
             gradient: true,
-            startLabel: every > 0
-                ? 'Refills 1 bean every $every '
-                      '${every == 1 ? 'minute' : 'minutes'}'
-                : null,
-            semanticLabel: 'Next bean',
+            startLabel: every > 0 ? context.l10n.refillsEvery(every) : null,
+            semanticLabel: context.l10n.nextBean,
           ),
         ],
       ),

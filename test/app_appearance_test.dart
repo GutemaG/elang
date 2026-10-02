@@ -16,12 +16,14 @@ import 'helpers/fake_answer_feedback_player.dart';
 import 'helpers/fake_lesson_audio_player.dart';
 import 'helpers/in_memory_secure_storage_service.dart';
 import 'helpers/test_appearance.dart';
+import 'helpers/test_app_language.dart';
 
 Widget _app(AppearanceController appearance) {
   final auth = AuthDependencies(storage: InMemorySecureStorageService());
   final sound = SoundPreferenceRepository(storage: auth.storage);
   return BunaApp(
     appearance: appearance,
+    appLanguage: testAppLanguage(),
     authDependencies: auth,
     lessonDependencies: LessonDependencies(
       sessionRepository: auth.sessionRepository,

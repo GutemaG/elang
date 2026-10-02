@@ -1,12 +1,18 @@
+import 'dart:ui';
+
+import '../../l10n/app_localizations.dart';
+import '../../l10n/app_localizations_en.dart';
+import '../l10n/app_language.dart';
 import 'language_names.dart';
 
-/// The language-selection screen's words, in the language the learner
-/// speaks: an Amharic speaker is asked in Amharic what they want to learn,
-/// and finds their courses under "ለአማርኛ ተናጋሪዎች".
+/// The course choice's words in the language the learner speaks, whatever
+/// the app language: an Amharic speaker is asked in Amharic what they want
+/// to learn, and finds their courses under "ለአማርኛ ተናጋሪዎች".
 ///
-/// A language with no entry here gets the English words, with its name
+/// The words come from that language's ARB file (024-app-localization). A
+/// language the app has no file for gets the English words, with its name
 /// filled in ("For Somali speakers"), so a language the admin site adds
-/// still works before anyone translates these.
+/// still works before anyone translates the app into it.
 class LearnPrompts {
   const LearnPrompts({
     required this.question,
@@ -24,32 +30,16 @@ class LearnPrompts {
   final String forSpeakers;
 
   /// The words for speakers of [code].
-  static LearnPrompts of(String code) =>
-      _translated[code] ??
-      LearnPrompts(
-        question: _english.question,
-        subtitle: _english.subtitle,
-        forSpeakers: 'For ${languageName(code)} speakers',
-      );
-
-  static const _english = LearnPrompts(
-    question: 'What do you want to learn?',
-    subtitle: 'Choose your journey to connect with heritage & family.',
-    forSpeakers: 'For English speakers',
-  );
-
-  static const Map<String, LearnPrompts> _translated = {
-    'en': _english,
-    'am': LearnPrompts(
-      question: 'ምን መማር ይፈልጋሉ?',
-      subtitle: 'ከቅርስዎ እና ከቤተሰብዎ ጋር ለመገናኘት ጉዞዎን ይምረጡ።',
-      forSpeakers: 'ለአማርኛ ተናጋሪዎች',
-    ),
-    'om': LearnPrompts(
-      question: 'Maal barachuu barbaadda?',
-      subtitle:
-          'Aadaa fi maatii kee waliin walitti hidhamuuf imala kee filadhu.',
-      forSpeakers: 'Afaan Oromoo dubbattootaaf',
-    ),
-  };
+  static LearnPrompts of(String code) {
+    final AppLocalizations l = AppLanguage.has(code)
+        ? lookupAppLocalizations(Locale(code))
+        : AppLocalizationsEn();
+    return LearnPrompts(
+      question: l.learnQuestion,
+      subtitle: l.learnSubtitle,
+      forSpeakers: l.forSpeakers(
+        AppLanguage.has(code) ? languageNativeName(code) : languageName(code),
+      ),
+    );
+  }
 }

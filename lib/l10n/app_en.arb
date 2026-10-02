@@ -1,0 +1,1729 @@
+{
+  "@@locale": "en",
+  "appLanguageTitle": "App language",
+  "@appLanguageTitle": {
+    "description": "Settings: the row, and the title of the sheet it opens, for the language the app's own words are shown in."
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Tooltip (read by screen readers) of the X button that closes a sheet."
+  },
+  "dayCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@dayCount": {
+    "description": "A number of days, e.g. in time left or a streak length.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "continueButton": "Continue",
+  "@continueButton": {
+    "description": "Button: go on to the next screen or step."
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Button: try a failed action again."
+  },
+  "getStarted": "Get Started",
+  "@getStarted": {
+    "description": "Button on the splash screen and the last onboarding slide."
+  },
+  "comingSoonBadge": "COMING SOON",
+  "@comingSoonBadge": {
+    "description": "Badge (capitals) on a course that is not open yet."
+  },
+  "minutesPerDay": "{minutes} min/day",
+  "@minutesPerDay": {
+    "description": "Daily goal length, e.g. \"10 min/day\".",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "xpPerDay": "+{xp} XP/day",
+  "@xpPerDay": {
+    "description": "XP a daily goal earns each day, e.g. \"+20 XP/day\".",
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "goalCasual": "Casual",
+  "@goalCasual": {
+    "description": "Daily goal name: 5 minutes a day."
+  },
+  "goalCasualDescription": "Gentle warm up",
+  "@goalCasualDescription": {
+    "description": "Under the 5-minute daily goal."
+  },
+  "goalRegular": "Regular",
+  "@goalRegular": {
+    "description": "Daily goal name: 10 minutes a day."
+  },
+  "goalRegularDescription": "Steady progress",
+  "@goalRegularDescription": {
+    "description": "Under the 10-minute daily goal."
+  },
+  "goalSerious": "Serious",
+  "@goalSerious": {
+    "description": "Daily goal name: 15 minutes a day."
+  },
+  "goalSeriousDescription": "Fast retention",
+  "@goalSeriousDescription": {
+    "description": "Under the 15-minute daily goal."
+  },
+  "goalIntense": "Intense",
+  "@goalIntense": {
+    "description": "Daily goal name: 20 minutes a day."
+  },
+  "goalIntenseDescription": "Speed fluency",
+  "@goalIntenseDescription": {
+    "description": "Under the 20-minute daily goal."
+  },
+  "splashTagline": "Learn Amharic, One Sip at a Time.",
+  "@splashTagline": {
+    "description": "Splash screen line under the app name."
+  },
+  "splashBrewing": "Brewing your lessons...",
+  "@splashBrewing": {
+    "description": "Splash screen: shown while the app gets ready (a coffee pun)."
+  },
+  "onboardingSlide1Title": "Bite-Sized Amharic",
+  "@onboardingSlide1Title": {
+    "description": "Onboarding slide 1 title."
+  },
+  "onboardingSlide1Body": "Master Fidel syllabaries and confident daily conversations in just 5 minutes a day.",
+  "@onboardingSlide1Body": {
+    "description": "Onboarding slide 1 text."
+  },
+  "onboardingSlide2Title": "Stay Motivated with Streaks",
+  "@onboardingSlide2Title": {
+    "description": "Onboarding slide 2 title."
+  },
+  "onboardingSlide2Body": "Earn XP, keep your streak alive, and climb the Highlands map as you learn.",
+  "@onboardingSlide2Body": {
+    "description": "Onboarding slide 2 text."
+  },
+  "onboardingSlide3Title": "Learn Real Dialects",
+  "@onboardingSlide3Title": {
+    "description": "Onboarding slide 3 title."
+  },
+  "onboardingSlide3Body": "Practice with authentic native-speaker audio from Addis Ababa's Merkato market.",
+  "@onboardingSlide3Body": {
+    "description": "Onboarding slide 3 text."
+  },
+  "skip": "Skip",
+  "@skip": {
+    "description": "Button: skip the onboarding slides."
+  },
+  "alreadyHaveAccount": "Already have an account?",
+  "@alreadyHaveAccount": {
+    "description": "Onboarding: before the Log In button."
+  },
+  "logIn": "Log In",
+  "@logIn": {
+    "description": "Button: sign in to an existing account."
+  },
+  "learnQuestion": "What do you want to learn?",
+  "@learnQuestion": {
+    "description": "Heading of the course choice at sign-up, in the language of the open section."
+  },
+  "learnSubtitle": "Choose your journey to connect with heritage & family.",
+  "@learnSubtitle": {
+    "description": "Under the course-choice heading."
+  },
+  "forSpeakers": "For {language} speakers",
+  "@forSpeakers": {
+    "description": "Heading over the courses taught from a language. {language} is the language's own name (English, አማርኛ, Afaan Oromoo).",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "switchCoursesAnytime": "You can always switch courses anytime from the home screen or your settings.",
+  "@switchCoursesAnytime": {
+    "description": "Note under the course choice at sign-up."
+  },
+  "coursesLoadFailed": "Couldn't load the courses.",
+  "@coursesLoadFailed": {
+    "description": "Error when the course list fails to load at sign-up."
+  },
+  "noCoursesYet": "No courses are available yet.",
+  "@noCoursesYet": {
+    "description": "Shown when no course is open yet."
+  },
+  "joinWaitlist": "Join Waitlist",
+  "@joinWaitlist": {
+    "description": "Button on a coming-soon course."
+  },
+  "onWaitlist": "You're on the waitlist for {language}.",
+  "@onWaitlist": {
+    "description": "Message after joining a course's waitlist. {language} is the language's name.",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "chooseDailyGoal": "Choose your daily goal",
+  "@chooseDailyGoal": {
+    "description": "Daily goal screen heading."
+  },
+  "dailyGoalQuestion": "How much time do you want to dedicate to Habesha languages each day?",
+  "@dailyGoalQuestion": {
+    "description": "Daily goal screen: under the heading."
+  },
+  "recommendedBadge": "RECOMMENDED",
+  "@recommendedBadge": {
+    "description": "Badge (capitals) on the suggested daily goal."
+  },
+  "dailyGoalTip": "Tip: Studying during your morning Buna ritual boosts long-term recall.",
+  "@dailyGoalTip": {
+    "description": "Tip on the daily goal screen (Buna = coffee)."
+  },
+  "changeGoalAnytime": "You can change your goal anytime in Settings.",
+  "@changeGoalAnytime": {
+    "description": "Note under the Continue button on the daily goal screen."
+  },
+  "createAccountTitle": "Create your free account",
+  "@createAccountTitle": {
+    "description": "Sign-in screen heading."
+  },
+  "createAccountBody": "Save your streak, sync your progress across devices, and start speaking Amharic today.",
+  "@createAccountBody": {
+    "description": "Sign-in screen: under the heading."
+  },
+  "continueWithGoogle": "Continue with Google",
+  "@continueWithGoogle": {
+    "description": "Sign-in button."
+  },
+  "continueWithApple": "Continue with Apple",
+  "@continueWithApple": {
+    "description": "Sign-in button."
+  },
+  "termsNote": "By continuing you agree to our Terms of Service & Privacy Policy.",
+  "@termsNote": {
+    "description": "Small print under the sign-in buttons."
+  },
+  "signInCancelled": "Sign-in was cancelled",
+  "@signInCancelled": {
+    "description": "Sign-in: the learner closed the Google or Apple window."
+  },
+  "signInFailed": "Something went wrong — try again",
+  "@signInFailed": {
+    "description": "Sign-in failed."
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Tooltip (read by screen readers) of the back arrow."
+  },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Settings screen title."
+  },
+  "settingsLoadFailed": "Couldn't load your settings",
+  "@settingsLoadFailed": {
+    "description": "Error when Settings fails to load."
+  },
+  "saveFailedCheckConnection": "Couldn't save. Check your connection.",
+  "@saveFailedCheckConnection": {
+    "description": "Message when a setting could not be saved."
+  },
+  "saveChangeFailed": "Couldn't save your change. Please try again.",
+  "@saveChangeFailed": {
+    "description": "Message when a Settings change (goal, notifications, sound) could not be saved."
+  },
+  "logOutQuestion": "Log out?",
+  "@logOutQuestion": {
+    "description": "Title of the log-out confirmation."
+  },
+  "logOutMessage": "You'll need to sign in again to continue learning.",
+  "@logOutMessage": {
+    "description": "Text of the log-out confirmation."
+  },
+  "logOut": "Log out",
+  "@logOut": {
+    "description": "Button: sign out."
+  },
+  "unknown": "Unknown",
+  "@unknown": {
+    "description": "Shown when a value is not known."
+  },
+  "signedInWithGoogle": "Signed in with Google",
+  "@signedInWithGoogle": {
+    "description": "Settings profile: how the learner signed in."
+  },
+  "signedInWithApple": "Signed in with Apple",
+  "@signedInWithApple": {
+    "description": "Settings profile: how the learner signed in."
+  },
+  "signedIn": "Signed in",
+  "@signedIn": {
+    "description": "Settings profile: signed in (provider unknown)."
+  },
+  "sectionLearning": "Learning",
+  "@sectionLearning": {
+    "description": "Settings section heading."
+  },
+  "dailyGoal": "Daily goal",
+  "@dailyGoal": {
+    "description": "Settings row and sheet title: the daily goal."
+  },
+  "course": "Course",
+  "@course": {
+    "description": "Settings row: the active course."
+  },
+  "sectionPreferences": "Preferences",
+  "@sectionPreferences": {
+    "description": "Settings section heading."
+  },
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Settings switch: the daily reminder."
+  },
+  "notificationsSubtitle": "A reminder at 8 pm if you haven't practised",
+  "@notificationsSubtitle": {
+    "description": "Under the Notifications switch (8 pm; Ethiopian time 2 in the evening)."
+  },
+  "notificationsBlocked": "Blocked in your phone's settings",
+  "@notificationsBlocked": {
+    "description": "Settings row when the phone blocks notifications."
+  },
+  "notificationsAllow": "Tap to allow notifications",
+  "@notificationsAllow": {
+    "description": "Under the blocked-notifications row."
+  },
+  "sound": "Sound",
+  "@sound": {
+    "description": "Settings switch: sounds when answering."
+  },
+  "appearance": "Appearance",
+  "@appearance": {
+    "description": "Settings row and sheet title: light or dark look."
+  },
+  "appearanceSystem": "System",
+  "@appearanceSystem": {
+    "description": "Appearance choice: follow the phone."
+  },
+  "appearanceSystemDescription": "Match your phone",
+  "@appearanceSystemDescription": {
+    "description": "Under the System appearance choice."
+  },
+  "appearanceLight": "Light",
+  "@appearanceLight": {
+    "description": "Appearance choice: light."
+  },
+  "appearanceLightDescription": "Always light",
+  "@appearanceLightDescription": {
+    "description": "Under the Light appearance choice."
+  },
+  "appearanceDark": "Dark",
+  "@appearanceDark": {
+    "description": "Appearance choice: dark."
+  },
+  "appearanceDarkDescription": "Always dark",
+  "@appearanceDarkDescription": {
+    "description": "Under the Dark appearance choice."
+  },
+  "sectionLeague": "League",
+  "@sectionLeague": {
+    "description": "Settings section heading: the weekly league."
+  },
+  "showInLeagues": "Show me in leagues",
+  "@showInLeagues": {
+    "description": "Settings switch: take part in weekly leagues."
+  },
+  "showInLeaguesSubtitle": "Others in your league see your first name",
+  "@showInLeaguesSubtitle": {
+    "description": "Under the Show me in leagues switch."
+  },
+  "sectionAbout": "About",
+  "@sectionAbout": {
+    "description": "Settings section heading: about the app."
+  },
+  "sendFeedback": "Send feedback",
+  "@sendFeedback": {
+    "description": "Settings row and the feedback screen title."
+  },
+  "sendFeedbackSubtitle": "Report a problem or share an idea",
+  "@sendFeedbackSubtitle": {
+    "description": "Under the Send feedback row."
+  },
+  "licences": "Licences",
+  "@licences": {
+    "description": "Settings row: open-source licences."
+  },
+  "licencesSubtitle": "Open-source software and picture credits",
+  "@licencesSubtitle": {
+    "description": "Under the Licences row."
+  },
+  "feedbackBug": "Something broke",
+  "@feedbackBug": {
+    "description": "Feedback kind: a bug."
+  },
+  "feedbackBugHint": "What happened, and what were you doing just before?",
+  "@feedbackBugHint": {
+    "description": "Hint in the message box for a bug."
+  },
+  "feedbackContent": "A lesson mistake",
+  "@feedbackContent": {
+    "description": "Feedback kind: a mistake in a lesson."
+  },
+  "feedbackContentHint": "Which lesson, and what is wrong: a word, a translation, the audio?",
+  "@feedbackContentHint": {
+    "description": "Hint in the message box for a lesson mistake."
+  },
+  "feedbackIdea": "An idea",
+  "@feedbackIdea": {
+    "description": "Feedback kind: an idea."
+  },
+  "feedbackIdeaHint": "What would make Buna better for you?",
+  "@feedbackIdeaHint": {
+    "description": "Hint in the message box for an idea."
+  },
+  "feedbackOther": "Something else",
+  "@feedbackOther": {
+    "description": "Feedback kind: anything else."
+  },
+  "feedbackOtherHint": "Tell us anything.",
+  "@feedbackOtherHint": {
+    "description": "Hint in the message box for anything else."
+  },
+  "feedbackTooMany": "That's plenty for today. Thank you! Try again tomorrow.",
+  "@feedbackTooMany": {
+    "description": "Feedback: too many sent today."
+  },
+  "feedbackSendFailed": "Couldn't send. Check your connection and try again.",
+  "@feedbackSendFailed": {
+    "description": "Feedback: sending failed."
+  },
+  "done": "Done",
+  "@done": {
+    "description": "Button: close a finished screen."
+  },
+  "send": "Send",
+  "@send": {
+    "description": "Button: send the feedback."
+  },
+  "feedbackIntro": "Tell us what's working and what isn't. We read every message.",
+  "@feedbackIntro": {
+    "description": "Feedback screen: the first line."
+  },
+  "feedbackAbout": "What is it about?",
+  "@feedbackAbout": {
+    "description": "Feedback screen: heading over the kinds."
+  },
+  "feedbackRating": "How do you like Buna?",
+  "@feedbackRating": {
+    "description": "Feedback screen: heading over the stars."
+  },
+  "feedbackMessage": "Your message",
+  "@feedbackMessage": {
+    "description": "Feedback screen: heading over the message box."
+  },
+  "feedbackPickFirst": "Pick what it is about, then write here.",
+  "@feedbackPickFirst": {
+    "description": "Hint in the message box before a kind is chosen."
+  },
+  "feedbackSentWith": "Sent with your account and current course, so we can follow up.",
+  "@feedbackSentWith": {
+    "description": "Feedback screen: note under the message box."
+  },
+  "thankYou": "Thank you!",
+  "@thankYou": {
+    "description": "Feedback screen after sending."
+  },
+  "feedbackOnItsWay": "Your feedback is on its way to the Buna team.",
+  "@feedbackOnItsWay": {
+    "description": "Feedback screen after sending."
+  },
+  "rateStars": "Rate {stars} out of 5",
+  "@rateStars": {
+    "description": "Tooltip of each rating star.",
+    "placeholders": {
+      "stars": {
+        "type": "int"
+      }
+    }
+  },
+  "courses": "Courses",
+  "@courses": {
+    "description": "Dashboard course button before a course is known."
+  },
+  "courseLabel": "Course: {course}",
+  "@courseLabel": {
+    "description": "Screen-reader label of the dashboard course button.",
+    "placeholders": {
+      "course": {
+        "type": "String"
+      }
+    }
+  },
+  "courseSettings": "Course settings",
+  "@courseSettings": {
+    "description": "Course panel row: open Settings."
+  },
+  "manageDownloads": "Manage downloads",
+  "@manageDownloads": {
+    "description": "Course panel row and the downloads screen title."
+  },
+  "weeklyLeague": "Weekly league",
+  "@weeklyLeague": {
+    "description": "Course panel row: open the league."
+  },
+  "coursesLoadFailedShort": "Couldn't load your courses",
+  "@coursesLoadFailedShort": {
+    "description": "Error when the course list fails to load."
+  },
+  "currentCourse": "{language}, current course",
+  "@currentCourse": {
+    "description": "Screen-reader label of the active course tile.",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "switchToCourse": "Switch to {language} from {from}",
+  "@switchToCourse": {
+    "description": "Screen-reader label of another course tile.",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "fromLanguage": "from {language}",
+  "@fromLanguage": {
+    "description": "Under a course tile: the language it is taught from.",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "addCourse": "Add a course",
+  "@addCourse": {
+    "description": "Screen-reader label of the add-course tile."
+  },
+  "courseOpenOfflineFirst": "Connect to the internet to open this course for the first time.",
+  "@courseOpenOfflineFirst": {
+    "description": "Course switch failed offline."
+  },
+  "courseSwitchFailed": "Couldn't switch course. Please try again.",
+  "@courseSwitchFailed": {
+    "description": "Course switch failed."
+  },
+  "chooseCourse": "Choose a course",
+  "@chooseCourse": {
+    "description": "Course picker title."
+  },
+  "courseComingSoon": "{course} · Coming soon",
+  "@courseComingSoon": {
+    "description": "Course picker: a course not open yet.",
+    "placeholders": {
+      "course": {
+        "type": "String"
+      }
+    }
+  },
+  "skillsProgress": "{done} of {total} skills",
+  "@skillsProgress": {
+    "description": "Screen-reader label of a course progress bar.",
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteDownloadQuestion": "Delete \"{title}\"?",
+  "@deleteDownloadQuestion": {
+    "description": "Title of the delete-download confirmation.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteDownloadPending": "This lesson has progress that hasn't synced yet. Deleting the download won't affect that pending sync -- it only removes the offline copy.",
+  "@deleteDownloadPending": {
+    "description": "Delete-download confirmation when progress has not synced."
+  },
+  "deleteDownloadMessage": "This removes the downloaded content and audio from your device. Your synced progress is not affected.",
+  "@deleteDownloadMessage": {
+    "description": "Delete-download confirmation."
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Button: delete."
+  },
+  "deleteDownloadTooltip": "Delete \"{title}\"",
+  "@deleteDownloadTooltip": {
+    "description": "Tooltip of the delete button on a downloaded lesson.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "noDownloads": "No downloaded lessons yet.",
+  "@noDownloads": {
+    "description": "Downloads screen when empty."
+  },
+  "noDownloadsMessage": "Lessons you download from the path show up here, ready to play offline.",
+  "@noDownloadsMessage": {
+    "description": "Downloads screen when empty."
+  },
+  "practice": "Practice",
+  "@practice": {
+    "description": "The Practice card on the dashboard, and the title of a practice session."
+  },
+  "jumpToCurrentLesson": "Jump to your current lesson",
+  "@jumpToCurrentLesson": {
+    "description": "Tooltip of the dashboard button that scrolls to the current lesson."
+  },
+  "practiceOffline": "Offline -- Practice needs a connection",
+  "@practiceOffline": {
+    "description": "Practice card when offline."
+  },
+  "wordsToReview": "{count, plural, =1{1 word to review today} other{{count} words to review today}}",
+  "@wordsToReview": {
+    "description": "Practice card: how many words are due.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allCaughtUp": "You're all caught up -- nothing due today",
+  "@allCaughtUp": {
+    "description": "Practice card when nothing is due."
+  },
+  "joinThisWeeksLeague": "Join this week's league",
+  "@joinThisWeeksLeague": {
+    "description": "Dashboard league card before joining."
+  },
+  "leaguePlace": "{place} of {size} · {xp} XP this week",
+  "@leaguePlace": {
+    "description": "Dashboard league card: place, group size and weekly XP.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      },
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "earnXpToJoin": "Earn XP to join · {tier}",
+  "@earnXpToJoin": {
+    "description": "Dashboard league card before joining; {tier} is the league tier name.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadedOffline": "Downloaded for offline use",
+  "@downloadedOffline": {
+    "description": "Lesson popover: the lesson is downloaded."
+  },
+  "downloading": "Downloading",
+  "@downloading": {
+    "description": "Lesson popover: the lesson is downloading."
+  },
+  "downloadFailed": "Download failed, tap to try again",
+  "@downloadFailed": {
+    "description": "Lesson popover: download failed."
+  },
+  "downloadForOffline": "Download for offline use",
+  "@downloadForOffline": {
+    "description": "Lesson popover: download the lesson."
+  },
+  "offlineSavedProgress": "Offline, showing saved progress",
+  "@offlineSavedProgress": {
+    "description": "Dashboard note when offline."
+  },
+  "signInAgainTitle": "Please sign in again",
+  "@signInAgainTitle": {
+    "description": "Dashboard when the session has ended."
+  },
+  "signInAgainMessage": "Your session has ended. Your progress is saved to your account and will be back once you sign in.",
+  "@signInAgainMessage": {
+    "description": "Dashboard when the session has ended."
+  },
+  "signIn": "Sign in",
+  "@signIn": {
+    "description": "Button: sign in again."
+  },
+  "skillTreeLoadFailed": "Couldn't load your skill tree",
+  "@skillTreeLoadFailed": {
+    "description": "Dashboard load error."
+  },
+  "checkConnection": "Check your connection and try again.",
+  "@checkConnection": {
+    "description": "Under a load error."
+  },
+  "loadingLesson": "Loading lesson",
+  "@loadingLesson": {
+    "description": "While a lesson loads."
+  },
+  "lessonLoadFailed": "Couldn't load this lesson.",
+  "@lessonLoadFailed": {
+    "description": "Lesson load error."
+  },
+  "exitLesson": "Exit lesson",
+  "@exitLesson": {
+    "description": "Tooltip of the X that leaves a lesson."
+  },
+  "youreOffline": "You're offline",
+  "@youreOffline": {
+    "description": "A lesson that needs a connection."
+  },
+  "downloadWhileOnline": "Download this lesson while online to take it offline.",
+  "@downloadWhileOnline": {
+    "description": "A lesson that needs a connection."
+  },
+  "goBack": "Go back",
+  "@goBack": {
+    "description": "Button: leave the screen."
+  },
+  "mistakesCount": "{count, plural, =1{1 mistake} other{{count} mistakes}}",
+  "@mistakesCount": {
+    "description": "Badge on the review-your-mistakes screen.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewMistakesTitle": "Let's review your mistakes",
+  "@reviewMistakesTitle": {
+    "description": "Screen before the missed questions come back."
+  },
+  "reviewMistakesBody": "{count, plural, =1{You missed 1 question earlier. Let's get it right this time!} other{You missed {count} questions earlier. Let's get them right this time!}}",
+  "@reviewMistakesBody": {
+    "description": "Screen before the missed questions come back.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "progressSaveFailed": "Couldn't save your progress. Tap Continue to try again.",
+  "@progressSaveFailed": {
+    "description": "Lesson end: saving failed."
+  },
+  "tapToPlay": "Tap to play/replay",
+  "@tapToPlay": {
+    "description": "Under the big play button of a listening question."
+  },
+  "translateSentence": "Translate this sentence",
+  "@translateSentence": {
+    "description": "Instruction of a translation question."
+  },
+  "reviewComplete": "Review Complete!",
+  "@reviewComplete": {
+    "description": "Title after a review."
+  },
+  "lessonComplete": "Lesson Complete!",
+  "@lessonComplete": {
+    "description": "Title after a lesson."
+  },
+  "xpEarned": "XP EARNED",
+  "@xpEarned": {
+    "description": "Stat card label (capitals)."
+  },
+  "syncsWhenOnline": "SYNCS WHEN ONLINE",
+  "@syncsWhenOnline": {
+    "description": "Stat card label (capitals) when offline."
+  },
+  "streakDays": "{count, plural, =1{1 Day} other{{count} Days}}",
+  "@streakDays": {
+    "description": "Stat card value: the streak length.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streakLabel": "STREAK",
+  "@streakLabel": {
+    "description": "Stat card label (capitals)."
+  },
+  "plusOneToday": "+1 Today",
+  "@plusOneToday": {
+    "description": "Ribbon on the streak card when it grew today."
+  },
+  "accuracy": "ACCURACY",
+  "@accuracy": {
+    "description": "Stat card label (capitals)."
+  },
+  "correctLabel": "CORRECT",
+  "@correctLabel": {
+    "description": "Stat card label (capitals)."
+  },
+  "dailyGoalProgress": "Daily Goal Progress",
+  "@dailyGoalProgress": {
+    "description": "Card title after a lesson."
+  },
+  "offlineXpWillSync": "You're offline -- this lesson's XP will sync and count toward today's goal once you're back online.",
+  "@offlineXpWillSync": {
+    "description": "After a lesson finished offline."
+  },
+  "xpToday": "{total} / {target} XP today",
+  "@xpToday": {
+    "description": "Daily goal progress after a lesson.",
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "finishedSkill": "You finished {skill}!",
+  "@finishedSkill": {
+    "description": "After the last lesson of a skill.",
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "skillUnlocked": "{skill} is now unlocked.",
+  "@skillUnlocked": {
+    "description": "After a skill opens the next.",
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "allLessonsDone": "All {count} lessons done.",
+  "@allLessonsDone": {
+    "description": "After the last lesson of a skill.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lessonNofMDone": "Lesson {number} of {count} done",
+  "@lessonNofMDone": {
+    "description": "After a lesson in a skill.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lessonsLeftInSkill": "{count, plural, =1{1 more lesson to finish {skill}.} other{{count} more lessons to finish {skill}.}}",
+  "@lessonsLeftInSkill": {
+    "description": "After a lesson: lessons left in the skill.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "lessonsDoneIn": "Lessons done in {skill}",
+  "@lessonsDoneIn": {
+    "description": "Screen-reader label of the skill progress bar.",
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewsNoXp": "Reviews don't earn XP or use beans. They keep what you've already learned fresh.",
+  "@reviewsNoXp": {
+    "description": "Note after a review."
+  },
+  "tierGreenBean": "Green Bean",
+  "@tierGreenBean": {
+    "description": "League tier 1 (lowest): an unroasted coffee bean."
+  },
+  "tierLightRoast": "Light Roast",
+  "@tierLightRoast": {
+    "description": "League tier 2: lightly roasted coffee."
+  },
+  "tierMediumRoast": "Medium Roast",
+  "@tierMediumRoast": {
+    "description": "League tier 3: medium roasted coffee."
+  },
+  "tierDarkRoast": "Dark Roast",
+  "@tierDarkRoast": {
+    "description": "League tier 4: dark roasted coffee."
+  },
+  "tierGoldenCup": "Golden Cup",
+  "@tierGoldenCup": {
+    "description": "League tier 5 (highest): a golden coffee cup."
+  },
+  "ordinal": "{n}th",
+  "@ordinal": {
+    "description": "A place in a ranking: 1st, 2nd... (English is worked out in code; this is the other languages' form).",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tierLeague": "{tier} league",
+  "@tierLeague": {
+    "description": "A league by its tier name, e.g. \"Green Bean league\".",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "movedUpTo": "You moved up to {tier}!",
+  "@movedUpTo": {
+    "description": "Last week's result: promoted.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "droppedTo": "You dropped to {tier}",
+  "@droppedTo": {
+    "description": "Last week's result: demoted.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "stayedIn": "You stayed in {tier}",
+  "@stayedIn": {
+    "description": "Last week's result: stayed.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "finishedPlace": "You finished {place} of {size} with {xp} XP.",
+  "@finishedPlace": {
+    "description": "Last week's result: the place.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      },
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "leftBeforeEnd": "You had left the league before the week ended.",
+  "@leftBeforeEnd": {
+    "description": "Last week's result: the learner had left."
+  },
+  "climbBack": "Climb back this week!",
+  "@climbBack": {
+    "description": "Last week's result after a drop."
+  },
+  "amoleAmount": "{amount} Amole",
+  "@amoleAmount": {
+    "description": "An amount of Amole (the app's coins). {amount} is already formatted.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "memberYou": "{name} (You)",
+  "@memberYou": {
+    "description": "The learner's own row in the league.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberRowLabel": "Place {place}, {name}, {xp} XP",
+  "@memberRowLabel": {
+    "description": "Screen-reader label of a league row.",
+    "placeholders": {
+      "place": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      },
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "memberRowReward": ", {amole} Amole if the week ended now",
+  "@memberRowReward": {
+    "description": "Added to a league row's screen-reader label.",
+    "placeholders": {
+      "amole": {
+        "type": "int"
+      }
+    }
+  },
+  "xpAmount": "{xp} XP",
+  "@xpAmount": {
+    "description": "An amount of XP.",
+    "placeholders": {
+      "xp": {
+        "type": "String"
+      }
+    }
+  },
+  "movingUp": "Moving up",
+  "@movingUp": {
+    "description": "League divider over the places that move up."
+  },
+  "movingDown": "Moving down",
+  "@movingDown": {
+    "description": "League divider over the places that move down."
+  },
+  "daysLeft": "{count, plural, =1{1 day left} other{{count} days left}}",
+  "@daysLeft": {
+    "description": "Time left in the league week.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursLeft": "{count, plural, =1{1 hour left} other{{count} hours left}}",
+  "@hoursLeft": {
+    "description": "Time left in the league week.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endsSoon": "Ends soon",
+  "@endsSoon": {
+    "description": "League week in its last hour."
+  },
+  "zoneTop": "{count, plural, =1{Top 1 moves up} other{Top {count} move up}}",
+  "@zoneTop": {
+    "description": "League: how many move up.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "zoneBottom": "{count, plural, =1{Bottom 1 moves down} other{Bottom {count} move down}}",
+  "@zoneBottom": {
+    "description": "League: how many move down, as a sentence of its own.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "zoneBottomAfter": "{count, plural, =1{bottom 1 moves down} other{bottom {count} move down}}",
+  "@zoneBottomAfter": {
+    "description": "League: how many move down, after \"Top 2 move up · \".",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "updatedJustNow": "updated just now",
+  "@updatedJustNow": {
+    "description": "When the saved league was last updated."
+  },
+  "updatedMinutesAgo": "updated {minutes} min ago",
+  "@updatedMinutesAgo": {
+    "description": "When the saved league was last updated.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "updatedHoursAgo": "updated {hours} h ago",
+  "@updatedHoursAgo": {
+    "description": "When the saved league was last updated.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "updatedDaysAgo": "{count, plural, =1{updated 1 day ago} other{updated {count} days ago}}",
+  "@updatedDaysAgo": {
+    "description": "When the saved league was last updated.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineWith": "Offline · {detail}",
+  "@offlineWith": {
+    "description": "League screen offline note, e.g. \"Offline · updated 5 min ago\".",
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "connectToSeeLeague": "Connect to see your league",
+  "@connectToSeeLeague": {
+    "description": "League screen offline with no saved copy."
+  },
+  "leagueShowsOnline": "Your league shows here once you are online.",
+  "@leagueShowsOnline": {
+    "description": "League screen offline with no saved copy."
+  },
+  "earnXpThisWeekToJoin": "Earn XP this week to join",
+  "@earnXpThisWeekToJoin": {
+    "description": "League screen before joining."
+  },
+  "joinLeagueExplain": "Your first lesson or practice this week puts you in a group of up to 30 learners in your league.",
+  "@joinLeagueExplain": {
+    "description": "League screen before joining."
+  },
+  "startALesson": "Start a lesson",
+  "@startALesson": {
+    "description": "Button on the league screen before joining."
+  },
+  "notInLeague": "You're not in a league",
+  "@notInLeague": {
+    "description": "League screen when the learner stays out."
+  },
+  "notInLeagueExplain": "\"Show me in leagues\" is off, so nobody sees your name and you are not ranked.",
+  "@notInLeagueExplain": {
+    "description": "League screen when the learner stays out."
+  },
+  "stayOutAnytime": "You can stay out of leagues at any time in Settings.",
+  "@stayOutAnytime": {
+    "description": "League notice about names."
+  },
+  "stayOut": "Stay out",
+  "@stayOut": {
+    "description": "Button: leave leagues."
+  },
+  "gotIt": "Got it",
+  "@gotIt": {
+    "description": "Button: close a notice."
+  },
+  "monthNames": "January,February,March,April,May,June,July,August,September,October,November,December",
+  "@monthNames": {
+    "description": "The twelve Gregorian month names, January first, separated by commas (no spaces)."
+  },
+  "monthShortNames": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
+  "@monthShortNames": {
+    "description": "The twelve month names shortened, January first, separated by commas."
+  },
+  "weekdayInitials": "M,T,W,T,F,S,S",
+  "@weekdayInitials": {
+    "description": "One letter per weekday, Monday first, separated by commas (streak calendar)."
+  },
+  "dayMonth": "{day} {month}",
+  "@dayMonth": {
+    "description": "A date: day and month name, e.g. \"3 March\".",
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "monthYear": "{month} {year}",
+  "@monthYear": {
+    "description": "A month and year, e.g. \"March 2026\" (the year without separators).",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "previousMonth": "Previous month",
+  "@previousMonth": {
+    "description": "Tooltip of the calendar arrow."
+  },
+  "nextMonth": "Next month",
+  "@nextMonth": {
+    "description": "Tooltip of the calendar arrow."
+  },
+  "dayPractised": "practised",
+  "@dayPractised": {
+    "description": "Screen-reader state of a calendar day."
+  },
+  "dayNotPractised": "not practised",
+  "@dayNotPractised": {
+    "description": "Screen-reader state of a calendar day."
+  },
+  "dayNotYet": "not yet",
+  "@dayNotYet": {
+    "description": "Screen-reader state of a future calendar day."
+  },
+  "dayBeforeJoining": "before you joined",
+  "@dayBeforeJoining": {
+    "description": "Screen-reader state of a calendar day before sign-up."
+  },
+  "today": "today",
+  "@today": {
+    "description": "Screen-reader: the day is today."
+  },
+  "notEnoughAmoleRefill": "Not enough Amole for a refill.",
+  "@notEnoughAmoleRefill": {
+    "description": "Bean refill failed."
+  },
+  "refillFailed": "Couldn't refill. Check your connection and try again.",
+  "@refillFailed": {
+    "description": "Bean refill failed."
+  },
+  "xpExplain": "You earn XP for every answer you get right in lessons and Practice.",
+  "@xpExplain": {
+    "description": "Stat sheet: what XP is."
+  },
+  "dayStreak": "{count, plural, =1{1 day streak} other{{count} day streak}}",
+  "@dayStreak": {
+    "description": "Stat sheet title and streak pill label.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dayCounts": "A day counts when you finish a lesson.",
+  "@dayCounts": {
+    "description": "Stat sheet: how a streak day counts."
+  },
+  "longestStreak": "{count, plural, =1{Longest: 1 day} other{Longest: {count} days}}",
+  "@longestStreak": {
+    "description": "Stat sheet: the longest streak.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "amoleExplain": "Earned by lessons, perfect lessons, streak milestones and Practice. Spent on bean refills.",
+  "@amoleExplain": {
+    "description": "Stat sheet: what Amole is."
+  },
+  "calendarNeedsConnection": "The calendar needs a connection. Connect to see it.",
+  "@calendarNeedsConnection": {
+    "description": "Stat sheet offline: the streak calendar."
+  },
+  "calendarLoadFailed": "Couldn't load the calendar",
+  "@calendarLoadFailed": {
+    "description": "Stat sheet: the streak calendar failed to load."
+  },
+  "listNeedsConnection": "The list needs a connection. Connect to see it.",
+  "@listNeedsConnection": {
+    "description": "Stat sheet offline: the Amole list."
+  },
+  "listLoadFailed": "Couldn't load the list",
+  "@listLoadFailed": {
+    "description": "Stat sheet: the Amole list failed to load."
+  },
+  "beansFull": "Your beans are full",
+  "@beansFull": {
+    "description": "Stat sheet when all beans are there."
+  },
+  "beansExplainEvery": "{count, plural, =1{Each wrong answer in a lesson uses a bean. They come back on their own, one every 1 minute.} other{Each wrong answer in a lesson uses a bean. They come back on their own, one every {count} minutes.}}",
+  "@beansExplainEvery": {
+    "description": "Stat sheet: how beans work, with the refill time.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "beansExplainSlowly": "Each wrong answer in a lesson uses a bean. They come back on their own over time.",
+  "@beansExplainSlowly": {
+    "description": "Stat sheet: how beans work."
+  },
+  "refillNeedsConnection": "Refill needs a connection",
+  "@refillNeedsConnection": {
+    "description": "Refill button when offline."
+  },
+  "refillWithAmole": "Refill with Amole",
+  "@refillWithAmole": {
+    "description": "Button: refill beans with Amole."
+  },
+  "notEnoughAmole": "Not enough Amole",
+  "@notEnoughAmole": {
+    "description": "Refill button when the learner cannot pay."
+  },
+  "beans": "Beans",
+  "@beans": {
+    "description": "Stat sheet title: beans (the lives spent on wrong answers)."
+  },
+  "beansExplainRefill": "Each wrong answer in a lesson uses a bean. They come back on their own, or you can refill them now with Amole.",
+  "@beansExplainRefill": {
+    "description": "Stat sheet: how beans work, with the refill."
+  },
+  "nextBeanIn": "Next bean in",
+  "@nextBeanIn": {
+    "description": "Bean timer: before the countdown."
+  },
+  "nextBeanInTime": "Next bean in {time}",
+  "@nextBeanInTime": {
+    "description": "Screen-reader: the bean countdown.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "refillsEvery": "{count, plural, =1{Refills 1 bean every 1 minute} other{Refills 1 bean every {count} minutes}}",
+  "@refillsEvery": {
+    "description": "Under the bean timer.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nextBean": "Next bean",
+  "@nextBean": {
+    "description": "Screen-reader label of the bean timer bar."
+  },
+  "outOfBeans": "Out of Beans!",
+  "@outOfBeans": {
+    "description": "Sheet title when no beans are left."
+  },
+  "outOfBeansBody": "Don't worry, mistakes help you brew fluency! Beans refill automatically over time so you can continue your lessons.",
+  "@outOfBeansBody": {
+    "description": "Sheet when no beans are left."
+  },
+  "notNow": "Not now",
+  "@notNow": {
+    "description": "Button: dismiss."
+  },
+  "streakFreezeUnlocked": "Streak Freeze Unlocked!",
+  "@streakFreezeUnlocked": {
+    "description": "Level-up sheet title when a streak freeze is earned."
+  },
+  "crownLevelUp": "Crown Level Up!",
+  "@crownLevelUp": {
+    "description": "Level-up sheet title."
+  },
+  "levelShort": "Lv {level}",
+  "@levelShort": {
+    "description": "A crown level, short, e.g. \"Lv 3\".",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "reachedCrownLevel": "You reached crown level {level}",
+  "@reachedCrownLevel": {
+    "description": "Level-up sheet text.",
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "andUnlocked": " and unlocked {skill}",
+  "@andUnlocked": {
+    "description": "Added to the level-up text when a skill opened.",
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "freeStreakFreeze": ". A free streak freeze protects one missed day.",
+  "@freeStreakFreeze": {
+    "description": "Ends the level-up text when a streak freeze is earned."
+  },
+  "fullStop": ".",
+  "@fullStop": {
+    "description": "Ends a sentence."
+  },
+  "leavePractice": "Leave this practice?",
+  "@leavePractice": {
+    "description": "Exit sheet title in practice."
+  },
+  "leaveLesson": "Leave this lesson?",
+  "@leaveLesson": {
+    "description": "Exit sheet title in a lesson."
+  },
+  "practiceNotSaved": "Your progress in this practice won't be saved.",
+  "@practiceNotSaved": {
+    "description": "Exit sheet text in practice."
+  },
+  "lessonNotSaved": "Your progress in this lesson won't be saved.",
+  "@lessonNotSaved": {
+    "description": "Exit sheet text in a lesson."
+  },
+  "keepLearning": "Keep learning",
+  "@keepLearning": {
+    "description": "Exit sheet: stay."
+  },
+  "leave": "Leave",
+  "@leave": {
+    "description": "Exit sheet: leave."
+  },
+  "lessonsDoneOfCount": "{done} of {count} lessons done",
+  "@lessonsDoneOfCount": {
+    "description": "Screen-reader label of a skill node.",
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "start": "Start",
+  "@start": {
+    "description": "The bubble over the current skill, and the button in its popover."
+  },
+  "review": "Review",
+  "@review": {
+    "description": "Button in a completed skill's popover."
+  },
+  "nodeLocked": "locked",
+  "@nodeLocked": {
+    "description": "Screen-reader state of a skill node."
+  },
+  "nodeActive": "active, tap to start",
+  "@nodeActive": {
+    "description": "Screen-reader state of a skill node."
+  },
+  "nodeCompleted": "completed, tap to review",
+  "@nodeCompleted": {
+    "description": "Screen-reader state of a skill node."
+  },
+  "finishSkillsAbove": "Finish the skills above to unlock this one.",
+  "@finishSkillsAbove": {
+    "description": "Popover of a locked skill."
+  },
+  "lessonNofM": "Lesson {number} of {count}",
+  "@lessonNofM": {
+    "description": "Popover of a skill: where the learner is.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readyWhenYouAre": "Ready when you are.",
+  "@readyWhenYouAre": {
+    "description": "Popover of a one-lesson skill."
+  },
+  "skillCompletedNote": "You've completed this skill. Reviews don't earn XP or use beans.",
+  "@skillCompletedNote": {
+    "description": "Popover of a completed skill."
+  },
+  "locked": "Locked",
+  "@locked": {
+    "description": "Popover badge of a locked skill."
+  },
+  "completedOfTotal": "{completed} of {total} completed",
+  "@completedOfTotal": {
+    "description": "Screen-reader label of a section banner.",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "completedCount": "{completed}/{total} Completed",
+  "@completedCount": {
+    "description": "Badge on a section banner, e.g. \"1/3 Completed\".",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "synced": "Synced",
+  "@synced": {
+    "description": "Sync banner: everything is saved."
+  },
+  "offlineDownloadsAvailable": "Offline -- downloaded lessons available",
+  "@offlineDownloadsAvailable": {
+    "description": "Sync banner."
+  },
+  "offlineNothingDownloaded": "Offline -- nothing downloaded",
+  "@offlineNothingDownloaded": {
+    "description": "Sync banner."
+  },
+  "syncing": "Syncing your offline progress...",
+  "@syncing": {
+    "description": "Sync banner."
+  },
+  "syncFailedRetrying": "Sync failed -- retrying...",
+  "@syncFailedRetrying": {
+    "description": "Sync banner."
+  },
+  "unsyncedLong": "{status} (unsynced for 30+ days -- please reconnect soon)",
+  "@unsyncedLong": {
+    "description": "Sync banner when progress has waited a month.",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "noAmoleYet": "No Amole yet",
+  "@noAmoleYet": {
+    "description": "Amole list when empty."
+  },
+  "amoleEntryLabel": "{reason}, {sign} {amount} Amole, {date}",
+  "@amoleEntryLabel": {
+    "description": "Screen-reader label of an Amole entry.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      },
+      "sign": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "plus": "plus",
+  "@plus": {
+    "description": "Screen-reader: Amole earned."
+  },
+  "minus": "minus",
+  "@minus": {
+    "description": "Screen-reader: Amole spent."
+  },
+  "reasonWelcome": "Welcome bonus",
+  "@reasonWelcome": {
+    "description": "Amole entry: the first Amole."
+  },
+  "reasonStartingBalance": "Starting balance",
+  "@reasonStartingBalance": {
+    "description": "Amole entry: the balance an older account started with."
+  },
+  "reasonLessonFinished": "Lesson finished",
+  "@reasonLessonFinished": {
+    "description": "Amole entry."
+  },
+  "reasonPerfectLesson": "Perfect lesson",
+  "@reasonPerfectLesson": {
+    "description": "Amole entry: a lesson with no mistakes."
+  },
+  "reasonStreak7": "7-day streak",
+  "@reasonStreak7": {
+    "description": "Amole entry."
+  },
+  "reasonStreak30": "30-day streak",
+  "@reasonStreak30": {
+    "description": "Amole entry."
+  },
+  "reasonBeanRefill": "Bean refill",
+  "@reasonBeanRefill": {
+    "description": "Amole entry: spent on beans."
+  },
+  "reasonPractice": "Practice session",
+  "@reasonPractice": {
+    "description": "Amole entry."
+  },
+  "reasonLeagueReward": "League reward",
+  "@reasonLeagueReward": {
+    "description": "Amole entry."
+  },
+  "amole": "Amole",
+  "@amole": {
+    "description": "The app's coins (a name; usually kept as is)."
+  },
+  "spellHint": "Tap the characters below to spell it",
+  "@spellHint": {
+    "description": "Hint over a spell-from-tiles answer."
+  },
+  "pillStreak": "{count} day streak",
+  "@pillStreak": {
+    "description": "Screen-reader label of the streak pill.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pillBeans": "{count} beans",
+  "@pillBeans": {
+    "description": "Screen-reader label of the beans pill.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pillBeansOf": "{count} of {max} beans remaining",
+  "@pillBeansOf": {
+    "description": "Screen-reader label of the beans pill.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "pillXp": "{count} total XP",
+  "@pillXp": {
+    "description": "Screen-reader label of the XP pill.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pillAmole": "{count} Amole",
+  "@pillAmole": {
+    "description": "Screen-reader label of the Amole pill.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pageOf": "Page {page} of {count}",
+  "@pageOf": {
+    "description": "Screen-reader label of the page dots.",
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tryAgain": "Try again",
+  "@tryAgain": {
+    "description": "Button on an error."
+  },
+  "loading": "Loading",
+  "@loading": {
+    "description": "Screen-reader label while something loads."
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Button: cancel a confirmation."
+  },
+  "check": "Check",
+  "@check": {
+    "description": "Button: check an answer."
+  },
+  "correct": "Correct!",
+  "@correct": {
+    "description": "After a right answer."
+  },
+  "notQuite": "Not quite",
+  "@notQuite": {
+    "description": "After a wrong answer."
+  },
+  "buildAnswerHint": "Tap words below to build your answer",
+  "@buildAnswerHint": {
+    "description": "Hint over a sentence-building answer."
+  },
+  "blank": "blank",
+  "@blank": {
+    "description": "Screen-reader: the empty gap in a sentence."
+  },
+  "blankFilled": "blank, filled with {word}",
+  "@blankFilled": {
+    "description": "Screen-reader: the gap with a chosen word.",
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "playAudio": "Play audio",
+  "@playAudio": {
+    "description": "Screen-reader label of a play button."
+  },
+  "playingAudio": "Playing audio",
+  "@playingAudio": {
+    "description": "Screen-reader label while audio plays."
+  },
+  "lessonProgress": "Lesson progress",
+  "@lessonProgress": {
+    "description": "Screen-reader label of the lesson progress bar."
+  },
+  "pictureN": "Picture {number}",
+  "@pictureN": {
+    "description": "A picture with no description, by its place.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderTitleToday": "Time for today's lesson",
+  "@reminderTitleToday": {
+    "description": "Daily reminder notification title."
+  },
+  "reminderBodyToday": "A quick lesson keeps you going.",
+  "@reminderBodyToday": {
+    "description": "Daily reminder notification text."
+  },
+  "reminderTitleStreak": "Keep your {count}-day streak going",
+  "@reminderTitleStreak": {
+    "description": "Daily reminder title when there is a streak.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderBodyStreak": "A quick lesson is enough.",
+  "@reminderBodyStreak": {
+    "description": "Daily reminder text when there is a streak."
+  }
+}

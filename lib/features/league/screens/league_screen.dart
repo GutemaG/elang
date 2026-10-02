@@ -17,6 +17,7 @@ import '../league_controller.dart';
 import '../league_models.dart';
 import '../league_store.dart';
 import '../widgets/league_widgets.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// The weekly league (023-weekly-leagues, stories 006 and 007): the
 /// learner's tier, the time left and their group ranked by this week's XP,
@@ -102,9 +103,7 @@ class _LeagueScreenState extends State<LeagueScreen> {
     } on AccountSettingsException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Couldn't save. Check your connection."),
-          ),
+          SnackBar(content: Text(context.l10n.saveFailedCheckConnection)),
         );
       }
     } finally {
@@ -118,10 +117,10 @@ class _LeagueScreenState extends State<LeagueScreen> {
       topBar: AppTopBar(
         leading: AppIconButton(
           icon: Icons.arrow_back,
-          tooltip: 'Back',
+          tooltip: context.l10n.back,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: 'Weekly league',
+        title: context.l10n.weeklyLeague,
       ),
       scrollable: false,
       padded: false,
@@ -138,10 +137,10 @@ class _LeagueScreenState extends State<LeagueScreen> {
             padding: const EdgeInsets.all(AppSpacing.marginMobile),
             child: ErrorState(
               icon: Icons.wifi_off,
-              title: 'Connect to see your league',
-              message: 'Your league shows here once you are online.',
+              title: context.l10n.connectToSeeLeague,
+              message: context.l10n.leagueShowsOnline,
               onRetry: _controller.refresh,
-              retryLabel: 'Retry',
+              retryLabel: context.l10n.retry,
             ),
           ),
         ),
@@ -165,9 +164,13 @@ class _LeagueScreenState extends State<LeagueScreen> {
               key: LeagueScreen.offlineKey,
               icon: Icons.cloud_off,
               tone: AppTone.neutral,
-              message:
-                  'Offline · '
-                  '${leagueUpdatedAgo(_controller.savedAt!, _controller.now())}',
+              message: context.l10n.offlineWith(
+                leagueUpdatedAgo(
+                  _controller.savedAt!,
+                  _controller.now(),
+                  context.l10n,
+                ),
+              ),
             ),
             const SizedBox(height: AppSpacing.spaceSm),
           ],
@@ -185,12 +188,10 @@ class _LeagueScreenState extends State<LeagueScreen> {
         return [
           EmptyState(
             icon: Icons.emoji_events,
-            title: 'Earn XP this week to join',
-            message:
-                'Your first lesson or practice this week puts you in a '
-                'group of up to 30 learners in your league.',
+            title: context.l10n.earnXpThisWeekToJoin,
+            message: context.l10n.joinLeagueExplain,
             action: AppButton.primary(
-              label: 'Start a lesson',
+              label: context.l10n.startALesson,
               onPressed: () => Navigator.of(context).maybePop(),
             ),
           ),
@@ -200,12 +201,10 @@ class _LeagueScreenState extends State<LeagueScreen> {
           EmptyState(
             icon: Icons.visibility_off,
             tone: AppTone.neutral,
-            title: "You're not in a league",
-            message:
-                '"Show me in leagues" is off, so nobody sees your name '
-                'and you are not ranked.',
+            title: context.l10n.notInLeague,
+            message: context.l10n.notInLeagueExplain,
             action: AppButton.primary(
-              label: 'Show me in leagues',
+              label: context.l10n.showInLeagues,
               loading: _saving,
               onPressed: _saving ? null : () => _setShowInLeagues(true),
             ),
@@ -237,7 +236,11 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final zones = league.status == LeagueStatus.joined
-        ? leagueZoneSummary(league.promoteCount, league.demoteCount)
+        ? leagueZoneSummary(
+            league.promoteCount,
+            league.demoteCount,
+            context.l10n,
+          )
         : null;
     return AppCard(
       child: Row(
@@ -249,7 +252,7 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${league.tier.title} league',
+                  context.l10n.tierLeague(league.tier.titleIn(context.l10n)),
                   style: AppTypography.headlineSm.copyWith(
                     color: context.colors.onSurface,
                   ),
@@ -265,7 +268,7 @@ class _Header extends StatelessWidget {
                     const SizedBox(width: AppSpacing.space2xs),
                     Flexible(
                       child: Text(
-                        leagueTimeLeft(league.weekEndsAt, now),
+                        leagueTimeLeft(league.weekEndsAt, now, context.l10n),
                         style: AppTypography.bodySm.copyWith(
                           color: context.colors.onSurfaceVariant,
                         ),
@@ -355,14 +358,14 @@ class _NameNotice extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Others in your league see your first name',
+            context.l10n.showInLeaguesSubtitle,
             style: AppTypography.labelLg.copyWith(
               color: context.colors.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.space2xs),
           Text(
-            'You can stay out of leagues at any time in Settings.',
+            context.l10n.stayOutAnytime,
             style: AppTypography.bodySm.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
@@ -374,11 +377,11 @@ class _NameNotice extends StatelessWidget {
             alignment: WrapAlignment.end,
             children: [
               AppButton.text(
-                label: 'Stay out',
+                label: context.l10n.stayOut,
                 onPressed: saving ? null : onHide,
               ),
               AppButton.secondary(
-                label: 'Got it',
+                label: context.l10n.gotIt,
                 expand: false,
                 size: AppButtonSize.compact,
                 onPressed: onGotIt,

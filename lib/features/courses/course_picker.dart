@@ -14,6 +14,7 @@ import '../../shared/widgets/app_icon_button.dart';
 import '../../shared/widgets/app_sheet.dart';
 import '../../shared/widgets/app_status.dart';
 import '../../shared/widgets/course_glyph.dart';
+import '../../shared/l10n/app_language.dart';
 
 /// Tells the learner why a switch did not happen. Shared by the catalog and
 /// the dashboard's course rail so the two never drift apart.
@@ -23,8 +24,8 @@ void showCourseSwitchError(BuildContext context, CourseApiException e) {
     SnackBar(
       content: Text(
         e.errorCode == offlineNotCachedErrorCode
-            ? 'Connect to the internet to open this course for the first time.'
-            : "Couldn't switch course. Please try again.",
+            ? context.l10n.courseOpenOfflineFirst
+            : context.l10n.courseSwitchFailed,
       ),
     ),
   );
@@ -100,7 +101,7 @@ class _CoursePickerSheetState extends State<CoursePickerSheet> {
           children: [
             Expanded(
               child: Text(
-                'Choose a course',
+                context.l10n.chooseCourse,
                 style: AppTypography.headlineSm.copyWith(
                   color: context.colors.onSurface,
                 ),
@@ -108,7 +109,7 @@ class _CoursePickerSheetState extends State<CoursePickerSheet> {
             ),
             AppIconButton(
               icon: Icons.close,
-              tooltip: 'Close',
+              tooltip: context.l10n.close,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
@@ -125,9 +126,9 @@ class _CoursePickerSheetState extends State<CoursePickerSheet> {
             }
             if (snapshot.hasError) {
               return ErrorState(
-                title: "Couldn't load your courses",
+                title: context.l10n.coursesLoadFailedShort,
                 onRetry: _retry,
-                retryLabel: 'Retry',
+                retryLabel: context.l10n.retry,
               );
             }
             return _CourseGroups(courses: snapshot.data!.courses);
@@ -230,7 +231,9 @@ class _CatalogRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    enabled ? course.title : '${course.title} · Coming soon',
+                    enabled
+                        ? course.title
+                        : context.l10n.courseComingSoon(course.title),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.bodySm.copyWith(
@@ -241,9 +244,10 @@ class _CatalogRow extends StatelessWidget {
                     const SizedBox(height: AppSpacing.space2xs),
                     AppProgressBar(
                       value: course.completedSkills / course.totalSkills,
-                      semanticLabel:
-                          '${course.completedSkills} of '
-                          '${course.totalSkills} skills',
+                      semanticLabel: context.l10n.skillsProgress(
+                        course.completedSkills,
+                        course.totalSkills,
+                      ),
                     ),
                   ],
                 ],

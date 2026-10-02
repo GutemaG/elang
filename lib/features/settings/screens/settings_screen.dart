@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/l10n/app_language.dart';
 import '../../../shared/models/language_names.dart';
 import '../../../shared/services/course_api.dart';
 import '../../../shared/services/reminders/reminder_service.dart';
@@ -21,12 +22,14 @@ import '../../../shared/widgets/app_icon_button.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_status.dart';
+import '../../../shared/widgets/course_glyph.dart';
 import '../../../shared/widgets/selectable_option_card.dart';
 import '../../auth/auth_routes.dart';
 import '../../feedback/feedback_api.dart';
 import '../../feedback/feedback_screen.dart';
 import '../../courses/course_picker.dart';
 import '../state/settings_controller.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// A single daily-goal preset -- same 4 presets/labels as
 /// `DailyGoalSelectionScreen`'s `GoalOption`, duplicated here rather than
@@ -48,32 +51,33 @@ class _GoalOption {
   final IconData icon;
 }
 
-const List<_GoalOption> _goalOptions = [
+/// The four presets, in the app language [l].
+List<_GoalOption> _goalOptions(AppLocalizations l) => [
   _GoalOption(
     minutes: 5,
-    title: 'Casual',
-    description: 'Gentle warm up',
+    title: l.goalCasual,
+    description: l.goalCasualDescription,
     xpPerDay: 10,
     icon: Icons.eco,
   ),
   _GoalOption(
     minutes: 10,
-    title: 'Regular',
-    description: 'Steady progress',
+    title: l.goalRegular,
+    description: l.goalRegularDescription,
     xpPerDay: 20,
     icon: Icons.local_cafe,
   ),
   _GoalOption(
     minutes: 15,
-    title: 'Serious',
-    description: 'Fast retention',
+    title: l.goalSerious,
+    description: l.goalSeriousDescription,
     xpPerDay: 30,
     icon: Icons.coffee,
   ),
   _GoalOption(
     minutes: 20,
-    title: 'Intense',
-    description: 'Speed fluency',
+    title: l.goalIntense,
+    description: l.goalIntenseDescription,
     xpPerDay: 50,
     icon: Icons.local_fire_department,
   ),
@@ -126,6 +130,9 @@ class SettingsScreen extends StatefulWidget {
   /// The Appearance row (System, Light or Dark).
   static const appearanceRowKey = ValueKey('settings-appearance');
 
+  /// The App language row (024-app-localization).
+  static const appLanguageRowKey = ValueKey('settings-app-language');
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
@@ -157,8 +164,9 @@ class _SettingsScreenState extends State<SettingsScreen>
     final error = _controller.errorMessage;
     if (error != null && error != _lastShownError) {
       _lastShownError = error;
+      // The controller says what failed; the words are the app's.
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+          .showSnackBar(SnackBar(content: Text(context.l10n.saveChangeFailed)));
     }
   }
 
@@ -196,6 +204,17 @@ class _SettingsScreenState extends State<SettingsScreen>
     if (mode != null) await appearance.choose(mode);
   }
 
+  Future<void> _pickAppLanguage(AppLanguageController appLanguage) async {
+    final code = await showAppSheet<String>(
+      context: context,
+      builder: (context) =>
+          _AppLanguageSheet(selected: appLanguage.language.code),
+    );
+    if (code != null && code != appLanguage.language.code) {
+      await appLanguage.choose(code);
+    }
+  }
+
   Future<void> _setShowInLeagues(
     RemoteSettingsController settings,
     AccountSettingsApi api,
@@ -208,7 +227,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     } on AccountSettingsException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't save. Check your connection.")),
+        SnackBar(content: Text(context.l10n.saveFailedCheckConnection)),
       );
     }
   }
@@ -227,9 +246,9 @@ class _SettingsScreenState extends State<SettingsScreen>
     // Signing out deletes nothing, so the confirm is a plain primary.
     final confirmed = await showAppConfirmDialog(
       context: context,
-      title: 'Log out?',
-      message: "You'll need to sign in again to continue learning.",
-      confirmLabel: 'Log out',
+      title: context.l10n.logOutQuestion,
+      message: context.l10n.logOutMessage,
+      confirmLabel: context.l10n.logOut,
       icon: Icons.logout,
     );
     if (confirmed != true) return;
@@ -244,27 +263,30 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   String _goalLabel(int? minutes) {
-    final option = _goalOptions.where((o) => o.minutes == minutes).firstOrNull;
+    final l = context.l10n;
+    final option = _goalOptions(l)
+        .where((o) => o.minutes == minutes)
+        .firstOrNull;
     return option == null
-        ? 'Unknown'
-        : '${option.title} · ${option.minutes} min/day';
+        ? l.unknown
+        : '${option.title} · ${l.minutesPerDay(option.minutes)}';
   }
 
   String _courseLabel() {
     final course = _controller.activeCourse;
     if (course != null) return course.title;
     final language = _controller.selectedLanguage;
-    return language == null ? 'Unknown' : languageName(language);
+    return language == null ? context.l10n.unknown : languageName(language);
   }
 
   String _providerLabel(String? provider) {
     switch (provider) {
       case 'google':
-        return 'Signed in with Google';
+        return context.l10n.signedInWithGoogle;
       case 'apple':
-        return 'Signed in with Apple';
+        return context.l10n.signedInWithApple;
       default:
-        return 'Signed in';
+        return context.l10n.signedIn;
     }
   }
 
@@ -276,11 +298,11 @@ class _SettingsScreenState extends State<SettingsScreen>
         leading: Navigator.of(context).canPop()
             ? AppIconButton(
                 icon: Icons.arrow_back,
-                tooltip: 'Back',
+                tooltip: context.l10n.back,
                 onPressed: () => Navigator.of(context).maybePop(),
               )
             : null,
-        title: 'Settings',
+        title: context.l10n.settingsTitle,
       ),
       // Loading and errors sit in the middle of the page; the list scrolls.
       scrollable: loaded,
@@ -296,9 +318,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         return Center(
           child: SingleChildScrollView(
             child: ErrorState(
-              title: "Couldn't load your settings",
+              title: context.l10n.settingsLoadFailed,
               onRetry: _controller.load,
-              retryLabel: 'Retry',
+              retryLabel: context.l10n.retry,
             ),
           ),
         );
@@ -314,32 +336,32 @@ class _SettingsScreenState extends State<SettingsScreen>
                 providerLabel: _providerLabel(_controller.authProvider),
               ),
             ),
-            const SectionHeader(title: 'Learning'),
+            SectionHeader(title: context.l10n.sectionLearning),
             ListRowGroup(
               children: [
                 ListRow(
                   icon: Icons.flag,
                   tone: AppTone.secondary,
-                  title: 'Daily goal',
+                  title: context.l10n.dailyGoal,
                   subtitle: _goalLabel(_controller.dailyGoalMinutes),
                   onTap: _pickGoal,
                 ),
                 ListRow(
                   icon: Icons.translate,
                   tone: AppTone.primary,
-                  title: 'Course',
+                  title: context.l10n.course,
                   subtitle: _courseLabel(),
                   onTap: _pickCourse,
                 ),
               ],
             ),
-            const SectionHeader(title: 'Preferences'),
+            SectionHeader(title: context.l10n.sectionPreferences),
             ListRowGroup(
               children: [
                 SwitchRow(
                   icon: Icons.notifications,
-                  title: 'Notifications',
-                  subtitle: "A reminder at 8 pm if you haven't practised",
+                  title: context.l10n.notifications,
+                  subtitle: context.l10n.notificationsSubtitle,
                   value: _controller.notificationEnabled,
                   onChanged: _controller.updateNotificationEnabled,
                 ),
@@ -348,13 +370,13 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ListRow(
                     key: const ValueKey('notifications-blocked'),
                     icon: Icons.notifications_off,
-                    title: "Blocked in your phone's settings",
-                    subtitle: 'Tap to allow notifications',
+                    title: context.l10n.notificationsBlocked,
+                    subtitle: context.l10n.notificationsAllow,
                     onTap: _controller.openNotificationSettings,
                   ),
                 SwitchRow(
                   icon: Icons.volume_up,
-                  title: 'Sound',
+                  title: context.l10n.sound,
                   value: _controller.soundEnabled,
                   onChanged: _controller.updateSoundEnabled,
                 ),
@@ -365,11 +387,21 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ListRow(
                     key: SettingsScreen.appearanceRowKey,
                     icon: Icons.contrast,
-                    title: 'Appearance',
-                    subtitle: _appearanceOptions
+                    title: context.l10n.appearance,
+                    subtitle: _appearanceOptions(context.l10n)
                         .firstWhere((o) => o.mode == appearance.value)
                         .title,
                     onTap: () => _pickAppearance(appearance),
+                  ),
+                // English, Amharic or Afaan Oromo (024-app-localization),
+                // kept on the phone and the account.
+                if (AppLanguageScope.maybeOf(context) case final appLanguage?)
+                  ListRow(
+                    key: SettingsScreen.appLanguageRowKey,
+                    icon: Icons.translate,
+                    title: context.l10n.appLanguageTitle,
+                    subtitle: appLanguage.language.nativeName,
+                    onTap: () => _pickAppLanguage(appLanguage),
                   ),
               ],
             ),
@@ -380,21 +412,21 @@ class _SettingsScreenState extends State<SettingsScreen>
                   widget.accountSettingsApi,
                 )
                 case (final settings?, final api?)) ...[
-              const SectionHeader(title: 'League'),
+              SectionHeader(title: context.l10n.sectionLeague),
               ListRowGroup(
                 children: [
                   SwitchRow(
                     key: SettingsScreen.showInLeaguesKey,
                     icon: Icons.emoji_events,
-                    title: 'Show me in leagues',
-                    subtitle: 'Others in your league see your first name',
+                    title: context.l10n.showInLeagues,
+                    subtitle: context.l10n.showInLeaguesSubtitle,
                     value: settings.account.get(AccountSettings.showInLeagues),
                     onChanged: (show) => _setShowInLeagues(settings, api, show),
                   ),
                 ],
               ),
             ],
-            const SectionHeader(title: 'About'),
+            SectionHeader(title: context.l10n.sectionAbout),
             ListRowGroup(
               children: [
                 if (widget.feedbackApi case final api?)
@@ -402,8 +434,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                     key: SettingsScreen.sendFeedbackKey,
                     icon: Icons.feedback,
                     tone: AppTone.primary,
-                    title: 'Send feedback',
-                    subtitle: 'Report a problem or share an idea',
+                    title: context.l10n.sendFeedback,
+                    subtitle: context.l10n.sendFeedbackSubtitle,
                     onTap: () => Navigator.of(context).push<void>(
                       MaterialPageRoute(
                         builder: (_) => FeedbackScreen(api: api),
@@ -415,8 +447,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                 // 005).
                 ListRow(
                   icon: Icons.info_outline,
-                  title: 'Licences',
-                  subtitle: 'Open-source software and picture credits',
+                  title: context.l10n.licences,
+                  subtitle: context.l10n.licencesSubtitle,
                   onTap: () => showLicensePage(
                     context: context,
                     applicationName: 'Buna',
@@ -426,7 +458,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             ),
             const SizedBox(height: AppSpacing.spaceLg),
             AppButton.exit(
-              label: 'Log out',
+              label: context.l10n.logOut,
               leading: const Icon(Icons.logout),
               onPressed: _confirmLogout,
             ),
@@ -445,15 +477,26 @@ class _AppearanceOption {
   final String description;
 }
 
-const _appearanceOptions = [
+/// System, Light and Dark, in the app language [l].
+List<_AppearanceOption> _appearanceOptions(AppLocalizations l) => [
   _AppearanceOption(
     ThemeMode.system,
     Icons.brightness_auto,
-    'System',
-    'Match your phone',
+    l.appearanceSystem,
+    l.appearanceSystemDescription,
   ),
-  _AppearanceOption(ThemeMode.light, Icons.light_mode, 'Light', 'Always light'),
-  _AppearanceOption(ThemeMode.dark, Icons.dark_mode, 'Dark', 'Always dark'),
+  _AppearanceOption(
+    ThemeMode.light,
+    Icons.light_mode,
+    l.appearanceLight,
+    l.appearanceLightDescription,
+  ),
+  _AppearanceOption(
+    ThemeMode.dark,
+    Icons.dark_mode,
+    l.appearanceDark,
+    l.appearanceDarkDescription,
+  ),
 ];
 
 /// The Appearance picker: System, Light and Dark as option cards, the
@@ -473,7 +516,7 @@ class _AppearanceSheet extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Appearance',
+                context.l10n.appearance,
                 style: AppTypography.headlineSm.copyWith(
                   color: context.colors.onSurface,
                 ),
@@ -481,13 +524,13 @@ class _AppearanceSheet extends StatelessWidget {
             ),
             AppIconButton(
               icon: Icons.close,
-              tooltip: 'Close',
+              tooltip: context.l10n.close,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.spaceXs),
-        for (final option in _appearanceOptions)
+        for (final option in _appearanceOptions(context.l10n))
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
             child: SelectableOptionCard(
@@ -503,6 +546,58 @@ class _AppearanceSheet extends StatelessWidget {
               subtitle: option.description,
               selected: selected == option.mode,
               onTap: () => Navigator.of(context).pop(option.mode),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// The App language picker: each language by its own name, with its
+/// English name under it, the current one selected. Pops with the chosen
+/// code; a dismiss pops `null`.
+class _AppLanguageSheet extends StatelessWidget {
+  const _AppLanguageSheet({required this.selected});
+
+  final String selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                context.l10n.appLanguageTitle,
+                style: AppTypography.forText(
+                  AppTypography.headlineSm.copyWith(
+                    color: context.colors.onSurface,
+                  ),
+                  context.l10n.appLanguageTitle,
+                ),
+              ),
+            ),
+            AppIconButton(
+              icon: Icons.close,
+              tooltip: context.l10n.close,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.spaceXs),
+        for (final language in AppLanguage.all)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
+            child: SelectableOptionCard(
+              key: ValueKey('app-language-${language.code}'),
+              leading: CourseGlyph(languageCode: language.code, size: 48),
+              title: language.nativeName,
+              subtitle: language.englishName,
+              selected: selected == language.code,
+              onTap: () => Navigator.of(context).pop(language.code),
             ),
           ),
       ],
@@ -527,7 +622,7 @@ class _GoalSheet extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Daily goal',
+                context.l10n.dailyGoal,
                 style: AppTypography.headlineSm.copyWith(
                   color: context.colors.onSurface,
                 ),
@@ -535,13 +630,13 @@ class _GoalSheet extends StatelessWidget {
             ),
             AppIconButton(
               icon: Icons.close,
-              tooltip: 'Close',
+              tooltip: context.l10n.close,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.spaceXs),
-        for (final option in _goalOptions)
+        for (final option in _goalOptions(context.l10n))
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
             child: SelectableOptionCard(
@@ -553,8 +648,10 @@ class _GoalSheet extends StatelessWidget {
                 size: 48,
                 square: true,
               ),
-              title: '${option.title} · ${option.minutes} min/day',
-              subtitle: '${option.description} · +${option.xpPerDay} XP/day',
+              title:
+                  '${option.title} · ${context.l10n.minutesPerDay(option.minutes)}',
+              subtitle:
+                  '${option.description} · ${context.l10n.xpPerDay(option.xpPerDay)}',
               selected: selected == option.minutes,
               onTap: () => Navigator.of(context).pop(option.minutes),
             ),

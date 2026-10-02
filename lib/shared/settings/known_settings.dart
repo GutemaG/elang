@@ -30,6 +30,12 @@ abstract final class AccountSettings {
   /// Off keeps the learner out of weekly leagues, so nobody sees their name
   /// (023-weekly-leagues, story 007).
   static const showInLeagues = KnownSetting<bool>('show_in_leagues', true);
+
+  /// The language the app's own words are shown in, `""` until chosen
+  /// (024-app-localization, story 006). The phone's copy is the one the app
+  /// draws in (`AppLanguageController`); this one follows the learner to a
+  /// new phone.
+  static const appLanguage = KnownSetting<String>('app_language', '');
 }
 
 /// **To add an app-wide value**, add one line here, then read it with

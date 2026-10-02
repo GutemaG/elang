@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/skill_tree.dart';
 import '../../../shared/widgets/path_node.dart';
 import '../../../shared/widgets/path_popover.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// One "Gamified Path Node" (`DESIGN.md` component 2) on the skill-tree
 /// dashboard: locked, active (Simien Gold, a bobbing "Start" bubble) or
@@ -20,28 +22,30 @@ class SkillPathNode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return PathNode(
       state: _pathState(node.state),
       semanticLabel: [
         node.title,
-        _stateLabel(node.state),
+        _stateLabel(node.state, l),
         if (node.isPartlyDone)
-          '${node.lessonsDone} of ${node.lessonCount} lessons done',
+          l.lessonsDoneOfCount(node.lessonsDone, node.lessonCount),
       ].join(', '),
       progress: node.isPartlyDone
           ? (node.lessonCount == 0 ? 0 : node.lessonsDone / node.lessonCount)
           : null,
       crownLevel: node.crownLevel,
-      callout: node.isPartlyDone ? 'Continue' : 'Start',
+      callout: node.isPartlyDone ? l.continueButton : l.start,
       onTap: onTap,
     );
   }
 
-  static String _stateLabel(SkillNodeState state) => switch (state) {
-    SkillNodeState.locked => 'locked',
-    SkillNodeState.active => 'active, tap to start',
-    SkillNodeState.completed => 'completed, tap to review',
-  };
+  static String _stateLabel(SkillNodeState state, AppLocalizations l) =>
+      switch (state) {
+        SkillNodeState.locked => l.nodeLocked,
+        SkillNodeState.active => l.nodeActive,
+        SkillNodeState.completed => l.nodeCompleted,
+      };
 }
 
 PathNodeState _pathState(SkillNodeState state) => switch (state) {
@@ -61,24 +65,19 @@ Future<bool?> showSkillPopover(
   required Rect anchor,
   Widget? footer,
 }) {
+  final l = context.l10n;
   final lessons = node.lessonCount;
   final (body, action) = switch (node.state) {
-    SkillNodeState.locked => (
-      'Finish the skills above to unlock this one.',
-      null,
-    ),
+    SkillNodeState.locked => (l.finishSkillsAbove, null),
     SkillNodeState.active when node.isPartlyDone => (
-      'Lesson ${node.lessonsDone + 1} of $lessons',
-      'Continue',
+      l.lessonNofM(node.lessonsDone + 1, lessons),
+      l.continueButton,
     ),
     SkillNodeState.active => (
-      lessons > 1 ? 'Lesson 1 of $lessons' : 'Ready when you are.',
-      'Start',
+      lessons > 1 ? l.lessonNofM(1, lessons) : l.readyWhenYouAre,
+      l.start,
     ),
-    SkillNodeState.completed => (
-      "You've completed this skill. Reviews don't earn XP or use beans.",
-      'Review',
-    ),
+    SkillNodeState.completed => (l.skillCompletedNote, l.review),
   };
   return showPathPopover(
     context: context,

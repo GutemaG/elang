@@ -50,6 +50,7 @@ abstract final class AuthRoutes {
         authApi: deps.authApi,
         onboardingRepository: deps.onboardingRepository,
         sessionRepository: deps.sessionRepository,
+        onSignedIn: deps.authFlowController.checkSessionInBackground,
       ),
       home: homeBuilder,
     };

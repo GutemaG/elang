@@ -57,6 +57,7 @@ import '../widgets/stat_sheet.dart';
 import '../widgets/sync_status_banner.dart';
 import 'download_management_screen.dart';
 import 'lesson_screen.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Story 001's skill-tree home dashboard — maps to
 /// `4._home_skill_tree_dashboard/`. This is the new post-sign-in
@@ -679,7 +680,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     final content = LessonContent(
       lessonId: '',
       skillId: '',
-      title: 'Practice',
+      title: context.l10n.practice,
       exercises: dueItems.map((item) => item.exercise).toList(),
       beansAtStart: 0,
       beansMax: 0,
@@ -765,7 +766,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                     icon: jumpTo == AxisDirection.up
                         ? Icons.arrow_upward
                         : Icons.arrow_downward,
-                    tooltip: 'Jump to your current lesson',
+                    tooltip: context.l10n.jumpToCurrentLesson,
                     onPressed: _jumpToCurrent,
                   ),
           ),
@@ -1225,11 +1226,12 @@ class _PracticeEntryCard extends StatelessWidget {
       builder: (context, _) {
         final offline = !syncEngine.isOnline;
         final enabled = !offline && dueCount > 0;
+        final l = context.l10n;
         final subtitle = offline
-            ? 'Offline -- Practice needs a connection'
+            ? l.practiceOffline
             : dueCount > 0
-            ? '$dueCount word${dueCount == 1 ? '' : 's'} to review today'
-            : "You're all caught up -- nothing due today";
+            ? l.wordsToReview(dueCount)
+            : l.allCaughtUp;
         return Opacity(
           opacity: enabled ? 1.0 : 0.5,
           child: AppCard(
@@ -1243,7 +1245,7 @@ class _PracticeEntryCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Practice',
+                        l.practice,
                         style: AppTypography.headlineSm.copyWith(
                           color: context.colors.onSurface,
                         ),
@@ -1286,11 +1288,12 @@ class LeagueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final me = league.members.where((m) => m.isMe).firstOrNull;
     final joined = league.status == LeagueStatus.joined && me != null;
-    final title = joined ? league.tier.title : "Join this week's league";
+    final l = context.l10n;
+    final tier = league.tier.titleIn(l);
+    final title = joined ? tier : l.joinThisWeeksLeague;
     final subtitle = joined
-        ? '${ordinal(me.rank)} of ${league.members.length} · '
-              '${me.weeklyXp} XP this week'
-        : 'Earn XP to join · ${league.tier.title}';
+        ? l.leaguePlace(ordinal(me.rank, l), league.members.length, me.weeklyXp)
+        : l.earnXpToJoin(tier);
     return AppCard(
       key: cardKey,
       onTap: onTap,
@@ -1341,23 +1344,23 @@ class _DownloadNote extends StatelessWidget {
       builder: (context, _) {
         void download() => downloader.downloadLesson(lessonId);
         return switch (downloader.statusFor(lessonId)) {
-          LessonDownloadStatus.downloaded => const PathPopoverNote(
+          LessonDownloadStatus.downloaded => PathPopoverNote(
             icon: Icons.download_done,
-            label: 'Downloaded for offline use',
+            label: context.l10n.downloadedOffline,
           ),
-          LessonDownloadStatus.downloading => const PathPopoverNote(
+          LessonDownloadStatus.downloading => PathPopoverNote(
             icon: Icons.downloading,
-            label: 'Downloading',
+            label: context.l10n.downloading,
             busy: true,
           ),
           LessonDownloadStatus.failed => PathPopoverNote(
             icon: Icons.error_outline,
-            label: 'Download failed, tap to try again',
+            label: context.l10n.downloadFailed,
             onTap: download,
           ),
           LessonDownloadStatus.notDownloaded => PathPopoverNote(
             icon: Icons.download_outlined,
-            label: 'Download for offline use',
+            label: context.l10n.downloadForOffline,
             onTap: download,
           ),
         };
@@ -1373,12 +1376,12 @@ class _OfflineNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(top: AppSpacing.spaceSm),
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.spaceSm),
       child: InfoBanner(
         icon: Icons.cloud_off_outlined,
         tone: AppTone.neutral,
-        message: 'Offline, showing saved progress',
+        message: context.l10n.offlineSavedProgress,
       ),
     );
   }
@@ -1405,12 +1408,10 @@ class _SignedOutState extends StatelessWidget {
     return EmptyState(
       icon: Icons.lock_clock,
       tone: AppTone.tertiary,
-      title: 'Please sign in again',
-      message:
-          'Your session has ended. Your progress is saved to your '
-          'account and will be back once you sign in.',
+      title: context.l10n.signInAgainTitle,
+      message: context.l10n.signInAgainMessage,
       action: AppButton.primary(
-        label: 'Sign in',
+        label: context.l10n.signIn,
         onPressed: onSignIn,
         expand: false,
       ),
@@ -1427,10 +1428,10 @@ class _LoadFailedState extends StatelessWidget {
   Widget build(BuildContext context) {
     return ErrorState(
       icon: Icons.wifi_off,
-      title: "Couldn't load your skill tree",
-      message: 'Check your connection and try again.',
+      title: context.l10n.skillTreeLoadFailed,
+      message: context.l10n.checkConnection,
       onRetry: onRetry,
-      retryLabel: 'Retry',
+      retryLabel: context.l10n.retry,
     );
   }
 }

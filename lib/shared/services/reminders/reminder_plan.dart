@@ -1,6 +1,8 @@
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../models/stat_history.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/app_localizations_en.dart';
 
 /// The hour of the day, on the phone's own clock, a reminder goes off
 /// (021-daily-reminder, D2).
@@ -38,10 +40,13 @@ class PlannedReminder {
 /// - Only the first reminder names the streak: if that day passes without
 ///   a lesson the streak is gone, so naming it on later days would be
 ///   wrong.
+///
+/// The words are in [words], the app language (English by default).
 List<PlannedReminder> planReminders({
   required tz.TZDateTime now,
   required int streakCount,
   DateTime? practisedDay,
+  AppLocalizations? words,
 }) {
   final practised = practisedDay == null ? null : utcDay(practisedDay);
   final reminders = <PlannedReminder>[];
@@ -56,8 +61,8 @@ List<PlannedReminder> planReminders({
     if (!at.isAfter(now)) continue;
     if (utcDay(at) == practised) continue;
     final (title, body) = reminders.isEmpty
-        ? reminderMessage(streakCount)
-        : reminderMessage(0);
+        ? reminderMessage(streakCount, words)
+        : reminderMessage(0, words);
     reminders.add(
       PlannedReminder(
         id: at.year * 10000 + at.month * 100 + at.day,
@@ -71,12 +76,9 @@ List<PlannedReminder> planReminders({
 }
 
 /// The reminder's title and body for a streak of [streakCount] days.
-(String, String) reminderMessage(int streakCount) {
-  if (streakCount <= 0) {
-    return ("Time for today's lesson", 'A quick lesson keeps you going.');
-  }
-  return (
-    'Keep your $streakCount-day streak going',
-    'A quick lesson is enough.',
-  );
+/// In [words] (English by default).
+(String, String) reminderMessage(int streakCount, [AppLocalizations? words]) {
+  final l = words ?? AppLocalizationsEn();
+  if (streakCount <= 0) return (l.reminderTitleToday, l.reminderBodyToday);
+  return (l.reminderTitleStreak(streakCount), l.reminderBodyStreak);
 }

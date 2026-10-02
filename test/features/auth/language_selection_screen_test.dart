@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:elang/features/auth/auth_routes.dart';
 import 'package:elang/features/auth/screens/language_selection_screen.dart';
+import 'package:elang/shared/l10n/app_language.dart';
 import 'package:elang/shared/models/course.dart';
 import 'package:elang/shared/services/course_api.dart';
 import 'package:elang/shared/services/fake_course_api.dart';
@@ -17,6 +18,7 @@ import 'package:elang/shared/services/onboarding_repository.dart';
 import 'package:elang/shared/widgets/selectable_option_card.dart';
 
 import '../../helpers/in_memory_secure_storage_service.dart';
+import '../../helpers/test_app_language.dart';
 
 const _pendingSelectionStorageKey = 'pending_onboarding_selection';
 
@@ -346,6 +348,47 @@ void main() {
     final pending = await repo.loadPendingSelection();
     expect(pending!.languageCode, 'am');
     expect(pending.fromLanguageCode, 'en');
+  });
+
+  group('the app language (024-app-localization, story 005)', () {
+    Future<void> continueUnder(
+      WidgetTester tester,
+      AppLanguageController appLanguage,
+      String section,
+    ) async {
+      await tester.pumpWidget(
+        AppLanguageScope(
+          controller: appLanguage,
+          child: _wrapped(repo, FakeCourseApi()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      if (section != 'For English speakers') {
+        await tester.tap(find.text(section));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('becomes the language spoken', (tester) async {
+      final appLanguage = testAppLanguage();
+      await continueUnder(tester, appLanguage, 'ለአማርኛ ተናጋሪዎች');
+      expect(appLanguage.value, 'am');
+      expect(find.text('DAILY_GOAL_STUB'), findsOneWidget);
+    });
+
+    testWidgets('becomes English for an English speaker', (tester) async {
+      final appLanguage = testAppLanguage();
+      await continueUnder(tester, appLanguage, 'For English speakers');
+      expect(appLanguage.value, 'en');
+    });
+
+    testWidgets('a language already chosen is kept', (tester) async {
+      final appLanguage = testAppLanguage(code: 'om');
+      await continueUnder(tester, appLanguage, 'ለአማርኛ ተናጋሪዎች');
+      expect(appLanguage.value, 'om');
+    });
   });
 
   for (final width in [360.0, 320.0]) {

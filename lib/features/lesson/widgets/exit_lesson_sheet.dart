@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_sheet.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Asked when the learner backs out of a lesson part-way through: nothing
 /// is saved until the last exercise, so leaving loses this lesson's
@@ -19,19 +20,19 @@ class ExitLessonSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final what = isPractice ? 'practice' : 'lesson';
+    final l = context.l10n;
     return SheetHero(
       illustration: const Icon(Icons.logout),
       illustrationSize: 96,
       tone: AppTone.tertiary,
-      title: 'Leave this $what?',
-      body: "Your progress in this $what won't be saved.",
+      title: isPractice ? l.leavePractice : l.leaveLesson,
+      body: isPractice ? l.practiceNotSaved : l.lessonNotSaved,
       primaryAction: AppButton.primary(
-        label: 'Keep learning',
+        label: l.keepLearning,
         onPressed: () => Navigator.of(context).pop(false),
       ),
       secondaryAction: AppButton.secondary(
-        label: 'Leave',
+        label: l.leave,
         onPressed: () => Navigator.of(context).pop(true),
       ),
     );

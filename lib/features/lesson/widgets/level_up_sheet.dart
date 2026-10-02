@@ -5,6 +5,7 @@ import '../../../shared/theme/app_tone.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_status.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Story 004's crown-level-up / streak-freeze modal — maps to
 /// `level_up_streak_freeze_modal/`. Only shown when
@@ -27,25 +28,27 @@ class LevelUpSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool freeze = result.streakFreezeUnlocked;
-    final String title = freeze ? 'Streak Freeze Unlocked!' : 'Crown Level Up!';
+    final l = context.l10n;
+    final String title = freeze ? l.streakFreezeUnlocked : l.crownLevelUp;
+    final unlocked = result.skillUnlockedTitle;
     final level = result.crownLevel;
 
     return SheetHero(
       illustration: Icon(freeze ? Icons.ac_unit : Icons.workspace_premium),
       illustrationBadge: level != null && level > 0
           ? CountBadge(
-              label: 'Lv $level',
+              label: l.levelShort(level),
               icon: Icons.workspace_premium,
               tone: AppTone.secondary,
             )
           : null,
       title: title,
       body:
-          'You reached crown level ${result.crownLevel} '
-          '${result.skillUnlockedTitle != null ? 'and unlocked ${result.skillUnlockedTitle}' : ''}'
-          '${freeze ? '. A free streak freeze protects one missed day.' : '.'}',
+          l.reachedCrownLevel('${result.crownLevel}') +
+          (unlocked != null ? l.andUnlocked(unlocked) : '') +
+          (freeze ? l.freeStreakFreeze : l.fullStop),
       primaryAction: AppButton.primary(
-        label: 'Continue',
+        label: l.continueButton,
         onPressed: onContinue,
       ),
     );

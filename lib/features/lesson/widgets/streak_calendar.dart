@@ -6,6 +6,8 @@ import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_icon_button.dart';
 import '../../../shared/widgets/app_status.dart';
+import '../../../shared/l10n/app_language.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// A month of days, marking those with a finished lesson
 /// (013-stat-pill-interactions, bolt 061). Opens on [today]'s month; the
@@ -40,21 +42,6 @@ class StreakCalendar extends StatefulWidget {
 /// How a day is drawn and read.
 enum _DayKind { practised, missed, notYet, beforeJoining }
 
-const _monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
 class _StreakCalendarState extends State<StreakCalendar> {
   /// Months before this one: 0 is [StreakCalendar.today]'s month.
   int _back = 0;
@@ -73,6 +60,7 @@ class _StreakCalendarState extends State<StreakCalendar> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final month = _month;
     final days = DateUtils.getDaysInMonth(month.year, month.month);
     // Monday first: blanks before the 1st.
@@ -92,7 +80,7 @@ class _StreakCalendarState extends State<StreakCalendar> {
           children: [
             AppIconButton(
               icon: Icons.chevron_left,
-              tooltip: 'Previous month',
+              tooltip: l.previousMonth,
               plain: true,
               onPressed: _back < widget.monthsBack
                   ? () => _go(_back + 1)
@@ -100,7 +88,7 @@ class _StreakCalendarState extends State<StreakCalendar> {
             ),
             Expanded(
               child: Text(
-                '${_monthNames[month.month - 1]} ${month.year}',
+                l.monthYear(l.monthName(month.month), '${month.year}'),
                 key: const ValueKey('streak-calendar-month'),
                 textAlign: TextAlign.center,
                 style: AppTypography.labelLg.copyWith(
@@ -110,7 +98,7 @@ class _StreakCalendarState extends State<StreakCalendar> {
             ),
             AppIconButton(
               icon: Icons.chevron_right,
-              tooltip: 'Next month',
+              tooltip: l.nextMonth,
               plain: true,
               onPressed: _back > 0 ? () => _go(_back - 1) : null,
             ),
@@ -120,7 +108,7 @@ class _StreakCalendarState extends State<StreakCalendar> {
         ExcludeSemantics(
           child: Row(
             children: [
-              for (final initial in const ['M', 'T', 'W', 'T', 'F', 'S', 'S'])
+              for (final initial in l.weekdayLetters)
                 Expanded(
                   child: Text(
                     initial,
@@ -161,15 +149,15 @@ class _Day extends StatelessWidget {
   final _DayKind kind;
   final bool isToday;
 
-  String get _label {
-    final name = '${day.day} ${_monthNames[day.month - 1]}';
+  String _label(AppLocalizations l) {
+    final name = l.dayMonth(day.day, l.monthName(day.month));
     final state = switch (kind) {
-      _DayKind.practised => 'practised',
-      _DayKind.missed => 'not practised',
-      _DayKind.notYet => 'not yet',
-      _DayKind.beforeJoining => 'before you joined',
+      _DayKind.practised => l.dayPractised,
+      _DayKind.missed => l.dayNotPractised,
+      _DayKind.notYet => l.dayNotYet,
+      _DayKind.beforeJoining => l.dayBeforeJoining,
     };
-    return isToday ? '$name, today, $state' : '$name, $state';
+    return isToday ? '$name, ${l.today}, $state' : '$name, $state';
   }
 
   @override
@@ -180,7 +168,7 @@ class _Day extends StatelessWidget {
         child: CalendarDay(
           key: ValueKey('streak-day-${day.day}'),
           day: day.day,
-          label: _label,
+          label: _label(context.l10n),
           filled: kind == _DayKind.practised,
           ringed: isToday,
           faded: kind == _DayKind.notYet || kind == _DayKind.beforeJoining,

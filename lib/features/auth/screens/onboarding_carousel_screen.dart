@@ -9,6 +9,8 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_status.dart';
 import '../auth_routes.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/l10n/app_language.dart';
 
 class _CarouselSlide {
   const _CarouselSlide({
@@ -24,32 +26,30 @@ class _CarouselSlide {
   final String chipLabel;
 }
 
-const List<_CarouselSlide> _slides = [
+/// The three slides, in the app language [l]. The chips are Fidel with its
+/// sound, the same in every language.
+List<_CarouselSlide> _slidesIn(AppLocalizations l) => [
   _CarouselSlide(
     icon: Icons.menu_book,
-    title: 'Bite-Sized Amharic',
-    body:
-        'Master Fidel syllabaries and confident daily conversations in '
-        'just 5 minutes a day.',
+    title: l.onboardingSlide1Title,
+    body: l.onboardingSlide1Body,
     chipLabel: 'ሀ ha',
   ),
   _CarouselSlide(
     icon: Icons.local_fire_department,
-    title: 'Stay Motivated with Streaks',
-    body:
-        'Earn XP, keep your streak alive, and climb the Highlands map as '
-        'you learn.',
+    title: l.onboardingSlide2Title,
+    body: l.onboardingSlide2Body,
     chipLabel: 'ቡ bu',
   ),
   _CarouselSlide(
     icon: Icons.volume_up,
-    title: 'Learn Real Dialects',
-    body:
-        "Practice with authentic native-speaker audio from Addis Ababa's "
-        'Merkato market.',
+    title: l.onboardingSlide3Title,
+    body: l.onboardingSlide3Body,
     chipLabel: 'ሂ hi',
   ),
 ];
+
+const int _slideCount = 3;
 
 /// The skippable, 3-slide onboarding carousel — maps to
 /// `stich-screens/.../2._onboarding_carousel/`.
@@ -70,7 +70,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
-  bool get _isLastSlide => _currentIndex == _slides.length - 1;
+  bool get _isLastSlide => _currentIndex == _slideCount - 1;
 
   void _goToLanguageSelection() {
     Navigator.of(context).pushReplacementNamed(AuthRoutes.languageSelection);
@@ -102,13 +102,18 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
     return AppPage(
       topBar: AppTopBar.brand(
         trailing: [
-          AppButton.text(label: 'Skip', onPressed: _goToLanguageSelection),
+          AppButton.text(
+            label: context.l10n.skip,
+            onPressed: _goToLanguageSelection,
+          ),
         ],
       ),
       scrollable: false,
       bottomDock: [
         AppButton.primary(
-          label: _isLastSlide ? 'Get Started' : 'Continue',
+          label: _isLastSlide
+              ? context.l10n.getStarted
+              : context.l10n.continueButton,
           onPressed: _onContinuePressed,
           trailing: const Icon(Icons.arrow_forward, size: 20),
         ),
@@ -117,12 +122,12 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
-              'Already have an account?',
+              context.l10n.alreadyHaveAccount,
               style: AppTypography.bodySm.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
             ),
-            AppButton.text(label: 'Log In', onPressed: _goToSignIn),
+            AppButton.text(label: context.l10n.logIn, onPressed: _goToSignIn),
           ],
         ),
       ],
@@ -131,14 +136,14 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
           Expanded(
             child: PageView.builder(
               controller: _pageController,
-              itemCount: _slides.length,
+              itemCount: _slideCount,
               onPageChanged: (index) => setState(() => _currentIndex = index),
               itemBuilder: (context, index) =>
-                  _SlideCard(slide: _slides[index]),
+                  _SlideCard(slide: _slidesIn(context.l10n)[index]),
             ),
           ),
           const SizedBox(height: AppSpacing.spaceSm),
-          PageDots(count: _slides.length, index: _currentIndex),
+          PageDots(count: _slideCount, index: _currentIndex),
           const SizedBox(height: AppSpacing.spaceSm),
         ],
       ),

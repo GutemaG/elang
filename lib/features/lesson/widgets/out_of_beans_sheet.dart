@@ -6,6 +6,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_status.dart';
 import 'bean_timer_card.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Story 003's out-of-beans modal — maps to `out_of_beans_refill_modal/`.
 ///
@@ -42,23 +43,24 @@ class OutOfBeansSheet extends StatelessWidget {
         tone: AppTone.tertiary,
       ),
       tone: AppTone.tertiary,
-      title: 'Out of Beans!',
-      body:
-          "Don't worry, mistakes help you brew fluency! Beans refill "
-          'automatically over time so you can continue your lessons.',
+      title: context.l10n.outOfBeans,
+      body: context.l10n.outOfBeansBody,
       content: BeanTimerCard(status: status, now: DateTime.now()),
       primaryAction: AppButton.accent(
         label: status.canAffordRefill
-            ? 'Refill with Amole'
-            : 'Not enough Amole',
+            ? context.l10n.refillWithAmole
+            : context.l10n.notEnoughAmole,
         onPressed: status.canAffordRefill ? onRefill : null,
         leading: const Icon(Icons.bolt),
         badge: AppButtonBadge(
-          label: '${status.refillCostAmole} Amole',
+          label: context.l10n.amoleAmount('${status.refillCostAmole}'),
           icon: Icons.diamond,
         ),
       ),
-      textAction: AppButton.text(label: 'Not now', onPressed: onDismiss),
+      textAction: AppButton.text(
+        label: context.l10n.notNow,
+        onPressed: onDismiss,
+      ),
     );
   }
 }

@@ -10,18 +10,23 @@ import 'features/lesson/lesson_dependencies.dart';
 import 'features/league/league_dependencies.dart';
 import 'features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'features/settings/settings_dependencies.dart';
+import 'shared/l10n/app_language.dart';
 import 'shared/licences/picture_credits.dart';
 import 'shared/services/reminders/reminder_scheduler.dart';
 import 'shared/services/reminders/reminder_service.dart';
 import 'shared/services/app_config_api.dart';
+import 'shared/services/app_language_repository.dart';
 import 'shared/services/appearance_repository.dart';
 import 'shared/services/secure_storage_service.dart';
 import 'shared/services/sound_preference_repository.dart';
+import 'shared/settings/account_settings_api.dart';
+import 'shared/settings/known_settings.dart';
 import 'shared/settings/remote_settings_controller.dart';
 import 'shared/settings/remote_settings_store.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/app_theme_context.dart';
 import 'shared/theme/appearance.dart';
+import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
   // The dependencies below reach platform plugins as soon as they are
@@ -45,16 +50,42 @@ Future<void> main() async {
     store: RemoteSettingsStore(storage: storage),
     configApi: AppConfigApi(),
   );
+  // The app language (024-app-localization), read before the first frame
+  // so the splash is already in it. It is sent to the account once the
+  // dependencies below exist.
+  final appLanguage = await AppLanguageController.load(
+    AppLanguageRepository(storage: storage),
+  );
+  // The reminder speaks the app language, and is rewritten when it changes.
+  reminders.words = () => lookupAppLocalizations(appLanguage.language.locale);
+  appLanguage.addListener(() => unawaited(reminders.reschedule()));
   final authDependencies = AuthDependencies(
     storage: storage,
-    // Each launch's session check brings the Notifications switch as the
-    // server has it, so a switch turned off on another phone applies here,
-    // and the account's settings.
-    onSessionChecked: (user) {
+    // Each launch's session check (and the one right after sign-in) brings
+    // the Notifications switch as the server has it, so a switch turned off
+    // on another phone applies here, and the account's settings, among
+    // them its app language.
+    onSessionChecked: (user) => unawaited(() async {
       unawaited(reminders.setEnabled(user.notificationEnabled));
-      unawaited(remoteSettings.applySession(user));
-    },
+      await remoteSettings.applySession(user);
+      await appLanguage.syncWithAccount(
+        RemoteSettings(user.settings).get(AccountSettings.appLanguage),
+      );
+    }()),
   );
+  final accountSettingsApi = HttpAccountSettingsApi(
+    sessionRepository: authDependencies.sessionRepository,
+  );
+  appLanguage.send = (code) async {
+    try {
+      await remoteSettings.updateAccount({
+        AccountSettings.appLanguage.key: code,
+      }, accountSettingsApi);
+      return true;
+    } on AccountSettingsException {
+      return false;
+    }
+  };
   // One learner's settings are never read for another.
   authDependencies.sessionRepository.addAccountChangedListener(
     () => unawaited(remoteSettings.forgetAccount()),
@@ -77,6 +108,7 @@ Future<void> main() async {
       controller: remoteSettings,
       child: BunaApp(
         appearance: appearance,
+        appLanguage: appLanguage,
         authDependencies: authDependencies,
         lessonDependencies: LessonDependencies(
           sessionRepository: authDependencies.sessionRepository,
@@ -109,6 +141,7 @@ class BunaApp extends StatelessWidget {
     required this.lessonDependencies,
     required this.settingsDependencies,
     required this.appearance,
+    required this.appLanguage,
     this.leagueDependencies,
   });
 
@@ -122,23 +155,33 @@ class BunaApp extends StatelessWidget {
   /// System, Light or Dark: the learner's choice in Settings.
   final AppearanceController appearance;
 
+  /// The language of the app's own words: the learner's choice in Settings
+  /// or at sign-up (024-app-localization).
+  final AppLanguageController appLanguage;
+
   @override
   Widget build(BuildContext context) {
     return AppearanceScope(
       controller: appearance,
-      child: ValueListenableBuilder(
-        valueListenable: appearance,
-        builder: (context, mode, _) => _app(mode),
+      child: AppLanguageScope(
+        controller: appLanguage,
+        child: ListenableBuilder(
+          listenable: Listenable.merge([appearance, appLanguage]),
+          builder: (context, _) => _app(appearance.value, appLanguage.language),
+        ),
       ),
     );
   }
 
-  Widget _app(ThemeMode mode) {
+  Widget _app(ThemeMode mode, AppLanguage language) {
     return MaterialApp(
       title: 'Buna',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: mode,
+      locale: language.locale,
+      localizationsDelegates: AppLanguage.delegates,
+      supportedLocales: AppLanguage.locales,
       builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
         value: AppTheme.systemBarsFor(
           context.colors,

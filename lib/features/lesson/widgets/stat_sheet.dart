@@ -15,6 +15,7 @@ import '../../../shared/widgets/app_status.dart';
 import 'amole_history.dart';
 import 'bean_timer_card.dart';
 import 'streak_calendar.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Opens the stats sheet on [initial]'s tab (013-stat-pill-interactions,
 /// bolt 060). A tap outside, a drag down or "Close" closes it.
@@ -240,10 +241,10 @@ class _StatSheetState extends State<StatSheet> {
           // The list would be missing this refill; fetched again when shown.
           if (!_amole.loading) _amole.data = null;
         case RefillFailure():
-          error = 'Not enough Amole for a refill.';
+          error = context.l10n.notEnoughAmoleRefill;
       }
     } on LessonApiException {
-      error = "Couldn't refill. Check your connection and try again.";
+      error = context.l10n.refillFailed;
     }
     if (!mounted) return;
     setState(() {
@@ -256,7 +257,7 @@ class _StatSheetState extends State<StatSheet> {
   @override
   Widget build(BuildContext context) {
     final close = AppButton.text(
-      label: 'Close',
+      label: context.l10n.close,
       onPressed: () => Navigator.of(context).pop(),
     );
     return Column(
@@ -280,10 +281,8 @@ class _StatSheetState extends State<StatSheet> {
           StatKind.xp => _StatExplainer(
             icon: Icons.bolt,
             tone: AppTone.secondary,
-            title: '${groupDigits(widget.totalXp)} XP',
-            body:
-                'You earn XP for every answer you get right in lessons '
-                'and Practice.',
+            title: context.l10n.xpAmount(groupDigits(widget.totalXp)),
+            body: context.l10n.xpExplain,
             close: close,
           ),
           StatKind.amole => _amoleTab(close),
@@ -299,14 +298,15 @@ class _StatSheetState extends State<StatSheet> {
     return _TabBody(
       icon: Icons.local_fire_department,
       tone: AppTone.secondary,
-      title: count == 1 ? '1 day streak' : '$count day streak',
+      title: context.l10n.dayStreak(count),
       subtitle: longest == null
-          ? 'A day counts when you finish a lesson.'
-          : 'Longest: $longest ${longest == 1 ? 'day' : 'days'}',
+          ? context.l10n.dayCounts
+          : context.l10n.longestStreak(longest),
       close: close,
       child: _loaded(
         _streak,
-        what: 'calendar',
+        offlineText: context.l10n.calendarNeedsConnection,
+        errorTitle: context.l10n.calendarLoadFailed,
         onRetry: () => _retry(_streak),
         builder: (history) =>
             StreakCalendar(history: history, today: utcDay(_now)),
@@ -318,14 +318,13 @@ class _StatSheetState extends State<StatSheet> {
     return _TabBody(
       icon: Icons.diamond,
       tone: AppTone.primary,
-      title: '${groupDigits(_beans.amoleBalance)} Amole',
-      subtitle:
-          'Earned by lessons, perfect lessons, streak milestones and '
-          'Practice. Spent on bean refills.',
+      title: context.l10n.amoleAmount(groupDigits(_beans.amoleBalance)),
+      subtitle: context.l10n.amoleExplain,
       close: close,
       child: _loaded(
         _amole,
-        what: 'list',
+        offlineText: context.l10n.listNeedsConnection,
+        errorTitle: context.l10n.listLoadFailed,
         onRetry: () => _retry(_amole),
         builder: (entries) => AmoleHistoryList(entries: entries),
       ),
@@ -335,22 +334,20 @@ class _StatSheetState extends State<StatSheet> {
   /// A tab's fetched part: offline, shown, failed or still coming.
   Widget _loaded<T>(
     _Load<T> load, {
-    required String what,
+    required String offlineText,
+    required String errorTitle,
     required VoidCallback onRetry,
     required Widget Function(T data) builder,
   }) {
     final data = load.data;
     if (widget.offline) {
-      return _Note(
-        icon: Icons.cloud_off,
-        text: 'The $what needs a connection. Connect to see it.',
-      );
+      return _Note(icon: Icons.cloud_off, text: offlineText);
     }
     if (data != null) return builder(data);
     if (load.error != null) {
       return ErrorState(
-        title: "Couldn't load the $what",
-        message: 'Check your connection and try again.',
+        title: errorTitle,
+        message: context.l10n.checkConnection,
         onRetry: onRetry,
       );
     }
@@ -384,24 +381,21 @@ class _StatSheetState extends State<StatSheet> {
         illustrationBadge: badge,
         illustrationSize: _StatExplainer.illustrationSize,
         tone: AppTone.tertiary,
-        title: 'Your beans are full',
+        title: context.l10n.beansFull,
         body: every > 0
-            ? 'Each wrong answer in a lesson uses a bean. They come back '
-                  'on their own, one every $every '
-                  '${every == 1 ? 'minute' : 'minutes'}.'
-            : 'Each wrong answer in a lesson uses a bean. They come back '
-                  'on their own over time.',
+            ? context.l10n.beansExplainEvery(every)
+            : context.l10n.beansExplainSlowly,
         textAction: close,
       );
     }
 
     final String label;
     if (widget.offline) {
-      label = 'Refill needs a connection';
+      label = context.l10n.refillNeedsConnection;
     } else if (beans.canAffordRefill) {
-      label = 'Refill with Amole';
+      label = context.l10n.refillWithAmole;
     } else {
-      label = 'Not enough Amole';
+      label = context.l10n.notEnoughAmole;
     }
     final canRefill = !widget.offline && beans.canAffordRefill;
     final error = _refillError;
@@ -410,10 +404,8 @@ class _StatSheetState extends State<StatSheet> {
       illustrationBadge: badge,
       illustrationSize: _StatExplainer.illustrationSize,
       tone: AppTone.tertiary,
-      title: 'Beans',
-      body:
-          'Each wrong answer in a lesson uses a bean. They come back on '
-          'their own, or you can refill them now with Amole.',
+      title: context.l10n.beans,
+      body: context.l10n.beansExplainRefill,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -436,7 +428,7 @@ class _StatSheetState extends State<StatSheet> {
         leading: const Icon(Icons.bolt),
         badge: beans.refillCostAmole > 0
             ? AppButtonBadge(
-                label: '${beans.refillCostAmole} Amole',
+                label: context.l10n.amoleAmount('${beans.refillCostAmole}'),
                 icon: Icons.diamond,
               )
             : null,

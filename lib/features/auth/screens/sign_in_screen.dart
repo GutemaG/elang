@@ -15,6 +15,7 @@ import '../auth_routes.dart';
 import '../state/native_sign_in.dart';
 import '../state/sign_in_controller.dart';
 import '../widgets/google_web_sign_in_button.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Sign-in / create-account screen — maps to
 /// `stich-screens/.../5._create_account_sign_in/`.
@@ -32,11 +33,16 @@ class SignInScreen extends StatefulWidget {
     required this.sessionRepository,
     this.googleSignIn,
     this.appleSignIn,
+    this.onSignedIn,
   });
 
   final AuthApi authApi;
   final OnboardingRepository onboardingRepository;
   final SessionRepository sessionRepository;
+
+  /// Hears a successful sign-in, before the dashboard opens: the app checks
+  /// the new session then (`AuthFlowController.checkSessionInBackground`).
+  final VoidCallback? onSignedIn;
 
   /// Native token-acquisition collaborators. Left `null` in the real app so
   /// [SignInController] defaults to the real `google_sign_in`/
@@ -86,7 +92,7 @@ class _SignInScreenState extends State<SignInScreen> {
       );
     }
     return AppButton.secondary(
-      label: 'Continue with Google',
+      label: context.l10n.continueWithGoogle,
       onPressed: _controller.isInFlight
           ? null
           : () => _controller.signIn(AuthProvider.google),
@@ -95,6 +101,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _onSignedIn() {
+    widget.onSignedIn?.call();
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed(AuthRoutes.home);
   }
@@ -118,15 +125,14 @@ class _SignInScreenState extends State<SignInScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Create your free account',
+            context.l10n.createAccountTitle,
             style: AppTypography.headlineLg.copyWith(
               color: context.colors.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceXs),
           Text(
-            'Save your streak, sync your progress across devices, and '
-            'start speaking Amharic today.',
+            context.l10n.createAccountBody,
             style: AppTypography.bodyMd.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
@@ -135,7 +141,7 @@ class _SignInScreenState extends State<SignInScreen> {
           _buildGoogleButton(),
           const SizedBox(height: AppSpacing.spaceSm),
           AppButton.secondary(
-            label: 'Continue with Apple',
+            label: context.l10n.continueWithApple,
             onPressed: _controller.isInFlight
                 ? null
                 : () => _controller.signIn(AuthProvider.apple),
@@ -152,8 +158,7 @@ class _SignInScreenState extends State<SignInScreen> {
           const SizedBox(height: AppSpacing.spaceXl),
           Center(
             child: Text(
-              'By continuing you agree to our Terms of Service & Privacy '
-              'Policy.',
+              context.l10n.termsNote,
               style: AppTypography.labelSm.copyWith(
                 color: context.colors.onSurfaceVariant,
               ),
@@ -178,15 +183,15 @@ class _InlineErrorBanner extends StatelessWidget {
     // Cancel-tone (neutral, "you cancelled") vs. failure-tone (apologetic,
     // "something went wrong") per story 004's technical note.
     final String message = status == SignInStatus.errorCancelled
-        ? 'Sign-in was cancelled'
-        : 'Something went wrong — try again';
+        ? context.l10n.signInCancelled
+        : context.l10n.signInFailed;
 
     return InfoBanner(
       icon: Icons.info_outline,
       message: message,
       tone: AppTone.secondary,
       action: AppButton.secondary(
-        label: 'Retry',
+        label: context.l10n.retry,
         onPressed: onRetry,
         leading: const Icon(Icons.refresh, size: 18),
         expand: false,

@@ -11,6 +11,8 @@ import '../../shared/widgets/app_input.dart';
 import '../../shared/widgets/app_page.dart';
 import '../../shared/widgets/app_status.dart';
 import 'feedback_api.dart';
+import '../../l10n/app_localizations.dart';
+import '../../shared/l10n/app_language.dart';
 
 class _CategoryOption {
   const _CategoryOption(this.category, this.icon, this.label, this.hint);
@@ -21,30 +23,31 @@ class _CategoryOption {
   final String hint;
 }
 
-const _categories = [
+/// The four kinds, in the app language [l].
+List<_CategoryOption> _categoriesIn(AppLocalizations l) => [
   _CategoryOption(
     FeedbackCategory.bug,
     Icons.bug_report,
-    'Something broke',
-    'What happened, and what were you doing just before?',
+    l.feedbackBug,
+    l.feedbackBugHint,
   ),
   _CategoryOption(
     FeedbackCategory.content,
     Icons.spellcheck,
-    'A lesson mistake',
-    'Which lesson, and what is wrong: a word, a translation, the audio?',
+    l.feedbackContent,
+    l.feedbackContentHint,
   ),
   _CategoryOption(
     FeedbackCategory.idea,
     Icons.lightbulb,
-    'An idea',
-    'What would make Buna better for you?',
+    l.feedbackIdea,
+    l.feedbackIdeaHint,
   ),
   _CategoryOption(
     FeedbackCategory.other,
     Icons.chat_bubble,
-    'Something else',
-    'Tell us anything.',
+    l.feedbackOther,
+    l.feedbackOtherHint,
   ),
 ];
 
@@ -110,8 +113,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       if (!mounted) return;
       setState(
         () => _error = e.tooMany
-            ? "That's plenty for today. Thank you! Try again tomorrow."
-            : "Couldn't send. Check your connection and try again.",
+            ? context.l10n.feedbackTooMany
+            : context.l10n.feedbackSendFailed,
       );
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -124,15 +127,15 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       topBar: AppTopBar(
         leading: AppIconButton(
           icon: Icons.arrow_back,
-          tooltip: 'Back',
+          tooltip: context.l10n.back,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: 'Send feedback',
+        title: context.l10n.sendFeedback,
       ),
       bottomDock: [
         if (_sent)
           AppButton.primary(
-            label: 'Done',
+            label: context.l10n.done,
             onPressed: () => Navigator.of(context).maybePop(),
           )
         else ...[
@@ -144,7 +147,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             ),
           AppButton.primary(
             key: FeedbackScreen.sendKey,
-            label: 'Send',
+            label: context.l10n.send,
             leading: const Icon(Icons.send),
             loading: _sending,
             onPressed: _ready ? _send : null,
@@ -156,7 +159,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Widget _form(BuildContext context) {
-    final hint = _categories
+    final l = context.l10n;
+    final categories = _categoriesIn(l);
+    final hint = categories
         .where((o) => o.category == _category)
         .map((o) => o.hint)
         .firstOrNull;
@@ -164,22 +169,22 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          "Tell us what's working and what isn't. We read every message.",
+          l.feedbackIntro,
           style: AppTypography.bodyMd.copyWith(
             color: context.colors.onSurfaceVariant,
           ),
         ),
-        const SectionHeader(title: 'What is it about?'),
+        SectionHeader(title: l.feedbackAbout),
         // Two rows of two, each row as tall as its taller tile, so long
         // labels and large text grow the tiles instead of overflowing.
-        for (var row = 0; row < _categories.length; row += 2) ...[
+        for (var row = 0; row < categories.length; row += 2) ...[
           if (row > 0) const SizedBox(height: AppSpacing.spaceSm),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (final (i, option)
-                    in _categories.skip(row).take(2).indexed) ...[
+                    in categories.skip(row).take(2).indexed) ...[
                   if (i > 0) const SizedBox(width: AppSpacing.spaceSm),
                   Expanded(
                     child: _CategoryTile(
@@ -193,21 +198,21 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             ),
           ),
         ],
-        const SectionHeader(title: 'How do you like Buna?'),
+        SectionHeader(title: l.feedbackRating),
         RatingStars(
           rating: _rating,
           onChanged: (rating) => setState(() => _rating = rating),
         ),
-        const SectionHeader(title: 'Your message'),
+        SectionHeader(title: l.feedbackMessage),
         AppTextArea(
           key: FeedbackScreen.messageKey,
           controller: _message,
           maxLength: FeedbackScreen.maxLength,
-          hint: hint ?? 'Pick what it is about, then write here.',
+          hint: hint ?? l.feedbackPickFirst,
         ),
         const SizedBox(height: AppSpacing.spaceXs),
         Text(
-          'Sent with your account and current course, so we can follow up.',
+          l.feedbackSentWith,
           style: AppTypography.bodySm.copyWith(
             color: context.colors.onSurfaceVariant,
           ),
@@ -278,7 +283,7 @@ class _Thanks extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.spaceLg),
           Text(
-            'Thank you!',
+            context.l10n.thankYou,
             textAlign: TextAlign.center,
             style: AppTypography.headlineLg.copyWith(
               color: context.colors.onSurface,
@@ -286,7 +291,7 @@ class _Thanks extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.spaceXs),
           Text(
-            'Your feedback is on its way to the Buna team.',
+            context.l10n.feedbackOnItsWay,
             textAlign: TextAlign.center,
             style: AppTypography.bodyLg.copyWith(
               color: context.colors.onSurfaceVariant,

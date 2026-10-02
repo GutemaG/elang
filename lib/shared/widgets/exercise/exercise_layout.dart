@@ -7,6 +7,7 @@ import '../app_icon_button.dart';
 import '../app_page.dart';
 import '../app_status.dart';
 import 'audio_play_button.dart';
+import '../../l10n/app_language.dart';
 
 /// The one frame every question sits in (018-mobile-design-system, FR-7):
 /// close, progress and beans along the top, the [prompt], the scrolling
@@ -103,14 +104,14 @@ class ExerciseTopBar extends StatelessWidget {
           children: [
             AppIconButton(
               icon: Icons.close,
-              tooltip: 'Exit lesson',
+              tooltip: context.l10n.exitLesson,
               onPressed: onClose,
             ),
             const SizedBox(width: AppSpacing.spaceXs),
             Expanded(
               child: AppProgressBar(
                 value: progress,
-                semanticLabel: 'Lesson progress',
+                semanticLabel: context.l10n.lessonProgress,
               ),
             ),
             if (left != null) ...[

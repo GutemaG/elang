@@ -6,6 +6,9 @@ import '../../../shared/theme/app_tone.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_status.dart';
 import '../league_models.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/app_localizations_en.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// A tier's icon in its tone (023-weekly-leagues).
 class TierBadge extends StatelessWidget {
@@ -17,7 +20,7 @@ class TierBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: '${tier.title} league',
+      label: context.l10n.tierLeague(tier.titleIn(context.l10n)),
       child: ExcludeSemantics(
         child: IconBadge(icon: tier.icon, tone: tier.tone, size: size),
       ),
@@ -67,12 +70,13 @@ class LeagueRow extends StatelessWidget {
     final me = member.isMe;
     final tone = context.tone(AppTone.primary);
     final ink = me ? tone.ink : context.colors.onSurface;
-    final name = me ? '${member.name} (You)' : member.name;
+    final l = context.l10n;
+    final name = me ? l.memberYou(member.name) : member.name;
     return Semantics(
       container: true,
       label:
-          'Place ${member.rank}, $name, ${member.weeklyXp} XP'
-          '${reward > 0 ? ', $reward Amole if the week ended now' : ''}',
+          l.memberRowLabel(member.rank, name, member.weeklyXp) +
+          (reward > 0 ? l.memberRowReward(reward) : ''),
       excludeSemantics: true,
       child: Container(
         color: me ? tone.surface : null,
@@ -130,7 +134,7 @@ class LeagueRow extends StatelessWidget {
                       const SizedBox(width: AppSpacing.spaceXs),
                     ],
                     Text(
-                      '${member.weeklyXp} XP',
+                      l.xpAmount('${member.weeklyXp}'),
                       style: AppTypography.labelMd.copyWith(color: ink),
                     ),
                   ],
@@ -160,7 +164,7 @@ class LeagueZoneDivider extends StatelessWidget {
     final line = Expanded(
       child: SizedBox(height: 1, child: ColoredBox(color: tone.border)),
     );
-    final label = up ? 'Moving up' : 'Moving down';
+    final label = up ? context.l10n.movingUp : context.l10n.movingDown;
     return Semantics(
       header: true,
       label: label,
@@ -191,37 +195,35 @@ class LeagueZoneDivider extends StatelessWidget {
 }
 
 /// "3 days left", "5 hours left", or "Ends soon" in the last hour.
-String leagueTimeLeft(DateTime endsAt, DateTime now) {
+/// In [l] (English by default).
+String leagueTimeLeft(DateTime endsAt, DateTime now, [AppLocalizations? l]) {
+  l ??= AppLocalizationsEn();
   final left = endsAt.difference(now);
-  if (left.inHours >= 24) {
-    final days = left.inDays;
-    return days == 1 ? '1 day left' : '$days days left';
-  }
-  if (left.inHours >= 1) {
-    final hours = left.inHours;
-    return hours == 1 ? '1 hour left' : '$hours hours left';
-  }
-  return 'Ends soon';
+  if (left.inHours >= 24) return l.daysLeft(left.inDays);
+  if (left.inHours >= 1) return l.hoursLeft(left.inHours);
+  return l.endsSoon;
 }
 
 /// "Top 2 move up · bottom 1 moves down", leaving out a part that is 0.
-String? leagueZoneSummary(int promote, int demote) {
+/// In [l] (English by default).
+String? leagueZoneSummary(int promote, int demote, [AppLocalizations? l]) {
+  l ??= AppLocalizationsEn();
   final parts = [
-    if (promote > 0) 'Top $promote move${promote == 1 ? 's' : ''} up',
+    if (promote > 0) l.zoneTop(promote),
     if (demote > 0)
-      '${promote > 0 ? 'bottom' : 'Bottom'} $demote move${demote == 1 ? 's' : ''} down',
+      promote > 0 ? l.zoneBottomAfter(demote) : l.zoneBottom(demote),
   ];
   return parts.isEmpty ? null : parts.join(' · ');
 }
 
 /// "updated just now", "updated 5 min ago", "updated 2 h ago",
 /// "updated 3 days ago".
-String leagueUpdatedAgo(DateTime savedAt, DateTime now) {
+/// In [l] (English by default).
+String leagueUpdatedAgo(DateTime savedAt, DateTime now, [AppLocalizations? l]) {
+  l ??= AppLocalizationsEn();
   final ago = now.difference(savedAt);
-  if (ago.inMinutes < 1) return 'updated just now';
-  if (ago.inHours < 1) return 'updated ${ago.inMinutes} min ago';
-  if (ago.inDays < 1) return 'updated ${ago.inHours} h ago';
-  return ago.inDays == 1
-      ? 'updated 1 day ago'
-      : 'updated ${ago.inDays} days ago';
+  if (ago.inMinutes < 1) return l.updatedJustNow;
+  if (ago.inHours < 1) return l.updatedMinutesAgo(ago.inMinutes);
+  if (ago.inDays < 1) return l.updatedHoursAgo(ago.inHours);
+  return l.updatedDaysAgo(ago.inDays);
 }

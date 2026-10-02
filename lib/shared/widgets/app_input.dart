@@ -4,6 +4,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_theme_context.dart';
 import '../theme/app_tone.dart';
 import '../theme/app_typography.dart';
+import '../l10n/app_language.dart';
 
 /// Several lines of free text (027-learner-feedback): a cream field with
 /// the card border, green when focused, and a character count under it
@@ -72,7 +73,7 @@ class RatingStars extends StatelessWidget {
       children: [
         for (var n = 1; n <= 5; n++)
           IconButton(
-            tooltip: 'Rate $n out of 5',
+            tooltip: context.l10n.rateStars(n),
             isSelected: rating == n,
             iconSize: 32,
             onPressed: () => onChanged(rating == n ? null : n),

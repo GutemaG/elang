@@ -96,13 +96,70 @@ class TestDefinitions:
         with pytest.raises(ValueError, match="choices"):
             Setting("hour", "int", 1, choices=("1",))
 
+    def test_a_pattern_is_for_strings_only(self) -> None:
+        with pytest.raises(ValueError, match="pattern"):
+            Setting("hour", "int", 1, pattern=r"\d+")
+
+    def test_a_pattern_and_choices_are_not_both_taken(self) -> None:
+        with pytest.raises(ValueError, match="not both"):
+            Setting("theme", "str", "light", choices=("light", "dark"), pattern=r"[a-z]+")
+
+    def test_a_default_must_match_its_pattern(self) -> None:
+        with pytest.raises(ValueError, match="default"):
+            Setting("code", "str", "x1", pattern=r"[a-z]+")
+
     def test_a_key_is_listed_once(self) -> None:
         with pytest.raises(ValueError, match="twice"):
             SettingsRegistry([Setting("a", "bool", True), Setting("a", "bool", False)])
 
     def test_the_real_registries(self) -> None:
-        # Bolt 073 (023-weekly-leagues) added the first account setting;
-        # app configuration still needs none.
-        assert ACCOUNT_SETTINGS.keys == ["show_in_leagues"]
-        assert ACCOUNT_SETTINGS.resolve({}) == {"show_in_leagues": True}
+        # Bolt 073 (023-weekly-leagues) added the first account setting and
+        # bolt 077 (024-app-localization) the app language; app
+        # configuration still needs none.
+        assert ACCOUNT_SETTINGS.keys == ["show_in_leagues", "app_language"]
+        assert ACCOUNT_SETTINGS.resolve({}) == {"show_in_leagues": True, "app_language": ""}
         assert APP_CONFIG.keys == []
+
+
+_LANGUAGE_CODE = Setting("code", "str", "", pattern=r"(?:[a-z]{2,3})?")
+
+
+class TestPattern:
+    """A `str` setting with a pattern (bolt 077): the whole value must
+    match it."""
+
+    @pytest.mark.parametrize("value", ["", "am", "om", "en", "sid"])
+    def test_accepts_a_full_match(self, value: str) -> None:
+        assert _LANGUAGE_CODE.accepts(value)
+
+    @pytest.mark.parametrize("value", ["AM", "amharic", "a", "a1", "am ", " am", "am\n", None, 5])
+    def test_refuses_anything_else(self, value: object) -> None:
+        assert not _LANGUAGE_CODE.accepts(value)
+
+    def test_validate_names_the_pattern(self) -> None:
+        registry = SettingsRegistry([_LANGUAGE_CODE])
+        with pytest.raises(InvalidSettingError, match=r"code: expected text matching"):
+            registry.validate({"code": "Amharic"})
+
+    def test_a_stored_value_that_does_not_match_reads_as_the_default(self) -> None:
+        registry = SettingsRegistry([_LANGUAGE_CODE])
+        assert registry.resolve({"code": "AM"}) == {"code": ""}
+        assert registry.invalid_keys({"code": "AM"}) == ["code"]
+        assert registry.resolve({"code": "om"}) == {"code": "om"}
+
+
+class TestAppLanguage:
+    """The real `app_language` account setting (024-app-localization,
+    story 001)."""
+
+    def test_is_empty_until_chosen(self) -> None:
+        assert ACCOUNT_SETTINGS.resolve({})["app_language"] == ""
+
+    @pytest.mark.parametrize("code", ["", "en", "am", "om", "sid"])
+    def test_takes_any_two_or_three_letter_code(self, code: str) -> None:
+        ACCOUNT_SETTINGS.validate({"app_language": code})
+
+    @pytest.mark.parametrize("value", ["AM", "amharic", "a", "a1", None, 1, True])
+    def test_refuses_anything_else(self, value: object) -> None:
+        with pytest.raises(InvalidSettingError, match="app_language"):
+            ACCOUNT_SETTINGS.validate({"app_language": value})

@@ -9,6 +9,7 @@ import '../../../shared/widgets/app_icon_button.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_status.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Story 005's download-management screen: lists downloaded lesson packs
 /// with an approximate storage size and lets the user delete them.
@@ -54,14 +55,11 @@ class _DownloadManagementScreenState extends State<DownloadManagementScreen> {
     if (!mounted) return;
     final confirmed = await showAppConfirmDialog(
       context: context,
-      title: 'Delete "${pack.title}"?',
+      title: context.l10n.deleteDownloadQuestion(pack.title),
       message: hasPending
-          ? "This lesson has progress that hasn't synced yet. "
-                'Deleting the download won\'t affect that pending '
-                'sync -- it only removes the offline copy.'
-          : 'This removes the downloaded content and audio from your '
-                'device. Your synced progress is not affected.',
-      confirmLabel: 'Delete',
+          ? context.l10n.deleteDownloadPending
+          : context.l10n.deleteDownloadMessage,
+      confirmLabel: context.l10n.delete,
       destructive: true,
     );
     if (confirmed != true) return;
@@ -82,11 +80,11 @@ class _DownloadManagementScreenState extends State<DownloadManagementScreen> {
             leading: Navigator.of(context).canPop()
                 ? AppIconButton(
                     icon: Icons.arrow_back,
-                    tooltip: 'Back',
+                    tooltip: context.l10n.back,
                     onPressed: () => Navigator.of(context).maybePop(),
                   )
                 : null,
-            title: 'Manage Downloads',
+            title: context.l10n.manageDownloads,
           ),
           // Loading and the empty state sit in the middle of the page; the
           // list scrolls.
@@ -94,14 +92,12 @@ class _DownloadManagementScreenState extends State<DownloadManagementScreen> {
           body: !done
               ? const Center(child: LoadingState())
               : packs.isEmpty
-              ? const Center(
+              ? Center(
                   child: SingleChildScrollView(
                     child: EmptyState(
                       icon: Icons.download_for_offline_outlined,
-                      title: 'No downloaded lessons yet.',
-                      message:
-                          'Lessons you download from the path show up '
-                          'here, ready to play offline.',
+                      title: context.l10n.noDownloads,
+                      message: context.l10n.noDownloadsMessage,
                     ),
                   ),
                 )
@@ -142,7 +138,7 @@ class _PackRow extends StatelessWidget {
           '${pack.courseTitle} · ${_formatSize(pack.approximateSizeBytes)}',
       trailing: AppIconButton(
         icon: Icons.delete_outline_rounded,
-        tooltip: 'Delete "${pack.title}"',
+        tooltip: context.l10n.deleteDownloadTooltip(pack.title),
         onPressed: onDelete,
       ),
     );

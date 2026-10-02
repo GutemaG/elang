@@ -4,6 +4,7 @@ import '../../models/stat_history.dart';
 import '../secure_storage_service.dart';
 import 'reminder_plan.dart';
 import 'reminder_scheduler.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Device-only values the daily reminder keeps (021-daily-reminder, bolt
 /// 063), in the app's one key-value store, as `SoundPreferenceRepository`
@@ -81,6 +82,11 @@ class ReminderService {
   final ReminderScheduler _scheduler;
   final ReminderStore _store;
   final DateTime Function() _clock;
+
+  /// The words the reminders are written in: the app language
+  /// (024-app-localization, FR-7). English when unset. Call [reschedule]
+  /// after the language changes so pending reminders use the new words.
+  AppLocalizations Function()? words;
 
   /// Runs one rebuild at a time, in order.
   Future<void> _last = Future.value();
@@ -187,6 +193,7 @@ class ReminderService {
         now: tz.TZDateTime.from(_clock(), location),
         streakCount: await _store.streakCount(),
         practisedDay: await _store.practisedDay(),
+        words: words?.call(),
       ),
     );
   }

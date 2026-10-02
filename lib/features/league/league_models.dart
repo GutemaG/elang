@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../shared/theme/app_palette.dart';
 import '../../shared/theme/app_tone.dart';
+import '../../l10n/app_localizations.dart';
 
 /// The five league tiers (023-weekly-leagues), lowest first, as the
 /// backend names them (`backend/app/domain/league.py`). The names, icons
@@ -16,9 +17,20 @@ enum LeagueTier {
   const LeagueTier(this.key, this.title, this.icon, this.tone);
 
   final String key;
+
+  /// The name in English; [titleIn] gives it in the app language.
   final String title;
   final IconData icon;
   final AppTone tone;
+
+  /// The name in the app language [l].
+  String titleIn(AppLocalizations l) => switch (this) {
+    LeagueTier.greenBean => l.tierGreenBean,
+    LeagueTier.lightRoast => l.tierLightRoast,
+    LeagueTier.mediumRoast => l.tierMediumRoast,
+    LeagueTier.darkRoast => l.tierDarkRoast,
+    LeagueTier.goldenCup => l.tierGoldenCup,
+  };
 
   /// The tier [key] names; an unknown one (a newer backend) reads as the
   /// lowest.

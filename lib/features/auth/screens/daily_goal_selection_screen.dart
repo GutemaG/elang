@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/l10n/app_language.dart';
 import '../../../shared/services/onboarding_repository.dart';
 import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
@@ -29,32 +31,33 @@ class GoalOption {
   final IconData icon;
 }
 
-const List<GoalOption> _goalOptions = [
+/// The four presets, in the app language [l].
+List<GoalOption> _goalOptions(AppLocalizations l) => [
   GoalOption(
     minutes: 5,
-    title: 'Casual',
-    description: 'Gentle warm up',
+    title: l.goalCasual,
+    description: l.goalCasualDescription,
     xpPerDay: 10,
     icon: Icons.eco,
   ),
   GoalOption(
     minutes: 10,
-    title: 'Regular',
-    description: 'Steady progress',
+    title: l.goalRegular,
+    description: l.goalRegularDescription,
     xpPerDay: 20,
     icon: Icons.local_cafe,
   ),
   GoalOption(
     minutes: 15,
-    title: 'Serious',
-    description: 'Fast retention',
+    title: l.goalSerious,
+    description: l.goalSeriousDescription,
     xpPerDay: 30,
     icon: Icons.coffee,
   ),
   GoalOption(
     minutes: 20,
-    title: 'Intense',
-    description: 'Speed fluency',
+    title: l.goalIntense,
+    description: l.goalIntenseDescription,
     xpPerDay: 50,
     icon: Icons.local_fire_department,
   ),
@@ -92,15 +95,16 @@ class _DailyGoalSelectionScreenState extends State<DailyGoalSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AppPage(
       bottomDock: [
         AppButton.primary(
-          label: 'Continue',
+          label: l.continueButton,
           onPressed: _onContinuePressed,
           trailing: const Icon(Icons.arrow_forward, size: 20),
         ),
         Text(
-          'You can change your goal anytime in Settings.',
+          l.changeGoalAnytime,
           textAlign: TextAlign.center,
           style: AppTypography.labelSm.copyWith(
             color: context.colors.onSurfaceVariant,
@@ -111,21 +115,20 @@ class _DailyGoalSelectionScreenState extends State<DailyGoalSelectionScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Choose your daily goal',
+            l.chooseDailyGoal,
             style: AppTypography.displayLgMobile.copyWith(
               color: context.colors.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.space2xs),
           Text(
-            'How much time do you want to dedicate to Habesha '
-            'languages each day?',
+            l.dailyGoalQuestion,
             style: AppTypography.bodySm.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: AppSpacing.spaceLg),
-          for (final option in _goalOptions)
+          for (final option in _goalOptions(l))
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
               child: SelectableOptionCard(
@@ -137,22 +140,18 @@ class _DailyGoalSelectionScreenState extends State<DailyGoalSelectionScreen> {
                   size: 48,
                   square: true,
                 ),
-                title: '${option.title} · ${option.minutes} min/day',
-                subtitle: '${option.description} · +${option.xpPerDay} XP/day',
+                title: '${option.title} · ${l.minutesPerDay(option.minutes)}',
+                subtitle:
+                    '${option.description} · ${l.xpPerDay(option.xpPerDay)}',
                 badgeLabel: option.minutes == _defaultGoalMinutes
-                    ? 'RECOMMENDED'
+                    ? l.recommendedBadge
                     : null,
                 selected: _selectedMinutes == option.minutes,
                 onTap: () => setState(() => _selectedMinutes = option.minutes),
               ),
             ),
           const SizedBox(height: AppSpacing.space2xs),
-          const InfoBanner(
-            icon: Icons.lightbulb_outline,
-            message:
-                'Tip: Studying during your morning Buna ritual boosts '
-                'long-term recall.',
-          ),
+          InfoBanner(icon: Icons.lightbulb_outline, message: l.dailyGoalTip),
         ],
       ),
     );

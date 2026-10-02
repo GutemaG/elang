@@ -8,6 +8,7 @@ import '../theme/app_shadows.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'path_popover.dart';
+import '../l10n/app_language.dart';
 
 /// Where a skill stands on the path.
 enum PathNodeState {
@@ -406,7 +407,7 @@ class _CrownBadge extends StatelessWidget {
           ),
           const SizedBox(width: 2),
           Text(
-            'Lv $level',
+            context.l10n.levelShort(level),
             style: AppTypography.labelSm.copyWith(
               color: context.colors.secondary,
             ),

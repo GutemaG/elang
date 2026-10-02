@@ -9,6 +9,7 @@ import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_card.dart';
 import '../../shared/widgets/app_status.dart';
 import '../../shared/widgets/course_glyph.dart';
+import '../../shared/l10n/app_language.dart';
 
 /// The panel that drops from the dashboard's course badge
 /// (011-dashboard-ui-polish, stories 003 and 004).
@@ -72,19 +73,19 @@ class CoursePanel extends StatelessWidget {
             ),
             ListRow(
               icon: Icons.settings_outlined,
-              title: 'Course settings',
+              title: context.l10n.courseSettings,
               onTap: onSettings,
             ),
             ListRow(
               icon: Icons.folder_outlined,
-              title: 'Manage downloads',
+              title: context.l10n.manageDownloads,
               onTap: onDownloads,
             ),
             if (onLeague != null)
               ListRow(
                 key: const ValueKey('course-panel-league'),
                 icon: Icons.emoji_events_outlined,
-                title: 'Weekly league',
+                title: context.l10n.weeklyLeague,
                 onTap: onLeague,
               ),
           ],
@@ -107,7 +108,7 @@ class CoursePanel extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                "Couldn't load your courses",
+                context.l10n.coursesLoadFailedShort,
                 style: AppTypography.bodySm.copyWith(
                   color: context.colors.onSurfaceVariant,
                 ),
@@ -115,7 +116,7 @@ class CoursePanel extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.spaceXs),
             AppButton.secondary(
-              label: 'Retry',
+              label: context.l10n.retry,
               onPressed: onRetry,
               expand: false,
               size: AppButtonSize.compact,
@@ -169,9 +170,11 @@ class _CourseTile extends StatelessWidget {
       container: true,
       excludeSemantics: true,
       label: selected
-          ? '${languageName(course.learningLanguage)}, current course'
-          : 'Switch to ${languageName(course.learningLanguage)} from '
-                '${languageName(course.fromLanguage)}',
+          ? context.l10n.currentCourse(languageName(course.learningLanguage))
+          : context.l10n.switchToCourse(
+              languageName(course.learningLanguage),
+              languageName(course.fromLanguage),
+            ),
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
@@ -196,7 +199,7 @@ class _CourseTile extends StatelessWidget {
                 ),
               ),
               Text(
-                'from ${languageName(course.fromLanguage)}',
+                context.l10n.fromLanguage(languageName(course.fromLanguage)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.labelSm.copyWith(
@@ -222,7 +225,7 @@ class _AddCourseTile extends StatelessWidget {
       button: true,
       container: true,
       excludeSemantics: true,
-      label: 'Add a course',
+      label: context.l10n.addCourse,
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
@@ -233,7 +236,7 @@ class _AddCourseTile extends StatelessWidget {
               const IconBadge(icon: Icons.add, size: 44, square: true),
               const SizedBox(height: AppSpacing.space2xs),
               Text(
-                'Course',
+                context.l10n.course,
                 maxLines: 1,
                 style: AppTypography.labelSm.copyWith(
                   color: context.colors.onSurfaceVariant,

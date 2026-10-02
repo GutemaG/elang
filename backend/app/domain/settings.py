@@ -22,6 +22,7 @@ Appearance choice stays on the phone.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -35,30 +36,38 @@ _TYPE_NAMES = {"bool": "true or false", "int": "a whole number", "str": "text"}
 @dataclass(frozen=True)
 class Setting:
     """One known key: its type (`bool`, `int` or `str`), its default, and for
-    a `str`, optionally the only values it may take."""
+    a `str`, optionally the only values it may take, or a `pattern` (a
+    regular expression the whole value must match)."""
 
     key: str
     type: str
     default: Any
     choices: tuple[str, ...] | None = None
+    pattern: str | None = None
 
     def __post_init__(self) -> None:
         if self.type not in _TYPES:
             raise ValueError(f"{self.key}: unknown type {self.type!r}")
         if self.choices is not None and self.type != "str":
             raise ValueError(f"{self.key}: only a str setting takes choices")
+        if self.pattern is not None and self.type != "str":
+            raise ValueError(f"{self.key}: only a str setting takes a pattern")
+        if self.pattern is not None and self.choices is not None:
+            raise ValueError(f"{self.key}: takes choices or a pattern, not both")
         if not self.accepts(self.default):
             raise ValueError(f"{self.key}: the default {self.default!r} is not valid")
 
     def accepts(self, value: object) -> bool:
         """Whether `value` is of this setting's type (a bool is not an int
         here, though it is one in Python) and, if listed, one of its
-        choices."""
+        choices, or a match for its pattern."""
         expected = _TYPES[self.type]
         if expected is int and isinstance(value, bool):
             return False
         if not isinstance(value, expected):
             return False
+        if self.pattern is not None and isinstance(value, str):
+            return re.fullmatch(self.pattern, value) is not None
         return self.choices is None or value in self.choices
 
 
@@ -103,11 +112,12 @@ class SettingsRegistry:
             if setting is None:
                 problems.append(f"{key}: unknown setting")
             elif not setting.accepts(value):
-                expected = (
-                    f"one of {', '.join(setting.choices)}"
-                    if setting.choices
-                    else _TYPE_NAMES[setting.type]
-                )
+                if setting.choices:
+                    expected = f"one of {', '.join(setting.choices)}"
+                elif setting.pattern is not None:
+                    expected = f"text matching {setting.pattern}"
+                else:
+                    expected = _TYPE_NAMES[setting.type]
                 problems.append(f"{key}: expected {expected}")
         if problems:
             raise InvalidSettingError("; ".join(problems))
@@ -119,6 +129,12 @@ ACCOUNT_SETTINGS = SettingsRegistry(
         # 023-weekly-leagues (bolt 073): off keeps the learner out of
         # leagues, so nobody sees their name.
         Setting("show_in_leagues", "bool", True),
+        # 024-app-localization (bolt 077): the language the app's own words
+        # are shown in, so it follows the learner to a new phone. "" until
+        # chosen. Any 2-3 letter code: the app decides which it has, and
+        # shows English for one it lacks, so a new language needs no
+        # change here.
+        Setting("app_language", "str", "", pattern=r"(?:[a-z]{2,3})?"),
     ]
 )
 

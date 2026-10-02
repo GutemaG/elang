@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart' show listEquals, mapEquals;
 
+import '../../l10n/app_localizations.dart';
+import '../../l10n/app_localizations_en.dart';
+
 /// One exercise within a lesson.
 ///
 /// A sealed class (matching `AuthResult`'s existing pattern in this
@@ -156,9 +159,11 @@ class PictureChoice {
   final String imageUrl;
   final String altText;
 
-  /// [altText], or "Picture 2" for the second picture when it has none.
-  String labelAt(int index) =>
-      altText.trim().isEmpty ? 'Picture ${index + 1}' : altText;
+  /// [altText], or "Picture 2" for the second picture when it has none,
+  /// in [l] (English by default).
+  String labelAt(int index, [AppLocalizations? l]) => altText.trim().isEmpty
+      ? (l ?? AppLocalizationsEn()).pictureN(index + 1)
+      : altText;
 }
 
 /// Read a word, then tap its picture (019-image-choice-exercise-types).

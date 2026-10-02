@@ -169,10 +169,74 @@ class TestAppConfig:
         }
 
 
-def test_with_the_real_registries_only_the_league_switch_is_listed(
+def test_with_the_real_registries_the_league_switch_and_app_language_are_listed(
     make_client: ClientFactory,
 ) -> None:
-    # Bolt 073 (023-weekly-leagues) added the first account setting.
+    # Bolt 073 (023-weekly-leagues) added the first account setting, bolt
+    # 077 (024-app-localization) the app language.
     client, headers = _signed_in(make_client, f"{__name__}-6")
-    assert _session_settings(client, headers) == {"show_in_leagues": True}
+    assert _session_settings(client, headers) == {"show_in_leagues": True, "app_language": ""}
     assert client.get("/api/v1/config").json() == {"config": {}}
+
+
+class TestAppLanguage:
+    """024-app-localization, story 001: the app language is kept on the
+    account through the real registry, with no migration."""
+
+    def test_is_saved_returned_and_read_back_at_the_session_check(
+        self, make_client: ClientFactory
+    ) -> None:
+        client, headers = _signed_in(make_client, f"{__name__}-7")
+
+        response = client.patch(
+            "/api/v1/users/me/settings", json={"app_language": "am"}, headers=headers
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"settings": {"show_in_leagues": True, "app_language": "am"}}
+        assert _session_settings(client, headers)["app_language"] == "am"
+
+    def test_leaves_the_other_settings_alone(self, make_client: ClientFactory) -> None:
+        client, headers = _signed_in(make_client, f"{__name__}-8")
+        client.patch("/api/v1/users/me/settings", json={"show_in_leagues": False}, headers=headers)
+
+        client.patch("/api/v1/users/me/settings", json={"app_language": "om"}, headers=headers)
+
+        assert _session_settings(client, headers) == {
+            "show_in_leagues": False,
+            "app_language": "om",
+        }
+
+    @pytest.mark.parametrize("code", ["", "sid"])
+    def test_takes_any_short_code_and_can_be_cleared(
+        self, make_client: ClientFactory, code: str
+    ) -> None:
+        client, headers = _signed_in(make_client, f"{__name__}-9-{code}")
+        client.patch("/api/v1/users/me/settings", json={"app_language": "am"}, headers=headers)
+
+        response = client.patch(
+            "/api/v1/users/me/settings", json={"app_language": code}, headers=headers
+        )
+
+        assert response.status_code == 200
+        assert _session_settings(client, headers)["app_language"] == code
+
+    @pytest.mark.parametrize("value", ["AM", "amharic", "a", None, 3])
+    def test_a_bad_code_is_refused_and_nothing_is_saved(
+        self, make_client: ClientFactory, value: object
+    ) -> None:
+        client, headers = _signed_in(make_client, f"{__name__}-10")
+        client.patch("/api/v1/users/me/settings", json={"app_language": "am"}, headers=headers)
+
+        response = client.patch(
+            "/api/v1/users/me/settings",
+            json={"app_language": value, "show_in_leagues": False},
+            headers=headers,
+        )
+
+        assert response.status_code == 422
+        assert response.json()["error_code"] == "invalid_setting"
+        assert _session_settings(client, headers) == {
+            "show_in_leagues": True,
+            "app_language": "am",
+        }

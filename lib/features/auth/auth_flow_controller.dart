@@ -33,4 +33,12 @@ class AuthFlowController {
     if (renewer != null) unawaited(renewer.renew());
     return AuthStartDestination.home;
   }
+
+  /// Checks the new session in the background right after sign-in, so the
+  /// account's settings (its app language, 024-app-localization) arrive
+  /// now rather than at the next launch: the sign-in reply carries none.
+  void checkSessionInBackground() {
+    final renewer = _renewer;
+    if (renewer != null) unawaited(renewer.renew());
+  }
 }

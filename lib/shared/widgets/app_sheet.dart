@@ -7,6 +7,7 @@ import '../theme/app_tone.dart';
 import '../theme/app_typography.dart';
 import 'app_button.dart';
 import 'app_icon_button.dart';
+import '../l10n/app_language.dart';
 
 /// Sheets and dialogs (018-mobile-design-system, FR-5): one bottom sheet,
 /// one dialog, and the [SheetHero] layout both use, so a pop-up never looks
@@ -151,7 +152,7 @@ Future<bool?> showAppConfirmDialog({
   required String title,
   required String message,
   required String confirmLabel,
-  String cancelLabel = 'Cancel',
+  String? cancelLabel,
   bool destructive = false,
   IconData? icon,
 }) {
@@ -178,7 +179,7 @@ Future<bool?> showAppConfirmDialog({
                 onPressed: () => answer(true),
               ),
         textAction: AppButton.text(
-          label: cancelLabel,
+          label: cancelLabel ?? context.l10n.cancel,
           onPressed: () => answer(false),
         ),
       );
@@ -236,7 +237,7 @@ class AppDialogFrame extends StatelessWidget {
                             right: AppSpacing.space2xs,
                             child: AppIconButton(
                               icon: Icons.close,
-                              tooltip: 'Close',
+                              tooltip: context.l10n.close,
                               onPressed: onClose,
                             ),
                           ),

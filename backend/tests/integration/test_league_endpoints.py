@@ -211,7 +211,7 @@ class TestShowInLeagues:
     def test_it_is_on_by_default_in_the_session_check(self, make_client: ClientFactory) -> None:
         client, headers, _ = _sign_in(make_client, "u1")
         body = client.get("/api/v1/auth/session", headers=headers).json()
-        assert body["user"]["settings"] == {"show_in_leagues": True}
+        assert body["user"]["settings"]["show_in_leagues"] is True
 
     def test_switching_off_leaves_the_group_and_hides_the_league(
         self, make_client: ClientFactory, seeded_content: dict[str, str]
@@ -224,7 +224,7 @@ class TestShowInLeagues:
         response = b.patch(
             "/api/v1/users/me/settings", headers=b_headers, json={"show_in_leagues": False}
         )
-        assert response.json() == {"settings": {"show_in_leagues": False}}
+        assert response.json()["settings"]["show_in_leagues"] is False
 
         assert _league(b, b_headers)["status"] == "hidden"
         names = [m["name"] for m in _league(a, a_headers)["members"]]  # type: ignore[attr-defined]

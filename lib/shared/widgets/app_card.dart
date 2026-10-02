@@ -323,6 +323,7 @@ class InfoBanner extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
+              flex: 3,
               child: Semantics(
                 container: true,
                 label: message,
@@ -337,7 +338,10 @@ class InfoBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.spaceXs),
-            action!,
+            // At most two fifths of the width: a long label ("Irra
+            // deebi'i yaali") wraps inside the button instead of pushing
+            // the banner off the screen.
+            Flexible(flex: 2, child: action!),
           ],
         ),
       ),

@@ -218,7 +218,7 @@ void main() {
     await tester.tap(find.text('Manage downloads'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Manage Downloads'), findsOneWidget);
+    expect(find.text('Manage downloads'), findsOneWidget);
   });
 
   testWidgets('Course settings opens the settings screen', (tester) async {

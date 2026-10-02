@@ -6,6 +6,7 @@ import '../../shared/theme/app_theme_context.dart';
 import '../../shared/theme/app_spacing.dart';
 import '../../shared/theme/app_typography.dart';
 import '../../shared/widgets/course_glyph.dart';
+import '../../shared/l10n/app_language.dart';
 
 export '../../shared/widgets/course_glyph.dart' show CourseGlyph;
 
@@ -35,12 +36,12 @@ class CourseBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final course = this.course;
     final label = course == null
-        ? 'Courses'
+        ? context.l10n.courses
         : languageName(course.learningLanguage);
     return Semantics(
       button: true,
       expanded: expanded,
-      label: 'Course: $label',
+      label: context.l10n.courseLabel(label),
       child: InkWell(
         onTap: onTap,
         customBorder: const StadiumBorder(),

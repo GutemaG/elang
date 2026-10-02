@@ -5,36 +5,7 @@ import '../../../shared/theme/app_theme_context.dart';
 import '../../../shared/theme/app_spacing.dart';
 import '../../../shared/theme/app_typography.dart';
 import '../../../shared/widgets/app_status.dart';
-
-const _shortMonths = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-const _longMonths = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+import '../../../shared/l10n/app_language.dart';
 
 /// The recent Amole entries, newest first (013-stat-pill-interactions,
 /// bolt 061): why, when, and how much, earned in green and spent in the
@@ -50,7 +21,7 @@ class AmoleHistoryList extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceMd),
         child: Text(
-          'No Amole yet',
+          context.l10n.noAmoleYet,
           textAlign: TextAlign.center,
           style: AppTypography.bodyMd.copyWith(
             color: context.colors.onSurfaceVariant,
@@ -83,11 +54,15 @@ class _Entry extends StatelessWidget {
     final shown = earned
         ? '+${groupDigits(amount)}'
         : '−${groupDigits(-amount)}';
+    final l = context.l10n;
+    final reason = entry.reasonIn(l);
     return Semantics(
-      label:
-          '${entry.reason}, ${earned ? 'plus' : 'minus'} '
-          '${groupDigits(amount.abs())} Amole, '
-          '${when.day} ${_longMonths[when.month - 1]}',
+      label: l.amoleEntryLabel(
+        reason,
+        earned ? l.plus : l.minus,
+        groupDigits(amount.abs()),
+        l.dayMonth(when.day, l.monthName(when.month)),
+      ),
       container: true,
       excludeSemantics: true,
       child: Padding(
@@ -99,13 +74,13 @@ class _Entry extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    entry.reason,
+                    reason,
                     style: AppTypography.bodyMd.copyWith(
                       color: context.colors.onSurface,
                     ),
                   ),
                   Text(
-                    '${when.day} ${_shortMonths[when.month - 1]}',
+                    l.dayMonth(when.day, l.monthShort(when.month)),
                     style: AppTypography.labelSm.copyWith(
                       color: context.colors.onSurfaceVariant,
                     ),

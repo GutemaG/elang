@@ -6,6 +6,7 @@ import '../../../shared/widgets/exercise/answer_slot_line.dart';
 import '../../../shared/widgets/exercise/answer_tile.dart';
 import '../state/lesson_controller.dart';
 import 'answer_states.dart';
+import '../../../shared/l10n/app_language.dart';
 
 /// Spell-from-tiles (016-spell-from-tiles-exercise-type, bolt 033): the
 /// word being spelled on a ruled line above the character tiles; tapping a
@@ -51,7 +52,7 @@ class SpellTilesBuilder extends StatelessWidget {
       children: [
         AnswerSlotLine.sentence(
           grade: gradeOf(feedback),
-          hint: 'Tap the characters below to spell it',
+          hint: context.l10n.spellHint,
           minLines: 1,
           children: [
             for (final id in placed)
