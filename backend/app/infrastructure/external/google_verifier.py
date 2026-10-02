@@ -38,6 +38,11 @@ def first_name_from_claims(claims: dict[str, object]) -> str | None:
     return trimmed or None
 
 
+# Tolerance for this machine's clock disagreeing with Google's. With none, a
+# clock a few seconds slow rejects every fresh token as "used too early".
+CLOCK_SKEW_SECONDS = 10
+
+
 class GoogleTokenVerifier:
     """Implements the `app.domain.services.TokenVerifier` protocol."""
 
@@ -56,6 +61,7 @@ class GoogleTokenVerifier:
                 token,
                 self._transport_request,
                 self._client_id or None,
+                clock_skew_in_seconds=CLOCK_SKEW_SECONDS,
             )
         except TransportError as exc:
             raise ProviderUnreachableError(
