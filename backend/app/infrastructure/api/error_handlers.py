@@ -43,6 +43,7 @@ from app.domain.lesson.exceptions import (
     InvalidCompletionTimestampError,
     InvalidContentError,
     InvalidExerciseError,
+    InvalidFeedbackError,
     InvalidImportError,
     InvalidOrderError,
     InvalidPracticeCompletionError,
@@ -52,6 +53,7 @@ from app.domain.lesson.exceptions import (
     LessonDomainError,
     LessonNotFoundError,
     SkillLockedError,
+    TooMuchFeedbackError,
     UploadLinkExpiredError,
 )
 
@@ -80,6 +82,8 @@ _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     InvalidCompletionTimestampError: 422,
     InvalidPracticeCompletionError: 422,
     InvalidRangeError: 422,
+    InvalidFeedbackError: 422,
+    TooMuchFeedbackError: 429,
     ContentNotFoundError: 404,
     InvalidContentError: 422,
     InvalidExerciseError: 422,

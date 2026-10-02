@@ -22,6 +22,8 @@ import 'package:elang/features/auth/screens/onboarding_carousel_screen.dart';
 import 'package:elang/features/auth/screens/sign_in_screen.dart';
 import 'package:elang/features/auth/screens/splash_screen.dart';
 import 'package:elang/features/courses/course_picker.dart';
+import 'package:elang/features/feedback/feedback_api.dart';
+import 'package:elang/features/feedback/feedback_screen.dart';
 import 'package:elang/features/league/league_dependencies.dart';
 import 'package:elang/features/league/league_models.dart';
 import 'package:elang/features/league/widgets/league_result_sheet.dart';
@@ -112,6 +114,16 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
   await tester.pump();
   await tester.tap(finder);
   await tester.pumpAndSettle();
+}
+
+/// Takes every message (027-learner-feedback).
+class _SentFeedback implements FeedbackApi {
+  @override
+  Future<void> send({
+    required FeedbackCategory category,
+    required String message,
+    int? rating,
+  }) async {}
 }
 
 /// A page with one button that opens a pop-up with [open].
@@ -946,6 +958,31 @@ final _scenes = <String, _Scene>{
     await tester.pumpAndSettle();
     await _tap(tester, find.byIcon(Icons.delete_outline_rounded).first);
   },
+
+  // Send feedback (027-learner-feedback).
+  'feedback': (tester, scale) async {
+    await tester.pumpWidget(_app(FeedbackScreen(api: _SentFeedback()), scale));
+    await tester.pumpAndSettle();
+  },
+  'feedback, filled in': (tester, scale) async {
+    await tester.pumpWidget(_app(FeedbackScreen(api: _SentFeedback()), scale));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.text('A lesson mistake'));
+    await _tap(tester, find.byTooltip('Rate 5 out of 5'));
+    await tester.enterText(
+      find.byKey(FeedbackScreen.messageKey),
+      'The audio for "Selam" is cut off. ' * 12,
+    );
+    await tester.pumpAndSettle();
+  },
+  'feedback, sent': (tester, scale) async {
+    await tester.pumpWidget(_app(FeedbackScreen(api: _SentFeedback()), scale));
+    await tester.pumpAndSettle();
+    await _tap(tester, find.text('An idea'));
+    await tester.enterText(find.byKey(FeedbackScreen.messageKey), 'Tigrinya');
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(FeedbackScreen.sendKey));
+  },
 };
 
 /// What each scene must end up showing, so a scene that never reached its
@@ -1003,6 +1040,9 @@ final _shows = <String, Finder>{
   'league, offline with nothing saved': find.text('Connect to see your league'),
   'settings, the league switch': find.text('Show me in leagues'),
   'downloads, the delete dialog': find.textContaining('Delete "Alphabet'),
+  'feedback': find.text('What is it about?'),
+  'feedback, filled in': find.text('5 / 5'),
+  'feedback, sent': find.text('Thank you!'),
 };
 
 void main() {

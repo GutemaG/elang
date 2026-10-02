@@ -229,6 +229,7 @@ describe('the learner list', () => {
 
     expect(await screen.findByRole('heading', { name: /Abebe/, level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Longest 5 days')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Their feedback' })).toHaveAttribute('href', '/feedback?status=all&learner=u-abebe')
     expect(screen.getByRole('progressbar', { name: 'English to Amharic: skills done' })).toHaveAttribute('aria-valuenow', '1')
     expect(screen.getByText('Greetings', { selector: 'li' })).toHaveTextContent('Done')
     expect(screen.getByText('Numbers', { selector: 'li' })).toHaveTextContent('1/2Started')

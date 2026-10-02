@@ -26,6 +26,8 @@ const NAV_GROUPS = [
     items: [
       { to: '/dashboard', icon: 'monitoring', label: 'Dashboard', current: (path: string) => path === '/dashboard' },
       { to: '/learners', icon: 'group', label: 'Learners', current: (path: string) => path.startsWith('/learners') },
+      // 027-learner-feedback: what learners send from the app.
+      { to: '/feedback', icon: 'feedback', label: 'Feedback', current: (path: string) => path === '/feedback' },
     ],
   },
 ]

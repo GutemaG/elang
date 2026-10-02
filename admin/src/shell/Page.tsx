@@ -53,7 +53,7 @@ export function StatCard({
 }: {
   icon: string
   label: string
-  value: number
+  value: number | string
   tone?: StatTone
 }) {
   return (

@@ -374,3 +374,35 @@ export interface AdminReport {
   }[]
   top_learners: { id: string; name: string; email: string | null; xp: number; lessons: number; accuracy: number | null }[]
 }
+
+// Learner feedback (027-learner-feedback): sent from the app's Settings.
+export type FeedbackCategory = 'bug' | 'idea' | 'content' | 'other'
+export type FeedbackStatus = 'open' | 'resolved'
+
+export interface AdminFeedbackItem {
+  id: string
+  category: FeedbackCategory
+  /** 1 to 5, or null when the learner skipped it. */
+  rating: number | null
+  message: string
+  status: FeedbackStatus
+  platform: string | null
+  created_at: string
+  resolved_at: string | null
+  learner_id: string
+  learner_name: string
+  learner_email: string | null
+  course_id: string | null
+  course_title: string | null
+}
+
+export interface AdminFeedbackPage {
+  items: AdminFeedbackItem[]
+  /** How many match the filters; the rest count all feedback. */
+  total: number
+  open: number
+  resolved: number
+  rated: number
+  average_rating: number | null
+  open_by_category: Record<FeedbackCategory, number>
+}

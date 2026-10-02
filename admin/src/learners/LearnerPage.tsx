@@ -75,6 +75,13 @@ export function LearnerPage() {
                 </span>
               </p>
             </div>
+            <Link
+              to={`/feedback?status=all&learner=${l.id}`}
+              className="inline-flex h-10 items-center gap-2 rounded border border-line bg-surface px-4 text-sm font-semibold text-coffee hover:bg-inset"
+            >
+              <Icon name="feedback" className="text-lg" />
+              Their feedback
+            </Link>
           </header>
 
           <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

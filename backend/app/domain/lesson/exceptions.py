@@ -70,6 +70,20 @@ class InvalidRangeError(LessonDomainError):
     error_code = "invalid_range"
 
 
+class InvalidFeedbackError(LessonDomainError):
+    """Feedback with no message, an unknown category or a rating outside
+    1 to 5 (027-learner-feedback)."""
+
+    error_code = "invalid_feedback"
+
+
+class TooMuchFeedbackError(LessonDomainError):
+    """A learner sent more feedback in a day than the backend takes
+    (027-learner-feedback)."""
+
+    error_code = "too_much_feedback"
+
+
 class InsufficientAmoleError(LessonDomainError):
     """A Beans refill was attempted without enough Amole balance."""
 

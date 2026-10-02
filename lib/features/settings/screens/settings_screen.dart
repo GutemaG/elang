@@ -23,6 +23,8 @@ import '../../../shared/widgets/app_sheet.dart';
 import '../../../shared/widgets/app_status.dart';
 import '../../../shared/widgets/selectable_option_card.dart';
 import '../../auth/auth_routes.dart';
+import '../../feedback/feedback_api.dart';
+import '../../feedback/feedback_screen.dart';
 import '../../courses/course_picker.dart';
 import '../state/settings_controller.dart';
 
@@ -94,6 +96,7 @@ class SettingsScreen extends StatefulWidget {
     required this.sessionRepository,
     this.reminders,
     this.accountSettingsApi,
+    this.feedbackApi,
   });
 
   final SessionApi sessionApi;
@@ -109,6 +112,13 @@ class SettingsScreen extends StatefulWidget {
   /// Saves account settings ("Show me in leagues", 023-weekly-leagues);
   /// `null` leaves the League section out.
   final AccountSettingsApi? accountSettingsApi;
+
+  /// Sends feedback (027-learner-feedback); `null` leaves the "Send
+  /// feedback" row out.
+  final FeedbackApi? feedbackApi;
+
+  /// The "Send feedback" row.
+  static const sendFeedbackKey = ValueKey('settings-send-feedback');
 
   /// The "Show me in leagues" switch.
   static const showInLeaguesKey = ValueKey('settings-show-in-leagues');
@@ -387,6 +397,19 @@ class _SettingsScreenState extends State<SettingsScreen>
             const SectionHeader(title: 'About'),
             ListRowGroup(
               children: [
+                if (widget.feedbackApi case final api?)
+                  ListRow(
+                    key: SettingsScreen.sendFeedbackKey,
+                    icon: Icons.feedback,
+                    tone: AppTone.primary,
+                    title: 'Send feedback',
+                    subtitle: 'Report a problem or share an idea',
+                    onTap: () => Navigator.of(context).push<void>(
+                      MaterialPageRoute(
+                        builder: (_) => FeedbackScreen(api: api),
+                      ),
+                    ),
+                  ),
                 // Flutter's licence page: every package's licence, and the
                 // credits of the pictures the app ships (intent 019, story
                 // 005).

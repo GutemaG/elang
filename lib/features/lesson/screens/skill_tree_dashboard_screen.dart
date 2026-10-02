@@ -40,6 +40,7 @@ import '../../courses/course_badge.dart';
 import '../../courses/course_panel.dart';
 import '../../courses/course_picker.dart';
 import '../../courses/course_rail_source.dart';
+import '../../feedback/feedback_api.dart';
 import '../../league/league_api.dart';
 import '../../league/league_dependencies.dart';
 import '../../league/league_models.dart';
@@ -487,6 +488,9 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           sessionRepository: widget.sessionRepository,
           courseApi: widget.courseApi,
           reminders: widget.reminders,
+          feedbackApi: HttpFeedbackApi(
+            sessionRepository: widget.sessionRepository,
+          ),
         ),
       ),
     );

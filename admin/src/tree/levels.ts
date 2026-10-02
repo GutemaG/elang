@@ -39,6 +39,9 @@ export const routes = {
   learners: `${ADMIN}/learners`,
   learner: (id: string) => `${ADMIN}/learners/${id}`,
   reports: `${ADMIN}/reports`,
+  // Feedback (027-learner-feedback): the list, and one message's status.
+  feedback: `${ADMIN}/feedback`,
+  feedbackItem: (id: string) => `${ADMIN}/feedback/${id}`,
   // Exercises (bolt 038): a lesson's list, one exercise, and their order.
   exercises: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises`,
   exercise: (id: string) => `${ADMIN}/exercises/${id}`,

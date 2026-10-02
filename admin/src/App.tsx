@@ -4,6 +4,7 @@ import { NotAuthorisedScreen } from './auth/NotAuthorisedScreen'
 import { useSession } from './auth/SessionContext'
 import { SignInScreen } from './auth/SignInScreen'
 import { ExerciseEditorRoute } from './exercises/ExerciseEditorPage'
+import { FeedbackPage } from './feedback/FeedbackPage'
 import { GuidePage } from './guide/GuidePage'
 import { ImportPage } from './import/ImportPage'
 import { LanguagesPage } from './languages/LanguagesPage'
@@ -46,6 +47,7 @@ export function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/learners" element={<LearnersPage />} />
             <Route path="/learners/:learnerId" element={<LearnerPage />} />
+            <Route path="/feedback" element={<FeedbackPage />} />
             <Route
               path="/courses/:courseId/lessons/:lessonId/exercises/new/:type"
               element={<ExerciseEditorRoute />}
