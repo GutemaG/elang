@@ -5,6 +5,7 @@ import { ApiError } from '../api'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { AddExerciseMenu } from '../exercises/AddExerciseMenu'
 import { courseAudience, courseStatus, plural } from '../format'
+import { CourseShapeInfo } from '../guide/CourseShapeInfo'
 import { LessonTools } from '../import/LessonTools'
 import { StatCard, StatRow } from '../shell/Page'
 import type { AdminCourseTree, DeleteDetails } from '../types'
@@ -320,7 +321,7 @@ function CoursePage({ courseId }: { courseId: string }) {
           <div className="flex flex-wrap items-start justify-between gap-4">
             {/* A 20rem basis sends the buttons to their own line on a phone
                 rather than squeezing the title to a word per line. */}
-            <div className="min-w-0 flex-[1_1_20rem]">
+            <div className="relative min-w-0 flex-[1_1_20rem]">
               {editing === 'course' ? (
                 <InlineForm
                   label="Rename course"
@@ -331,9 +332,12 @@ function CoursePage({ courseId }: { courseId: string }) {
                   onCancel={() => setEditing(null)}
                 />
               ) : (
-                <h1 className="text-[1.75rem] leading-9 font-bold tracking-[-0.02em] break-words text-coffee lg:text-4xl lg:leading-11">
-                  {tree.course.title}
-                </h1>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="min-w-0 text-[1.75rem] leading-9 font-bold tracking-[-0.02em] break-words text-coffee lg:text-4xl lg:leading-11">
+                    {tree.course.title}
+                  </h1>
+                  <CourseShapeInfo tree={tree} />
+                </div>
               )}
               <p className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-stone">
                 <Badge tone={status.tone} dot>

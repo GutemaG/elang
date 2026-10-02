@@ -78,10 +78,19 @@ export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof 
         description={copy.description}
         actions={
           copy.canCreate && (
-            <Button variant="primary" disabled={!courses} onClick={() => setCreating(true)}>
-              <Icon name="add" className="text-lg" />
-              New course
-            </Button>
+            <>
+              <Link
+                to="/guide"
+                className="inline-flex h-11 items-center gap-2 rounded border border-line bg-surface px-4 text-sm font-semibold text-coffee hover:bg-inset sm:h-10"
+              >
+                <Icon name="help" className="text-lg" />
+                How courses work
+              </Link>
+              <Button variant="primary" disabled={!courses} onClick={() => setCreating(true)}>
+                <Icon name="add" className="text-lg" />
+                New course
+              </Button>
+            </>
           )
         }
       />

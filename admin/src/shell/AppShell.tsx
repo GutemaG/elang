@@ -14,6 +14,7 @@ const NAV = [
   { to: '/', icon: 'menu_book', label: 'Curriculum', current: isCurriculum },
   { to: '/vocabulary', icon: 'translate', label: 'Vocabulary', current: isVocabulary },
   { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
+  { to: '/guide', icon: 'help', label: 'Guide', current: (path: string) => path === '/guide' },
 ]
 
 function initialsOf(email: string): string {
