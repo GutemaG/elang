@@ -115,6 +115,49 @@ void main() {
       await controller.adoptSignUpLanguage('ti');
       expect(controller.value, isNull);
     });
+
+    test(
+      'a later pick replaces an earlier one, even after a restart',
+      () async {
+        final first = AppLanguageController(repository: repository);
+        await first.adoptSignUpLanguage('am');
+
+        // The app is closed and opened again, and English is picked.
+        final reopened = await AppLanguageController.load(repository);
+        expect(reopened.value, 'am');
+        await reopened.adoptSignUpLanguage('en');
+
+        expect(reopened.value, 'en');
+        expect((await repository.load()).code, 'en');
+      },
+    );
+
+    test('a later pick with no words goes back to English', () async {
+      final controller = AppLanguageController(repository: repository);
+      await controller.adoptSignUpLanguage('am');
+      await controller.adoptSignUpLanguage('ti');
+
+      expect(controller.value, isNull);
+      expect((await repository.load()).code, isNull);
+    });
+
+    test('never replaces a language chosen in Settings', () async {
+      final controller = AppLanguageController(repository: repository);
+      await controller.adoptSignUpLanguage('am');
+      await controller.choose('om');
+      await controller.adoptSignUpLanguage('en');
+
+      expect(controller.value, 'om');
+    });
+
+    test("never replaces the account's language", () async {
+      final controller = AppLanguageController(repository: repository);
+      await controller.adoptSignUpLanguage('am');
+      await controller.syncWithAccount('am');
+      await controller.adoptSignUpLanguage('en');
+
+      expect(controller.value, 'am');
+    });
   });
 
   group('the account', () {

@@ -89,6 +89,7 @@ class AppLanguageController extends ValueNotifier<String?> {
     required this._repository,
     String? initial,
     this._unsent = false,
+    this._fromSignUp = false,
     this.send,
   }) : super(initial);
 
@@ -103,6 +104,7 @@ class AppLanguageController extends ValueNotifier<String?> {
       repository: repository,
       initial: stored.code,
       unsent: stored.unsent,
+      fromSignUp: stored.fromSignUp,
       send: send,
     );
   }
@@ -115,6 +117,10 @@ class AppLanguageController extends ValueNotifier<String?> {
   /// A Settings change the account has not taken yet.
   bool _unsent;
 
+  /// [value] only came from sign-up's "I speak" choice, so going back and
+  /// choosing another course may still change it.
+  bool _fromSignUp;
+
   AppLanguage get language => AppLanguage.of(value);
 
   /// The learner chose [code] in Settings: applies at once, keeps it, and
@@ -122,17 +128,30 @@ class AppLanguageController extends ValueNotifier<String?> {
   Future<void> choose(String code) async {
     value = code;
     _unsent = true;
+    _fromSignUp = false;
     await _repository.save(code, unsent: true);
     await _sendUnsent();
   }
 
-  /// Sign-up's "I speak" choice (story 005): taken only if nothing is
-  /// chosen yet and the app has [code]. Not sent: an account that already
-  /// has a language wins at the next session check.
+  /// Sign-up's "I speak" choice (story 005): taken if nothing is chosen
+  /// yet, or if the language so far only came from an earlier sign-up
+  /// choice, so a course picked by mistake can be undone by going back and
+  /// picking another. A language the app has no words for goes back to
+  /// none (English). A language chosen in Settings or kept on the account
+  /// is never replaced. Not sent: an account that already has a language
+  /// wins at the next session check.
   Future<void> adoptSignUpLanguage(String code) async {
-    if (value != null || !AppLanguage.has(code)) return;
+    if (value != null && !_fromSignUp) return;
+    if (!AppLanguage.has(code)) {
+      if (value == null) return;
+      value = null;
+      _fromSignUp = false;
+      await _repository.save('', unsent: false);
+      return;
+    }
     value = code;
-    await _repository.save(code, unsent: false);
+    _fromSignUp = true;
+    await _repository.save(code, unsent: false, fromSignUp: true);
   }
 
   /// The account's app language from a session check (`""` = none): an
@@ -142,8 +161,9 @@ class AppLanguageController extends ValueNotifier<String?> {
     if (_unsent) {
       await _sendUnsent();
     } else if (accountCode.isNotEmpty) {
-      if (accountCode != value) {
+      if (accountCode != value || _fromSignUp) {
         value = accountCode;
+        _fromSignUp = false;
         await _repository.save(accountCode, unsent: false);
       }
     } else if (value case final code?) {

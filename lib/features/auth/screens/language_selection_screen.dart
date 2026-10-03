@@ -133,14 +133,17 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     final from = _fromCode;
     if (learning == null || from == null) return;
     // The app's own words switch to the language spoken, if the app has
-    // it and none is chosen yet (024-app-localization, story 005).
+    // it and none is chosen yet, or only an earlier pick here chose it
+    // (024-app-localization, story 005).
     await AppLanguageScope.maybeOf(context)?.adoptSignUpLanguage(from);
     await widget.onboardingRepository.selectLanguage(
       learning,
       fromLanguageCode: from,
     );
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(AuthRoutes.dailyGoalSelection);
+    // Pushed, not replaced, so the goal screen's back arrow returns here
+    // to change the course.
+    Navigator.of(context).pushNamed(AuthRoutes.dailyGoalSelection);
   }
 
   void _onJoinWaitlistPressed(Course course) {

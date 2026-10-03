@@ -13,10 +13,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:elang/features/auth/auth_routes.dart';
 import 'package:elang/features/auth/screens/daily_goal_selection_screen.dart';
 import 'package:elang/features/auth/screens/language_selection_screen.dart';
+import 'package:elang/shared/l10n/app_language.dart';
 import 'package:elang/shared/services/fake_course_api.dart';
 import 'package:elang/shared/services/onboarding_repository.dart';
 
 import '../../helpers/in_memory_secure_storage_service.dart';
+import '../../helpers/test_app_language.dart';
 
 const _pendingSelectionStorageKey = 'pending_onboarding_selection';
 
@@ -65,6 +67,8 @@ void main() {
     await tester.pumpWidget(_wrapped(repo));
     await repo.selectLanguage('am');
 
+    // Under the back arrow's bar, the last preset is below the fold.
+    await tester.ensureVisible(find.textContaining('Intense'));
     await tester.tap(find.textContaining('Intense'));
     await tester.pump();
 
@@ -104,11 +108,10 @@ void main() {
         MaterialApp(
           initialRoute: AuthRoutes.languageSelection,
           routes: {
-            AuthRoutes.languageSelection: (_) =>
-                LanguageSelectionScreen(
-                  onboardingRepository: repo,
-                  courseApi: FakeCourseApi(),
-                ),
+            AuthRoutes.languageSelection: (_) => LanguageSelectionScreen(
+              onboardingRepository: repo,
+              courseApi: FakeCourseApi(),
+            ),
             AuthRoutes.dailyGoalSelection: (_) =>
                 DailyGoalSelectionScreen(onboardingRepository: repo),
             AuthRoutes.signIn: (_) =>
@@ -136,4 +139,74 @@ void main() {
       expect(storage.values[_pendingSelectionStorageKey], isNotNull);
     },
   );
+
+  group('the back arrow', () {
+    testWidgets('returns to the course choice, and a new pick there '
+        'replaces the app language the first one set', (tester) async {
+      final repo = OnboardingRepository(
+        storage: InMemorySecureStorageService(),
+      );
+      final appLanguage = testAppLanguage();
+      await tester.pumpWidget(
+        AppLanguageScope(
+          controller: appLanguage,
+          child: MaterialApp(
+            initialRoute: AuthRoutes.languageSelection,
+            routes: {
+              AuthRoutes.languageSelection: (_) => LanguageSelectionScreen(
+                onboardingRepository: repo,
+                courseApi: FakeCourseApi(),
+              ),
+              AuthRoutes.dailyGoalSelection: (_) =>
+                  DailyGoalSelectionScreen(onboardingRepository: repo),
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // An Amharic speaker's course, picked by mistake.
+      await tester.tap(find.text('ለአማርኛ ተናጋሪዎች'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(appLanguage.value, 'am');
+      expect(find.textContaining('Regular'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('For English speakers'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(appLanguage.value, 'en');
+      expect(find.textContaining('Regular'), findsOneWidget);
+      expect((await repo.loadPendingSelection()), isNull);
+    });
+
+    testWidgets('opens the course choice when the app started here', (
+      tester,
+    ) async {
+      final repo = OnboardingRepository(
+        storage: InMemorySecureStorageService(),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          initialRoute: AuthRoutes.dailyGoalSelection,
+          routes: {
+            AuthRoutes.dailyGoalSelection: (_) =>
+                DailyGoalSelectionScreen(onboardingRepository: repo),
+            AuthRoutes.languageSelection: (_) =>
+                const Scaffold(body: Text('LANGUAGE_STUB')),
+          },
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('LANGUAGE_STUB'), findsOneWidget);
+    });
+  });
 }

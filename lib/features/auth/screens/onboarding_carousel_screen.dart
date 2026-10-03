@@ -138,8 +138,13 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
               controller: _pageController,
               itemCount: _slideCount,
               onPageChanged: (index) => setState(() => _currentIndex = index),
-              itemBuilder: (context, index) =>
-                  _SlideCard(slide: _slidesIn(context.l10n)[index]),
+              // A gap between slides while one slides over the next.
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.spaceXs,
+                ),
+                child: _SlideCard(slide: _slidesIn(context.l10n)[index]),
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.spaceSm),

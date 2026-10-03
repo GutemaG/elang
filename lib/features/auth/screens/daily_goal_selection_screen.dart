@@ -9,6 +9,7 @@ import '../../../shared/theme/app_typography.dart';
 import '../../../shared/theme/app_tone.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_icon_button.dart';
 import '../../../shared/widgets/app_page.dart';
 import '../../../shared/widgets/app_status.dart';
 import '../../../shared/widgets/selectable_option_card.dart';
@@ -93,10 +94,28 @@ class _DailyGoalSelectionScreenState extends State<DailyGoalSelectionScreen> {
     Navigator.of(context).pushReplacementNamed(AuthRoutes.signIn);
   }
 
+  /// Back to the course choice: the screen below, or a fresh one when the
+  /// app opened here.
+  void _onBackPressed() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      navigator.pushReplacementNamed(AuthRoutes.languageSelection);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     return AppPage(
+      topBar: AppTopBar(
+        leading: AppIconButton(
+          icon: Icons.arrow_back,
+          tooltip: l.back,
+          onPressed: _onBackPressed,
+        ),
+      ),
       bottomDock: [
         AppButton.primary(
           label: l.continueButton,
