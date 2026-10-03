@@ -67,11 +67,11 @@ void main() {
       }
     }
     // The page, light and dark.
-    expect(find.text('#FFF8F5'), findsWidgets);
-    expect(find.text('#1B1510'), findsWidgets);
+    expect(find.text('#F8F7FC'), findsWidgets);
+    expect(find.text('#0F0B1A'), findsWidgets);
     // A bolt 068 role, clear in light and a soft white in dark.
     expect(find.text('#FFFFFF @00'), findsOneWidget);
-    expect(find.text('#F3EBE2'), findsOneWidget);
+    expect(find.text('#F5F2FD'), findsOneWidget);
     // One light and one dark swatch per role.
     expect(find.text('Light'), findsNWidgets(74));
     expect(find.text('Dark'), findsNWidgets(74));

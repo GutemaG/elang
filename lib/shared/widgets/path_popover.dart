@@ -212,7 +212,9 @@ class PathPopoverTone {
           face: colors.secondaryContainer,
           shelf: colors.activeNodeShelf,
           ink: colors.onSecondaryContainer,
-          buttonInk: colors.onSecondaryContainer,
+          // The button is white in both themes, so its label takes the
+          // fill's own colour where it reads, as the completed one's does.
+          buttonInk: colors.secondaryOnWhite,
         ),
         PathNodeState.completed => PathPopoverTone(
           face: colors.primaryContainer,

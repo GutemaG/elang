@@ -7,7 +7,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/l10n/app_language.dart';
 
 /// One "Gamified Path Node" (`DESIGN.md` component 2) on the skill-tree
-/// dashboard: locked, active (Simien Gold, a bobbing "Start" bubble) or
+/// dashboard: locked, active (secondary ocean blue, a bobbing "Start" bubble) or
 /// completed (Highland Green, crown-level badge). The path shows no titles;
 /// a tap opens [showSkillPopover], which names the skill and starts it.
 /// An active skill part-way through its lessons gets a ring filled to how

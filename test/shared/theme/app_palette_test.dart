@@ -12,75 +12,75 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/distinct_palette.dart';
 
 void main() {
-  test('the light palette keeps every colour it had before bolt 066', () {
-    const p = AppPalette.light;
+  test('the light palette is the chosen mix, P2 · S7 · T2 · N10 · C3', () {
+    final p = AppPalette.light;
     final expected = <String, (Color, int)>{
-      'surface': (p.surface, 0xFFFFF8F5),
-      'surfaceDim': (p.surfaceDim, 0xFFE9D7C8),
+      'surface': (p.surface, 0xFFF8F7FC),
+      'surfaceDim': (p.surfaceDim, 0xFFE3E1EA),
       'surfaceContainerLowest': (p.surfaceContainerLowest, 0xFFFFFFFF),
-      'surfaceContainerLow': (p.surfaceContainerLow, 0xFFFFF1E8),
-      'surfaceContainer': (p.surfaceContainer, 0xFFFEEADC),
-      'surfaceContainerHigh': (p.surfaceContainerHigh, 0xFFF8E5D6),
-      'surfaceContainerHighest': (p.surfaceContainerHighest, 0xFFF2DFD1),
-      'onSurface': (p.onSurface, 0xFF231A11),
-      'onSurfaceVariant': (p.onSurfaceVariant, 0xFF404942),
-      'inverseSurface': (p.inverseSurface, 0xFF392E25),
-      'inverseOnSurface': (p.inverseOnSurface, 0xFFFFEEE1),
-      'outline': (p.outline, 0xFF707971),
-      'outlineVariant': (p.outlineVariant, 0xFFBFC9BF),
-      'primary': (p.primary, 0xFF004527),
+      'surfaceContainerLow': (p.surfaceContainerLow, 0xFFF3F1F9),
+      'surfaceContainer': (p.surfaceContainer, 0xFFEEECF7),
+      'surfaceContainerHigh': (p.surfaceContainerHigh, 0xFFEAE7F4),
+      'surfaceContainerHighest': (p.surfaceContainerHighest, 0xFFDCD9E9),
+      'onSurface': (p.onSurface, 0xFF18122B),
+      'onSurfaceVariant': (p.onSurfaceVariant, 0xFF3C364F),
+      'inverseSurface': (p.inverseSurface, 0xFF332D44),
+      'inverseOnSurface': (p.inverseOnSurface, 0xFFF3F1F9),
+      'outline': (p.outline, 0xFF767089),
+      'outlineVariant': (p.outlineVariant, 0xFFC6C3D5),
+      'primary': (p.primary, 0xFF1D652E),
       'onPrimary': (p.onPrimary, 0xFFFFFFFF),
-      'primaryContainer': (p.primaryContainer, 0xFF1B5E3B),
-      'onPrimaryContainer': (p.onPrimaryContainer, 0xFF92D5A9),
-      'primaryFixed': (p.primaryFixed, 0xFFAEF2C4),
-      'primaryFixedDim': (p.primaryFixedDim, 0xFF92D5A9),
-      'primaryShelf': (p.primaryShelf, 0xFF124027),
-      'secondary': (p.secondary, 0xFF8D4F00),
+      'primaryContainer': (p.primaryContainer, 0xFF247B38),
+      'onPrimaryContainer': (p.onPrimaryContainer, 0xFFB0DAB9),
+      'primaryFixed': (p.primaryFixed, 0xFFB6DDBF),
+      'primaryFixedDim': (p.primaryFixedDim, 0xFF8CCA9A),
+      'primaryShelf': (p.primaryShelf, 0xFF195627),
+      'secondary': (p.secondary, 0xFF225CAA),
       'onSecondary': (p.onSecondary, 0xFFFFFFFF),
-      'secondaryContainer': (p.secondaryContainer, 0xFFFFA03B),
-      'onSecondaryContainer': (p.onSecondaryContainer, 0xFF6C3B00),
-      'secondaryFixed': (p.secondaryFixed, 0xFFFFDCC0),
-      'secondaryBrand': (p.secondaryBrand, 0xFFE08722),
-      'secondaryShelf': (p.secondaryShelf, 0xFFA85E0E),
-      'tertiary': (p.tertiary, 0xFF7D0301),
+      'secondaryContainer': (p.secondaryContainer, 0xFF2A73D5),
+      'onSecondaryContainer': (p.onSecondaryContainer, 0xFFFFFFFF),
+      'secondaryFixed': (p.secondaryFixed, 0xFFBFD5F2),
+      'secondaryBrand': (p.secondaryBrand, 0xFF2565BB),
+      'secondaryShelf': (p.secondaryShelf, 0xFF1D5195),
+      'tertiary': (p.tertiary, 0xFF993A1F),
       'onTertiary': (p.onTertiary, 0xFFFFFFFF),
-      'tertiaryContainer': (p.tertiaryContainer, 0xFF9F2115),
-      'onTertiaryContainer': (p.onTertiaryContainer, 0xFFFFB4A7),
-      'tertiaryFixed': (p.tertiaryFixed, 0xFFFFDAD4),
-      'tertiaryBrand': (p.tertiaryBrand, 0xFFD84A38),
-      'tertiaryShelf': (p.tertiaryShelf, 0xFF9F2B1D),
+      'tertiaryContainer': (p.tertiaryContainer, 0xFFBD4826),
+      'onTertiaryContainer': (p.onTertiaryContainer, 0xFFF5BFB0),
+      'tertiaryFixed': (p.tertiaryFixed, 0xFFFADDD5),
+      'tertiaryBrand': (p.tertiaryBrand, 0xFFE4572E),
+      'tertiaryShelf': (p.tertiaryShelf, 0xFFA03D20),
       'error': (p.error, 0xFFBA1A1A),
       'onError': (p.onError, 0xFFFFFFFF),
       'errorContainer': (p.errorContainer, 0xFFFFDAD6),
       'onErrorContainer': (p.onErrorContainer, 0xFF93000A),
-      'cardBorder': (p.cardBorder, 0xFFEDE5D8),
-      'cardShelf': (p.cardShelf, 0xFFE2D7C5),
-      'answerSelectedFace': (p.answerSelectedFace, 0xFFFFF7ED),
-      'answerCorrectFace': (p.answerCorrectFace, 0xFFE8F8F0),
-      'answerIncorrectFace': (p.answerIncorrectFace, 0xFFFDF0EE),
-      'chosenFace': (p.chosenFace, 0xFFF0F7F2),
-      'tileBorder': (p.tileBorder, 0xFFE5DDD0),
-      'tileShelf': (p.tileShelf, 0xFFD5CCBD),
-      'lockedNodeFace': (p.lockedNodeFace, 0xFFE8DFD3),
-      'lockedNodeIcon': (p.lockedNodeIcon, 0xFFBAAFA1),
-      'activeNodeShelf': (p.activeNodeShelf, 0xFFC47318),
-      'streak': (p.streak, 0xFFFF5A1F),
-      'streakRim': (p.streakRim, 0xFFFFA726),
-      'gem': (p.gem, 0xFF10B981),
-      'xp': (p.xp, 0xFF0EA5E9),
-      'textMuted': (p.textMuted, 0xFF786A5E),
-      'track': (p.track, 0xFFE2D9CC),
-      'primaryToneBorder': (p.primaryToneBorder, 0xFFD1E8D9),
-      'primaryToneShelf': (p.primaryToneShelf, 0xFFB9D6C3),
-      'primaryToneSurface': (p.primaryToneSurface, 0xFFE5F5EC),
-      'secondaryToneBorder': (p.secondaryToneBorder, 0xFFF3DFC7),
-      'secondaryToneShelf': (p.secondaryToneShelf, 0xFFE3C6A3),
-      'tertiaryToneBorder': (p.tertiaryToneBorder, 0xFFFBD6CF),
-      'tertiaryToneShelf': (p.tertiaryToneShelf, 0xFFEDB9AF),
-      'tertiaryToneSurface': (p.tertiaryToneSurface, 0xFFFEE9E6),
-      'dialogShelf': (p.dialogShelf, 0xFFE5D8C3),
-      'scrim': (p.scrim, 0x732B2118),
-      'shadowInk': (p.shadowInk, 0xFF231A11),
+      'cardBorder': (p.cardBorder, 0xFFE6E3F2),
+      'cardShelf': (p.cardShelf, 0xFFD4D1DF),
+      'answerSelectedFace': (p.answerSelectedFace, 0xFFE5EEFA),
+      'answerCorrectFace': (p.answerCorrectFace, 0xFFEAF5ED),
+      'answerIncorrectFace': (p.answerIncorrectFace, 0xFFFDF2EE),
+      'chosenFace': (p.chosenFace, 0xFFEEF7F0),
+      'tileBorder': (p.tileBorder, 0xFFE6E3F2),
+      'tileShelf': (p.tileShelf, 0xFFC6C3D0),
+      'lockedNodeFace': (p.lockedNodeFace, 0xFFECEAF4),
+      'lockedNodeIcon': (p.lockedNodeIcon, 0xFFB0ACBE),
+      'activeNodeShelf': (p.activeNodeShelf, 0xFF2056A0),
+      'streak': (p.streak, 0xFFFF7A1A),
+      'streakRim': (p.streakRim, 0xFFFFA25F),
+      'gem': (p.gem, 0xFF14B8A6),
+      'xp': (p.xp, 0xFF38BDF8),
+      'textMuted': (p.textMuted, 0xFF67617C),
+      'track': (p.track, 0xFFE4E1EF),
+      'primaryToneBorder': (p.primaryToneBorder, 0xFFD1EAD7),
+      'primaryToneShelf': (p.primaryToneShelf, 0xFFB0DAB9),
+      'primaryToneSurface': (p.primaryToneSurface, 0xFFE6F3E9),
+      'secondaryToneBorder': (p.secondaryToneBorder, 0xFFBBD2F2),
+      'secondaryToneShelf': (p.secondaryToneShelf, 0xFF8AB2E8),
+      'tertiaryToneBorder': (p.tertiaryToneBorder, 0xFFF8D5CB),
+      'tertiaryToneShelf': (p.tertiaryToneShelf, 0xFFF4BCAB),
+      'tertiaryToneSurface': (p.tertiaryToneSurface, 0xFFFCEEEA),
+      'dialogShelf': (p.dialogShelf, 0xFFCDC9DA),
+      'scrim': (p.scrim, 0x7318122B),
+      'shadowInk': (p.shadowInk, 0xFF18122B),
     };
     expect(expected, hasLength(66));
     for (final MapEntry(key: name, value: (colour, argb)) in expected.entries) {
@@ -174,23 +174,23 @@ void main() {
       expect(AppTone.tertiary.colorsIn(p).fillShelf, p.tertiaryFillShelf);
     });
 
-    test('in light, every tone keeps the colours it had', () {
+    test('in light, every tone has the chosen colours', () {
       const expected = {
         AppTone.neutral: [
-          0xFFEDE5D8, 0xFFE2D7C5, 0xFFFEEADC, 0xFF404942, 0xFF231A11, //
-          0xFF392E25, 0xFFFFEEE1, 0xFF231A11, 0xFFFFF1E8,
+          0xFFE6E3F2, 0xFFD4D1DF, 0xFFEEECF7, 0xFF3C364F, 0xFF18122B, //
+          0xFF332D44, 0xFFF3F1F9, 0xFF18122B, 0xFFF3F1F9,
         ],
         AppTone.primary: [
-          0xFFD1E8D9, 0xFFB9D6C3, 0xFFE5F5EC, 0xFF1B5E3B, 0xFF004527, //
-          0xFF1B5E3B, 0xFFFFFFFF, 0xFF124027, 0xFFF0F7F2,
+          0xFFD1EAD7, 0xFFB0DAB9, 0xFFE6F3E9, 0xFF247B38, 0xFF1D652E, //
+          0xFF247B38, 0xFFFFFFFF, 0xFF195627, 0xFFEEF7F0,
         ],
         AppTone.secondary: [
-          0xFFF3DFC7, 0xFFE3C6A3, 0xFFFEEADC, 0xFFFFA03B, 0xFF8D4F00, //
-          0xFFFFA03B, 0xFF6C3B00, 0xFFA85E0E, 0xFFFFF7ED,
+          0xFFBBD2F2, 0xFF8AB2E8, 0xFFEEECF7, 0xFF2A73D5, 0xFF225CAA, //
+          0xFF2A73D5, 0xFFFFFFFF, 0xFF1D5195, 0xFFE5EEFA,
         ],
         AppTone.tertiary: [
-          0xFFFBD6CF, 0xFFEDB9AF, 0xFFFEE9E6, 0xFF9F2115, 0xFF9F2115, //
-          0xFF9F2115, 0xFFFFFFFF, 0xFF7D0301, 0xFFFDF0EE,
+          0xFFF8D5CB, 0xFFF4BCAB, 0xFFFCEEEA, 0xFFBD4826, 0xFFBD4826, //
+          0xFFBD4826, 0xFFFFFFFF, 0xFF993A1F, 0xFFFDF2EE,
         ],
       };
       for (final MapEntry(key: tone, value: argbs) in expected.entries) {
@@ -220,18 +220,18 @@ void main() {
       expect(s.tileRaised(p.activeNodeShelf).last, s.tile.last);
     });
 
-    test('in light, match the mockups as before', () {
+    test('in light, are drawn from the light palette', () {
       final s = AppShadows.of(AppPalette.light);
 
       expect(s.card, [
-        const BoxShadow(color: Color(0xFFE2D7C5), offset: Offset(0, 4)),
+        const BoxShadow(color: Color(0xFFD4D1DF), offset: Offset(0, 4)),
         BoxShadow(
-          color: const Color(0xFF231A11).withValues(alpha: 0.08),
+          color: const Color(0xFF18122B).withValues(alpha: 0.08),
           offset: const Offset(0, 4),
           blurRadius: 16,
         ),
       ]);
-      expect(s.dialog.first.color.toARGB32(), 0xFFE5D8C3);
+      expect(s.dialog.first.color.toARGB32(), 0xFFCDC9DA);
       expect(s.dialog.first.offset, const Offset(0, 8));
       expect(s.tile.first.offset, const Offset(0, AppShadows.tileShelfDepth));
     });

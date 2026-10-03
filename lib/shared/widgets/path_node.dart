@@ -15,7 +15,7 @@ enum PathNodeState {
   /// Not reachable yet: grey and a lock. A tap only says what it is.
   locked,
 
-  /// The next thing to learn: large, Simien Gold, a star.
+  /// The next thing to learn: large, the secondary ocean blue, a star.
   active,
 
   /// Done: Highland Green with a check, tapped to review.

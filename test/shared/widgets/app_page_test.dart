@@ -214,8 +214,8 @@ void main() {
 
       expect(paints(), before);
       expect(
-        const LatticePainter(colors: AppPalette.light)
-            .shouldRepaint(const LatticePainter(colors: AppPalette.light)),
+        LatticePainter(colors: AppPalette.light)
+            .shouldRepaint(LatticePainter(colors: AppPalette.light)),
         isFalse,
       );
     });
@@ -233,9 +233,8 @@ void main() {
 
       expect(paintOf(tester, CelebrationGlowPainter), isNotNull);
       expect(
-        const CelebrationGlowPainter(
-          colors: AppPalette.light,
-        ).shouldRepaint(const CelebrationGlowPainter(colors: AppPalette.light)),
+        CelebrationGlowPainter(colors: AppPalette.light)
+            .shouldRepaint(CelebrationGlowPainter(colors: AppPalette.light)),
         isFalse,
       );
     });
@@ -378,7 +377,7 @@ void main() {
     });
 
     test('woven should repeat the mockup\'s four bands', () {
-      const woven = WovenTibebPainter(colors: AppPalette.light);
+      final woven = WovenTibebPainter(colors: AppPalette.light);
       expect(woven.bands.map((b) => b.$1), [
         AppPalette.light.tertiary,
         AppPalette.light.secondaryContainer,

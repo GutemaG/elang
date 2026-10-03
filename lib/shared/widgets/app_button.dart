@@ -17,7 +17,7 @@ enum AppButtonVariant {
   /// for free beans"): white face, green-tinted border, neutral shelf.
   secondary,
 
-  /// A spend or reward action ("Refill with Amole"): Simien Gold.
+  /// A spend or reward action ("Refill with Amole"): the secondary ocean blue.
   accent,
 
   /// Ends or deletes something ("Leave lesson", "Delete download").
@@ -319,13 +319,13 @@ class AppButtonBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 16, color: context.colors.onSecondaryContainer),
+            Icon(icon, size: 16, color: context.colors.secondary),
             const SizedBox(width: AppSpacing.space2xs),
           ],
           Text(
             label,
             style: AppTypography.labelMd.copyWith(
-              color: context.colors.onSecondaryContainer,
+              color: context.colors.secondary,
             ),
           ),
         ],

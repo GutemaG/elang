@@ -13,22 +13,22 @@ void main() {
       'should match DESIGN.md and the mockups for every token added by 018',
       () {
         final expected = {
-          'answerSelected': (AppPalette.light.answerSelectedFace, 0xFFFFF7ED),
-          'answerCorrect': (AppPalette.light.answerCorrectFace, 0xFFE8F8F0),
-          'answerIncorrect': (AppPalette.light.answerIncorrectFace, 0xFFFDF0EE),
-          'optionChosen': (AppPalette.light.chosenFace, 0xFFF0F7F2),
-          'tileBorder': (AppPalette.light.tileBorder, 0xFFE5DDD0),
-          'tileShelf': (AppPalette.light.tileShelf, 0xFFD5CCBD),
-          'lockedNode': (AppPalette.light.lockedNodeFace, 0xFFE8DFD3),
-          'lockedNodeIcon': (AppPalette.light.lockedNodeIcon, 0xFFBAAFA1),
-          'activeNodeShelf': (AppPalette.light.activeNodeShelf, 0xFFC47318),
-          'streak': (AppPalette.light.streak, 0xFFFF5A1F),
-          'streakRim': (AppPalette.light.streakRim, 0xFFFFA726),
-          'gem': (AppPalette.light.gem, 0xFF10B981),
-          'xp': (AppPalette.light.xp, 0xFF0EA5E9),
-          'textMuted': (AppPalette.light.textMuted, 0xFF786A5E),
-          'track': (AppPalette.light.track, 0xFFE2D9CC),
-          'shadowInk': (AppPalette.light.shadowInk, 0xFF231A11),
+          'answerSelected': (AppPalette.light.answerSelectedFace, 0xFFE5EEFA),
+          'answerCorrect': (AppPalette.light.answerCorrectFace, 0xFFEAF5ED),
+          'answerIncorrect': (AppPalette.light.answerIncorrectFace, 0xFFFDF2EE),
+          'optionChosen': (AppPalette.light.chosenFace, 0xFFEEF7F0),
+          'tileBorder': (AppPalette.light.tileBorder, 0xFFE6E3F2),
+          'tileShelf': (AppPalette.light.tileShelf, 0xFFC6C3D0),
+          'lockedNode': (AppPalette.light.lockedNodeFace, 0xFFECEAF4),
+          'lockedNodeIcon': (AppPalette.light.lockedNodeIcon, 0xFFB0ACBE),
+          'activeNodeShelf': (AppPalette.light.activeNodeShelf, 0xFF2056A0),
+          'streak': (AppPalette.light.streak, 0xFFFF7A1A),
+          'streakRim': (AppPalette.light.streakRim, 0xFFFFA25F),
+          'gem': (AppPalette.light.gem, 0xFF14B8A6),
+          'xp': (AppPalette.light.xp, 0xFF38BDF8),
+          'textMuted': (AppPalette.light.textMuted, 0xFF67617C),
+          'track': (AppPalette.light.track, 0xFFE4E1EF),
+          'shadowInk': (AppPalette.light.shadowInk, 0xFF18122B),
         };
         for (final MapEntry(key: name, value: (colour, argb))
             in expected.entries) {
@@ -37,13 +37,13 @@ void main() {
       },
     );
 
-    test(
-      'should make the scrim the warm vignette at 45% (DESIGN.md overlays)',
-      () {
-        expect(AppPalette.light.scrim.toARGB32() & 0x00FFFFFF, 0x2B2118);
-        expect(AppPalette.light.scrim.a, closeTo(0.45, 0.01));
-      },
-    );
+    test('should make the scrim the page ink at 45% (DESIGN.md overlays)', () {
+      expect(
+        AppPalette.light.scrim.toARGB32() & 0x00FFFFFF,
+        AppPalette.light.onSurface.toARGB32() & 0x00FFFFFF,
+      );
+      expect(AppPalette.light.scrim.a, closeTo(0.45, 0.01));
+    });
   });
 
   group('radii', () {

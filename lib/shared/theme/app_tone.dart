@@ -18,13 +18,13 @@ import 'app_palette.dart';
 enum AppTone {
   neutral,
 
-  /// Highland Acacia: progress, success, the learner's own choices.
+  /// Meadow green: progress, success, the learner's own choices.
   primary,
 
-  /// Simien Gold: rewards, XP, the daily goal.
+  /// Ocean blue: rewards, XP, the daily goal.
   secondary,
 
-  /// Rift Terracotta: streaks, beans, warnings and endings.
+  /// Bonfire orange-red: streaks, beans, warnings and endings.
   tertiary;
 
   /// This tone's colours in [p].

@@ -57,23 +57,23 @@ void main() {
         'stat cards', () {
       expect(
         AppTone.primary.colorsIn(AppPalette.light).border,
-        const Color(0xFFD1E8D9),
+        const Color(0xFFD1EAD7),
       );
       expect(
         AppTone.primary.colorsIn(AppPalette.light).surface,
-        const Color(0xFFE5F5EC),
+        const Color(0xFFE6F3E9),
       );
       expect(
         AppTone.secondary.colorsIn(AppPalette.light).border,
-        const Color(0xFFF3DFC7),
+        const Color(0xFFBBD2F2),
       );
       expect(
         AppTone.tertiary.colorsIn(AppPalette.light).border,
-        const Color(0xFFFBD6CF),
+        const Color(0xFFF8D5CB),
       );
       expect(
         AppTone.tertiary.colorsIn(AppPalette.light).surface,
-        const Color(0xFFFEE9E6),
+        const Color(0xFFFCEEEA),
       );
       expect(
         AppTone.neutral.colorsIn(AppPalette.light).border,

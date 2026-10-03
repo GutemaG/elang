@@ -11,22 +11,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('the dark palette starts from the FR-4 table', () {
-    const p = AppPalette.dark;
+  test('the dark palette is the chosen mix on its night page', () {
+    final p = AppPalette.dark;
     final expected = <String, (Color, int)>{
-      'page': (p.surface, 0xFF1B1510),
-      'card face': (p.surfaceContainerLowest, 0xFF251D16),
-      'card border': (p.cardBorder, 0xFF3A2F26),
-      'card shelf': (p.cardShelf, 0xFF120D09),
-      'text': (p.onSurface, 0xFFF2DFD1),
-      'muted text': (p.textMuted, 0xFFA8988A),
-      'green text': (p.primary, 0xFF92D5A9),
-      'green button': (p.primaryContainer, 0xFF1B5E3B),
-      'green button shelf': (p.primaryShelf, 0xFF0B2E1A),
-      'gold text': (p.secondary, 0xFFFFB875),
-      'terracotta text': (p.tertiary, 0xFFFFB4A8),
-      'correct answer face': (p.answerCorrectFace, 0xFF173826),
-      'wrong answer face': (p.answerIncorrectFace, 0xFF3D1D18),
+      'page': (p.surface, 0xFF0F0B1A),
+      'card face': (p.surfaceContainerLowest, 0xFF181227),
+      'card border': (p.cardBorder, 0xFF2B2340),
+      'card shelf': (p.cardShelf, 0xFF08060E),
+      'text': (p.onSurface, 0xFFEFEAFB),
+      'muted text': (p.textMuted, 0xFFA39BBB),
+      'green text': (p.primary, 0xFF6FD38A),
+      'green button': (p.primaryContainer, 0xFF247B38),
+      'green button shelf': (p.primaryShelf, 0xFF123E1C),
+      'gold text': (p.secondary, 0xFF6AA8F7),
+      'terracotta text': (p.tertiary, 0xFFFF8A66),
+      'correct answer face': (p.answerCorrectFace, 0xFF1C2E2E),
+      'wrong answer face': (p.answerIncorrectFace, 0xFF412028),
     };
     for (final MapEntry(key: name, value: (colour, argb)) in expected.entries) {
       expect(colour.toARGB32(), argb, reason: name);
@@ -34,7 +34,7 @@ void main() {
   });
 
   test('streak, gem and XP keep their bright accents in dark', () {
-    const light = AppPalette.light, dark = AppPalette.dark;
+    final light = AppPalette.light, dark = AppPalette.dark;
     expect(dark.streak, light.streak);
     expect(dark.streakRim, light.streakRim);
     expect(dark.gem, light.gem);
@@ -43,7 +43,7 @@ void main() {
 
   test('the roles split off for dark keep the light colour of the role they '
       'replace', () {
-    const p = AppPalette.light;
+    final p = AppPalette.light;
     expect(p.primaryAccent, p.primaryContainer);
     expect(p.tertiaryAccent, p.tertiaryBrand);
     expect(p.tertiaryToneInk, p.tertiaryContainer);
@@ -54,7 +54,7 @@ void main() {
   });
 
   test('in dark, the split roles are light enough to read on the page', () {
-    const p = AppPalette.dark;
+    final p = AppPalette.dark;
     for (final (name, colour) in [
       ('primaryAccent', p.primaryAccent),
       ('tertiaryAccent', p.tertiaryAccent),

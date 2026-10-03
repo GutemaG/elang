@@ -86,6 +86,15 @@ final _body = <(_Role, _Role)>[
     _r('inverseAction', (p) => p.inverseAction),
     _r('inverseSurface', (p) => p.inverseSurface),
   ),
+  // A path popover's white button, labelled in its popover's fill.
+  (
+    _r('secondaryOnWhite', (p) => p.secondaryOnWhite),
+    _r('onPrimary', (p) => p.onPrimary),
+  ),
+  (
+    _r('primaryContainer', (p) => p.primaryContainer),
+    _r('onPrimary', (p) => p.onPrimary),
+  ),
   // Answers and choices.
   (
     _r('onSurface', (p) => p.onSurface),
@@ -187,7 +196,17 @@ final _neutralShelves = <(_Role, _Role)>[
 ];
 
 void main() {
-  const palettes = {'light': AppPalette.light, 'dark': AppPalette.dark};
+  // Every preset in `palette_seed.dart`, so switching to one is safe.
+  final palettes = {
+    for (final seed in PaletteSeed.presets) ...{
+      '${seed.name}, light': AppPalette.lightFrom(seed),
+      '${seed.name}, dark': AppPalette.darkFrom(seed),
+    },
+  };
+
+  test('the palette the app draws is one of the checked presets', () {
+    expect(PaletteSeed.presets, contains(PaletteSeed.active));
+  });
 
   test('the contrast ratio follows WCAG', () {
     expect(
@@ -207,7 +226,9 @@ void main() {
         void check(List<(_Role, _Role)> pairs, double needs) {
           for (final ((fgName, fg), (bgName, bg)) in pairs) {
             final label = '$fgName on $bgName';
-            if (name == 'light' && _lightShortfalls.contains(label)) continue;
+            if (name.endsWith('light') && _lightShortfalls.contains(label)) {
+              continue;
+            }
             final ratio = _contrast(fg(p), bg(p));
             if (ratio < needs) {
               failures.add(
@@ -235,7 +256,7 @@ void main() {
         expect(failures, isEmpty, reason: failures.join('\n'));
       });
 
-      if (name == 'dark') {
+      if (name.endsWith('dark')) {
         test('neutral shelves are darker than the page', () {
           final failures = <String>[
             for (final ((shelfName, shelf), _) in _neutralShelves)

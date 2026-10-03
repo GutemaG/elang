@@ -1,24 +1,31 @@
 /// Highland Pulse colours: every colour the app draws, by role, in one place
 /// (022-light-and-dark-themes, FR-1).
 ///
-/// **To change a colour**, edit its value in [AppPalette.light] and
-/// [AppPalette.dark]; every screen, tone, shadow and the Material theme
-/// follow. The gallery's Colours page shows both side by side.
+/// **To change the colours**, edit `palette_seed.dart`: a handful of seed
+/// colours (primary, secondary, tertiary, right and wrong, the page and
+/// text of each theme, the game icons). [AppPalette.lightFrom] and
+/// [AppPalette.darkFrom] work out every role below from them, and every
+/// screen, tone, shadow and the Material theme follow. The gallery's
+/// Colours page shows both themes side by side.
 ///
-/// **To add a role**, add the field, its constructor parameter, a value in
-/// each palette and an entry in [AppPalette.roles]. Every parameter is
-/// required, so a palette missing a role does not compile.
+/// **To add a role**, add the field, its constructor parameter, how each
+/// factory works it out and an entry in [AppPalette.roles]. Every
+/// parameter is required, so a palette missing a role does not compile.
 ///
 /// No other file in `lib/` holds a colour value
 /// (`test/design/design_rules_test.dart`). Screens read the current theme's
 /// palette with `context.colors` (`app_theme_context.dart`).
 ///
-/// Light values come from
-/// `stich-screens/extracted/stitch_ethiopian_language_learning_app/highland_pulse/DESIGN.md`
-/// and the Stitch mockups.
+/// The roles and shapes follow
+/// `stich-screens/extracted/stitch_ethiopian_language_learning_app/highland_pulse/DESIGN.md`.
 library;
 
 import 'package:flutter/material.dart';
+
+import 'palette_maths.dart';
+import 'palette_seed.dart';
+
+export 'palette_seed.dart';
 
 @immutable
 class AppPalette extends ThemeExtension<AppPalette> {
@@ -99,195 +106,208 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.shadowInk,
   });
 
-  /// The light palette: Highland Pulse as designed.
-  static const AppPalette light = AppPalette(
-    // Surfaces
-    surface: Color(0xFFFFF8F5),
-    surfaceDim: Color(0xFFE9D7C8),
-    surfaceContainerLowest: Color(0xFFFFFFFF),
-    surfaceContainerLow: Color(0xFFFFF1E8),
-    surfaceContainer: Color(0xFFFEEADC),
-    surfaceContainerHigh: Color(0xFFF8E5D6),
-    surfaceContainerHighest: Color(0xFFF2DFD1),
-    // Text on surfaces
-    onSurface: Color(0xFF231A11),
-    onSurfaceVariant: Color(0xFF404942),
-    inverseSurface: Color(0xFF392E25),
-    inverseOnSurface: Color(0xFFFFEEE1),
-    // Lines
-    outline: Color(0xFF707971),
-    outlineVariant: Color(0xFFBFC9BF),
-    // Primary: Highland Acacia
-    primary: Color(0xFF004527),
-    onPrimary: Color(0xFFFFFFFF),
-    primaryContainer: Color(0xFF1B5E3B),
-    onPrimaryContainer: Color(0xFF92D5A9),
-    primaryFixed: Color(0xFFAEF2C4),
-    primaryFixedDim: Color(0xFF92D5A9),
-    primaryShelf: Color(0xFF124027),
-    // Secondary: Simien Gold
-    secondary: Color(0xFF8D4F00),
-    onSecondary: Color(0xFFFFFFFF),
-    secondaryContainer: Color(0xFFFFA03B),
-    onSecondaryContainer: Color(0xFF6C3B00),
-    secondaryFixed: Color(0xFFFFDCC0),
-    secondaryBrand: Color(0xFFE08722),
-    secondaryShelf: Color(0xFFA85E0E),
-    // Tertiary: Rift Terracotta
-    tertiary: Color(0xFF7D0301),
-    onTertiary: Color(0xFFFFFFFF),
-    tertiaryContainer: Color(0xFF9F2115),
-    onTertiaryContainer: Color(0xFFFFB4A7),
-    tertiaryFixed: Color(0xFFFFDAD4),
-    tertiaryBrand: Color(0xFFD84A38),
-    tertiaryShelf: Color(0xFF9F2B1D),
-    // Error
-    error: Color(0xFFBA1A1A),
-    onError: Color(0xFFFFFFFF),
-    errorContainer: Color(0xFFFFDAD6),
-    onErrorContainer: Color(0xFF93000A),
-    // Cards
-    cardBorder: Color(0xFFEDE5D8),
-    cardShelf: Color(0xFFE2D7C5),
-    // Answers and choices
-    answerSelectedFace: Color(0xFFFFF7ED),
-    answerCorrectFace: Color(0xFFE8F8F0),
-    answerIncorrectFace: Color(0xFFFDF0EE),
-    chosenFace: Color(0xFFF0F7F2),
-    tileBorder: Color(0xFFE5DDD0),
-    tileShelf: Color(0xFFD5CCBD),
-    // Learning-map nodes
-    lockedNodeFace: Color(0xFFE8DFD3),
-    lockedNodeIcon: Color(0xFFBAAFA1),
-    activeNodeShelf: Color(0xFFC47318),
-    // Gamification accents
-    streak: Color(0xFFFF5A1F),
-    streakRim: Color(0xFFFFA726),
-    gem: Color(0xFF10B981),
-    xp: Color(0xFF0EA5E9),
-    // Muted text and tracks
-    textMuted: Color(0xFF786A5E),
-    track: Color(0xFFE2D9CC),
-    // Tones (see `app_tone.dart`)
-    primaryToneBorder: Color(0xFFD1E8D9),
-    primaryToneShelf: Color(0xFFB9D6C3),
-    primaryToneSurface: Color(0xFFE5F5EC),
-    secondaryToneBorder: Color(0xFFF3DFC7),
-    secondaryToneShelf: Color(0xFFE3C6A3),
-    tertiaryToneBorder: Color(0xFFFBD6CF),
-    tertiaryToneShelf: Color(0xFFEDB9AF),
-    tertiaryToneSurface: Color(0xFFFEE9E6),
-    // Accents on surfaces
-    primaryAccent: Color(0xFF1B5E3B),
-    tertiaryAccent: Color(0xFFD84A38),
-    tertiaryToneInk: Color(0xFF9F2115),
-    secondaryButtonEdge: Color(0xFF8D4F00),
-    answerLine: Color(0xFFD5CCBD),
-    inverseAction: Color(0xFF92D5A9),
-    pictureMat: Color(0x00FFFFFF),
-    tertiaryFillShelf: Color(0xFF7D0301),
-    // Overlays and shadows
-    dialogShelf: Color(0xFFE5D8C3),
-    scrim: Color(0x732B2118),
-    shadowInk: Color(0xFF231A11),
-  );
+  /// The light palette, built from [PaletteSeed.active].
+  static final AppPalette light = AppPalette.lightFrom(PaletteSeed.active);
 
-  /// The dark palette: a warm Highland Pulse dark (FR-4), not Material's
-  /// grey. Fills keep their light colours; texts, surfaces and shelves
-  /// change. Every shelf is darker than the face above it, and the
-  /// neutral ones than the page, since soft shadows barely show on it.
-  static const AppPalette dark = AppPalette(
-    // Surfaces
-    surface: Color(0xFF1B1510),
-    surfaceDim: Color(0xFF2E251E),
-    surfaceContainerLowest: Color(0xFF251D16),
-    surfaceContainerLow: Color(0xFF2A2119),
-    surfaceContainer: Color(0xFF30261E),
-    surfaceContainerHigh: Color(0xFF372C23),
-    surfaceContainerHighest: Color(0xFF3E3229),
-    // Text on surfaces
-    onSurface: Color(0xFFF2DFD1),
-    onSurfaceVariant: Color(0xFFCDBFB2),
-    inverseSurface: Color(0xFFF2DFD1),
-    inverseOnSurface: Color(0xFF392E25),
-    // Lines
-    outline: Color(0xFF9A8B7E),
-    outlineVariant: Color(0xFF5E5147),
-    // Primary: Highland Acacia
-    primary: Color(0xFF92D5A9),
-    onPrimary: Color(0xFFFFFFFF),
-    primaryContainer: Color(0xFF1B5E3B),
-    onPrimaryContainer: Color(0xFFAEF2C4),
-    primaryFixed: Color(0xFFAEF2C4),
-    primaryFixedDim: Color(0xFF92D5A9),
-    primaryShelf: Color(0xFF0B2E1A),
-    // Secondary: Simien Gold
-    secondary: Color(0xFFFFB875),
-    onSecondary: Color(0xFF3D2000),
-    secondaryContainer: Color(0xFFFFA03B),
-    onSecondaryContainer: Color(0xFF6C3B00),
-    secondaryFixed: Color(0xFF4D3520),
-    secondaryBrand: Color(0xFFE08722),
-    secondaryShelf: Color(0xFFA85E0E),
-    // Tertiary: Rift Terracotta
-    tertiary: Color(0xFFFFB4A8),
-    onTertiary: Color(0xFFFFFFFF),
-    tertiaryContainer: Color(0xFF9F2115),
-    onTertiaryContainer: Color(0xFFFFDAD4),
-    tertiaryFixed: Color(0xFF5A2B24),
-    // A shade deeper than light's, so white text on it reads at 4.5:1.
-    tertiaryBrand: Color(0xFFC23E2D),
-    tertiaryShelf: Color(0xFF9F2B1D),
-    // Error
-    error: Color(0xFFFFB4AB),
-    onError: Color(0xFF690005),
-    errorContainer: Color(0xFF93000A),
-    onErrorContainer: Color(0xFFFFDAD6),
-    // Cards
-    cardBorder: Color(0xFF3A2F26),
-    cardShelf: Color(0xFF120D09),
-    // Answers and choices
-    answerSelectedFace: Color(0xFF3A2A14),
-    answerCorrectFace: Color(0xFF173826),
-    answerIncorrectFace: Color(0xFF3D1D18),
-    chosenFace: Color(0xFF1D3325),
-    tileBorder: Color(0xFF3F342A),
-    tileShelf: Color(0xFF110C08),
-    // Learning-map nodes
-    lockedNodeFace: Color(0xFF2E251E),
-    lockedNodeIcon: Color(0xFF16110C),
-    activeNodeShelf: Color(0xFFA85E0E),
-    // Gamification accents
-    streak: Color(0xFFFF5A1F),
-    streakRim: Color(0xFFFFA726),
-    gem: Color(0xFF10B981),
-    xp: Color(0xFF0EA5E9),
-    // Muted text and tracks
-    textMuted: Color(0xFFA8988A),
-    track: Color(0xFF3A2F26),
-    // Tones (see `app_tone.dart`)
-    primaryToneBorder: Color(0xFF2B4A36),
-    primaryToneShelf: Color(0xFF08140D),
-    primaryToneSurface: Color(0xFF1D3A2A),
-    secondaryToneBorder: Color(0xFF4D3A22),
-    secondaryToneShelf: Color(0xFF1A1106),
-    tertiaryToneBorder: Color(0xFF5A2B24),
-    tertiaryToneShelf: Color(0xFF230B08),
-    tertiaryToneSurface: Color(0xFF3D1D18),
-    // Accents on surfaces
-    primaryAccent: Color(0xFF7CCB98),
-    tertiaryAccent: Color(0xFFFF8A78),
-    tertiaryToneInk: Color(0xFFFFB4A8),
-    secondaryButtonEdge: Color(0xFF8D4F00),
-    answerLine: Color(0xFF5A4D42),
-    inverseAction: Color(0xFF1B5E3B),
-    pictureMat: Color(0xFFF3EBE2),
-    tertiaryFillShelf: Color(0xFF5C130B),
-    // Overlays and shadows
-    dialogShelf: Color(0xFF0F0A07),
-    scrim: Color(0x99000000),
-    shadowInk: Color(0xFF000000),
-  );
+  /// The dark palette, built from [PaletteSeed.active].
+  static final AppPalette dark = AppPalette.darkFrom(PaletteSeed.active);
+
+  /// Every light role worked out from [seed]. Fills that carry white text
+  /// are the seed colour deepened just enough to read at 4.5:1; tints mix
+  /// it toward white.
+  factory AppPalette.lightFrom(PaletteSeed seed) {
+    final n = seed.light;
+    final p = seed.primary, t = seed.tertiary;
+    final s = PaletteMaths.labelledFill(seed.secondary);
+    final button = _toward(
+      _toward(p, _black, n.page, 4.9),
+      _black,
+      _white,
+      4.9,
+    );
+    final greenText = _toward(p, _black, n.page, 6.5);
+    final secondaryText = _toward(_mix(s, _black, 0.2), _black, n.page, 5.0);
+    final redFill = _toward(t, _black, _white, 5.0);
+    final redText = _toward(t, _black, n.page, 6.5);
+    final tileShelf = _mix(n.border, _black, 0.14);
+    final inverse = _mix(n.ink, n.page, 0.12);
+    final fixedDim = _toward(_mix(p, _white, 0.45), _white, inverse, 4.6);
+    return AppPalette(
+      surface: n.page,
+      surfaceDim: _mix(n.locked, _black, 0.04),
+      surfaceContainerLowest: n.card,
+      surfaceContainerLow: _mix(n.page, n.border, 0.3),
+      surfaceContainer: _mix(n.page, n.border, 0.55),
+      surfaceContainerHigh: _mix(n.page, n.border, 0.8),
+      surfaceContainerHighest: _mix(n.border, n.muted, 0.08),
+      onSurface: n.ink,
+      onSurfaceVariant: _mix(n.ink, n.muted, 0.45),
+      inverseSurface: inverse,
+      inverseOnSurface: _mix(n.page, n.border, 0.3),
+      outline: _mix(n.muted, n.page, 0.1),
+      outlineVariant: _mix(n.border, n.muted, 0.25),
+      primary: greenText,
+      onPrimary: _white,
+      primaryContainer: button,
+      onPrimaryContainer: _mix(p, _white, 0.62),
+      primaryFixed: _mix(p, _white, 0.65),
+      primaryFixedDim: fixedDim,
+      primaryShelf: _mix(button, _black, 0.3),
+      secondary: secondaryText,
+      onSecondary: PaletteMaths.textOn(s),
+      secondaryContainer: s,
+      onSecondaryContainer: PaletteMaths.textOn(s),
+      secondaryFixed: _mix(s, _white, 0.7),
+      secondaryBrand: _mix(s, _black, 0.12),
+      secondaryShelf: _mix(s, _black, 0.3),
+      tertiary: redText,
+      onTertiary: _white,
+      tertiaryContainer: redFill,
+      onTertiaryContainer: _mix(t, _white, 0.62),
+      tertiaryFixed: _mix(t, _white, 0.8),
+      tertiaryBrand: t,
+      tertiaryShelf: _mix(t, _black, 0.3),
+      error: const Color(0xFFBA1A1A),
+      onError: _white,
+      errorContainer: const Color(0xFFFFDAD6),
+      onErrorContainer: const Color(0xFF93000A),
+      cardBorder: n.border,
+      cardShelf: _mix(n.border, _black, 0.08),
+      answerSelectedFace: _mix(s, _white, 0.88),
+      answerCorrectFace: _mix(seed.correct, _white, 0.9),
+      answerIncorrectFace: _mix(seed.wrong, _white, 0.92),
+      chosenFace: _mix(p, _white, 0.92),
+      tileBorder: n.border,
+      tileShelf: tileShelf,
+      lockedNodeFace: n.locked,
+      lockedNodeIcon: _mix(n.locked, n.muted, 0.45),
+      activeNodeShelf: _mix(s, _black, 0.25),
+      streak: seed.streak,
+      streakRim: _mix(seed.streak, _white, 0.3),
+      gem: seed.gem,
+      xp: seed.xp,
+      textMuted: n.muted,
+      track: n.track,
+      primaryToneBorder: _mix(p, _white, 0.78),
+      primaryToneShelf: _mix(p, _white, 0.62),
+      primaryToneSurface: _mix(p, _white, 0.88),
+      secondaryToneBorder: _mix(s, _white, 0.68),
+      secondaryToneShelf: _mix(s, _white, 0.45),
+      tertiaryToneBorder: _mix(t, _white, 0.75),
+      tertiaryToneShelf: _mix(t, _white, 0.6),
+      tertiaryToneSurface: _mix(t, _white, 0.9),
+      primaryAccent: button,
+      tertiaryAccent: t,
+      tertiaryToneInk: redFill,
+      secondaryButtonEdge: secondaryText,
+      answerLine: tileShelf,
+      inverseAction: fixedDim,
+      pictureMat: const Color(0x00FFFFFF),
+      tertiaryFillShelf: redText,
+      dialogShelf: _mix(n.border, n.muted, 0.2),
+      scrim: n.ink.withAlpha(0x73),
+      shadowInk: n.ink,
+    );
+  }
+
+  /// Every dark role worked out from [seed]. Fills keep their light
+  /// colours where white text still reads; texts, surfaces and shelves
+  /// change. Every shelf is darker than the face above it, and the neutral
+  /// ones than the page, since soft shadows barely show on it.
+  factory AppPalette.darkFrom(PaletteSeed seed) {
+    final n = seed.dark;
+    final p = seed.primary, t = seed.tertiary;
+    final s = PaletteMaths.labelledFill(seed.secondary);
+    final button = _toward(
+      _toward(p, _black, seed.light.page, 4.9),
+      _black,
+      _white,
+      4.9,
+    );
+    final redFill = _toward(t, _black, _white, 4.6);
+    final pageShelf = _mix(n.page, _black, 0.45);
+    return AppPalette(
+      surface: n.page,
+      surfaceDim: n.locked,
+      surfaceContainerLowest: n.card,
+      surfaceContainerLow: _mix(n.card, n.border, 0.25),
+      surfaceContainer: _mix(n.card, n.border, 0.45),
+      surfaceContainerHigh: _mix(n.card, n.border, 0.7),
+      surfaceContainerHighest: _mix(n.border, n.muted, 0.1),
+      onSurface: n.ink,
+      onSurfaceVariant: _mix(n.ink, n.muted, 0.5),
+      inverseSurface: n.ink,
+      inverseOnSurface: _mix(n.card, n.border, 0.6),
+      outline: _mix(n.muted, n.page, 0.1),
+      outlineVariant: _mix(n.border, n.muted, 0.3),
+      primary: seed.primaryOnDark,
+      onPrimary: _white,
+      primaryContainer: button,
+      onPrimaryContainer: _mix(p, _white, 0.7),
+      primaryFixed: _mix(p, _white, 0.65),
+      primaryFixedDim: _mix(p, _white, 0.45),
+      primaryShelf: _mix(button, _black, 0.5),
+      secondary: seed.secondaryOnDark,
+      onSecondary: PaletteMaths.textOn(s),
+      secondaryContainer: s,
+      onSecondaryContainer: PaletteMaths.textOn(s),
+      secondaryFixed: _mix(s, n.card, 0.75),
+      secondaryBrand: _mix(s, _black, 0.12),
+      secondaryShelf: _mix(s, _black, 0.35),
+      tertiary: seed.tertiaryOnDark,
+      onTertiary: _white,
+      tertiaryContainer: redFill,
+      onTertiaryContainer: _mix(t, _white, 0.75),
+      tertiaryFixed: _mix(t, n.card, 0.7),
+      tertiaryBrand: redFill,
+      tertiaryShelf: _mix(redFill, _black, 0.3),
+      error: const Color(0xFFFFB4AB),
+      onError: const Color(0xFF690005),
+      errorContainer: const Color(0xFF93000A),
+      onErrorContainer: const Color(0xFFFFDAD6),
+      cardBorder: n.border,
+      cardShelf: pageShelf,
+      answerSelectedFace: _mix(s, n.card, 0.8),
+      answerCorrectFace: _mix(seed.correct, n.card, 0.8),
+      answerIncorrectFace: _mix(seed.wrong, n.card, 0.8),
+      chosenFace: _mix(p, n.card, 0.84),
+      tileBorder: _mix(n.border, n.muted, 0.08),
+      tileShelf: pageShelf,
+      lockedNodeFace: n.locked,
+      lockedNodeIcon: _mix(n.page, _black, 0.3),
+      activeNodeShelf: _mix(s, _black, 0.35),
+      streak: seed.streak,
+      streakRim: _mix(seed.streak, _white, 0.3),
+      gem: seed.gem,
+      xp: seed.xp,
+      textMuted: n.muted,
+      track: n.border,
+      primaryToneBorder: _mix(p, n.card, 0.7),
+      primaryToneShelf: _mix(p, _black, 0.95),
+      primaryToneSurface: _mix(p, n.card, 0.78),
+      secondaryToneBorder: _mix(s, n.card, 0.72),
+      secondaryToneShelf: _mix(s, _black, 0.95),
+      tertiaryToneBorder: _mix(t, n.card, 0.7),
+      tertiaryToneShelf: _mix(t, _black, 0.95),
+      tertiaryToneSurface: _mix(t, n.card, 0.8),
+      primaryAccent: _mix(seed.primaryOnDark, p, 0.2),
+      tertiaryAccent: seed.tertiaryOnDark,
+      tertiaryToneInk: _mix(seed.tertiaryOnDark, _white, 0.35),
+      secondaryButtonEdge: _mix(s, _black, 0.45),
+      answerLine: _mix(n.border, n.muted, 0.35),
+      inverseAction: _toward(p, _black, n.ink, 4.6),
+      pictureMat: _mix(n.ink, _white, 0.4),
+      tertiaryFillShelf: _mix(redFill, _black, 0.45),
+      dialogShelf: _mix(n.page, _black, 0.6),
+      scrim: const Color(0x99000000),
+      shadowInk: _black,
+    );
+  }
+
+  static const _white = PaletteMaths.white;
+  static const _black = PaletteMaths.black;
+  static const _mix = PaletteMaths.mix;
+  static const _toward = PaletteMaths.toward;
 
   /// Every role by group, with its name, in the order of the fields:
   /// what the gallery's Colours page lists. A test checks it names every
@@ -323,7 +343,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       ],
     ),
     (
-      'Primary: Highland Acacia',
+      'Primary: Adey Abeba green',
       [
         ('primary', (p) => p.primary),
         ('onPrimary', (p) => p.onPrimary),
@@ -335,7 +355,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       ],
     ),
     (
-      'Secondary: Simien Gold',
+      'Secondary: ocean blue',
       [
         ('secondary', (p) => p.secondary),
         ('onSecondary', (p) => p.onSecondary),
@@ -347,7 +367,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       ],
     ),
     (
-      'Tertiary: Rift Terracotta',
+      'Tertiary: Meskel bonfire',
       [
         ('tertiary', (p) => p.tertiary),
         ('onTertiary', (p) => p.onTertiary),
@@ -440,7 +460,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   ];
 
   /// Both palettes by name, for the gallery's side-by-side Colours page.
-  static const Map<String, AppPalette> all = {'Light': light, 'Dark': dark};
+  static final Map<String, AppPalette> all = {'Light': light, 'Dark': dark};
 
   // Surfaces ---------------------------------------------------------------
 
@@ -474,7 +494,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color outline;
   final Color outlineVariant;
 
-  // Primary: Highland Acacia ------------------------------------------------
+  // Primary: Adey Abeba green ------------------------------------------------
 
   /// Green text.
   final Color primary;
@@ -491,7 +511,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// The shelf under a green button (DESIGN.md's `#124027` bevel).
   final Color primaryShelf;
 
-  // Secondary: Simien Gold --------------------------------------------------
+  // Secondary: ocean blue --------------------------------------------------
 
   /// Gold text.
   final Color secondary;
@@ -506,7 +526,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// The shelf under a gold button.
   final Color secondaryShelf;
 
-  // Tertiary: Rift Terracotta ----------------------------------------------
+  // Tertiary: Meskel bonfire ----------------------------------------------
 
   final Color tertiary;
   final Color onTertiary;
@@ -643,8 +663,17 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// `rgba(35,26,17,…)`); only the shadows read it.
   final Color shadowInk;
 
-  /// Palettes are edited here, never copied with changes, so this returns
-  /// the palette unchanged; it exists because [ThemeExtension] requires it.
+  /// A label in the secondary colour on a white button (the active path
+  /// popover's): the fill itself when white text reads on it, so the fill
+  /// is dark enough, else the dark text a light fill such as a yellow
+  /// takes.
+  Color get secondaryOnWhite => onSecondaryContainer == onPrimary
+      ? secondaryContainer
+      : onSecondaryContainer;
+
+  /// Palettes are built from a seed, never copied with changes, so this
+  /// returns the palette unchanged; it exists because [ThemeExtension]
+  /// requires it.
   @override
   AppPalette copyWith() => this;
 
