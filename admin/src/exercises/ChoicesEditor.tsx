@@ -52,21 +52,24 @@ export function ChoicesEditor<B extends ChoiceBody>({
                   />
                   <span className="tnum w-4 text-xs font-bold text-stone">{i + 1}</span>
                 </label>
-                <Input
-                  aria-label={`Choice ${i + 1}`}
-                  placeholder={`Choice ${i + 1}`}
-                  value={choice.text}
-                  className="flex-1"
-                  onChange={(e) => onChange(setChoiceText(body, i, e.target.value))}
-                />
-                <Input
-                  aria-label={`Choice ${i + 1} pronunciation`}
-                  title="Pronunciation in Latin letters (optional)"
-                  placeholder="Pronunciation"
-                  value={choice.pronunciation ?? ''}
-                  className="w-28 sm:w-36"
-                  onChange={(e) => onChange(setChoicePronunciation(body, i, e.target.value))}
-                />
+                {/* The pronunciation sits under its text, as in the app, so a
+                    narrow form never squeezes the text field away. */}
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <Input
+                    aria-label={`Choice ${i + 1}`}
+                    placeholder={`Choice ${i + 1}`}
+                    value={choice.text}
+                    onChange={(e) => onChange(setChoiceText(body, i, e.target.value))}
+                  />
+                  <Input
+                    aria-label={`Choice ${i + 1} pronunciation`}
+                    title="Pronunciation in Latin letters (optional)"
+                    placeholder="Pronunciation (optional)"
+                    value={choice.pronunciation ?? ''}
+                    className="h-9 text-xs sm:h-8"
+                    onChange={(e) => onChange(setChoicePronunciation(body, i, e.target.value))}
+                  />
+                </div>
                 {isCorrect && (
                   <span className="hidden shrink-0 text-xs font-bold tracking-wide text-forest uppercase sm:inline">
                     Correct

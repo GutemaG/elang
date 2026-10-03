@@ -49,21 +49,24 @@ export function SequenceEditor<B extends SequenceBody>({
               <li key={tile.id}>
                 <div className="flex items-center gap-2 rounded-md border border-line bg-canvas px-2 py-1.5">
                   <span className="tnum w-5 shrink-0 pl-1 text-xs font-bold text-stone">{i + 1}</span>
-                  <Input
-                    aria-label={`${unit} ${i + 1}`}
-                    placeholder={`${unit} ${i + 1}`}
-                    value={tile.text}
-                    className="flex-1"
-                    onChange={(e) => onChange(setTileText(body, i, e.target.value))}
-                  />
-                  <Input
-                    aria-label={`${unit} ${i + 1} pronunciation`}
-                    title="Pronunciation in Latin letters (optional)"
-                    placeholder="Pronunciation"
-                    value={tile.pronunciation ?? ''}
-                    className="w-28 sm:w-36"
-                    onChange={(e) => onChange(setTilePronunciation(body, i, e.target.value))}
-                  />
+                  {/* The pronunciation sits under its text, as in the app, so a
+                      narrow form never squeezes the text field away. */}
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <Input
+                      aria-label={`${unit} ${i + 1}`}
+                      placeholder={`${unit} ${i + 1}`}
+                      value={tile.text}
+                      onChange={(e) => onChange(setTileText(body, i, e.target.value))}
+                    />
+                    <Input
+                      aria-label={`${unit} ${i + 1} pronunciation`}
+                      title="Pronunciation in Latin letters (optional)"
+                      placeholder="Pronunciation (optional)"
+                      value={tile.pronunciation ?? ''}
+                      className="h-9 text-xs sm:h-8"
+                      onChange={(e) => onChange(setTilePronunciation(body, i, e.target.value))}
+                    />
+                  </div>
                   <span
                     className={cx(
                       'hidden shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-bold sm:inline',

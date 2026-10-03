@@ -286,7 +286,7 @@ describe('a refused save', () => {
     const error = await screen.findByRole('alert')
     expect(error).toHaveTextContent('Must be a non-empty string')
     // Under choice 2: its row and the error share one list item.
-    expect(screen.getByLabelText('Choice 2').closest('[class]')!.parentElement!.parentElement).toContainElement(error)
+    expect(screen.getByLabelText('Choice 2').closest('[role="radiogroup"] > div')).toContainElement(error)
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument()
   })
 
