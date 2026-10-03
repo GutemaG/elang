@@ -176,7 +176,14 @@ def test_with_the_real_registries_the_league_switch_and_app_language_are_listed(
     # 077 (024-app-localization) the app language.
     client, headers = _signed_in(make_client, f"{__name__}-6")
     assert _session_settings(client, headers) == {"show_in_leagues": True, "app_language": ""}
-    assert client.get("/api/v1/config").json() == {"config": {}}
+    assert client.get("/api/v1/config").json() == {
+        "config": {
+            "min_build_android": 0,
+            "min_build_ios": 0,
+            "latest_build_ios": 0,
+            "ios_store_url": "",
+        }
+    }
 
 
 class TestAppLanguage:

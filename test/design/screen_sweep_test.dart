@@ -38,6 +38,7 @@ import 'package:elang/features/lesson/widgets/level_up_sheet.dart';
 import 'package:elang/features/lesson/widgets/out_of_beans_sheet.dart';
 import 'package:elang/features/lesson/widgets/skill_path_node.dart';
 import 'package:elang/features/settings/screens/settings_screen.dart';
+import 'package:elang/features/updates/update_required_screen.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/course.dart';
 import 'package:elang/shared/models/exercise.dart';
@@ -1085,6 +1086,12 @@ final _scenes = <String, _Scene>{
     await tester.pumpAndSettle();
     await _tap(tester, find.byKey(FeedbackScreen.sendKey));
   },
+  'update needed': (tester, scale) async {
+    await tester.pumpWidget(
+      _app(UpdateRequiredScreen(onUpdate: () async {}), scale),
+    );
+    await tester.pumpAndSettle();
+  },
 };
 
 /// What each scene must end up showing, so a scene that never reached its
@@ -1147,6 +1154,7 @@ final _shows = <String, Finder>{
   'feedback': find.text('What is it about?'),
   'feedback, filled in': find.text('5 / 5'),
   'feedback, sent': find.text('Thank you!'),
+  'update needed': find.text('Update needed'),
 };
 
 void main() {

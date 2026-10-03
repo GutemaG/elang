@@ -324,5 +324,13 @@
   "reminderTitleToday": "Yeroon barnoota har'aa gaheera",
   "reminderBodyToday": "Barnoonni gabaabaan si itti fufsiisa.",
   "reminderTitleStreak": "Walitti fufiinsa guyyaa {count} kee itti fufsiisi",
-  "reminderBodyStreak": "Barnoonni gabaabaan gahaadha."
+  "reminderBodyStreak": "Barnoonni gabaabaan gahaadha.",
+  "updateRequiredTitle": "Haaromsuun barbaachisa",
+  "updateRequiredBody": "Gosti Buna kun baay'ee dulloomeera, hojjechuu hin danda'u. Barachuu itti fufuuf haaromsi. Guddinni kee olkaa'ameera.",
+  "updateNow": "Amma haaromsi",
+  "updateStoreFailed": "Suuqii banuun hin danda'amne. Buna appii suuqii irraa haaromsi.",
+  "updateAvailable": "Gosti Buna haaraan jira.",
+  "updateAction": "Haaromsi",
+  "updateDownloaded": "Haaromsichi qophaa'eera.",
+  "updateRestart": "Irra deebi'ii jalqabi"
 }

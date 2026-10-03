@@ -1290,4 +1290,30 @@ class AppLocalizationsOm extends AppLocalizations {
 
   @override
   String get reminderBodyStreak => 'Barnoonni gabaabaan gahaadha.';
+
+  @override
+  String get updateRequiredTitle => 'Haaromsuun barbaachisa';
+
+  @override
+  String get updateRequiredBody =>
+      'Gosti Buna kun baay\'ee dulloomeera, hojjechuu hin danda\'u. Barachuu itti fufuuf haaromsi. Guddinni kee olkaa\'ameera.';
+
+  @override
+  String get updateNow => 'Amma haaromsi';
+
+  @override
+  String get updateStoreFailed =>
+      'Suuqii banuun hin danda\'amne. Buna appii suuqii irraa haaromsi.';
+
+  @override
+  String get updateAvailable => 'Gosti Buna haaraan jira.';
+
+  @override
+  String get updateAction => 'Haaromsi';
+
+  @override
+  String get updateDownloaded => 'Haaromsichi qophaa\'eera.';
+
+  @override
+  String get updateRestart => 'Irra deebi\'ii jalqabi';
 }

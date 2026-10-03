@@ -16,8 +16,9 @@ default, so the new key works at once for every existing account.
 **Nothing secret may go in `APP_CONFIG`.** `GET /api/v1/config` returns it
 to anyone, signed in or not.
 
-`APP_CONFIG` starts empty (the bean constants stay in code for now). The
-Appearance choice stays on the phone.
+`APP_CONFIG` holds the app versions the phone checks itself against (the
+bean constants stay in code for now). The Appearance choice stays on the
+phone.
 """
 
 from __future__ import annotations
@@ -139,4 +140,21 @@ ACCOUNT_SETTINGS = SettingsRegistry(
 )
 
 # App-wide configuration, stored in `app_config`. Never anything secret.
-APP_CONFIG = SettingsRegistry([])
+APP_CONFIG = SettingsRegistry(
+    [
+        # App updates: the oldest build number (the `+N` in `pubspec.yaml`,
+        # Android's versionCode) still allowed to run on each platform. An
+        # older app shows a blocking "Update needed" screen. 0 lets every
+        # build run. Raise it only once the new build is out to everyone
+        # in that store, and when old builds would break against this API.
+        Setting("min_build_android", "int", 0),
+        Setting("min_build_ios", "int", 0),
+        # The newest iOS build in the App Store: an older app is offered
+        # the update, without being made to take it. Android asks Google
+        # Play instead, which knows when the update has reached that phone.
+        Setting("latest_build_ios", "int", 0),
+        # Where the iOS app's "Update" opens, e.g.
+        # `https://apps.apple.com/app/id1234567890`. "" until it is listed.
+        Setting("ios_store_url", "str", "", pattern=r"(?:https://\S+)?"),
+    ]
+)

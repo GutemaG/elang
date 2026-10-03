@@ -10,11 +10,13 @@ import 'features/lesson/lesson_dependencies.dart';
 import 'features/league/league_dependencies.dart';
 import 'features/lesson/screens/skill_tree_dashboard_screen.dart';
 import 'features/settings/settings_dependencies.dart';
+import 'features/updates/app_update_gate.dart';
 import 'shared/l10n/app_language.dart';
 import 'shared/licences/picture_credits.dart';
 import 'shared/services/reminders/reminder_scheduler.dart';
 import 'shared/services/reminders/reminder_service.dart';
 import 'shared/services/app_config_api.dart';
+import 'shared/services/app_updater.dart';
 import 'shared/services/app_language_repository.dart';
 import 'shared/services/appearance_repository.dart';
 import 'shared/services/secure_storage_service.dart';
@@ -124,6 +126,13 @@ Future<void> main() async {
           storage: storage,
           sessionRepository: authDependencies.sessionRepository,
         ),
+        // Required and offered app updates, checked against the
+        // configuration above.
+        updates: AppUpdates(
+          updater: StoreAppUpdater(),
+          settings: remoteSettings,
+          storage: storage,
+        ),
       ),
     ),
   );
@@ -143,6 +152,7 @@ class BunaApp extends StatelessWidget {
     required this.appearance,
     required this.appLanguage,
     this.leagueDependencies,
+    this.updates,
   });
 
   final AuthDependencies authDependencies;
@@ -151,6 +161,9 @@ class BunaApp extends StatelessWidget {
 
   /// The weekly league; `null` (tests) hides it.
   final LeagueDependencies? leagueDependencies;
+
+  /// Required and offered app updates; `null` (tests) checks none.
+  final AppUpdates? updates;
 
   /// System, Light or Dark: the learner's choice in Settings.
   final AppearanceController appearance;
@@ -187,7 +200,15 @@ class BunaApp extends StatelessWidget {
           context.colors,
           brightness: Theme.of(context).brightness,
         ),
-        child: child!,
+        child: switch (updates) {
+          final updates? => AppUpdateGate(
+            updater: updates.updater,
+            settings: updates.settings,
+            storage: updates.storage,
+            child: child!,
+          ),
+          null => child!,
+        },
       ),
       initialRoute: AuthRoutes.splash,
       routes: AuthRoutes.build(

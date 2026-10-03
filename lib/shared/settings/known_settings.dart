@@ -41,8 +41,22 @@ abstract final class AccountSettings {
 /// **To add an app-wide value**, add one line here, then read it with
 /// `RemoteSettingsScope.of(context).config.get(AppConfig.<name>)`.
 ///
-/// The backend's `APP_CONFIG` must list the same key. None yet.
-abstract final class AppConfig {}
+/// The backend's `APP_CONFIG` must list the same key.
+abstract final class AppConfig {
+  /// The oldest Android build (versionCode) still allowed to run; an older
+  /// app shows "Update needed". 0 lets every build run.
+  static const minBuildAndroid = KnownSetting<int>('min_build_android', 0);
+
+  /// The oldest iOS build still allowed to run.
+  static const minBuildIos = KnownSetting<int>('min_build_ios', 0);
+
+  /// The newest iOS build in the App Store: an older app is offered it.
+  /// Android asks Google Play instead.
+  static const latestBuildIos = KnownSetting<int>('latest_build_ios', 0);
+
+  /// The iOS app's App Store page, `""` until it is listed.
+  static const iosStoreUrl = KnownSetting<String>('ios_store_url', '');
+}
 
 /// A snapshot of settings as received: read through [get], so a missing or
 /// wrong-typed value reads as the app's default and a key the app doesn't

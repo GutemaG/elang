@@ -1725,5 +1725,37 @@
   "reminderBodyStreak": "A quick lesson is enough.",
   "@reminderBodyStreak": {
     "description": "Daily reminder text when there is a streak."
+  },
+  "updateRequiredTitle": "Update needed",
+  "@updateRequiredTitle": {
+    "description": "Title of the screen shown when this version of the app is too old to run."
+  },
+  "updateRequiredBody": "This version of Buna is too old to keep working. Update it to keep learning. Your progress is saved.",
+  "@updateRequiredBody": {
+    "description": "Text of the screen shown when this version of the app is too old to run."
+  },
+  "updateNow": "Update now",
+  "@updateNow": {
+    "description": "Button on the update-needed screen that opens the store's update."
+  },
+  "updateStoreFailed": "Couldn't open the store. Update Buna from the store app.",
+  "@updateStoreFailed": {
+    "description": "Shown when the update-needed button could not open the store."
+  },
+  "updateAvailable": "A new version of Buna is available.",
+  "@updateAvailable": {
+    "description": "Message offering an optional app update."
+  },
+  "updateAction": "Update",
+  "@updateAction": {
+    "description": "Action on the message offering an optional app update."
+  },
+  "updateDownloaded": "The update is ready.",
+  "@updateDownloaded": {
+    "description": "Message shown once an app update has downloaded in the background."
+  },
+  "updateRestart": "Restart",
+  "@updateRestart": {
+    "description": "Action that installs a downloaded app update by restarting the app."
   }
 }

@@ -2054,6 +2054,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A quick lesson is enough.'**
   String get reminderBodyStreak;
+
+  /// Title of the screen shown when this version of the app is too old to run.
+  ///
+  /// In en, this message translates to:
+  /// **'Update needed'**
+  String get updateRequiredTitle;
+
+  /// Text of the screen shown when this version of the app is too old to run.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of Buna is too old to keep working. Update it to keep learning. Your progress is saved.'**
+  String get updateRequiredBody;
+
+  /// Button on the update-needed screen that opens the store's update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update now'**
+  String get updateNow;
+
+  /// Shown when the update-needed button could not open the store.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the store. Update Buna from the store app.'**
+  String get updateStoreFailed;
+
+  /// Message offering an optional app update.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of Buna is available.'**
+  String get updateAvailable;
+
+  /// Action on the message offering an optional app update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateAction;
+
+  /// Message shown once an app update has downloaded in the background.
+  ///
+  /// In en, this message translates to:
+  /// **'The update is ready.'**
+  String get updateDownloaded;
+
+  /// Action that installs a downloaded app update by restarting the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get updateRestart;
 }
 
 class _AppLocalizationsDelegate

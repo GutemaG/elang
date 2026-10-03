@@ -324,5 +324,13 @@
   "reminderTitleToday": "የዛሬው ትምህርት ጊዜ ደርሷል",
   "reminderBodyToday": "ፈጣን ትምህርት ያስቀጥልዎታል።",
   "reminderTitleStreak": "የ{count} ቀን ተከታታይነትዎን ያስቀጥሉ",
-  "reminderBodyStreak": "ፈጣን ትምህርት በቂ ነው።"
+  "reminderBodyStreak": "ፈጣን ትምህርት በቂ ነው።",
+  "updateRequiredTitle": "ማዘመን ያስፈልጋል",
+  "updateRequiredBody": "ይህ የቡና ስሪት በጣም ስለቆየ መስራት አይችልም። መማርዎን ለመቀጠል ያዘምኑት። እድገትዎ ተቀምጧል።",
+  "updateNow": "አሁን ያዘምኑ",
+  "updateStoreFailed": "መደብሩን መክፈት አልተቻለም። ቡናን ከመደብሩ መተግበሪያ ያዘምኑ።",
+  "updateAvailable": "አዲስ የቡና ስሪት አለ።",
+  "updateAction": "አዘምን",
+  "updateDownloaded": "ማዘመኛው ዝግጁ ነው።",
+  "updateRestart": "እንደገና ጀምር"
 }

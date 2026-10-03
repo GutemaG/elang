@@ -114,11 +114,32 @@ class TestDefinitions:
 
     def test_the_real_registries(self) -> None:
         # Bolt 073 (023-weekly-leagues) added the first account setting and
-        # bolt 077 (024-app-localization) the app language; app
-        # configuration still needs none.
+        # bolt 077 (024-app-localization) the app language. App
+        # configuration holds the app versions the phone checks itself
+        # against.
         assert ACCOUNT_SETTINGS.keys == ["show_in_leagues", "app_language"]
         assert ACCOUNT_SETTINGS.resolve({}) == {"show_in_leagues": True, "app_language": ""}
-        assert APP_CONFIG.keys == []
+        assert APP_CONFIG.keys == [
+            "min_build_android",
+            "min_build_ios",
+            "latest_build_ios",
+            "ios_store_url",
+        ]
+
+    def test_the_app_versions_start_open(self) -> None:
+        # Every build may run until the team raises a minimum.
+        assert APP_CONFIG.resolve({}) == {
+            "min_build_android": 0,
+            "min_build_ios": 0,
+            "latest_build_ios": 0,
+            "ios_store_url": "",
+        }
+
+    def test_the_ios_store_url_must_be_an_https_address(self) -> None:
+        APP_CONFIG.validate({"ios_store_url": "https://apps.apple.com/app/id1"})
+        APP_CONFIG.validate({"ios_store_url": ""})
+        with pytest.raises(InvalidSettingError):
+            APP_CONFIG.validate({"ios_store_url": "javascript:alert(1)"})
 
 
 _LANGUAGE_CODE = Setting("code", "str", "", pattern=r"(?:[a-z]{2,3})?")

@@ -1278,4 +1278,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminderBodyStreak => 'A quick lesson is enough.';
+
+  @override
+  String get updateRequiredTitle => 'Update needed';
+
+  @override
+  String get updateRequiredBody =>
+      'This version of Buna is too old to keep working. Update it to keep learning. Your progress is saved.';
+
+  @override
+  String get updateNow => 'Update now';
+
+  @override
+  String get updateStoreFailed =>
+      'Couldn\'t open the store. Update Buna from the store app.';
+
+  @override
+  String get updateAvailable => 'A new version of Buna is available.';
+
+  @override
+  String get updateAction => 'Update';
+
+  @override
+  String get updateDownloaded => 'The update is ready.';
+
+  @override
+  String get updateRestart => 'Restart';
 }

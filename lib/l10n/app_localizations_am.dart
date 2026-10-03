@@ -1252,4 +1252,29 @@ class AppLocalizationsAm extends AppLocalizations {
 
   @override
   String get reminderBodyStreak => 'ፈጣን ትምህርት በቂ ነው።';
+
+  @override
+  String get updateRequiredTitle => 'ማዘመን ያስፈልጋል';
+
+  @override
+  String get updateRequiredBody =>
+      'ይህ የቡና ስሪት በጣም ስለቆየ መስራት አይችልም። መማርዎን ለመቀጠል ያዘምኑት። እድገትዎ ተቀምጧል።';
+
+  @override
+  String get updateNow => 'አሁን ያዘምኑ';
+
+  @override
+  String get updateStoreFailed => 'መደብሩን መክፈት አልተቻለም። ቡናን ከመደብሩ መተግበሪያ ያዘምኑ።';
+
+  @override
+  String get updateAvailable => 'አዲስ የቡና ስሪት አለ።';
+
+  @override
+  String get updateAction => 'አዘምን';
+
+  @override
+  String get updateDownloaded => 'ማዘመኛው ዝግጁ ነው።';
+
+  @override
+  String get updateRestart => 'እንደገና ጀምር';
 }
