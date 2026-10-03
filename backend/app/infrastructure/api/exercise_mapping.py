@@ -10,6 +10,7 @@ from __future__ import annotations
 from app.domain.lesson.entities import Exercise
 from app.domain.lesson.value_objects import (
     AudioImageChoiceContent,
+    Choice,
     ChoiceAnswerKey,
     ExerciseType,
     GapFillContent,
@@ -44,6 +45,10 @@ def _pictures(choices: tuple[PictureChoice, ...]) -> list[PictureChoiceResponse]
     ]
 
 
+def _tile(choice: Choice) -> ChoiceResponse:
+    return ChoiceResponse(id=choice.id, text=choice.text, pronunciation=choice.pronunciation)
+
+
 def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
     # Built from `exercise.content` (renderable) and `exercise.answer_key`
     # (correct-answer) -- the latter is included per ADR-5, which
@@ -55,7 +60,8 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             id=exercise.id,
             order_index=exercise.order_index,
             prompt=exercise.prompt,
-            choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
+            pronunciation=exercise.pronunciation,
+            choices=[_tile(c) for c in exercise.content.choices],
             correct_choice_id=exercise.answer_key.correct_choice_id,
         )
     if exercise.type is ExerciseType.LISTENING:
@@ -66,7 +72,7 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             order_index=exercise.order_index,
             prompt=exercise.prompt,
             audio_url=exercise.content.audio_url,
-            choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
+            choices=[_tile(c) for c in exercise.content.choices],
             correct_choice_id=exercise.answer_key.correct_choice_id,
         )
     if exercise.type is ExerciseType.SENTENCE_CONSTRUCTION:
@@ -76,7 +82,8 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             id=exercise.id,
             order_index=exercise.order_index,
             prompt=exercise.prompt,
-            word_bank=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.word_bank],
+            pronunciation=exercise.pronunciation,
+            word_bank=[_tile(c) for c in exercise.content.word_bank],
             correct_sequence=list(exercise.answer_key.correct_sequence),
         )
     if exercise.type is ExerciseType.MATCH_PAIRS:
@@ -86,10 +93,9 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             id=exercise.id,
             order_index=exercise.order_index,
             prompt=exercise.prompt,
-            left_tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.left_tiles],
-            right_tiles=[
-                ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.right_tiles
-            ],
+            pronunciation=exercise.pronunciation,
+            left_tiles=[_tile(c) for c in exercise.content.left_tiles],
+            right_tiles=[_tile(c) for c in exercise.content.right_tiles],
             correct_pairs=list(exercise.answer_key.correct_pairs),
         )
     # Match-pairs used to be the unguarded final branch here; bolt 030 made
@@ -106,9 +112,10 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             id=exercise.id,
             order_index=exercise.order_index,
             prompt=exercise.prompt,
+            pronunciation=exercise.pronunciation,
             sentence_before=exercise.content.sentence_before,
             sentence_after=exercise.content.sentence_after,
-            choices=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.choices],
+            choices=[_tile(c) for c in exercise.content.choices],
             correct_choice_id=exercise.answer_key.correct_choice_id,
         )
     if exercise.type is ExerciseType.SPELL_TILES:
@@ -118,7 +125,8 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             id=exercise.id,
             order_index=exercise.order_index,
             prompt=exercise.prompt,
-            tiles=[ChoiceResponse(id=c.id, text=c.text) for c in exercise.content.tiles],
+            pronunciation=exercise.pronunciation,
+            tiles=[_tile(c) for c in exercise.content.tiles],
             correct_sequence=list(exercise.answer_key.correct_sequence),
         )
     if exercise.type is ExerciseType.IMAGE_CHOICE:
@@ -128,6 +136,7 @@ def to_exercise_response(exercise: Exercise) -> ExerciseResponse:
             id=exercise.id,
             order_index=exercise.order_index,
             prompt=exercise.prompt,
+            pronunciation=exercise.pronunciation,
             choices=_pictures(exercise.content.choices),
             correct_choice_id=exercise.answer_key.correct_choice_id,
         )

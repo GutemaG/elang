@@ -780,17 +780,29 @@ class _LessonQuestionState extends State<_LessonQuestion> {
       // "Translate:" stacked in front of the prompt's own.
       SentenceConstructionExercise e => _questionPrompt(
         _translatePrompt(e.promptTranslation, context.l10n.translateSentence),
+        pronunciation: e.pronunciation,
       ),
-      MatchPairsExercise e => _questionPrompt(splitPrompt(e.prompt)),
+      MatchPairsExercise e => _questionPrompt(
+        splitPrompt(e.prompt),
+        pronunciation: e.pronunciation,
+      ),
+      // The pronunciation belongs to the sentence with the gap, so it sits
+      // under that, not under the instruction.
       GapFillExercise e => _questionPrompt(splitPrompt(e.prompt)),
-      ImageChoiceExercise e => _questionPrompt(splitPrompt(e.prompt)),
+      ImageChoiceExercise e => _questionPrompt(
+        splitPrompt(e.prompt),
+        pronunciation: e.pronunciation,
+      ),
       // Only what to do: the word is heard, never written, even when the
       // prompt was written as "Instruction: 'word'".
       AudioImageChoiceExercise e => _listenPrompt(
         PromptParts(instruction: splitPrompt(e.instruction).instruction),
         e.audioUrl,
       ),
-      SpellTilesExercise e => _questionPrompt(splitPrompt(e.prompt)),
+      SpellTilesExercise e => _questionPrompt(
+        splitPrompt(e.prompt),
+        pronunciation: e.pronunciation,
+      ),
     };
   }
 
@@ -823,10 +835,11 @@ class _LessonQuestionState extends State<_LessonQuestion> {
   Widget _answersFor(Exercise exercise) {
     final controller = _controller;
     return switch (exercise) {
-      MultipleChoiceExercise e => _choices(e.options),
-      ListeningExercise e => _choices(e.options),
+      MultipleChoiceExercise e => _choices(e.options, e.optionPronunciations),
+      ListeningExercise e => _choices(e.options, e.optionPronunciations),
       SentenceConstructionExercise e => WordBankBuilder(
         wordBank: e.wordBank,
+        pronunciations: e.wordPronunciations,
         built: (controller.selectedAnswer as List<String>?) ?? const [],
         feedback: controller.feedback,
         onToggle: controller.toggleWordBankToken,
@@ -853,10 +866,19 @@ class _LessonQuestionState extends State<_LessonQuestion> {
             },
             grade: gradeOf(controller.feedback),
           ),
+          if (e.pronunciation case final spoken?) ...[
+            const SizedBox(height: AppSpacing.space2xs),
+            Text(
+              spoken,
+              style: AppTypography.phonetic.copyWith(
+                color: context.colors.textMuted,
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.spaceLg),
           // Graded on the tap, like the other choice types: the chosen
           // word drops into the gap and the tile shows right or wrong.
-          _choices(e.options),
+          _choices(e.options, e.optionPronunciations),
         ],
       ),
       ImageChoiceExercise e => _pictures(e.choices),
@@ -871,9 +893,10 @@ class _LessonQuestionState extends State<_LessonQuestion> {
     };
   }
 
-  /// Full-width answer rows. Only the chosen one shows the grade, and none
-  /// takes a tap once the question is graded.
-  Widget _choices(List<String> options) {
+  /// Full-width answer rows, each with its pronunciation if it has one.
+  /// Only the chosen one shows the grade, and none takes a tap once the
+  /// question is graded.
+  Widget _choices(List<String> options, List<String?> pronunciations) {
     final controller = _controller;
     final chosen = controller.selectedAnswer as int?;
     return Column(
@@ -884,6 +907,7 @@ class _LessonQuestionState extends State<_LessonQuestion> {
             padding: const EdgeInsets.only(bottom: AppSpacing.spaceSm),
             child: AnswerTile(
               label: options[i],
+              pronunciation: pronunciationAt(pronunciations, i),
               state: choiceStateOf(
                 chosen: chosen == i,
                 feedback: controller.feedback,
@@ -931,17 +955,26 @@ Widget _choicePrompt(MultipleChoiceExercise exercise) {
   final parts = splitPrompt(exercise.prompt);
   final gloss = exercise.promptTranslation.trim();
   if (parts.content == null && gloss.isNotEmpty) {
-    return QuestionPrompt(instruction: gloss, question: parts.instruction);
+    return QuestionPrompt(
+      instruction: gloss,
+      question: parts.instruction,
+      pronunciation: exercise.pronunciation,
+    );
   }
   return QuestionPrompt(
     instruction: parts.instruction,
     question: parts.content,
     translation: gloss.isEmpty ? null : gloss,
+    pronunciation: exercise.pronunciation,
   );
 }
 
-Widget _questionPrompt(PromptParts parts) =>
-    QuestionPrompt(instruction: parts.instruction, question: parts.content);
+Widget _questionPrompt(PromptParts parts, {String? pronunciation}) =>
+    QuestionPrompt(
+      instruction: parts.instruction,
+      question: parts.content,
+      pronunciation: pronunciation,
+    );
 
 /// [prompt] split into what to do and the sentence; one with no
 /// instruction of its own gets [instruction] ("Translate this sentence").

@@ -14,6 +14,9 @@ export type SequenceBody = Extract<ExerciseBody, { answer_key: { correct_sequenc
 export type PairsBody = Extract<ExerciseBody, { type: 'match_pairs' }>
 export type PictureBody = Extract<ExerciseBody, { type: 'image_choice' | 'audio_image_choice' }>
 export type AudioBody = Extract<ExerciseBody, { type: 'listening' | 'audio_image_choice' }>
+/** Every type but the two only heard: their word is never written, so it
+ * has no pronunciation either. */
+export type PronouncedBody = Exclude<ExerciseBody, AudioBody>
 
 export const TYPE_INFO: Record<ExerciseType, { name: string; icon: string; description: string }> = {
   multiple_choice: {
@@ -64,6 +67,10 @@ export function isChoiceBody(body: ExerciseBody): body is ChoiceBody {
 
 export function isPictureBody(body: ExerciseBody): body is PictureBody {
   return body.type === 'image_choice' || body.type === 'audio_image_choice'
+}
+
+export function isPronouncedBody(body: ExerciseBody): body is PronouncedBody {
+  return body.type !== 'listening' && body.type !== 'audio_image_choice'
 }
 
 export function isSequenceBody(body: ExerciseBody): body is SequenceBody {
@@ -192,6 +199,59 @@ export function setPrompt<B extends ExerciseBody>(body: B, prompt: string): B {
 
 export function setAudioUrl<B extends AudioBody>(body: B, audio_url: string): B {
   return { ...body, content: { ...body.content, audio_url } }
+}
+
+// --- pronunciations (romanization) ---------------------------------------------
+//
+// Optional everywhere: an empty field takes the key away rather than storing
+// "", so an exercise without romanization is stored as it always was.
+
+function pronounced<T extends { pronunciation?: string }>(item: T, pronunciation: string): T {
+  if (pronunciation !== '') return { ...item, pronunciation }
+  const rest = { ...item }
+  delete rest.pronunciation
+  return rest
+}
+
+/** The pronunciation of the question's own word or sentence. */
+export function setPronunciation<B extends PronouncedBody>(body: B, pronunciation: string): B {
+  return { ...body, content: pronounced(body.content, pronunciation) }
+}
+
+export function setChoicePronunciation<B extends ChoiceBody>(body: B, index: number, pronunciation: string): B {
+  return {
+    ...body,
+    content: {
+      ...body.content,
+      choices: body.content.choices.map((c, i) => (i === index ? pronounced(c, pronunciation) : c)),
+    },
+  }
+}
+
+export function setTilePronunciation<B extends SequenceBody>(body: B, index: number, pronunciation: string): B {
+  return withTiles(
+    body,
+    tilesOf(body).map((t, i) => (i === index ? pronounced(t, pronunciation) : t)),
+  )
+}
+
+export function setPairPronunciation(
+  body: PairsBody,
+  row: number,
+  side: 'left' | 'right',
+  pronunciation: string,
+): PairsBody {
+  const pair = body.answer_key.correct_pairs[row]
+  if (!pair) return body
+  const id = side === 'left' ? pair[0] : pair[1]
+  const key = side === 'left' ? 'left_tiles' : 'right_tiles'
+  return {
+    ...body,
+    content: {
+      ...body.content,
+      [key]: body.content[key].map((t) => (t.id === id ? pronounced(t, pronunciation) : t)),
+    },
+  }
 }
 
 export function setSentence(
@@ -473,6 +533,7 @@ export function missingAnswer(body: ExerciseBody): string | null {
  * one row of it, a text field, or `top` when nothing in the form names it. */
 export type Slot =
   | 'prompt'
+  | 'pronunciation'
   | 'audio_url'
   | 'sentence'
   | 'choices'
@@ -486,6 +547,7 @@ export type Slot =
 
 export function placeError(field: string, message: string, body: ExerciseBody): Slot {
   if (field === 'prompt') return 'prompt'
+  if (field === 'content.pronunciation') return 'pronunciation'
   if (field === 'content.audio_url') return 'audio_url'
   if (field === 'content.sentence_before' || field === 'content.sentence_after') return 'sentence'
 

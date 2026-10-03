@@ -101,10 +101,19 @@ export interface DeleteDetails {
 // --- Exercises (bolt 038), mirroring backend/app/domain/lesson/exercise_parts.py
 
 /** A choice, word, letter or match-pairs tile. `id` is identity; `text` is
- * only what is shown, and may repeat (two tiles can both read "ላ"). */
+ * only what is shown, and may repeat (two tiles can both read "ላ").
+ * `pronunciation` is the text in Latin letters (ቡና → bunna), shown under it
+ * in the app; left out when there is none. */
 export interface Tile {
   id: string
   text: string
+  pronunciation?: string
+}
+
+/** The question's own word or sentence in Latin letters, shown under it in
+ * the app. Not on a question that is only heard. */
+interface Pronounced {
+  pronunciation?: string
 }
 
 /** One picture of a picture question (bolt 050): `image_url` is an https
@@ -148,7 +157,7 @@ interface SequenceKey {
 /** The type, prompt, content and answer key an exercise is written as --
  * exactly what `POST`/`PUT` send and what the server stores. */
 export type ExerciseBody =
-  | { type: 'multiple_choice'; prompt: string; content: { choices: Tile[] }; answer_key: ChoiceKey }
+  | { type: 'multiple_choice'; prompt: string; content: { choices: Tile[] } & Pronounced; answer_key: ChoiceKey }
   | {
       type: 'listening'
       prompt: string
@@ -158,23 +167,28 @@ export type ExerciseBody =
   | {
       type: 'gap_fill'
       prompt: string
-      content: { sentence_before: string; sentence_after: string; choices: Tile[] }
+      content: { sentence_before: string; sentence_after: string; choices: Tile[] } & Pronounced
       answer_key: ChoiceKey
     }
   | {
       type: 'sentence_construction'
       prompt: string
-      content: { word_bank: Tile[] }
+      content: { word_bank: Tile[] } & Pronounced
       answer_key: SequenceKey
     }
-  | { type: 'spell_tiles'; prompt: string; content: { tiles: Tile[] }; answer_key: SequenceKey }
+  | { type: 'spell_tiles'; prompt: string; content: { tiles: Tile[] } & Pronounced; answer_key: SequenceKey }
   | {
       type: 'match_pairs'
       prompt: string
-      content: { left_tiles: Tile[]; right_tiles: Tile[] }
+      content: { left_tiles: Tile[]; right_tiles: Tile[] } & Pronounced
       answer_key: { correct_pairs: [string, string][] }
     }
-  | { type: 'image_choice'; prompt: string; content: { choices: PictureTile[] }; answer_key: ChoiceKey }
+  | {
+      type: 'image_choice'
+      prompt: string
+      content: { choices: PictureTile[] } & Pronounced
+      answer_key: ChoiceKey
+    }
   | {
       type: 'audio_image_choice'
       prompt: string

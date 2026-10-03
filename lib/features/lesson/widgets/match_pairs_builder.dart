@@ -75,6 +75,7 @@ class MatchPairsBuilder extends StatelessWidget {
     final state = _stateFor(tile.id, isLeft: isLeft);
     return AnswerTile(
       label: tile.text,
+      pronunciation: tile.pronunciation,
       shape: AnswerTileShape.cell,
       state: state,
       onTap: state == AnswerTileState.correct

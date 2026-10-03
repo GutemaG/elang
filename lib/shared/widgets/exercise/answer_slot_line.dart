@@ -26,6 +26,7 @@ class AnswerSlotLine extends StatelessWidget {
     this.grade,
     this.hint,
     this.minLines = 2,
+    this.tallPills = false,
   }) : before = null,
        after = null,
        options = null,
@@ -48,11 +49,16 @@ class AnswerSlotLine extends StatelessWidget {
     this.grade,
   }) : children = null,
        hint = null,
-       minLines = 1;
+       minLines = 1,
+       tallPills = false;
 
   final List<Widget>? children;
   final String? hint;
   final int minLines;
+
+  /// The pills carry a pronunciation line (`AnswerTile.tallPill`), so the
+  /// lines are ruled that much further apart.
+  final bool tallPills;
 
   /// Either side of the gap, already trimmed; either may be empty, meaning
   /// the gap sits at that end of the sentence.
@@ -88,7 +94,7 @@ class AnswerSlotLine extends StatelessWidget {
   }
 
   Widget _sentence(BuildContext context, List<Widget> words) {
-    final pill = AnswerTile.pillHeightOf(context);
+    final pill = AnswerTile.pillHeightOf(context, withPronunciation: tallPills);
     final pitch = pill + runGap;
     return CustomPaint(
       painter: _RulesPainter(

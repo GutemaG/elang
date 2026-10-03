@@ -10,6 +10,7 @@ import {
   moveInAnswer,
   removeFromAnswer,
   removeTile,
+  setTilePronunciation,
   setTileText,
   tilesOf,
   type SequenceBody,
@@ -37,8 +38,8 @@ export function SequenceEditor<B extends SequenceBody>({
         title={body.type === 'sentence_construction' ? 'Word bank' : 'Letter tiles'}
         hint={
           body.type === 'sentence_construction'
-            ? 'Every word the learner can pick from. Words left out of the answer act as distractors.'
-            : 'Every letter the learner can pick from. The same letter twice is two tiles.'
+            ? 'Every word the learner can pick from. Words left out of the answer act as distractors. Pronunciation is optional.'
+            : 'Every letter the learner can pick from. The same letter twice is two tiles. Pronunciation is optional.'
         }
       >
         <ol className="space-y-2">
@@ -54,6 +55,14 @@ export function SequenceEditor<B extends SequenceBody>({
                     value={tile.text}
                     className="flex-1"
                     onChange={(e) => onChange(setTileText(body, i, e.target.value))}
+                  />
+                  <Input
+                    aria-label={`${unit} ${i + 1} pronunciation`}
+                    title="Pronunciation in Latin letters (optional)"
+                    placeholder="Pronunciation"
+                    value={tile.pronunciation ?? ''}
+                    className="w-28 sm:w-36"
+                    onChange={(e) => onChange(setTilePronunciation(body, i, e.target.value))}
                   />
                   <span
                     className={cx(

@@ -8,7 +8,18 @@ import Papa from 'papaparse'
 import { TYPE_INFO } from '../exercises/model'
 import { EXERCISE_TYPES, type ExerciseType } from '../types'
 
-export const COLUMNS = ['type', 'prompt', 'sentence', 'answer', 'wrong', 'audio_url', 'descriptions'] as const
+export const COLUMNS = [
+  'type',
+  'prompt',
+  'pronunciation',
+  'sentence',
+  'answer',
+  'answer_pronunciation',
+  'wrong',
+  'wrong_pronunciation',
+  'audio_url',
+  'descriptions',
+] as const
 export type Column = (typeof COLUMNS)[number]
 export type CsvRow = Record<Column, string>
 

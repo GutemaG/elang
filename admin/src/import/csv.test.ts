@@ -7,6 +7,8 @@ import { NOT_UTF8, readCsv, type ImportRow } from './fromCsv'
 import { exercisesToCsv } from './toCsv'
 
 const HEADER = 'type,prompt,sentence,answer,wrong,audio_url,descriptions'
+/** Every column, in the order a written file has them. */
+const ALL_COLUMNS = 'type,prompt,pronunciation,sentence,answer,answer_pronunciation,wrong,wrong_pronunciation,audio_url,descriptions'
 
 /** The one row of a CSV made of `HEADER` and `line`. */
 function one(line: string, header = HEADER): ImportRow {
@@ -105,7 +107,7 @@ describe('the CSV cells', () => {
   it('are written with a byte-order mark, every column, and CRLF', () => {
     const text = writeCsv([{ type: 'multiple_choice', prompt: 'Hi, "you"', answer: 'ሰላም' }])
     expect(text.startsWith('\uFEFF')).toBe(true)
-    expect(text.slice(1)).toBe(`${HEADER}\r\nmultiple_choice,"Hi, ""you""",,ሰላም,,,`)
+    expect(text.slice(1)).toBe(`${ALL_COLUMNS}\r\nmultiple_choice,"Hi, ""you""",,,ሰላም,,,,,`)
   })
 })
 
@@ -261,7 +263,7 @@ describe('reading a CSV file', () => {
   it.each([
     [
       'type,prompt,answr\n',
-      'Unknown column "answr". The columns are: type, prompt, sentence, answer, wrong, audio_url, descriptions.',
+      'Unknown column "answr". The columns are: type, prompt, pronunciation, sentence, answer, answer_pronunciation, wrong, wrong_pronunciation, audio_url, descriptions.',
     ],
     ['type,prompt\nmultiple_choice,x\n', 'The file needs a "answer" column.'],
     ['type,prompt,answer,Answer\n', 'The column "answer" appears twice.'],
@@ -291,7 +293,7 @@ describe('exporting to CSV', () => {
 
   it('writes the answer first and the rest in wrong', () => {
     const [, line] = exercisesToCsv([MC]).slice(1).split('\r\n')
-    expect(line).toBe(`multiple_choice,How do you say 'Hello' in Amharic?,,ሰላም,ደህና ሁን | አመሰግናለሁ | አዎ,,`)
+    expect(line).toBe(`multiple_choice,How do you say 'Hello' in Amharic?,,,ሰላም,,ደህና ሁን | አመሰግናለሁ | አዎ,,,`)
   })
 
   it('writes the gap as ___', () => {

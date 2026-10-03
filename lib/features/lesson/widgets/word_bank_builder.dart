@@ -17,9 +17,14 @@ class WordBankBuilder extends StatelessWidget {
     required this.built,
     required this.feedback,
     required this.onToggle,
+    this.pronunciations = const {},
   });
 
   final List<String> wordBank;
+
+  /// Each word's pronunciation, by its text; a word with none is not in it.
+  /// With any at all, every pill is made tall so they all line up.
+  final Map<String, String> pronunciations;
   final List<String> built;
   final TileFeedback feedback;
   final ValueChanged<String> onToggle;
@@ -33,15 +38,19 @@ class WordBankBuilder extends StatelessWidget {
       TileFeedback.correct => AnswerTileState.correct,
       TileFeedback.incorrect => AnswerTileState.incorrect,
     };
+    final tall = pronunciations.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AnswerSlotLine.sentence(
           grade: gradeOf(feedback),
+          tallPills: tall,
           children: [
             for (final token in built)
               AnswerTile(
                 label: token,
+                pronunciation: pronunciations[token],
+                tallPill: tall,
                 shape: AnswerTileShape.pill,
                 state: placed,
                 onTap: _locked ? null : () => onToggle(token),
@@ -56,6 +65,8 @@ class WordBankBuilder extends StatelessWidget {
             for (final token in wordBank)
               AnswerTile(
                 label: token,
+                pronunciation: pronunciations[token],
+                tallPill: tall,
                 shape: AnswerTileShape.pill,
                 state: built.contains(token)
                     ? AnswerTileState.used

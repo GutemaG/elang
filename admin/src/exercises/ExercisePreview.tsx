@@ -16,6 +16,12 @@ const PAIR_TONES = [
 
 const shown = (text: string) => text || '…'
 
+/** A pronunciation under its text, small and muted as in the app. */
+function Spoken({ text, className }: { text?: string; className?: string }) {
+  if (!text) return null
+  return <span className={cx('block text-xs font-medium text-stone', className)}>{text}</span>
+}
+
 /** Roughly what the learner sees, with the correct answer shown. An
  * approximation of the app's screens, not a copy (story 005). Renders
  * whatever it is given, finished or not, so it can follow the form live. */
@@ -39,7 +45,12 @@ export function ExercisePreview({ body }: { body: ExerciseBody }) {
             <Icon name={info.icon} className="text-sm" />
             {info.name}
           </p>
-          <p className="text-lg leading-7 font-bold break-words text-coffee">{shown(body.prompt)}</p>
+          <div>
+            <p className="text-lg leading-7 font-bold break-words text-coffee">{shown(body.prompt)}</p>
+            {body.type !== 'gap_fill' && 'pronunciation' in body.content && (
+              <Spoken text={body.content.pronunciation} className="mt-0.5 text-sm" />
+            )}
+          </div>
           <Body body={body} />
         </div>
       </div>
@@ -77,6 +88,7 @@ function Body({ body }: { body: ExerciseBody }) {
               {answer ? shown(answer.text) : '____'}
             </span>
             {body.content.sentence_after && <span> {body.content.sentence_after}</span>}
+            <Spoken text={body.content.pronunciation} className="text-sm leading-5" />
           </p>
           <Choices choices={body.content.choices} correct={body.answer_key.correct_choice_id} inline />
         </>
@@ -99,6 +111,7 @@ function Body({ body }: { body: ExerciseBody }) {
                 className="rounded-md border border-forest-line bg-forest-tint px-3 py-1.5 text-base font-bold text-forest"
               >
                 {shown(byId.get(id)?.text ?? '')}
+                <Spoken text={byId.get(id)?.pronunciation} className="text-center" />
               </li>
             ))}
             {sequence.length === 0 && <li className="text-sm text-stone">No answer yet.</li>}
@@ -116,6 +129,7 @@ function Body({ body }: { body: ExerciseBody }) {
                   )}
                 >
                   {shown(t.text)}
+                  <Spoken text={t.pronunciation} className="text-center" />
                   {!used && <span className="sr-only"> (distractor)</span>}
                 </li>
               )
@@ -142,7 +156,10 @@ function Body({ body }: { body: ExerciseBody }) {
                   i === undefined ? 'border-line bg-surface text-coffee' : PAIR_TONES[i % PAIR_TONES.length],
                 )}
               >
-                <span className="min-w-0 break-words">{shown(t.text)}</span>
+                <span className="min-w-0 break-words">
+                  {shown(t.text)}
+                  <Spoken text={t.pronunciation} />
+                </span>
                 {i !== undefined && <span className="tnum text-[0.625rem] font-bold opacity-70">{i + 1}</span>}
               </li>
             )
@@ -224,7 +241,10 @@ function Choices({ choices, correct, inline }: { choices: Tile[]; correct: strin
               isCorrect ? 'border-forest bg-forest-tint text-forest' : 'border-line bg-surface text-coffee',
             )}
           >
-            <span className="min-w-0 flex-1 break-words">{shown(c.text)}</span>
+            <span className="min-w-0 flex-1 break-words">
+              {shown(c.text)}
+              <Spoken text={c.pronunciation} />
+            </span>
             {isCorrect && (
               <>
                 <Icon name="check_circle" className="text-lg" filled />

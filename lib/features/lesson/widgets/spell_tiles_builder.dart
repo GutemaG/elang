@@ -41,7 +41,9 @@ class SpellTilesBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textById = {for (final tile in tiles) tile.id: tile.text};
+    final byId = {for (final tile in tiles) tile.id: tile};
+    // One tile with a pronunciation makes every pill tall, so they line up.
+    final tall = tiles.any((tile) => tile.pronunciation != null);
     final placedState = switch (feedback) {
       TileFeedback.none => AnswerTileState.idle,
       TileFeedback.correct => AnswerTileState.correct,
@@ -54,11 +56,14 @@ class SpellTilesBuilder extends StatelessWidget {
           grade: gradeOf(feedback),
           hint: context.l10n.spellHint,
           minLines: 1,
+          tallPills: tall,
           children: [
             for (final id in placed)
               AnswerTile(
                 key: ValueKey('placed-$id'),
-                label: textById[id] ?? '',
+                label: byId[id]?.text ?? '',
+                pronunciation: byId[id]?.pronunciation,
+                tallPill: tall,
                 shape: AnswerTileShape.pill,
                 state: placedState,
                 onTap: _locked ? null : () => onToggle(id),
@@ -77,6 +82,8 @@ class SpellTilesBuilder extends StatelessWidget {
               AnswerTile(
                 key: ValueKey('bank-${tile.id}'),
                 label: tile.text,
+                pronunciation: tile.pronunciation,
+                tallPill: tall,
                 shape: AnswerTileShape.pill,
                 state: placed.contains(tile.id)
                     ? AnswerTileState.used

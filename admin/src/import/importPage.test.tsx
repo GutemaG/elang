@@ -258,7 +258,7 @@ describe('exporting a lesson', () => {
     // A byte-order mark first, so Excel reads it as UTF-8.
     expect([...new Uint8Array(await bytesOf(saved[0]!.blob)).slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
     const csvText = await saved[0]!.text
-    expect(csvText.startsWith(`${HEADER}\r\n`)).toBe(true)
+    expect(csvText.startsWith(`type,prompt,pronunciation,sentence,answer,answer_pronunciation,wrong,wrong_pronunciation,audio_url,descriptions\r\n`)).toBe(true)
     expect(csvText.split('\r\n')).toHaveLength(1 + lessonExercises().length)
     const json = JSON.parse(await saved[1]!.text) as { lesson: string; exercises: unknown[] }
     expect(json.lesson).toBe('Hello')

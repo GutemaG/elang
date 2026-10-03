@@ -283,6 +283,8 @@ Map<String, dynamic> packExerciseToJson(
     'promptTranslation': e.promptTranslation,
     'options': e.options,
     'correctOptionIndex': e.correctOptionIndex,
+    ..._optionPronunciationsToJson(e.optionPronunciations),
+    ..._pronunciationToJson(e.pronunciation),
   },
   ListeningExercise e => {
     'type': 'listening',
@@ -291,6 +293,7 @@ Map<String, dynamic> packExerciseToJson(
     'instruction': e.instruction,
     'options': e.options,
     'correctOptionIndex': e.correctOptionIndex,
+    ..._optionPronunciationsToJson(e.optionPronunciations),
   },
   SentenceConstructionExercise e => {
     'type': 'sentence_construction',
@@ -298,16 +301,22 @@ Map<String, dynamic> packExerciseToJson(
     'promptTranslation': e.promptTranslation,
     'wordBank': e.wordBank,
     'correctSentence': e.correctSentence,
+    if (e.wordPronunciations.isNotEmpty)
+      'wordPronunciations': e.wordPronunciations,
+    ..._pronunciationToJson(e.pronunciation),
   },
   MatchPairsExercise e => {
     'type': 'match_pairs',
     'id': e.id,
     'prompt': e.prompt,
-    'leftTiles': e.leftTiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
+    'leftTiles': e.leftTiles
+        .map((t) => _tileToJson(t.id, t.text, t.pronunciation))
+        .toList(),
     'rightTiles': e.rightTiles
-        .map((t) => {'id': t.id, 'text': t.text})
+        .map((t) => _tileToJson(t.id, t.text, t.pronunciation))
         .toList(),
     'correctPairs': e.correctPairs,
+    ..._pronunciationToJson(e.pronunciation),
   },
   // Unlike every other seam a new exercise type touches, this map and its
   // matching `case` below are NOT checked by the compiler in both
@@ -322,6 +331,8 @@ Map<String, dynamic> packExerciseToJson(
     'sentenceAfter': e.sentenceAfter,
     'options': e.options,
     'correctOptionIndex': e.correctOptionIndex,
+    ..._optionPronunciationsToJson(e.optionPronunciations),
+    ..._pronunciationToJson(e.pronunciation),
   },
   // Bolt 053: the picture addresses are kept as they came. Downloading the
   // pictures into a pack, and rewriting these to local files, is bolt 054's.
@@ -331,6 +342,7 @@ Map<String, dynamic> packExerciseToJson(
     'prompt': e.prompt,
     'choices': e.choices.map(_pictureToJson).toList(),
     'correctOptionIndex': e.correctOptionIndex,
+    ..._pronunciationToJson(e.pronunciation),
   },
   AudioImageChoiceExercise e => {
     'type': 'audio_image_choice',
@@ -347,10 +359,38 @@ Map<String, dynamic> packExerciseToJson(
     'type': 'spell_tiles',
     'id': e.id,
     'prompt': e.prompt,
-    'tiles': e.tiles.map((t) => {'id': t.id, 'text': t.text}).toList(),
+    'tiles': e.tiles
+        .map((t) => _tileToJson(t.id, t.text, t.pronunciation))
+        .toList(),
     'correctSequence': e.correctSequence,
+    ..._pronunciationToJson(e.pronunciation),
   },
 };
+
+// Pronunciations are written only when there are some, so a pack saved
+// without any reads exactly as one saved before they existed.
+Map<String, dynamic> _pronunciationToJson(String? pronunciation) => {
+  'pronunciation': ?pronunciation,
+};
+
+Map<String, dynamic> _optionPronunciationsToJson(
+  List<String?> pronunciations,
+) => {
+  if (pronunciations.any((p) => p != null))
+    'optionPronunciations': pronunciations,
+};
+
+Map<String, dynamic> _tileToJson(
+  String id,
+  String text,
+  String? pronunciation,
+) => {'id': id, 'text': text, 'pronunciation': ?pronunciation};
+
+String? _pronunciationFromJson(Map<String, dynamic> json) =>
+    json['pronunciation'] as String?;
+
+List<String?> _optionPronunciationsFromJson(Map<String, dynamic> json) =>
+    (json['optionPronunciations'] as List?)?.cast<String?>() ?? const [];
 
 Map<String, dynamic> _pictureToJson(PictureChoice picture) => {
   'imageUrl': picture.imageUrl,
@@ -376,6 +416,8 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         promptTranslation: json['promptTranslation'] as String,
         options: (json['options'] as List).cast<String>(),
         correctOptionIndex: json['correctOptionIndex'] as int,
+        optionPronunciations: _optionPronunciationsFromJson(json),
+        pronunciation: _pronunciationFromJson(json),
       );
     case 'listening':
       return ListeningExercise(
@@ -384,6 +426,7 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         instruction: json['instruction'] as String,
         options: (json['options'] as List).cast<String>(),
         correctOptionIndex: json['correctOptionIndex'] as int,
+        optionPronunciations: _optionPronunciationsFromJson(json),
       );
     case 'sentence_construction':
       return SentenceConstructionExercise(
@@ -391,6 +434,10 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         promptTranslation: json['promptTranslation'] as String,
         wordBank: (json['wordBank'] as List).cast<String>(),
         correctSentence: (json['correctSentence'] as List).cast<String>(),
+        wordPronunciations:
+            (json['wordPronunciations'] as Map?)?.cast<String, String>() ??
+            const {},
+        pronunciation: _pronunciationFromJson(json),
       );
     case 'match_pairs':
       final leftTiles = (json['leftTiles'] as List)
@@ -405,6 +452,7 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
               (t) => MatchPairsTile(
                 id: t['id'] as String,
                 text: t['text'] as String,
+                pronunciation: _pronunciationFromJson(t),
               ),
             )
             .toList(),
@@ -413,10 +461,12 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
               (t) => MatchPairsTile(
                 id: t['id'] as String,
                 text: t['text'] as String,
+                pronunciation: _pronunciationFromJson(t),
               ),
             )
             .toList(),
         correctPairs: (json['correctPairs'] as Map).cast<String, String>(),
+        pronunciation: _pronunciationFromJson(json),
       );
     case 'gap_fill':
       return GapFillExercise(
@@ -426,6 +476,8 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         sentenceAfter: json['sentenceAfter'] as String,
         options: (json['options'] as List).cast<String>(),
         correctOptionIndex: json['correctOptionIndex'] as int,
+        optionPronunciations: _optionPronunciationsFromJson(json),
+        pronunciation: _pronunciationFromJson(json),
       );
     case 'image_choice':
       return ImageChoiceExercise(
@@ -433,6 +485,7 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         prompt: json['prompt'] as String,
         choices: _picturesFromJson(json['choices']),
         correctOptionIndex: json['correctOptionIndex'] as int,
+        pronunciation: _pronunciationFromJson(json),
       );
     case 'audio_image_choice':
       return AudioImageChoiceExercise(
@@ -449,11 +502,15 @@ Exercise packExerciseFromJson(Map<String, dynamic> json) {
         prompt: json['prompt'] as String,
         tiles: tiles
             .map(
-              (t) =>
-                  SpellTile(id: t['id'] as String, text: t['text'] as String),
+              (t) => SpellTile(
+                id: t['id'] as String,
+                text: t['text'] as String,
+                pronunciation: _pronunciationFromJson(t),
+              ),
             )
             .toList(),
         correctSequence: (json['correctSequence'] as List).cast<String>(),
+        pronunciation: _pronunciationFromJson(json),
       );
     default:
       throw StateError('Unknown exercise type in cached pack: ${json['type']}');

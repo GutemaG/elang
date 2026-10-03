@@ -40,7 +40,10 @@ from app.domain.lesson.value_objects import (
 
 
 def choices_from_json(raw: list[dict[str, Any]]) -> tuple[Choice, ...]:
-    return tuple(Choice(id=item["id"], text=item["text"]) for item in raw)
+    return tuple(
+        Choice(id=item["id"], text=item["text"], pronunciation=item.get("pronunciation"))
+        for item in raw
+    )
 
 
 def pictures_from_json(raw: list[dict[str, Any]]) -> tuple[PictureChoice, ...]:
@@ -127,6 +130,15 @@ _AUDIO_TYPES = frozenset({ExerciseType.LISTENING, ExerciseType.AUDIO_IMAGE_CHOIC
 _PICTURE_KEYS = frozenset({"id", "image_url", "alt_text"})
 MAX_ALT_TEXT_LENGTH = 200
 
+# Romanization (`ቡና` -> `bunna`) is optional everywhere it may appear: on
+# any text tile, and as `content.pronunciation` for the question's own word
+# or sentence. Not on a question that is only heard: the word is never
+# written there, so neither is its pronunciation.
+_TILE_KEYS = frozenset({"id", "text"})
+_OPTIONAL_TILE_KEYS = frozenset({"pronunciation"})
+_OPTIONAL_CONTENT_KEYS = frozenset({"pronunciation"})
+MAX_PRONUNCIATION_LENGTH = 300
+
 
 def _answer_keys_for(exercise_type: ExerciseType) -> frozenset[str]:
     if exercise_type in (ExerciseType.SENTENCE_CONSTRUCTION, ExerciseType.SPELL_TILES):
@@ -136,13 +148,27 @@ def _answer_keys_for(exercise_type: ExerciseType) -> frozenset[str]:
     return frozenset({"correct_choice_id"})
 
 
-def _check_keys(where: str, data: Any, allowed: frozenset[str]) -> None:
+def _check_keys(
+    where: str,
+    data: Any,
+    allowed: frozenset[str],
+    optional: frozenset[str] = frozenset(),
+) -> None:
     if not isinstance(data, dict):
         raise InvalidExerciseError(where, f"{where} must be an object")
     for key in sorted(allowed - data.keys()):
         raise InvalidExerciseError(f"{where}.{key}", f"{where}.{key} is required")
-    for key in sorted(data.keys() - allowed):
+    for key in sorted(data.keys() - allowed - optional):
         raise InvalidExerciseError(f"{where}.{key}", f"{where}.{key} is not allowed here")
+
+
+def _check_pronunciation(where: str, value: Any) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise InvalidExerciseError(where, f"{where} must be a non-empty string")
+    if len(value) > MAX_PRONUNCIATION_LENGTH:
+        raise InvalidExerciseError(
+            where, f"{where} must be at most {MAX_PRONUNCIATION_LENGTH} characters"
+        )
 
 
 def _check_tiles(field: str, tiles: Any) -> None:
@@ -151,12 +177,18 @@ def _check_tiles(field: str, tiles: Any) -> None:
     seen: set[str] = set()
     for i, tile in enumerate(tiles):
         where = f"{field}[{i}]"
-        if not isinstance(tile, dict) or set(tile) != {"id", "text"}:
-            raise InvalidExerciseError(where, f"{where} must have exactly an id and a text")
+        if not isinstance(tile, dict) or not (
+            _TILE_KEYS <= tile.keys() <= _TILE_KEYS | _OPTIONAL_TILE_KEYS
+        ):
+            raise InvalidExerciseError(
+                where, f"{where} must have an id and a text, and optionally a pronunciation"
+            )
         if not isinstance(tile["id"], str) or not tile["id"]:
             raise InvalidExerciseError(f"{where}.id", f"{where}.id must be a non-empty string")
         if not isinstance(tile["text"], str) or not tile["text"]:
             raise InvalidExerciseError(f"{where}.text", f"{where}.text must be a non-empty string")
+        if "pronunciation" in tile:
+            _check_pronunciation(f"{where}.pronunciation", tile["pronunciation"])
         if tile["id"] in seen:
             raise InvalidExerciseError(f"{where}.id", f"{where}.id repeats {tile['id']!r}")
         seen.add(tile["id"])
@@ -288,9 +320,16 @@ def validate_exercise(
     if not isinstance(prompt, str) or not prompt.strip():
         raise InvalidExerciseError("prompt", "prompt must not be empty")
 
-    _check_keys("content", content, _CONTENT_KEYS[parsed_type])
+    _check_keys(
+        "content",
+        content,
+        _CONTENT_KEYS[parsed_type],
+        frozenset() if parsed_type in _AUDIO_TYPES else _OPTIONAL_CONTENT_KEYS,
+    )
     for key, value in content.items():
-        if key == "choices" and parsed_type in _PICTURE_TYPES:
+        if key == "pronunciation":
+            _check_pronunciation("content.pronunciation", value)
+        elif key == "choices" and parsed_type in _PICTURE_TYPES:
             _check_pictures(f"content.{key}", value, allow_local_media=allow_local_media)
         elif key in _TILE_LIST_KEYS:
             _check_tiles(f"content.{key}", value)

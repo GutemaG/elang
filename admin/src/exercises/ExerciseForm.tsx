@@ -7,7 +7,7 @@ import { FieldError, Section } from './fields'
 import { PairsEditor } from './PairsEditor'
 import { PictureChoicesEditor } from './PictureChoicesEditor'
 import { SequenceEditor } from './SequenceEditor'
-import { setAudioUrl, setPrompt, setSentence } from './model'
+import { isPronouncedBody, setAudioUrl, setPronunciation, setPrompt, setSentence } from './model'
 
 const PLACEHOLDERS: Partial<Record<ExerciseBody['type'], string>> = {
   image_choice: 'e.g. Choose the picture: ‘ቡና’',
@@ -44,6 +44,13 @@ export function ExerciseForm({
           className={cx(FIELD_CLASS, 'h-auto min-h-20 resize-y py-2 leading-6')}
         />
         <FieldError slot="prompt" />
+        {isPronouncedBody(body) && body.type !== 'gap_fill' && (
+          <QuestionPronunciation
+            body={body}
+            label="Pronunciation of the word or sentence in the prompt"
+            onChange={onChange}
+          />
+        )}
       </Section>
 
       {(body.type === 'listening' || body.type === 'audio_image_choice') && (
@@ -80,6 +87,12 @@ export function ExerciseForm({
             />
           </div>
           <FieldError slot="sentence" />
+          <QuestionPronunciation
+            body={body}
+            label="Pronunciation of the sentence"
+            placeholder="e.g. ___ ifeligalehu"
+            onChange={onChange}
+          />
         </Section>
       )}
 
@@ -93,6 +106,36 @@ export function ExerciseForm({
       {(body.type === 'image_choice' || body.type === 'audio_image_choice') && (
         <PictureChoicesEditor body={body} lessonId={lessonId} onChange={onChange} onBusy={onBusy} />
       )}
+    </div>
+  )
+}
+
+/** The question's word or sentence in Latin letters, for learners who can't
+ * read Fidel yet. Optional: left empty, nothing is stored. */
+function QuestionPronunciation<B extends Exclude<ExerciseBody, { type: 'listening' | 'audio_image_choice' }>>({
+  body,
+  label,
+  placeholder = 'e.g. bunna (optional)',
+  onChange,
+}: {
+  body: B
+  label: string
+  placeholder?: string
+  onChange: (next: ExerciseBody) => void
+}) {
+  return (
+    <div className="mt-3">
+      <label className="mb-1 block text-xs font-semibold text-stone">
+        {label} <span className="font-normal">(optional, in Latin letters)</span>
+        <Input
+          aria-label={label}
+          placeholder={placeholder}
+          value={body.content.pronunciation ?? ''}
+          className="mt-1"
+          onChange={(e) => onChange(setPronunciation(body, e.target.value))}
+        />
+      </label>
+      <FieldError slot="pronunciation" />
     </div>
   )
 }

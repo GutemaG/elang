@@ -6,7 +6,8 @@ import type { ExerciseBody, Tile } from '../types'
 import { joinItems, writeCsv, type CsvRow } from './csvFormat'
 
 export function bodyToRow(body: ExerciseBody): Partial<CsvRow> {
-  const base = { type: body.type, prompt: body.prompt }
+  const question = 'pronunciation' in body.content ? body.content.pronunciation : undefined
+  const base = { type: body.type, prompt: body.prompt, ...(question ? { pronunciation: question } : {}) }
   switch (body.type) {
     case 'multiple_choice':
       return {
@@ -38,13 +39,15 @@ export function bodyToRow(body: ExerciseBody): Partial<CsvRow> {
         ...sequenceCells(body.content.tiles, body.answer_key.correct_sequence),
       }
     case 'match_pairs': {
-      const text = (tiles: Tile[], id: string) => tiles.find((t) => t.id === id)?.text ?? ''
+      const find = (tiles: Tile[], id: string) => tiles.find((t) => t.id === id)
+      const pairs = body.answer_key.correct_pairs.map(
+        ([l, r]) => [find(body.content.left_tiles, l), find(body.content.right_tiles, r)] as const,
+      )
       return {
         ...base,
-        answer: joinItems(
-          body.answer_key.correct_pairs.map(
-            ([l, r]) => `${text(body.content.left_tiles, l)}=${text(body.content.right_tiles, r)}`,
-          ),
+        answer: joinItems(pairs.map(([l, r]) => `${l?.text ?? ''}=${r?.text ?? ''}`)),
+        answer_pronunciation: spokenCell(
+          pairs.map(([l, r]) => (l?.pronunciation || r?.pronunciation ? `${l?.pronunciation ?? ''}=${r?.pronunciation ?? ''}` : '')),
         ),
       }
     }
@@ -70,21 +73,34 @@ export function bodyToRow(body: ExerciseBody): Partial<CsvRow> {
   }
 }
 
+/** Pronunciations by place, empty places kept (`bunna |  | wuha`) so each
+ * stays with its item; none at all is an empty cell. */
+function spokenCell(items: readonly string[]): string {
+  return items.some(Boolean) ? items.map((item) => item.replaceAll('|', '\\|')).join(' | ') : ''
+}
+
 function choiceCells(choices: Tile[], correctId: string): Partial<CsvRow> {
+  const right = choices.filter((c) => c.id === correctId)
+  const wrong = choices.filter((c) => c.id !== correctId)
   return {
-    answer: joinItems(choices.filter((c) => c.id === correctId).map((c) => c.text)),
-    wrong: joinItems(choices.filter((c) => c.id !== correctId).map((c) => c.text)),
+    answer: joinItems(right.map((c) => c.text)),
+    answer_pronunciation: right[0]?.pronunciation ?? '',
+    wrong: joinItems(wrong.map((c) => c.text)),
+    wrong_pronunciation: spokenCell(wrong.map((c) => c.pronunciation ?? '')),
   }
 }
 
 /** The answer's tiles in order, joined by `|` (so a tile of several
  * letters, or a word with a space, survives), and the extra tiles. */
 function sequenceCells(tiles: Tile[], sequence: string[]): Partial<CsvRow> {
-  const byId = new Map(tiles.map((t) => [t.id, t.text]))
+  const byId = new Map(tiles.map((t) => [t.id, t]))
   const used = new Set(sequence)
+  const extra = tiles.filter((t) => !used.has(t.id))
   return {
-    answer: joinItems(sequence.map((id) => byId.get(id) ?? '')),
-    wrong: joinItems(tiles.filter((t) => !used.has(t.id)).map((t) => t.text)),
+    answer: joinItems(sequence.map((id) => byId.get(id)?.text ?? '')),
+    answer_pronunciation: spokenCell(sequence.map((id) => byId.get(id)?.pronunciation ?? '')),
+    wrong: joinItems(extra.map((t) => t.text)),
+    wrong_pronunciation: spokenCell(extra.map((t) => t.pronunciation ?? '')),
   }
 }
 

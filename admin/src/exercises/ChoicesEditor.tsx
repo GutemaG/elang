@@ -7,6 +7,7 @@ import {
   missingAnswer,
   moveChoice,
   removeChoice,
+  setChoicePronunciation,
   setChoiceText,
   type ChoiceBody,
 } from './model'
@@ -25,7 +26,10 @@ export function ChoicesEditor<B extends ChoiceBody>({
   const missing = missingAnswer(body)
 
   return (
-    <Section title="Choices" hint="Type each choice, then mark the one that is correct.">
+    <Section
+      title="Choices"
+      hint="Type each choice, then mark the one that is correct. Pronunciation is optional: the choice in Latin letters, shown under it."
+    >
       <div role="radiogroup" aria-label="Correct choice" className="space-y-2">
         {choices.map((choice, i) => {
           const isCorrect = choice.id === correct
@@ -54,6 +58,14 @@ export function ChoicesEditor<B extends ChoiceBody>({
                   value={choice.text}
                   className="flex-1"
                   onChange={(e) => onChange(setChoiceText(body, i, e.target.value))}
+                />
+                <Input
+                  aria-label={`Choice ${i + 1} pronunciation`}
+                  title="Pronunciation in Latin letters (optional)"
+                  placeholder="Pronunciation"
+                  value={choice.pronunciation ?? ''}
+                  className="w-28 sm:w-36"
+                  onChange={(e) => onChange(setChoicePronunciation(body, i, e.target.value))}
                 />
                 {isCorrect && (
                   <span className="hidden shrink-0 text-xs font-bold tracking-wide text-forest uppercase sm:inline">

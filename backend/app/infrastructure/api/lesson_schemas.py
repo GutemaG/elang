@@ -14,14 +14,28 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
 
 from app.infrastructure.api.course_schemas import CourseInfoResponse
 
 
-class ChoiceResponse(BaseModel):
+class _OmitsNoPronunciation(BaseModel):
+    """Leaves `pronunciation` out when there is none, so an exercise without
+    romanization is served exactly as it was before the field existed."""
+
+    @model_serializer(mode="wrap")
+    def _omit_no_pronunciation(self, handler: SerializerFunctionWrapHandler) -> dict:
+        data = handler(self)
+        if data.get("pronunciation", "") is None:
+            del data["pronunciation"]
+        return data
+
+
+class ChoiceResponse(_OmitsNoPronunciation):
     id: str
     text: str
+    # The text in Latin letters (`ቡና` -> `bunna`); `None` when it has none.
+    pronunciation: str | None = None
 
 
 class CategoryResponse(BaseModel):
@@ -74,11 +88,13 @@ class SkillTreeResponse(BaseModel):
     practised_today: bool = False
 
 
-class MultipleChoiceExerciseResponse(BaseModel):
+class MultipleChoiceExerciseResponse(_OmitsNoPronunciation):
     id: str
     order_index: int
     type: Literal["multiple_choice"] = "multiple_choice"
     prompt: str
+    # The question's word or sentence in Latin letters, if it has one.
+    pronunciation: str | None = None
     choices: list[ChoiceResponse]
     correct_choice_id: str
 
@@ -93,26 +109,30 @@ class ListeningExerciseResponse(BaseModel):
     correct_choice_id: str
 
 
-class SentenceConstructionExerciseResponse(BaseModel):
+class SentenceConstructionExerciseResponse(_OmitsNoPronunciation):
     id: str
     order_index: int
     type: Literal["sentence_construction"] = "sentence_construction"
     prompt: str
+    # The question's word or sentence in Latin letters, if it has one.
+    pronunciation: str | None = None
     word_bank: list[ChoiceResponse]
     correct_sequence: list[str]
 
 
-class MatchPairsExerciseResponse(BaseModel):
+class MatchPairsExerciseResponse(_OmitsNoPronunciation):
     id: str
     order_index: int
     type: Literal["match_pairs"] = "match_pairs"
     prompt: str
+    # The question's word or sentence in Latin letters, if it has one.
+    pronunciation: str | None = None
     left_tiles: list[ChoiceResponse]
     right_tiles: list[ChoiceResponse]
     correct_pairs: list[tuple[str, str]]
 
 
-class GapFillExerciseResponse(BaseModel):
+class GapFillExerciseResponse(_OmitsNoPronunciation):
     """`gap_fill` (bolt 030): the sentence either side of the gap, the
     words to choose between, and which one is right. `correct_choice_id`
     is the same field `multiple_choice`/`listening` carry -- this type
@@ -123,13 +143,15 @@ class GapFillExerciseResponse(BaseModel):
     order_index: int
     type: Literal["gap_fill"] = "gap_fill"
     prompt: str
+    # The question's word or sentence in Latin letters, if it has one.
+    pronunciation: str | None = None
     sentence_before: str
     sentence_after: str
     choices: list[ChoiceResponse]
     correct_choice_id: str
 
 
-class SpellTilesExerciseResponse(BaseModel):
+class SpellTilesExerciseResponse(_OmitsNoPronunciation):
     """`spell_tiles` (bolt 032): the character tiles a word is spelled
     from, shuffled and including distractors, plus the order that spells
     it. `correct_sequence` is the same field `sentence_construction`
@@ -147,6 +169,8 @@ class SpellTilesExerciseResponse(BaseModel):
     order_index: int
     type: Literal["spell_tiles"] = "spell_tiles"
     prompt: str
+    # The question's word or sentence in Latin letters, if it has one.
+    pronunciation: str | None = None
     tiles: list[ChoiceResponse]
     correct_sequence: list[str]
 
@@ -159,7 +183,7 @@ class PictureChoiceResponse(BaseModel):
     alt_text: str
 
 
-class ImageChoiceExerciseResponse(BaseModel):
+class ImageChoiceExerciseResponse(_OmitsNoPronunciation):
     """`image_choice` (bolt 050): read `prompt`, tap the matching picture.
     Answered with `correct_choice_id`, like `multiple_choice`."""
 
@@ -167,6 +191,8 @@ class ImageChoiceExerciseResponse(BaseModel):
     order_index: int
     type: Literal["image_choice"] = "image_choice"
     prompt: str
+    # The question's word or sentence in Latin letters, if it has one.
+    pronunciation: str | None = None
     choices: list[PictureChoiceResponse]
     correct_choice_id: str
 

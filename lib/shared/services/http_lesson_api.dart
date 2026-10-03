@@ -276,6 +276,14 @@ class HttpLessonApi implements LessonApi {
     return _toExercise(json);
   }
 
+  /// A tile's or an exercise's `pronunciation`, or `null` when it has
+  /// none: the server leaves the key out then.
+  static String? _pronunciationOf(Map<String, dynamic> json) =>
+      switch (json['pronunciation']) {
+        final String spoken when spoken.trim().isNotEmpty => spoken,
+        _ => null,
+      };
+
   Exercise _toExercise(Map<String, dynamic> json) {
     final type = json['type'] as String;
     final id = json['id'] as String;
@@ -301,6 +309,8 @@ class HttpLessonApi implements LessonApi {
           correctOptionIndex: choices.indexWhere(
             (c) => c['id'] == correctChoiceId,
           ),
+          optionPronunciations: choices.map(_pronunciationOf).toList(),
+          pronunciation: _pronunciationOf(json),
         );
       case 'listening':
         final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
@@ -313,6 +323,7 @@ class HttpLessonApi implements LessonApi {
           correctOptionIndex: choices.indexWhere(
             (c) => c['id'] == correctChoiceId,
           ),
+          optionPronunciations: choices.map(_pronunciationOf).toList(),
         );
       case 'sentence_construction':
         final wordBank = (json['word_bank'] as List)
@@ -330,6 +341,11 @@ class HttpLessonApi implements LessonApi {
           correctSentence: correctSequence
               .map((tileId) => textById[tileId]!)
               .toList(),
+          wordPronunciations: {
+            for (final tile in wordBank)
+              tile['text'] as String: ?_pronunciationOf(tile),
+          },
+          pronunciation: _pronunciationOf(json),
         );
       case 'match_pairs':
         final leftTiles = (json['left_tiles'] as List)
@@ -346,6 +362,7 @@ class HttpLessonApi implements LessonApi {
                 (t) => MatchPairsTile(
                   id: t['id'] as String,
                   text: t['text'] as String,
+                  pronunciation: _pronunciationOf(t),
                 ),
               )
               .toList(),
@@ -354,6 +371,7 @@ class HttpLessonApi implements LessonApi {
                 (t) => MatchPairsTile(
                   id: t['id'] as String,
                   text: t['text'] as String,
+                  pronunciation: _pronunciationOf(t),
                 ),
               )
               .toList(),
@@ -361,6 +379,7 @@ class HttpLessonApi implements LessonApi {
             for (final pair in correctPairs)
               pair[0] as String: pair[1] as String,
           },
+          pronunciation: _pronunciationOf(json),
         );
       case 'gap_fill':
         final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
@@ -375,6 +394,8 @@ class HttpLessonApi implements LessonApi {
           correctOptionIndex: choices.indexWhere(
             (c) => c['id'] == correctChoiceId,
           ),
+          optionPronunciations: choices.map(_pronunciationOf).toList(),
+          pronunciation: _pronunciationOf(json),
         );
       case 'image_choice':
         final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
@@ -386,6 +407,7 @@ class HttpLessonApi implements LessonApi {
           correctOptionIndex: choices.indexWhere(
             (c) => c['id'] == correctChoiceId,
           ),
+          pronunciation: _pronunciationOf(json),
         );
       case 'audio_image_choice':
         final choices = (json['choices'] as List).cast<Map<String, dynamic>>();
@@ -410,11 +432,15 @@ class HttpLessonApi implements LessonApi {
           prompt: json['prompt'] as String,
           tiles: tiles
               .map(
-                (t) =>
-                    SpellTile(id: t['id'] as String, text: t['text'] as String),
+                (t) => SpellTile(
+                  id: t['id'] as String,
+                  text: t['text'] as String,
+                  pronunciation: _pronunciationOf(t),
+                ),
               )
               .toList(),
           correctSequence: (json['correct_sequence'] as List).cast<String>(),
+          pronunciation: _pronunciationOf(json),
         );
       default:
         throw LessonApiException('Unknown exercise type: $type');

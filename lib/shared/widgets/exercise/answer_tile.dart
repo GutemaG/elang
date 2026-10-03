@@ -59,6 +59,11 @@ enum AnswerTileShape {
 ///
 /// The [AnswerTileShape.picture] shape draws [picture] instead of the
 /// label, and the label becomes what a screen reader reads.
+///
+/// A [pronunciation] (the label in Latin letters, `ቡና` -> `bunna`) shows
+/// as a smaller muted line under the label. Pills are all one height, so a
+/// pill shows it only in a row whose pills are all made tall
+/// ([tallPill]); a pill with a pronunciation is always tall.
 class AnswerTile extends StatefulWidget {
   const AnswerTile({
     super.key,
@@ -67,15 +72,28 @@ class AnswerTile extends StatefulWidget {
     this.shape = AnswerTileShape.row,
     this.onTap,
     this.picture,
+    this.pronunciation,
+    this.tallPill = false,
   }) : assert(
          (shape == AnswerTileShape.picture) == (picture != null),
          'A picture tile needs a picture, and only a picture tile takes one',
+       ),
+       assert(
+         shape != AnswerTileShape.picture || pronunciation == null,
+         'A picture tile has no label to pronounce',
        );
 
   final String label;
   final AnswerTileState state;
   final AnswerTileShape shape;
   final VoidCallback? onTap;
+
+  /// [label] in Latin letters; `null` shows no second line.
+  final String? pronunciation;
+
+  /// A pill as tall as one with a pronunciation, whether or not this one
+  /// has one, so every pill in a sentence or a bank lines up.
+  final bool tallPill;
 
   /// What a picture tile shows, fitted inside its square face. Any text it
   /// shows (a picture that failed to load) takes the tile's text colour.
@@ -97,6 +115,19 @@ class AnswerTile extends StatefulWidget {
 
   static const TextStyle labelStyle = AppTypography.bodyLg;
 
+  /// A pronunciation under a row's or a cell's label.
+  static const TextStyle pronunciationStyle = AppTypography.phonetic;
+
+  /// A pronunciation under a pill's label: smaller, so a tall pill stays
+  /// close to a plain one.
+  static const TextStyle pillPronunciationStyle = TextStyle(
+    fontFamily: AppTypography.fontFamily,
+    fontFamilyFallback: AppTypography.fontFamilyFallback,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    height: 16 / 12,
+  );
+
   /// How far a picture sits inside a picture tile's border.
   static const double pictureInset = AppSpacing.spaceXs;
 
@@ -105,13 +136,22 @@ class AnswerTile extends StatefulWidget {
 
   /// A pill's outer height (face and rim) at the current text scale. Every
   /// pill is this tall, Latin or Fidel, so a row of them lines up and the
-  /// answer line can rule its lines to match.
-  static double pillHeightOf(BuildContext context) {
-    final line =
-        (MediaQuery.textScalerOf(context).scale(labelStyle.fontSize!) *
-                labelStyle.height! *
-                AppTypography.ethiopicLineHeightFactor)
-            .ceilToDouble();
+  /// answer line can rule its lines to match. [withPronunciation] adds the
+  /// pronunciation line a tall pill holds.
+  static double pillHeightOf(
+    BuildContext context, {
+    bool withPronunciation = false,
+  }) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final label =
+        scaler.scale(labelStyle.fontSize!) *
+        labelStyle.height! *
+        AppTypography.ethiopicLineHeightFactor;
+    final spoken = withPronunciation
+        ? scaler.scale(pillPronunciationStyle.fontSize!) *
+              pillPronunciationStyle.height!
+        : 0.0;
+    final line = (label + spoken).ceilToDouble();
     final face = math.max(
       minPillFaceHeight,
       line + AppSpacing.spaceXs * 2 + borderWidth * 2,
@@ -161,6 +201,8 @@ class _AnswerTileState extends State<AnswerTile>
     super.dispose();
   }
 
+  bool get _tall => widget.tallPill || widget.pronunciation != null;
+
   bool get _interactive =>
       widget.onTap != null &&
       widget.state != AnswerTileState.used &&
@@ -198,7 +240,8 @@ class _AnswerTileState extends State<AnswerTile>
         shadows: (visible) =>
             context.shadows.tileRaised(look.rim, visible: visible),
         height: widget.shape == AnswerTileShape.pill
-            ? AnswerTile.pillHeightOf(context) - AppShadows.tileShelfDepth
+            ? AnswerTile.pillHeightOf(context, withPronunciation: _tall) -
+                  AppShadows.tileShelfDepth
             : null,
         child: _content(
           context,
@@ -238,6 +281,42 @@ class _AnswerTileState extends State<AnswerTile>
     );
   }
 
+  /// [text] with the pronunciation line under it, or [text] alone. The line
+  /// is muted until the tile is graded, then takes the grade's colour.
+  Widget _withPronunciation(
+    BuildContext context,
+    Widget text,
+    Color textColor, {
+    required bool graded,
+  }) {
+    final spoken = widget.pronunciation;
+    if (spoken == null) return text;
+    final pill = widget.shape == AnswerTileShape.pill;
+    final cell = widget.shape == AnswerTileShape.cell;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: cell || pill
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
+      children: [
+        text,
+        Text(
+          spoken,
+          textAlign: cell ? TextAlign.center : TextAlign.start,
+          maxLines: pill ? 1 : null,
+          softWrap: !pill,
+          style:
+              (pill
+                      ? AnswerTile.pillPronunciationStyle
+                      : AnswerTile.pronunciationStyle)
+                  .copyWith(
+                    color: graded ? textColor : context.colors.textMuted,
+                  ),
+        ),
+      ],
+    );
+  }
+
   Widget _content(
     BuildContext context,
     Color textColor,
@@ -264,6 +343,12 @@ class _AnswerTileState extends State<AnswerTile>
     final iconWidget = icon == null
         ? null
         : Icon(icon, size: AnswerTile.iconSize, color: look.border);
+    final label = _withPronunciation(
+      context,
+      text,
+      textColor,
+      graded: icon != null,
+    );
 
     switch (widget.shape) {
       case AnswerTileShape.row:
@@ -278,7 +363,7 @@ class _AnswerTileState extends State<AnswerTile>
             ),
             child: Row(
               children: [
-                Expanded(child: text),
+                Expanded(child: label),
                 if (iconWidget != null) ...[
                   const SizedBox(width: AppSpacing.spaceXs),
                   iconWidget,
@@ -300,7 +385,7 @@ class _AnswerTileState extends State<AnswerTile>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Flexible(child: text),
+                Flexible(child: label),
                 if (iconWidget != null) ...[
                   const SizedBox(width: AppSpacing.space2xs),
                   iconWidget,
@@ -318,7 +403,7 @@ class _AnswerTileState extends State<AnswerTile>
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.spaceMd),
           child: Center(
             widthFactor: 1,
-            child: FittedBox(fit: BoxFit.scaleDown, child: text),
+            child: FittedBox(fit: BoxFit.scaleDown, child: label),
           ),
         );
       case AnswerTileShape.picture:

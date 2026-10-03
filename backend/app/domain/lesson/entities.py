@@ -37,6 +37,9 @@ class Exercise:
     # vocab item, so this is nullable, not required -- `None` means this
     # exercise has no SRS tracking at all, not "not yet linked."
     vocab_item_id: str | None = None
+    # The question's word or sentence written in Latin letters, stored as
+    # `content.pronunciation`; `None` when the exercise has none.
+    pronunciation: str | None = None
 
 
 @dataclass

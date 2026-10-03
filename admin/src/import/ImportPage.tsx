@@ -550,6 +550,16 @@ function Help() {
           <li>
             <strong>descriptions</strong> (pictures, optional): for the answer's picture, then each wrong one.
           </li>
+          <li>
+            <strong>pronunciation</strong> (optional): the prompt's word or sentence in Latin letters, e.g.{' '}
+            <code>bunna</code>; for gap fill, the sentence with <code>___</code>. Not for questions that are only heard.
+          </li>
+          <li>
+            <strong>answer_pronunciation</strong>, <strong>wrong_pronunciation</strong> (optional): each item of{' '}
+            <strong>answer</strong> and <strong>wrong</strong> in Latin letters, in the same order, separated with{' '}
+            <code>|</code>. Leave a place empty for an item without one (<code>selam | | wuha</code>). For match pairs,
+            write <code>left=right</code> (<code>selam=</code> when only the left word needs one).
+          </li>
         </ul>
         <p>Choices are mixed up, so the answer isn't always first. The same file always gives the same order.</p>
         <div className="overflow-x-auto rounded border border-line">

@@ -79,6 +79,7 @@ def _exercise_model_to_domain(model: ExerciseModel) -> Exercise:
         content=_content_from_json(exercise_type, model.content),
         answer_key=_answer_key_from_json(exercise_type, model.answer_key),
         vocab_item_id=model.vocab_item_id,
+        pronunciation=model.content.get("pronunciation"),
     )
 
 

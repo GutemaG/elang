@@ -142,16 +142,23 @@ class Choice:
     sentence-construction word-bank tiles -- the same shape recurs across 2
     of the 3 exercise types, per the design system's "Choice & Match Tiles"
     component.
+
+    `pronunciation` is the text written in Latin letters (`ቡና` ->
+    `bunna`), for a learner who cannot read the script yet; `None` when the
+    tile has none.
     """
 
     id: str
     text: str
+    pronunciation: str | None = None
 
     def __post_init__(self) -> None:
         if not self.id:
             raise ValueError("Choice.id must be a non-empty string")
         if not self.text:
             raise ValueError("Choice.text must be a non-empty string")
+        if self.pronunciation is not None and not self.pronunciation:
+            raise ValueError("Choice.pronunciation must be a non-empty string when set")
 
 
 @dataclass(frozen=True)

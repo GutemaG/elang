@@ -16,10 +16,21 @@ import '../../l10n/app_localizations_en.dart';
 /// answer key to the client — that's an explicit open item for
 /// `001-lesson-service`'s Technical Design, not decided here.
 sealed class Exercise {
-  const Exercise({required this.id});
+  const Exercise({required this.id, this.pronunciation});
 
   final String id;
+
+  /// The question's word or sentence in Latin letters (`ቡና` -> `bunna`),
+  /// shown under it for a learner who cannot read the script yet; `null`
+  /// when the exercise has none. A question that is only heard has none.
+  final String? pronunciation;
 }
+
+/// The pronunciation of the option at [index] in [pronunciations], a list
+/// kept beside the options it describes; `null` when it has none, or the
+/// list is shorter (an exercise with no pronunciations has an empty list).
+String? pronunciationAt(List<String?> pronunciations, int index) =>
+    index < pronunciations.length ? pronunciations[index] : null;
 
 class MultipleChoiceExercise extends Exercise {
   const MultipleChoiceExercise({
@@ -28,6 +39,8 @@ class MultipleChoiceExercise extends Exercise {
     required this.promptTranslation,
     required this.options,
     required this.correctOptionIndex,
+    this.optionPronunciations = const [],
+    super.pronunciation,
   });
 
   /// The Amharic (or Afaan Oromo) prompt to translate/answer.
@@ -37,6 +50,9 @@ class MultipleChoiceExercise extends Exercise {
   final String promptTranslation;
   final List<String> options;
   final int correctOptionIndex;
+
+  /// Each option's pronunciation, by position (see [pronunciationAt]).
+  final List<String?> optionPronunciations;
 }
 
 class ListeningExercise extends Exercise {
@@ -46,6 +62,7 @@ class ListeningExercise extends Exercise {
     required this.instruction,
     required this.options,
     required this.correctOptionIndex,
+    this.optionPronunciations = const [],
   });
 
   /// Cloudflare R2 (or, in the fake, a placeholder) URL for the audio clip.
@@ -53,6 +70,9 @@ class ListeningExercise extends Exercise {
   final String instruction;
   final List<String> options;
   final int correctOptionIndex;
+
+  /// Each option's pronunciation, by position (see [pronunciationAt]).
+  final List<String?> optionPronunciations;
 }
 
 class SentenceConstructionExercise extends Exercise {
@@ -61,6 +81,8 @@ class SentenceConstructionExercise extends Exercise {
     required this.promptTranslation,
     required this.wordBank,
     required this.correctSentence,
+    this.wordPronunciations = const {},
+    super.pronunciation,
   });
 
   /// English sentence the learner builds the Amharic translation of.
@@ -72,6 +94,11 @@ class SentenceConstructionExercise extends Exercise {
 
   /// The correct token order — a subset (or all) of [wordBank].
   final List<String> correctSentence;
+
+  /// Each word's pronunciation, by its text: the word bank is keyed by
+  /// text, and the same word always sounds the same. A word with none is
+  /// not in it.
+  final Map<String, String> wordPronunciations;
 }
 
 /// One tappable tile in a [MatchPairsExercise]'s left or right column.
@@ -81,10 +108,17 @@ class SentenceConstructionExercise extends Exercise {
 /// position alone can no longer identify which left tile pairs with which
 /// right tile.
 class MatchPairsTile {
-  const MatchPairsTile({required this.id, required this.text});
+  const MatchPairsTile({
+    required this.id,
+    required this.text,
+    this.pronunciation,
+  });
 
   final String id;
   final String text;
+
+  /// [text] in Latin letters, if it has a pronunciation.
+  final String? pronunciation;
 }
 
 class MatchPairsExercise extends Exercise {
@@ -94,6 +128,7 @@ class MatchPairsExercise extends Exercise {
     required this.leftTiles,
     required this.rightTiles,
     required this.correctPairs,
+    super.pronunciation,
   });
 
   final String prompt;
@@ -130,6 +165,8 @@ class GapFillExercise extends Exercise {
     required this.sentenceAfter,
     required this.options,
     required this.correctOptionIndex,
+    this.optionPronunciations = const [],
+    super.pronunciation,
   });
 
   /// The instruction, already carrying the sentence's meaning in the
@@ -143,6 +180,9 @@ class GapFillExercise extends Exercise {
 
   final List<String> options;
   final int correctOptionIndex;
+
+  /// Each option's pronunciation, by position (see [pronunciationAt]).
+  final List<String?> optionPronunciations;
 }
 
 /// One picture a learner can choose in a picture question (019-image-
@@ -176,6 +216,7 @@ class ImageChoiceExercise extends Exercise {
     required this.prompt,
     required this.choices,
     required this.correctOptionIndex,
+    super.pronunciation,
   });
 
   /// The instruction and the word, e.g. "Choose the picture: 'ውሻ'".
@@ -210,10 +251,13 @@ class AudioImageChoiceExercise extends Exercise {
 /// [id]. Anything that looks a tile up by its text silently collapses such
 /// a word -- the one bug this type exists not to have.
 class SpellTile {
-  const SpellTile({required this.id, required this.text});
+  const SpellTile({required this.id, required this.text, this.pronunciation});
 
   final String id;
   final String text;
+
+  /// [text] in Latin letters (`ቡ` -> `bu`), if it has a pronunciation.
+  final String? pronunciation;
 }
 
 /// Spell a word by tapping its characters in order (016-spell-from-tiles-
@@ -229,6 +273,7 @@ class SpellTilesExercise extends Exercise {
     required this.prompt,
     required this.tiles,
     required this.correctSequence,
+    super.pronunciation,
   });
 
   /// What to spell, in the learner's own language, e.g. "Spell 'Hello'".

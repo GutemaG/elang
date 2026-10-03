@@ -45,14 +45,40 @@ const LETTERS = 'abcdefghijklmnopqrstuvwxyz'
 /** The columns each type reads. Anything written in another column is a
  * mistake worth hearing about, not something to drop quietly. */
 const USES: Record<ExerciseType, readonly Column[]> = {
-  multiple_choice: ['answer', 'wrong'],
-  listening: ['answer', 'wrong', 'audio_url'],
-  gap_fill: ['sentence', 'answer', 'wrong'],
-  sentence_construction: ['answer', 'wrong'],
-  spell_tiles: ['answer', 'wrong'],
-  match_pairs: ['answer'],
-  image_choice: ['answer', 'wrong', 'descriptions'],
+  multiple_choice: ['pronunciation', 'answer', 'answer_pronunciation', 'wrong', 'wrong_pronunciation'],
+  listening: ['answer', 'answer_pronunciation', 'wrong', 'wrong_pronunciation', 'audio_url'],
+  gap_fill: ['pronunciation', 'sentence', 'answer', 'answer_pronunciation', 'wrong', 'wrong_pronunciation'],
+  sentence_construction: ['pronunciation', 'answer', 'answer_pronunciation', 'wrong', 'wrong_pronunciation'],
+  spell_tiles: ['pronunciation', 'answer', 'answer_pronunciation', 'wrong', 'wrong_pronunciation'],
+  match_pairs: ['pronunciation', 'answer', 'answer_pronunciation'],
+  image_choice: ['pronunciation', 'answer', 'wrong', 'descriptions'],
   audio_image_choice: ['answer', 'wrong', 'audio_url', 'descriptions'],
+}
+
+const SEED_COLUMNS = ['type', 'prompt', 'sentence', 'answer', 'wrong', 'audio_url', 'descriptions'] as const
+
+/** A tile with its pronunciation, when it has one: the key is left out
+ * otherwise, as the editor does. */
+function tile(id: string, text: string, pronunciation: string | undefined): Tile {
+  return pronunciation ? { id, text, pronunciation } : { id, text }
+}
+
+/** The pronunciation of each of `count` items, by position: `cell` split
+ * on `|` (an empty place is an item without one), or, for `spaced` cells
+ * written without `|`, on spaces. Empty: none at all. */
+function pronunciations(row: CsvRow, column: Column, count: number, { spaced = false } = {}): (string | undefined)[] {
+  const cell = row[column]
+  if (!cell.trim()) return []
+  const items = cell.includes('|') || !spaced ? splitItems(cell, { keepEmpty: true }) : cell.trim().split(/\s+/)
+  if (items.length > count)
+    throw new RowProblem(`"${column}" has ${items.length} pronunciations but there are ${count} items to go with them.`)
+  return items.map((item) => item || undefined)
+}
+
+/** The question's own pronunciation, in `content`, when there is one. */
+function withQuestion<B extends ExerciseBody>(body: B, row: CsvRow): B {
+  const spoken = row.pronunciation.trim()
+  return spoken ? ({ ...body, content: { ...body.content, pronunciation: spoken } } as B) : body
 }
 
 export function readCsv(text: string): ReadResult {
@@ -108,14 +134,26 @@ export function rowToBody(row: CsvRow): ExerciseBody {
   if (!type) throw new RowProblem(`Unknown type "${row.type.trim()}".`)
   const prompt = row.prompt.trim()
   if (!prompt) throw new RowProblem('Add a prompt.')
-  for (const column of ['sentence', 'wrong', 'audio_url', 'descriptions'] as const) {
+  for (const column of [
+    'pronunciation',
+    'sentence',
+    'answer_pronunciation',
+    'wrong',
+    'wrong_pronunciation',
+    'audio_url',
+    'descriptions',
+  ] as const) {
     if (row[column].trim() && !USES[type].includes(column))
       throw new RowProblem(`${TYPE_INFO[type].name} doesn't use "${column}"; leave it empty.`)
   }
-  // Every cell, so a change anywhere in the row may reorder its choices,
-  // and nothing outside the row does.
-  const seed = COLUMNS.map((c) => row[c]).join('\u0000')
+  // Every cell but the pronunciations, so a change anywhere else in the row
+  // may reorder its choices, and nothing outside the row does. Adding
+  // pronunciations to a file keeps its order.
+  const seed = SEED_COLUMNS.map((c) => row[c]).join('\u0000')
+  return withQuestion(bodyOfType(type, prompt, row, seed), row)
+}
 
+function bodyOfType(type: ExerciseType, prompt: string, row: CsvRow, seed: string): ExerciseBody {
   switch (type) {
     case 'multiple_choice':
       return { type, prompt, ...choices(row, seed) }
@@ -142,7 +180,7 @@ export function rowToBody(row: CsvRow): ExerciseBody {
     }
     case 'sentence_construction': {
       const words = row.answer.includes('|') ? splitItems(row.answer) : row.answer.trim().split(/\s+/).filter(Boolean)
-      const { tiles, sequence } = sequenceTiles(words, row, 'w', seed)
+      const { tiles, sequence } = sequenceTiles(words, row, 'w', seed, { spaced: true })
       return {
         type,
         prompt,
@@ -152,7 +190,7 @@ export function rowToBody(row: CsvRow): ExerciseBody {
     }
     case 'spell_tiles': {
       const letters = row.answer.includes('|') ? splitItems(row.answer) : charactersOf(row.answer)
-      const { tiles, sequence } = sequenceTiles(letters, row, 't', seed)
+      const { tiles, sequence } = sequenceTiles(letters, row, 't', seed, { spaced: true })
       return {
         type,
         prompt,
@@ -204,9 +242,21 @@ function choices(
   seed: string,
 ): { content: { choices: Tile[] }; answer_key: { correct_choice_id: string } } {
   const [answer, wrong] = answerAndWrong(row, 'choice')
-  const shuffled = lettered(seededShuffle([answer, ...wrong], seed).map((text) => ({ text })))
+  // The answer is one choice, so its pronunciation is the whole cell.
+  const answerSpoken = row.answer_pronunciation.trim() || undefined
+  const wrongSpoken = pronunciations(row, 'wrong_pronunciation', wrong.length)
+  const items = [
+    { text: answer, spoken: answerSpoken },
+    ...wrong.map((text, i) => ({ text, spoken: wrongSpoken[i] })),
+  ]
+  // Shuffled by text alone, so adding pronunciations never reorders them.
+  const order = seededShuffle(
+    items.map((_, i) => i),
+    seed,
+  )
+  const shuffled = lettered(order.map((i) => items[i]!))
   return {
-    content: { choices: shuffled.map(({ id, text }) => ({ id, text })) },
+    content: { choices: shuffled.map(({ id, text, spoken }) => tile(id, text, spoken)) },
     answer_key: {
       correct_choice_id: shuffled.find((c) => c.text === answer)!.id,
     },
@@ -255,9 +305,15 @@ function sequenceTiles(
   row: CsvRow,
   prefix: string,
   seed: string,
+  { spaced = false } = {},
 ): { tiles: Tile[]; sequence: string[] } {
   if (answer.length === 0) throw new RowProblem('Add the answer in "answer".')
-  const all = [...answer, ...splitItems(row.wrong)].map((text, at) => ({
+  const wrong = splitItems(row.wrong)
+  const spoken = [
+    ...padded(pronunciations(row, 'answer_pronunciation', answer.length, { spaced }), answer.length),
+    ...pronunciations(row, 'wrong_pronunciation', wrong.length),
+  ]
+  const all = [...answer, ...wrong].map((text, at) => ({
     text,
     at,
   }))
@@ -267,9 +323,14 @@ function sequenceTiles(
   }))
   const idOf = new Map(tiles.map((tile) => [tile.at, tile.id]))
   return {
-    tiles: tiles.map(({ id, text }) => ({ id, text })),
+    tiles: tiles.map(({ id, text, at }) => tile(id, text, spoken[at])),
     sequence: answer.map((_, at) => idOf.get(at)!),
   }
+}
+
+/** `items` made `count` long, so the next list's places line up. */
+function padded<T>(items: T[], count: number): (T | undefined)[] {
+  return [...items, ...Array<undefined>(count - items.length).fill(undefined)]
 }
 
 function pairs(row: CsvRow): {
@@ -284,11 +345,18 @@ function pairs(row: CsvRow): {
     if (!left || !right) throw new RowProblem(`Write each pair as left=right, not "${item}".`)
     return [left, right] as const
   })
+  // One `left=right` per pair, either side may be empty: `selam= | bunna=`.
+  const spoken = pronunciations(row, 'answer_pronunciation', split.length).map((item) => {
+    if (!item) return [undefined, undefined] as const
+    const at = item.indexOf('=')
+    if (at < 0) throw new RowProblem(`Write each pair's pronunciations as left=right, not "${item}".`)
+    return [item.slice(0, at).trim() || undefined, item.slice(at + 1).trim() || undefined] as const
+  })
   // In order: the app shuffles each column itself.
   return {
     content: {
-      left_tiles: split.map(([text], i) => ({ id: `l${i + 1}`, text })),
-      right_tiles: split.map(([, text], i) => ({ id: `r${i + 1}`, text })),
+      left_tiles: split.map(([text], i) => tile(`l${i + 1}`, text, spoken[i]?.[0])),
+      right_tiles: split.map(([, text], i) => tile(`r${i + 1}`, text, spoken[i]?.[1])),
     },
     answer_key: {
       correct_pairs: split.map((_, i) => [`l${i + 1}`, `r${i + 1}`]),
