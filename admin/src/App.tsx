@@ -12,6 +12,7 @@ import { DashboardPage } from './learners/DashboardPage'
 import { LearnerPage } from './learners/LearnerPage'
 import { LearnersPage } from './learners/LearnersPage'
 import { AppShell } from './shell/AppShell'
+import { AppUpdatesPage } from './updates/AppUpdatesPage'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
 import { VocabularyPage } from './vocab/VocabularyPage'
@@ -48,6 +49,7 @@ export function App() {
             <Route path="/learners" element={<LearnersPage />} />
             <Route path="/learners/:learnerId" element={<LearnerPage />} />
             <Route path="/feedback" element={<FeedbackPage />} />
+            <Route path="/app-updates" element={<AppUpdatesPage />} />
             <Route
               path="/courses/:courseId/lessons/:lessonId/exercises/new/:type"
               element={<ExerciseEditorRoute />}

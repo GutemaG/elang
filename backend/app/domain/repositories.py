@@ -49,6 +49,10 @@ class AppConfigRepository(Protocol):
 
     async def get_all(self) -> dict[str, Any]: ...
 
+    async def set_values(self, values: dict[str, Any]) -> None:
+        """Stores each value under its key, replacing any row there."""
+        ...
+
 
 class AuthSessionRepository(Protocol):
     """Entity: `AuthSession`.

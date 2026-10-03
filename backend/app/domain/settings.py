@@ -14,7 +14,8 @@ seed or backfill: reading fills every key missing from storage with its
 default, so the new key works at once for every existing account.
 
 **Nothing secret may go in `APP_CONFIG`.** `GET /api/v1/config` returns it
-to anyone, signed in or not.
+to anyone, signed in or not. Admins change it from the admin site's App
+updates page (`PATCH /api/v1/admin/app-config`).
 
 `APP_CONFIG` holds the app versions the phone checks itself against (the
 bean constants stay in code for now). The Appearance choice stays on the
@@ -38,13 +39,15 @@ _TYPE_NAMES = {"bool": "true or false", "int": "a whole number", "str": "text"}
 class Setting:
     """One known key: its type (`bool`, `int` or `str`), its default, and for
     a `str`, optionally the only values it may take, or a `pattern` (a
-    regular expression the whole value must match)."""
+    regular expression the whole value must match); for an `int`,
+    optionally the smallest it may be (`minimum`)."""
 
     key: str
     type: str
     default: Any
     choices: tuple[str, ...] | None = None
     pattern: str | None = None
+    minimum: int | None = None
 
     def __post_init__(self) -> None:
         if self.type not in _TYPES:
@@ -55,6 +58,8 @@ class Setting:
             raise ValueError(f"{self.key}: only a str setting takes a pattern")
         if self.pattern is not None and self.choices is not None:
             raise ValueError(f"{self.key}: takes choices or a pattern, not both")
+        if self.minimum is not None and self.type != "int":
+            raise ValueError(f"{self.key}: only an int setting takes a minimum")
         if not self.accepts(self.default):
             raise ValueError(f"{self.key}: the default {self.default!r} is not valid")
 
@@ -69,6 +74,8 @@ class Setting:
             return False
         if self.pattern is not None and isinstance(value, str):
             return re.fullmatch(self.pattern, value) is not None
+        if self.minimum is not None and isinstance(value, int):
+            return value >= self.minimum
         return self.choices is None or value in self.choices
 
 
@@ -117,6 +124,8 @@ class SettingsRegistry:
                     expected = f"one of {', '.join(setting.choices)}"
                 elif setting.pattern is not None:
                     expected = f"text matching {setting.pattern}"
+                elif setting.minimum is not None:
+                    expected = f"a whole number from {setting.minimum}"
                 else:
                     expected = _TYPE_NAMES[setting.type]
                 problems.append(f"{key}: expected {expected}")
@@ -147,12 +156,12 @@ APP_CONFIG = SettingsRegistry(
         # older app shows a blocking "Update needed" screen. 0 lets every
         # build run. Raise it only once the new build is out to everyone
         # in that store, and when old builds would break against this API.
-        Setting("min_build_android", "int", 0),
-        Setting("min_build_ios", "int", 0),
+        Setting("min_build_android", "int", 0, minimum=0),
+        Setting("min_build_ios", "int", 0, minimum=0),
         # The newest iOS build in the App Store: an older app is offered
         # the update, without being made to take it. Android asks Google
         # Play instead, which knows when the update has reached that phone.
-        Setting("latest_build_ios", "int", 0),
+        Setting("latest_build_ios", "int", 0, minimum=0),
         # Where the iOS app's "Update" opens, e.g.
         # `https://apps.apple.com/app/id1234567890`. "" until it is listed.
         Setting("ios_store_url", "str", "", pattern=r"(?:https://\S+)?"),

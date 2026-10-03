@@ -233,3 +233,12 @@ class SqlAlchemyAppConfigRepository:
     async def get_all(self) -> dict[str, Any]:
         result = await self._session.execute(select(AppConfigModel))
         return {row.key: row.value for row in result.scalars()}
+
+    async def set_values(self, values: dict[str, Any]) -> None:
+        for key, value in values.items():
+            row = await self._session.get(AppConfigModel, key)
+            if row is None:
+                self._session.add(AppConfigModel(key=key, value=value))
+            else:
+                row.value = value
+        await self._session.flush()

@@ -42,6 +42,8 @@ export const routes = {
   // Feedback (027-learner-feedback): the list, and one message's status.
   feedback: `${ADMIN}/feedback`,
   feedbackItem: (id: string) => `${ADMIN}/feedback/${id}`,
+  // App updates: the builds the app checks itself against.
+  appConfig: `${ADMIN}/app-config`,
   // Exercises (bolt 038): a lesson's list, one exercise, and their order.
   exercises: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises`,
   exercise: (id: string) => `${ADMIN}/exercises/${id}`,

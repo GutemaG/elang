@@ -225,3 +225,25 @@ async def read_app_config(
     for key in registry.invalid_keys(stored):
         logger.warning("app_config_invalid_value key=%s", key)
     return registry.resolve(stored)
+
+
+async def update_app_config(
+    repo: AppConfigRepository,
+    changes: dict[str, Any],
+    *,
+    admin_email: str,
+    registry: SettingsRegistry = APP_CONFIG,
+) -> dict[str, Any]:
+    """Saves a partial map of app-wide values from the admin site and returns
+    them all. Checks the whole update first, so an unknown key or a value
+    of the wrong type or range raises `InvalidSettingError` (422) and
+    nothing is saved. The app reads the change on its next launch.
+    """
+    registry.validate(changes)
+    await repo.set_values(changes)
+    logger.info(
+        "app_config_updated admin=%s changes=%s",
+        admin_email,
+        {key: changes[key] for key in sorted(changes)},
+    )
+    return await read_app_config(repo, registry)

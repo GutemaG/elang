@@ -30,6 +30,18 @@ const NAV_GROUPS = [
       { to: '/feedback', icon: 'feedback', label: 'Feedback', current: (path: string) => path === '/feedback' },
     ],
   },
+  {
+    // The phone app itself: which builds may still run.
+    heading: 'App',
+    items: [
+      {
+        to: '/app-updates',
+        icon: 'system_update',
+        label: 'App updates',
+        current: (path: string) => path === '/app-updates',
+      },
+    ],
+  },
 ]
 
 function initialsOf(email: string): string {

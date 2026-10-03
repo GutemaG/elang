@@ -420,3 +420,20 @@ export interface AdminFeedbackPage {
   average_rating: number | null
   open_by_category: Record<FeedbackCategory, number>
 }
+
+/** What `GET /api/v1/config` sends the app: the builds it checks itself
+ * against for updates (`backend/app/domain/settings.py`). */
+export interface AdminAppConfig {
+  /** The oldest Android build (versionCode) still allowed to run. */
+  min_build_android: number
+  /** The oldest iOS build still allowed to run. */
+  min_build_ios: number
+  /** The newest iOS build in the App Store, offered to older ones. */
+  latest_build_ios: number
+  /** The App Store page iOS updates open; "" until listed. */
+  ios_store_url: string
+}
+
+export interface AdminAppConfigResponse {
+  config: AdminAppConfig
+}

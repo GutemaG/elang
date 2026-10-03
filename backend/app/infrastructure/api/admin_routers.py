@@ -11,12 +11,13 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, NamedTuple
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Body, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application import admin_audio_use_cases as audio_uc
 from app.application import admin_content_use_cases as uc
 from app.application import admin_image_use_cases as image_uc
+from app.application.use_cases import read_app_config, update_app_config
 from app.config import get_settings
 from app.domain.entities import User
 from app.domain.lesson.exceptions import ContentNotFoundError
@@ -59,7 +60,8 @@ from app.infrastructure.api.admin_schemas import (
     UpdateTitleRequest,
     UpdateVocabRequest,
 )
-from app.infrastructure.api.dependencies import require_admin
+from app.infrastructure.api.dependencies import get_app_config_repository, require_admin
+from app.infrastructure.api.user_schemas import AppConfigResponse
 from app.infrastructure.db.admin_content_repository import (
     EXERCISE,
     LESSON,
@@ -74,6 +76,7 @@ from app.infrastructure.db.lesson_models import (
     LanguageModel,
     VocabItemModel,
 )
+from app.infrastructure.db.repositories import SqlAlchemyAppConfigRepository
 from app.infrastructure.db.seed_category_content import PLACEHOLDER_AUDIO_URL
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.external.audio_link_checker import AudioLinkChecker
@@ -259,6 +262,32 @@ def _audio_status(exercise_type: str, content: dict[str, Any]) -> AudioStatus | 
 async def get_admin_me(admin: User = Depends(require_admin)) -> AdminMeResponse:
     """Story 001-admin-authorization: who the admin site is signed in as."""
     return AdminMeResponse(email=admin.email or "")
+
+
+# --- app configuration -----------------------------------------------------
+
+
+@router.get("/app-config", response_model=AppConfigResponse)
+async def get_app_config(
+    repo: SqlAlchemyAppConfigRepository = Depends(get_app_config_repository),
+) -> AppConfigResponse:
+    """Every app-wide value, stored or default: what `GET /api/v1/config`
+    sends the app (the minimum and latest builds for app updates)."""
+    return AppConfigResponse(config=await read_app_config(repo))
+
+
+@router.patch("/app-config", response_model=AppConfigResponse)
+async def patch_app_config(
+    changes: dict[str, Any] = Body(...),
+    repo: SqlAlchemyAppConfigRepository = Depends(get_app_config_repository),
+    admin: User = Depends(require_admin),
+) -> AppConfigResponse:
+    """Saves a partial map of app-wide values and returns them all. An
+    unknown key, a wrong type or a negative build is `422
+    invalid_setting`, and nothing is saved."""
+    return AppConfigResponse(
+        config=await update_app_config(repo, changes, admin_email=admin.email or "")
+    )
 
 
 # --- languages -------------------------------------------------------------

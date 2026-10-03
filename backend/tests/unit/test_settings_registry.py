@@ -184,3 +184,23 @@ class TestAppLanguage:
     def test_refuses_anything_else(self, value: object) -> None:
         with pytest.raises(InvalidSettingError, match="app_language"):
             ACCOUNT_SETTINGS.validate({"app_language": value})
+
+
+class TestMinimum:
+    """An `int` setting may name the smallest value it takes."""
+
+    def test_a_value_below_the_minimum_is_refused(self) -> None:
+        build = Setting("build", "int", 0, minimum=0)
+        assert build.accepts(0)
+        assert build.accepts(7)
+        assert not build.accepts(-1)
+        with pytest.raises(InvalidSettingError, match="a whole number from 0"):
+            SettingsRegistry([build]).validate({"build": -1})
+
+    def test_only_an_int_takes_a_minimum(self) -> None:
+        with pytest.raises(ValueError, match="only an int"):
+            Setting("name", "str", "", minimum=0)
+
+    def test_the_default_must_meet_it(self) -> None:
+        with pytest.raises(ValueError, match="default"):
+            Setting("build", "int", 0, minimum=1)
