@@ -9,7 +9,7 @@ import type { AdminSoundChart, AdminSoundLetter, SoundLetterChange } from '../ty
 import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
-import { FIELD_CLASS } from '../ui/Input'
+import { LetterPicker } from './LetterPicker'
 import { englishOf, matchFiles, uploadSound } from './model'
 import { useSoundChart } from './useSoundChart'
 
@@ -297,20 +297,13 @@ function FileRow({
         </div>
       </td>
       <td className="px-4 py-2">
-        <select
-          aria-label={`Letter for ${row.file.name}`}
-          className={cx(FIELD_CLASS, 'h-9 w-auto min-w-[9rem] sm:h-9')}
+        <LetterPicker
+          label={`Letter for ${row.file.name}`}
+          letters={letters}
           value={row.letterId}
           disabled={disabled}
-          onChange={(e) => onPick(e.target.value)}
-        >
-          <option value="">Pick a letter</option>
-          {letters.map((x) => (
-            <option key={x.id} value={x.id}>
-              {x.glyph} · {x.romanization}
-            </option>
-          ))}
-        </select>
+          onPick={onPick}
+        />
       </td>
       <td className="px-4 py-2">
         <div className="flex items-center gap-1">

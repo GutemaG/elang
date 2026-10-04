@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FakeServer, type Call } from '../test/fakeServer'
 import { renderApp, withStoredSession } from '../test/renderApp'
 import type { AdminSoundChart, AdminSoundLetter, SoundLetterChange } from '../types'
-import { chartToCsv, csvToChanges, matchFiles } from './model'
+import { chartToCsv, csvToChanges, matchFiles, searchLetters } from './model'
 
 vi.mock('../auth/GoogleButton', () => ({ GoogleButton: () => null }))
 
@@ -268,8 +268,8 @@ describe('uploading many files', () => {
     ]
     await userEvent.upload(screen.getByLabelText('Recordings'), files)
 
-    expect(screen.getByLabelText('Letter for hu.mp3')).toHaveValue('hu')
-    expect(screen.getByLabelText('Letter for hello.mp3')).toHaveValue('')
+    expect(screen.getByRole('combobox', { name: 'Letter for hu.mp3' })).toHaveValue('ሁ · hu')
+    expect(screen.getByRole('combobox', { name: 'Letter for hello.mp3' })).toHaveValue('')
     expect(screen.getByText('No match; pick a letter')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Upload 1 file' }))
@@ -278,6 +278,55 @@ describe('uploading many files', () => {
     expect(server.callsTo('POST', UPLOADS)[0]!.body).toEqual({ content_type: 'audio/mpeg', size: 900 })
     expect(server.callsTo('PUT', STORE_PATH)).toHaveLength(1)
     expect(await screen.findByText('1 recording saved and marked Needs review.')).toBeInTheDocument()
+  })
+
+  it('finds a letter by typing its romanization, glyph or hint', async () => {
+    chart = withCounts({
+      ...chart,
+      letters: [
+        ...chart.letters,
+        letter('le', 'ለ', 'le', { position: 4 }),
+        letter('lu', 'ሉ', 'lu', { position: 5, hint: { en: 'as in loot' } }),
+      ],
+    })
+    renderApp('/sounds/am/upload')
+    await screen.findByLabelText('Recordings')
+    await userEvent.upload(screen.getByLabelText('Recordings'), [
+      new File([new Uint8Array(900)], 'take-3.mp3', { type: 'audio/mpeg' }),
+    ])
+    const picker = screen.getByRole('combobox', { name: 'Letter for take-3.mp3' })
+    const options = () => screen.getAllByRole('option').map((o) => o.textContent)
+
+    // Every letter with its own sound, and none that borrow one.
+    await userEvent.click(picker)
+    expect(options()).toEqual(['ሀheRecorded', 'ሁhu', 'ለle', 'ሉlu'])
+
+    // The exact romanization first, then those that start with it.
+    await userEvent.type(picker, 'lu')
+    expect(options()).toEqual(['ሉlu'])
+    await userEvent.clear(picker)
+    await userEvent.type(picker, 'l')
+    expect(options()).toEqual(['ለle', 'ሉlu'])
+    await userEvent.keyboard('{ArrowDown}{Enter}')
+    expect(picker).toHaveValue('ሉ · lu')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+
+    // By the glyph, or by a word of its hint, with a click.
+    await userEvent.clear(picker)
+    await userEvent.type(picker, 'ለ')
+    await userEvent.click(screen.getByRole('option', { name: /ለ/ }))
+    expect(picker).toHaveValue('ለ · le')
+    await userEvent.clear(picker)
+    await userEvent.type(picker, 'loot')
+    expect(options()).toEqual(['ሉlu'])
+
+    // Nothing found says so, and Escape keeps the letter it had.
+    await userEvent.clear(picker)
+    await userEvent.type(picker, 'zz')
+    expect(screen.getByText('No letter matches “zz”.')).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(picker).toHaveValue('ለ · le')
+    expect(screen.getByRole('button', { name: 'Upload 1 file' })).toBeEnabled()
   })
 
   it('plays a file before it is sent, and the recording it would replace', async () => {
@@ -346,6 +395,24 @@ describe('the record session', () => {
 
 describe('the rules', () => {
   const file = (name: string) => new File(['x'], name, { type: 'audio/mpeg' })
+
+  it('searches letters best match first, without needing the apostrophe', () => {
+    const xs = [
+      letter('ta', 'ተ', 'te'),
+      letter('tta', 'ጠ', "t'e"),
+      letter('dh', 'Dh dh', 'dh'),
+      letter('d', 'D d', 'd', { hint: { en: 'as in dog' } }),
+    ]
+    const ids = (q: string) => searchLetters(xs, q).map((x) => x.id)
+    expect(ids('')).toEqual(['ta', 'tta', 'dh', 'd'])
+    expect(ids('te')).toEqual(['ta', 'tta'])
+    expect(ids("t'e")).toEqual(['tta', 'ta'])
+    expect(ids('d')).toEqual(['d', 'dh'])
+    expect(ids('Dh')).toEqual(['dh'])
+    expect(ids('ጠ')).toEqual(['tta'])
+    expect(ids('dog')).toEqual(['d'])
+    expect(ids('x')).toEqual([])
+  })
 
   it('names a file by romanization, glyph or either form of a Qubee letter', () => {
     const letters = [

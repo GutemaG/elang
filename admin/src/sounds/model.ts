@@ -120,6 +120,33 @@ export function matchFiles(files: File[], letters: AdminSoundLetter[]): FileMatc
   })
 }
 
+/** The letters a search names, best first: an exact romanization or
+ * glyph, then the same without apostrophes, then romanizations that start
+ * with it, then any that contain it,
+ * then English hints. Apostrophes may be left out, as in file names. An
+ * empty search keeps every letter in chart order. */
+export function searchLetters(letters: AdminSoundLetter[], query: string): AdminSoundLetter[] {
+  const q = norm(query)
+  if (!q) return letters
+  const bare = q.replace(/'/g, '')
+  const rank = (x: AdminSoundLetter): number => {
+    const roman = norm(x.romanization)
+    const romans = [roman, roman.replace(/'/g, '')]
+    const glyphs = [norm(x.glyph), ...x.glyph.split(/\s+/).map(norm)]
+    if (roman === q || glyphs.includes(q)) return 0
+    if (romans.includes(bare)) return 1
+    if (romans.some((r) => r.startsWith(bare))) return 2
+    if (romans.some((r) => r.includes(bare)) || glyphs.some((g) => g.includes(q))) return 3
+    if (norm(x.hint.en ?? '').includes(q)) return 4
+    return -1
+  }
+  return letters
+    .map((x, i) => ({ x, i, r: rank(x) }))
+    .filter((m) => m.r >= 0)
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .map((m) => m.x)
+}
+
 // --- CSV ---------------------------------------------------------------------------
 
 /** The columns, in order. `id` ties a row to its letter; the rest are what
