@@ -279,6 +279,61 @@ describe('uploading many files', () => {
     expect(server.callsTo('PUT', STORE_PATH)).toHaveLength(1)
     expect(await screen.findByText('1 recording saved and marked Needs review.')).toBeInTheDocument()
   })
+
+  it('plays a file before it is sent, and the recording it would replace', async () => {
+    let made = 0
+    URL.createObjectURL = vi.fn(() => `blob:file-${++made}`)
+    URL.revokeObjectURL = vi.fn()
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+    const { container } = renderApp('/sounds/am/upload')
+    await screen.findByLabelText('Recordings')
+    await userEvent.upload(screen.getByLabelText('Recordings'), [
+      new File([new Uint8Array(900)], 'hu.mp3', { type: 'audio/mpeg' }),
+      new File([new Uint8Array(900)], 'he.mp3', { type: 'audio/mpeg' }),
+    ])
+    const audio = () => container.querySelector('audio')!
+
+    await userEvent.click(screen.getByRole('button', { name: 'Play hu.mp3' }))
+    expect(audio().src).toBe('blob:file-1')
+    expect(play).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Stop hu.mp3' })).toHaveAttribute('aria-pressed', 'true')
+
+    // Another one takes over; ሀ already has a recording to compare with.
+    await userEvent.click(screen.getByRole('button', { name: 'Play ሀ’s current recording' }))
+    expect(audio().src).toBe('https://pub.example/am/sounds/aaaaaaaaaaaa.m4a')
+    expect(screen.getByRole('button', { name: 'Play hu.mp3' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Stop ሀ’s current recording' }))
+    expect(pause).toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Play he.mp3' }))
+    fireEvent.ended(audio())
+    expect(screen.queryByRole('button', { name: /^Stop/ })).not.toBeInTheDocument()
+
+    // Nothing was sent to hear them, and a removed file is let go.
+    expect(server.callsTo('POST', UPLOADS)).toHaveLength(0)
+    await userEvent.click(screen.getByRole('button', { name: 'Remove hu.mp3' }))
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:file-1')
+    play.mockRestore()
+    pause.mockRestore()
+  })
+
+  it('says when the browser cannot play a file', async () => {
+    URL.createObjectURL = vi.fn(() => 'blob:file')
+    URL.revokeObjectURL = vi.fn()
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(new Error('NotSupportedError'))
+    renderApp('/sounds/am/upload')
+    await screen.findByLabelText('Recordings')
+    await userEvent.upload(screen.getByLabelText('Recordings'), [
+      new File([new Uint8Array(900)], 'hu.mp3', { type: 'audio/mpeg' }),
+    ])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Play hu.mp3' }))
+
+    expect(await screen.findByText(/can’t play that recording/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Play hu.mp3' })).toBeInTheDocument()
+    play.mockRestore()
+  })
 })
 
 describe('the record session', () => {

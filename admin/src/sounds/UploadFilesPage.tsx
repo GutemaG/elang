@@ -1,9 +1,9 @@
-import { useState, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { checkClip } from '../audio/formats'
 import { messageOf, useSession } from '../auth/SessionContext'
-import { plainMessage } from '../exercises/model'
+import { plainMessage, playableUrl } from '../exercises/model'
 import { plural } from '../format'
 import type { AdminSoundChart, AdminSoundLetter, SoundLetterChange } from '../types'
 import { Button } from '../ui/Button'
@@ -14,6 +14,8 @@ import { englishOf, matchFiles, uploadSound } from './model'
 import { useSoundChart } from './useSoundChart'
 
 interface Row {
+  /** Stays with the file as rows above it are removed. */
+  id: number
   file: File
   letterId: string
   ambiguous: boolean
@@ -69,6 +71,8 @@ function Uploader({
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
+  const nextId = useRef(0)
+  const player = useListener()
   const recordable = chart.letters.filter((x) => !x.same_as_id)
   const byId = new Map(chart.letters.map((x) => [x.id, x]))
 
@@ -81,6 +85,7 @@ function Uploader({
       ...matches.map((m) => {
         const check = checkClip(m.file)
         return {
+          id: nextId.current++,
           file: m.file,
           letterId: m.letter?.id ?? '',
           ambiguous: m.ambiguous,
@@ -166,6 +171,13 @@ function Uploader({
         />
       </label>
 
+      {player.element}
+      {player.problem && (
+        <p role="alert" className="text-sm text-danger">
+          {player.problem}
+        </p>
+      )}
+
       {rows.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-line bg-surface">
           <table className="w-full min-w-[34rem] text-sm">
@@ -182,14 +194,20 @@ function Uploader({
             <tbody>
               {rows.map((row, i) => (
                 <FileRow
-                  key={`${row.file.name}-${i}`}
+                  key={row.id}
                   row={row}
                   letters={recordable}
                   letter={byId.get(row.letterId)}
                   twice={twice.has(row.letterId)}
                   disabled={busy || row.state === 'done'}
                   onPick={(letterId) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, letterId, ambiguous: false } : r)))}
-                  onRemove={() => setRows((rs) => rs.filter((_, j) => j !== i))}
+                  onRemove={() => {
+                    player.forget(row.id, row.file)
+                    setRows((rs) => rs.filter((_, j) => j !== i))
+                  }}
+                  playing={player.playing}
+                  onPlayFile={() => player.toggleFile(row.id, row.file)}
+                  onPlayCurrent={player.toggleUrl}
                 />
               ))}
             </tbody>
@@ -210,7 +228,13 @@ function Uploader({
               {problem}
             </p>
           )}
-          <Button disabled={busy} onClick={() => setRows([])}>
+          <Button
+            disabled={busy}
+            onClick={() => {
+              player.forgetAll()
+              setRows([])
+            }}
+          >
             Clear
           </Button>
           <Button variant="primary" disabled={busy || ready.length === 0 || twice.size > 0} onClick={() => void upload()}>
@@ -231,6 +255,9 @@ function FileRow({
   disabled,
   onPick,
   onRemove,
+  playing,
+  onPlayFile,
+  onPlayCurrent,
 }: {
   row: Row
   letters: AdminSoundLetter[]
@@ -239,6 +266,10 @@ function FileRow({
   disabled: boolean
   onPick: (letterId: string) => void
   onRemove: () => void
+  /** What the page is playing: `file-{row id}`, or a recording's address. */
+  playing: string | null
+  onPlayFile: () => void
+  onPlayCurrent: (url: string) => void
 }) {
   let what: { text: string; tone: string }
   if (row.state === 'done') what = { text: 'Uploaded', tone: 'bg-forest-tint text-forest' }
@@ -252,8 +283,18 @@ function FileRow({
 
   return (
     <tr className="border-b border-line last:border-0">
-      <td className="max-w-[14rem] truncate px-4 py-2 font-mono text-xs" title={row.file.name}>
-        {row.file.name}
+      <td className="px-2 py-2">
+        <div className="flex max-w-[16rem] items-center gap-1">
+          <PlayButton
+            playing={playing === `file-${row.id}`}
+            label={row.file.name}
+            disabled={!!row.problem}
+            onClick={onPlayFile}
+          />
+          <span className="truncate font-mono text-xs" title={row.file.name}>
+            {row.file.name}
+          </span>
+        </div>
       </td>
       <td className="px-4 py-2">
         <select
@@ -272,7 +313,16 @@ function FileRow({
         </select>
       </td>
       <td className="px-4 py-2">
-        <span className={cx('rounded-full px-2.5 py-0.5 text-xs font-bold', what.tone)}>{what.text}</span>
+        <div className="flex items-center gap-1">
+          <span className={cx('rounded-full px-2.5 py-0.5 text-xs font-bold', what.tone)}>{what.text}</span>
+          {letter?.audio_url && row.state !== 'done' && (
+            <PlayButton
+              playing={playing === letter.audio_url}
+              label={`${letter.glyph}’s current recording`}
+              onClick={() => onPlayCurrent(letter.audio_url!)}
+            />
+          )}
+        </div>
       </td>
       <td className="px-2 py-2">
         <Button size="icon" variant="ghost" aria-label={`Remove ${row.file.name}`} disabled={disabled} onClick={onRemove}>
@@ -281,4 +331,104 @@ function FileRow({
       </td>
     </tr>
   )
+}
+
+function PlayButton({
+  playing,
+  label,
+  disabled,
+  onClick,
+}: {
+  playing: boolean
+  label: string
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      aria-label={`${playing ? 'Stop' : 'Play'} ${label}`}
+      aria-pressed={playing}
+      title={playing ? 'Stop' : `Play ${label}`}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <Icon name={playing ? 'stop' : 'play_arrow'} filled className="text-lg text-forest" />
+    </Button>
+  )
+}
+
+/** One hidden audio element for the whole table, so starting one sound stops
+ * the last. A file plays from this computer: nothing is sent to hear it. */
+function useListener() {
+  const ref = useRef<HTMLAudioElement>(null)
+  const urls = useRef(new Map<File, string>())
+  const [playing, setPlaying] = useState<string | null>(null)
+  const [problem, setProblem] = useState<string | null>(null)
+
+  useEffect(() => {
+    const made = urls.current
+    return () => {
+      for (const url of made.values()) URL.revokeObjectURL(url)
+    }
+  }, [])
+
+  function urlOf(file: File) {
+    let url = urls.current.get(file)
+    if (!url) {
+      url = URL.createObjectURL(file)
+      urls.current.set(file, url)
+    }
+    return url
+  }
+
+  function stop() {
+    ref.current?.pause()
+    setPlaying(null)
+  }
+
+  function toggle(key: string, src: string) {
+    const audio = ref.current
+    if (!audio) return
+    setProblem(null)
+    if (playing === key) return stop()
+    audio.src = src
+    audio.currentTime = 0
+    setPlaying(key)
+    void Promise.resolve(audio.play()).catch(cannotPlay)
+  }
+
+  /** The audio element's error event: only a sound being played matters, not
+   * the empty element at rest. */
+  function failed() {
+    if (playing) cannotPlay()
+  }
+
+  function cannotPlay() {
+    setPlaying(null)
+    setProblem('This browser can’t play that recording. Check it opens in a music player, or export it again as mp3 or m4a.')
+  }
+
+  function forget(id: number, file: File) {
+    if (playing === `file-${id}`) stop()
+    const url = urls.current.get(file)
+    if (!url) return
+    URL.revokeObjectURL(url)
+    urls.current.delete(file)
+  }
+
+  return {
+    element: <audio ref={ref} onEnded={stop} onError={failed} className="hidden" />,
+    playing,
+    problem,
+    toggleFile: (id: number, file: File) => toggle(`file-${id}`, urlOf(file)),
+    toggleUrl: (url: string) => toggle(url, playableUrl(url)),
+    forget,
+    forgetAll: () => {
+      stop()
+      for (const url of urls.current.values()) URL.revokeObjectURL(url)
+      urls.current.clear()
+    },
+  }
 }
