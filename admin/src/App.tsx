@@ -12,6 +12,11 @@ import { DashboardPage } from './learners/DashboardPage'
 import { LearnerPage } from './learners/LearnerPage'
 import { LearnersPage } from './learners/LearnersPage'
 import { AppShell } from './shell/AppShell'
+import { LetterPage } from './sounds/LetterPage'
+import { RecordSessionPage } from './sounds/RecordSessionPage'
+import { SoundChartPage } from './sounds/SoundChartPage'
+import { SoundsPage } from './sounds/SoundsPage'
+import { UploadFilesPage } from './sounds/UploadFilesPage'
 import { AppUpdatesPage } from './updates/AppUpdatesPage'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
@@ -44,6 +49,11 @@ export function App() {
             <Route path="/vocabulary" element={<CourseList key="vocabulary" purpose="vocabulary" />} />
             <Route path="/courses/:courseId/vocabulary" element={<VocabularyPage />} />
             <Route path="/languages" element={<LanguagesPage />} />
+            <Route path="/sounds" element={<SoundsPage />} />
+            <Route path="/sounds/:language" element={<SoundChartPage />} />
+            <Route path="/sounds/:language/letters/:letterId" element={<LetterPage />} />
+            <Route path="/sounds/:language/record" element={<RecordSessionPage />} />
+            <Route path="/sounds/:language/upload" element={<UploadFilesPage />} />
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/learners" element={<LearnersPage />} />

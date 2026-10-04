@@ -332,5 +332,22 @@
   "updateAvailable": "አዲስ የቡና ስሪት አለ።",
   "updateAction": "አዘምን",
   "updateDownloaded": "ማዘመኛው ዝግጁ ነው።",
-  "updateRestart": "እንደገና ጀምር"
+  "updateRestart": "እንደገና ጀምር",
+  "tabLearn": "ትምህርት",
+  "tabSounds": "ድምጾች",
+  "tabLeague": "ሊግ",
+  "tabDownloads": "ውርዶች",
+  "tabSettings": "ቅንብሮች",
+  "soundsSubtitle": "{language} · {script}",
+  "soundsTapToHear": "ለመስማት ፊደሉን ይንኩ።",
+  "soundsPlay": "አጫውት",
+  "soundsSlow": "በዝግታ",
+  "soundsSameAs": "ልክ እንደ {glyph} ይነበባል",
+  "soundsExample": "ምሳሌ",
+  "soundsRecordedBy": "የቀረጹት፦ {names}",
+  "soundsOffline": "ድምጾቹን ለመጫን አንድ ጊዜ ከበይነመረብ ጋር ይገናኙ። ከዚያ ያለ በይነመረብ ይሰራሉ።",
+  "soundsLoadFailed": "ድምጾቹን መጫን አልተቻለም",
+  "soundsCantPlay": "ይህን ድምጽ ማጫወት አልተቻለም።",
+  "soundsNone": "ለዚህ ኮርስ እስካሁን የድምጽ ሰንጠረዥ የለም።",
+  "soundsLetterLabel": "{glyph}፣ {romanization}"
 }

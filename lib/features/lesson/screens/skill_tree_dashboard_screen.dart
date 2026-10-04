@@ -89,9 +89,29 @@ class SkillTreeDashboardScreen extends StatefulWidget {
     this.mediaCache,
     this.reminders,
     this.league,
+    this.linksInBar = false,
+    this.onOpenLeague,
+    this.onCourse,
+    this.reloads,
   });
 
   final LessonApi lessonApi;
+
+  /// Settings, Downloads and the league live in the home screen's bottom
+  /// bar, so the course panel leaves them out.
+  final bool linksInBar;
+
+  /// Opens the league somewhere else (the bar's League tab) instead of
+  /// pushing its screen.
+  final VoidCallback? onOpenLeague;
+
+  /// Told the course shown, whenever it changes: the bar shows a Sounds
+  /// tab only for a language that has a chart.
+  final ValueChanged<Course?>? onCourse;
+
+  /// Each notification reloads the dashboard from the top, as after a
+  /// course change made elsewhere (in the Settings tab).
+  final Listenable? reloads;
 
   /// Per-course offline copy of the dashboard (010-multi-language-courses,
   /// story 003). When set, every successful load is saved, and a failed load
@@ -276,6 +296,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     super.initState();
     _pendingSeen = widget.syncEngine.pendingCount;
     widget.syncEngine.addListener(_onSyncChanged);
+    widget.reloads?.addListener(_reloadFromTop);
     _future = _load();
     unawaited(_loadLeague());
     // So a previously-downloaded pack shows as downloaded immediately,
@@ -290,8 +311,28 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   @override
   void dispose() {
     widget.syncEngine.removeListener(_onSyncChanged);
+    widget.reloads?.removeListener(_reloadFromTop);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _reloadFromTop() {
+    if (!mounted) return;
+    _railFuture = null;
+    _reload(scrollToTop: true);
+  }
+
+  /// The id of the course last passed to [SkillTreeDashboardScreen.onCourse];
+  /// a placeholder until the first, so even "no course" is passed once.
+  Object? _reportedCourse = const Object();
+
+  void _reportCourse(Course? course) {
+    final onCourse = widget.onCourse;
+    if (onCourse == null || _reportedCourse == course?.id) return;
+    _reportedCourse = course?.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) onCourse(course);
+    });
   }
 
   /// Offline completions reaching the server change XP, streak and crowns,
@@ -743,6 +784,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   /// the skill path is what fills the screen.
   Widget _dashboard(BuildContext context, _DashboardData loaded) {
     final data = _withSheetBeans(loaded);
+    _reportCourse(data.tree.course);
     // The panel floats over the path rather than pushing it down, so opening
     // it never reflows the tree. It hangs from the header, whose height the
     // header itself is the authority on.
@@ -832,15 +874,20 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                 activeCourseId: data.tree.course?.id,
                 onCourseSelected: _switchFromRail,
                 onAddCourse: _openCoursePicker,
-                onSettings: () {
-                  _closePanel();
-                  _openSettings();
-                },
-                onDownloads: () {
-                  _closePanel();
-                  _openDownloadManagement();
-                },
+                onSettings: widget.linksInBar
+                    ? null
+                    : () {
+                        _closePanel();
+                        _openSettings();
+                      },
+                onDownloads: widget.linksInBar
+                    ? null
+                    : () {
+                        _closePanel();
+                        _openDownloadManagement();
+                      },
                 onLeague: switch (widget.league) {
+                  _ when widget.linksInBar => null,
                   final league? => () {
                     _closePanel();
                     _openLeague(league);
@@ -987,7 +1034,7 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                 sliver: SliverToBoxAdapter(
                   child: LeagueCard(
                     league: current,
-                    onTap: () => _openLeague(league),
+                    onTap: widget.onOpenLeague ?? () => _openLeague(league),
                   ),
                 ),
               ),

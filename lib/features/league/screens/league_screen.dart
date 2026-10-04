@@ -36,6 +36,7 @@ class LeagueScreen extends StatefulWidget {
     required this.accountSettingsApi,
     this.clock,
     this.onLeague,
+    this.onStartLesson,
   });
 
   final LeagueApi api;
@@ -46,6 +47,10 @@ class LeagueScreen extends StatefulWidget {
   /// Called with each freshly fetched league, so the last-week result can
   /// be shown (`LeagueDependencies.showResultOnce`).
   final void Function(BuildContext context, CurrentLeague league)? onLeague;
+
+  /// "Start a lesson": back to the learning path. Pops the screen unless
+  /// given, as in the bottom bar's League tab, which has nothing to pop.
+  final VoidCallback? onStartLesson;
 
   static const noticeKey = ValueKey('league-notice');
   static const offlineKey = ValueKey('league-offline');
@@ -115,11 +120,14 @@ class _LeagueScreenState extends State<LeagueScreen> {
   Widget build(BuildContext context) {
     return AppPage(
       topBar: AppTopBar(
-        leading: AppIconButton(
-          icon: Icons.arrow_back,
-          tooltip: context.l10n.back,
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+        // None in the bottom bar's tab, where there is nothing to go back to.
+        leading: Navigator.of(context).canPop()
+            ? AppIconButton(
+                icon: Icons.arrow_back,
+                tooltip: context.l10n.back,
+                onPressed: () => Navigator.of(context).maybePop(),
+              )
+            : null,
         title: context.l10n.weeklyLeague,
       ),
       scrollable: false,
@@ -192,7 +200,9 @@ class _LeagueScreenState extends State<LeagueScreen> {
             message: context.l10n.joinLeagueExplain,
             action: AppButton.primary(
               label: context.l10n.startALesson,
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed:
+                  widget.onStartLesson ??
+                  () => Navigator.of(context).maybePop(),
             ),
           ),
         ];

@@ -24,6 +24,7 @@ import 'package:elang/features/auth/screens/splash_screen.dart';
 import 'package:elang/features/courses/course_picker.dart';
 import 'package:elang/features/feedback/feedback_api.dart';
 import 'package:elang/features/feedback/feedback_screen.dart';
+import 'package:elang/features/home/home_shell.dart';
 import 'package:elang/features/league/league_dependencies.dart';
 import 'package:elang/features/league/league_models.dart';
 import 'package:elang/features/league/widgets/league_result_sheet.dart';
@@ -38,6 +39,10 @@ import 'package:elang/features/lesson/widgets/level_up_sheet.dart';
 import 'package:elang/features/lesson/widgets/out_of_beans_sheet.dart';
 import 'package:elang/features/lesson/widgets/skill_path_node.dart';
 import 'package:elang/features/settings/screens/settings_screen.dart';
+import 'package:elang/features/sounds/sound_chart.dart';
+import 'package:elang/features/sounds/sound_chart_store.dart';
+import 'package:elang/features/sounds/sound_charts.dart';
+import 'package:elang/features/sounds/sounds_screen.dart';
 import 'package:elang/features/updates/update_required_screen.dart';
 import 'package:elang/shared/models/beans_status.dart';
 import 'package:elang/shared/models/course.dart';
@@ -86,6 +91,7 @@ import '../helpers/fake_user_preferences_api.dart';
 import '../helpers/in_memory_secure_storage_service.dart';
 import '../helpers/test_app_language.dart';
 import '../helpers/test_appearance.dart';
+import '../features/sounds/sound_fixtures.dart';
 
 // ---------------------------------------------------------------------------
 // The app shell and small drivers.
@@ -289,6 +295,132 @@ Widget _dashboard(
             accountSettingsApi: FakeAccountSettingsApi(),
           ),
   );
+}
+
+/// The whole Fidel, 34 families in seven orders, with romanizations as
+/// long as the template's (ch'é, ts'ə), so the grid is drawn at its widest.
+SoundChart _fullFidel() {
+  const consonants = [
+    'h',
+    'l',
+    'h',
+    'm',
+    's',
+    'r',
+    's',
+    'sh',
+    'q',
+    'b',
+    'v',
+    't',
+    'ch',
+    'h',
+    'n',
+    'ny',
+    '',
+    'k',
+    'kh',
+    'w',
+    '',
+    'z',
+    'zh',
+    'y',
+    'd',
+    'j',
+    'g',
+    "t'",
+    "ch'",
+    "p'",
+    "ts'",
+    "ts'",
+    'f',
+    'p',
+  ];
+  const bases = [
+    0x1200,
+    0x1208,
+    0x1210,
+    0x1218,
+    0x1220,
+    0x1228,
+    0x1230,
+    0x1238,
+    0x1240,
+    0x1260,
+    0x1268,
+    0x1270,
+    0x1278,
+    0x1280,
+    0x1290,
+    0x1298,
+    0x12A0,
+    0x12A8,
+    0x12B8,
+    0x12C8,
+    0x12D0,
+    0x12D8,
+    0x12E0,
+    0x12E8,
+    0x12F0,
+    0x1300,
+    0x1308,
+    0x1320,
+    0x1328,
+    0x1330,
+    0x1338,
+    0x1340,
+    0x1348,
+    0x1350,
+  ];
+  const orders = ['e', 'u', 'i', 'a', 'é', 'ə', 'o'];
+  return SoundChart(
+    language: 'am',
+    title: const {'en': 'Fidel', 'am': 'ፊደል'},
+    version: 1,
+    credits: const ['Selam Tesfaye'],
+    groups: [
+      SoundGroup(
+        key: 'fidel',
+        names: const {'en': 'Fidel', 'am': 'ፊደል'},
+        columns: 7,
+        columnLabels: orders,
+        letters: [
+          for (var f = 0; f < bases.length; f++)
+            for (var o = 0; o < 7; o++)
+              SoundLetter(
+                id: 'l$f-$o',
+                glyph: String.fromCharCode(bases[f] + o),
+                romanization: consonants[f] + orders[o],
+                audioUrl: '$clip/l$f-$o.m4a',
+                hint: f == 28
+                    ? const {'en': 'Pushed out from the throat'}
+                    : const {},
+                example: f == 0 && o == 0
+                    ? const SoundExample(
+                        word: 'ሀገር',
+                        romanization: 'hager',
+                        meaning: {'en': 'country', 'am': 'አገር', 'om': 'biyya'},
+                        audioUrl: '$clip/hager.m4a',
+                      )
+                    : null,
+              ),
+        ],
+      ),
+      const SoundGroup(
+        key: 'labialised',
+        names: {'en': 'Labialised', 'am': 'ዲቃላ'},
+        letters: [SoundLetter(id: 'lwa', glyph: 'ሏ', romanization: 'lwa')],
+      ),
+    ],
+  );
+}
+
+Future<SoundCharts> _soundCharts() async {
+  final api = FakeSoundChartApi()..byLanguage['am'] = _fullFidel();
+  api.charts = [summary(version: 1)];
+  final charts = SoundCharts(api: api, store: InMemorySoundChartStore());
+  await charts.load();
+  return charts;
 }
 
 /// A league with a long tier line: 30 members, ranked 28th.
@@ -1086,6 +1218,80 @@ final _scenes = <String, _Scene>{
     await tester.pumpAndSettle();
     await _tap(tester, find.byKey(FeedbackScreen.sendKey));
   },
+  // The bottom bar and the Sounds tab.
+  'home, with the bottom bar': (tester, scale) async {
+    final charts = await tester.runAsync(_soundCharts);
+    final api = _dashboardApi();
+    final connectivity = FakeConnectivityMonitor();
+    final packStore = FakeLessonPackStore();
+    final session = SessionRepository(storage: InMemorySecureStorageService());
+    await tester.pumpWidget(
+      _app(
+        HomeShell(
+          lessonApi: api,
+          audioPlayer: FakeLessonAudioPlayer(),
+          feedbackPlayer: FakeAnswerFeedbackPlayer(),
+          connectivityMonitor: connectivity,
+          lessonPackStore: packStore,
+          lessonPackDownloader: LessonPackDownloader(
+            lessonApi: api,
+            packStore: packStore,
+          ),
+          syncEngine: SyncEngine(
+            lessonApi: api,
+            connectivityMonitor: connectivity,
+            queueStore: FakePendingSyncQueueStore(),
+          ),
+          courseApi: FakeCourseApi(),
+          sessionRepository: session,
+          userPreferencesApi: FakeUserPreferencesApi(),
+          soundPreferenceRepository: SoundPreferenceRepository(
+            storage: InMemorySecureStorageService(),
+          ),
+          soundCharts: charts!,
+          soundPlayer: FakeSoundPlayer(),
+          sessionApi: SessionApi(),
+          league: LeagueDependencies(
+            storage: InMemorySecureStorageService(),
+            sessionRepository: session,
+            api: FakeLeagueApi(_dashboardLeague()),
+            accountSettingsApi: FakeAccountSettingsApi(),
+          ),
+        ),
+        scale,
+      ),
+    );
+    await tester.pumpAndSettle();
+  },
+  'sounds': (tester, scale) async {
+    final charts = await tester.runAsync(_soundCharts);
+    await tester.pumpWidget(
+      _app(
+        SoundsScreen(
+          charts: charts!,
+          language: 'am',
+          player: FakeSoundPlayer(),
+        ),
+        scale,
+      ),
+    );
+    await tester.pumpAndSettle();
+  },
+  'sounds, a letter': (tester, scale) async {
+    final charts = await tester.runAsync(_soundCharts);
+    await tester.pumpWidget(
+      _app(
+        SoundsScreen(
+          charts: charts!,
+          language: 'am',
+          player: FakeSoundPlayer(),
+        ),
+        scale,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _tap(tester, find.byKey(SoundsScreen.tileKey('l0-0')));
+  },
   'update needed': (tester, scale) async {
     await tester.pumpWidget(
       _app(UpdateRequiredScreen(onUpdate: () async {}), scale),
@@ -1154,6 +1360,9 @@ final _shows = <String, Finder>{
   'feedback': find.text('What is it about?'),
   'feedback, filled in': find.text('5 / 5'),
   'feedback, sent': find.text('Thank you!'),
+  'home, with the bottom bar': find.text('Downloads'),
+  'sounds': find.text('Tap a letter to hear it.'),
+  'sounds, a letter': find.text('Slow'),
   'update needed': find.text('Update needed'),
 };
 

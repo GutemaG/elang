@@ -10,6 +10,7 @@ import '../../shared/services/reminders/reminder_service.dart';
 import '../../shared/services/session_repository.dart';
 import '../../shared/services/sound_preference_repository.dart';
 import '../../shared/services/sync_engine.dart';
+import '../sounds/sound_charts.dart';
 
 /// Bag of shared services the lesson-loop feature depends on, constructed
 /// once at app start-up — same "no DI framework, plain constructor-
@@ -49,6 +50,7 @@ class LessonDependencies {
     LessonPackStore? lessonPackStore,
     LessonPackDownloader? lessonPackDownloader,
     SyncEngine? syncEngine,
+    SoundCharts? soundCharts,
     this.reminders,
   }) : lessonApi =
            lessonApi ?? HttpLessonApi(sessionRepository: sessionRepository),
@@ -67,6 +69,7 @@ class LessonDependencies {
           player: AudioplayersLessonAudioPlayer(),
           cache: this.mediaCache,
         );
+    this.soundCharts = soundCharts ?? SoundCharts(mediaCache: this.mediaCache);
     this.lessonPackDownloader =
         lessonPackDownloader ??
         LessonPackDownloader(
@@ -93,4 +96,8 @@ class LessonDependencies {
   late final LessonPackDownloader lessonPackDownloader;
   late final SyncEngine syncEngine;
   final ReminderService? reminders;
+
+  /// The Sounds tab's charts, saved on the phone; their recordings go to
+  /// [mediaCache].
+  late final SoundCharts soundCharts;
 }

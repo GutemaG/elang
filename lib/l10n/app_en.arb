@@ -1757,5 +1757,99 @@
   "updateRestart": "Restart",
   "@updateRestart": {
     "description": "Action that installs a downloaded app update by restarting the app."
+  },
+  "tabLearn": "Learn",
+  "@tabLearn": {
+    "description": "Bottom bar tab: the learning path."
+  },
+  "tabSounds": "Sounds",
+  "@tabSounds": {
+    "description": "Bottom bar tab, and its screen's title: the letters of the language being learned and how they sound."
+  },
+  "tabLeague": "League",
+  "@tabLeague": {
+    "description": "Bottom bar tab: the weekly league."
+  },
+  "tabDownloads": "Downloads",
+  "@tabDownloads": {
+    "description": "Bottom bar tab: lessons downloaded for offline use."
+  },
+  "tabSettings": "Settings",
+  "@tabSettings": {
+    "description": "Bottom bar tab: settings."
+  },
+  "soundsSubtitle": "{language} · {script}",
+  "@soundsSubtitle": {
+    "description": "Under the Sounds title: the language and its script, e.g. \"Amharic · Fidel\".",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      },
+      "script": {
+        "type": "String"
+      }
+    }
+  },
+  "soundsTapToHear": "Tap a letter to hear it.",
+  "@soundsTapToHear": {
+    "description": "Hint at the top of the Sounds screen."
+  },
+  "soundsPlay": "Play",
+  "@soundsPlay": {
+    "description": "Button in a letter's sheet that plays its sound."
+  },
+  "soundsSlow": "Slow",
+  "@soundsSlow": {
+    "description": "Button in a letter's sheet that plays its sound slowly."
+  },
+  "soundsSameAs": "Sounds the same as {glyph}",
+  "@soundsSameAs": {
+    "description": "In a letter's sheet: another letter that is said the same way.",
+    "placeholders": {
+      "glyph": {
+        "type": "String"
+      }
+    }
+  },
+  "soundsExample": "Example",
+  "@soundsExample": {
+    "description": "Heading of a letter's example word."
+  },
+  "soundsRecordedBy": "Recorded by {names}",
+  "@soundsRecordedBy": {
+    "description": "Credit for the speakers who recorded the sounds.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "soundsOffline": "Connect to the internet once to load the sounds. After that they work offline.",
+  "@soundsOffline": {
+    "description": "Shown when the Sounds chart has never been downloaded and the phone is offline."
+  },
+  "soundsLoadFailed": "Couldn't load the sounds",
+  "@soundsLoadFailed": {
+    "description": "Title when the Sounds chart could not be loaded."
+  },
+  "soundsCantPlay": "Couldn't play this sound.",
+  "@soundsCantPlay": {
+    "description": "Shown when a letter's sound could not be played."
+  },
+  "soundsNone": "There is no sounds chart for this course yet.",
+  "@soundsNone": {
+    "description": "Shown when the Sounds tab's chart was removed."
+  },
+  "soundsLetterLabel": "{glyph}, {romanization}",
+  "@soundsLetterLabel": {
+    "description": "What a screen reader says for a letter tile.",
+    "placeholders": {
+      "glyph": {
+        "type": "String"
+      },
+      "romanization": {
+        "type": "String"
+      }
+    }
   }
 }

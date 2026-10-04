@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 
 import { messageOf, useSession } from '../auth/SessionContext'
 import { FieldError, Section } from '../exercises/fields'
@@ -33,8 +33,18 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'link', label: 'Link', icon: 'link' },
 ]
 
+/** Stores one clip and returns the address to keep. */
+export type ClipUploader = (clip: Blob, type: string) => Promise<string>
+
 interface Props {
-  lessonId: string
+  /** The lesson a listening exercise's clips are stored under. */
+  lessonId?: string
+  /** Stores clips some other way, for audio outside lessons (a Sounds
+   * chart's letters). Used instead of `lessonId` when given. */
+  upload?: ClipUploader
+  /** The card's heading and hint; an exercise's clip by default. */
+  title?: string
+  hint?: ReactNode
   /** The draft's `audio_url`. */
   url: string
   /** The stored `audio_url`, or null for an exercise not created yet. */
@@ -46,13 +56,16 @@ interface Props {
  * it (story 004). Recordings and files are uploaded when the admin chooses
  * "Use this…"; the exercise's own Save then stores the new address. All
  * three panels stay mounted, so switching tabs never loses a take. */
-export function AudioField({ lessonId, url, savedUrl, onChange }: Props) {
+export function AudioField({ lessonId, upload, title = 'Audio', hint, url, savedUrl, onChange }: Props) {
+  const { api } = useSession()
+  const ids = useId()
+  const send: ClipUploader = upload ?? ((clip, type) => uploadClip(api, lessonId ?? '', clip, type))
   const [tab, setTab] = useState<Tab>('record')
   const current = url.trim()
   const unsaved = current !== '' && current !== (savedUrl ?? '').trim()
 
   return (
-    <Section title="Audio" hint="The clip the learner hears. Record it here, upload a file, or paste a link.">
+    <Section title={title} hint={hint ?? 'The clip the learner hears. Record it here, upload a file, or paste a link.'}>
       <CurrentClip url={current} unsaved={unsaved} />
       <FieldError slot="audio_url" />
 
@@ -62,9 +75,9 @@ export function AudioField({ lessonId, url, savedUrl, onChange }: Props) {
             key={t.id}
             type="button"
             role="tab"
-            id={`audio-tab-${t.id}`}
+            id={`${ids}-tab-${t.id}`}
             aria-selected={tab === t.id}
-            aria-controls={`audio-panel-${t.id}`}
+            aria-controls={`${ids}-panel-${t.id}`}
             onClick={() => setTab(t.id)}
             className={cx(
               '-mb-px inline-flex h-11 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold transition-colors sm:h-10',
@@ -83,13 +96,13 @@ export function AudioField({ lessonId, url, savedUrl, onChange }: Props) {
         <div
           key={t.id}
           role="tabpanel"
-          id={`audio-panel-${t.id}`}
-          aria-labelledby={`audio-tab-${t.id}`}
+          id={`${ids}-panel-${t.id}`}
+          aria-labelledby={`${ids}-tab-${t.id}`}
           hidden={tab !== t.id}
           className="pt-4"
         >
-          {t.id === 'record' && <RecordPanel lessonId={lessonId} onUploaded={onChange} />}
-          {t.id === 'upload' && <UploadPanel lessonId={lessonId} onUploaded={onChange} />}
+          {t.id === 'record' && <RecordPanel send={send} onUploaded={onChange} />}
+          {t.id === 'upload' && <UploadPanel send={send} onUploaded={onChange} />}
           {t.id === 'link' && <LinkPanel onChecked={onChange} />}
         </div>
       ))}
@@ -173,8 +186,7 @@ function Note({ icon, children }: { icon: string; children: ReactNode }) {
 
 /** Sends one clip to the store. `send` answers false when it failed, and
  * `problem` then says why. */
-function useClipUpload(lessonId: string, onUploaded: (url: string) => void) {
-  const { api } = useSession()
+function useClipUpload(store: ClipUploader, onUploaded: (url: string) => void) {
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
 
@@ -182,7 +194,7 @@ function useClipUpload(lessonId: string, onUploaded: (url: string) => void) {
     setBusy(true)
     setProblem(null)
     try {
-      onUploaded(await uploadClip(api, lessonId, clip, type))
+      onUploaded(await store(clip, type))
       return true
     } catch (e) {
       setProblem(plainMessage(messageOf(e)))
@@ -202,9 +214,9 @@ const MIC_PROBLEMS: Record<MicProblem, string> = {
   failed: 'The microphone could not be started. Try again, or use Upload or Link.',
 }
 
-function RecordPanel({ lessonId, onUploaded }: { lessonId: string; onUploaded: (url: string) => void }) {
+function RecordPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (url: string) => void }) {
   const recorder = useRecorder()
-  const upload = useClipUpload(lessonId, onUploaded)
+  const upload = useClipUpload(send, onUploaded)
   const { state } = recorder
 
   if (!canRecord()) {
@@ -313,8 +325,8 @@ interface Chosen {
   url: string
 }
 
-function UploadPanel({ lessonId, onUploaded }: { lessonId: string; onUploaded: (url: string) => void }) {
-  const upload = useClipUpload(lessonId, onUploaded)
+function UploadPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (url: string) => void }) {
+  const upload = useClipUpload(send, onUploaded)
   const [chosen, setChosen] = useState<Chosen | null>(null)
   const input = useRef<HTMLInputElement>(null)
 

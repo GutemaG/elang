@@ -8,7 +8,7 @@ import 'features/auth/auth_dependencies.dart';
 import 'features/auth/auth_routes.dart';
 import 'features/lesson/lesson_dependencies.dart';
 import 'features/league/league_dependencies.dart';
-import 'features/lesson/screens/skill_tree_dashboard_screen.dart';
+import 'features/home/home_shell.dart';
 import 'features/settings/settings_dependencies.dart';
 import 'features/updates/app_update_gate.dart';
 import 'shared/l10n/app_language.dart';
@@ -213,7 +213,7 @@ class BunaApp extends StatelessWidget {
       initialRoute: AuthRoutes.splash,
       routes: AuthRoutes.build(
         authDependencies,
-        homeBuilder: (context) => SkillTreeDashboardScreen(
+        homeBuilder: (context) => HomeShell(
           lessonApi: lessonDependencies.lessonApi,
           audioPlayer: lessonDependencies.audioPlayer,
           feedbackPlayer: lessonDependencies.feedbackPlayer,
@@ -230,6 +230,7 @@ class BunaApp extends StatelessWidget {
           soundPreferenceRepository:
               settingsDependencies.soundPreferenceRepository,
           league: leagueDependencies,
+          soundCharts: lessonDependencies.soundCharts,
         ),
       ),
     );

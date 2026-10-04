@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/l10n/app_language.dart';
+import '../../../shared/models/course.dart';
 import '../../../shared/models/language_names.dart';
 import '../../../shared/services/course_api.dart';
 import '../../../shared/services/reminders/reminder_service.dart';
@@ -101,6 +102,7 @@ class SettingsScreen extends StatefulWidget {
     this.reminders,
     this.accountSettingsApi,
     this.feedbackApi,
+    this.onCourseChanged,
   });
 
   final SessionApi sessionApi;
@@ -120,6 +122,10 @@ class SettingsScreen extends StatefulWidget {
   /// Sends feedback (027-learner-feedback); `null` leaves the "Send
   /// feedback" row out.
   final FeedbackApi? feedbackApi;
+
+  /// Told when the learner switches course here, so the learning path,
+  /// open beside it in the bottom bar, follows.
+  final ValueChanged<Course>? onCourseChanged;
 
   /// The "Send feedback" row.
   static const sendFeedbackKey = ValueKey('settings-send-feedback');
@@ -239,6 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
     if (switched != null) {
       _controller.applySwitchedCourse(switched);
+      widget.onCourseChanged?.call(switched);
     }
   }
 

@@ -1316,4 +1316,64 @@ class AppLocalizationsOm extends AppLocalizations {
 
   @override
   String get updateRestart => 'Irra deebi\'ii jalqabi';
+
+  @override
+  String get tabLearn => 'Barnoota';
+
+  @override
+  String get tabSounds => 'Sagaleewwan';
+
+  @override
+  String get tabLeague => 'Liigii';
+
+  @override
+  String get tabDownloads => 'Buufamoota';
+
+  @override
+  String get tabSettings => 'Qindaa\'ina';
+
+  @override
+  String soundsSubtitle(String language, String script) {
+    return '$language · $script';
+  }
+
+  @override
+  String get soundsTapToHear => 'Dhaggeeffachuuf qubee tuqi.';
+
+  @override
+  String get soundsPlay => 'Taphachiisi';
+
+  @override
+  String get soundsSlow => 'Suuta';
+
+  @override
+  String soundsSameAs(String glyph) {
+    return 'Akkuma $glyph dubbatama';
+  }
+
+  @override
+  String get soundsExample => 'Fakkeenya';
+
+  @override
+  String soundsRecordedBy(String names) {
+    return 'Kan waraabe: $names';
+  }
+
+  @override
+  String get soundsOffline =>
+      'Sagaleewwan fe\'uuf yeroo tokko interneetii wajjin walqunnami. Achii booda interneetii malee hojjetu.';
+
+  @override
+  String get soundsLoadFailed => 'Sagaleewwan fe\'uun hin danda\'amne';
+
+  @override
+  String get soundsCantPlay => 'Sagalee kana taphachiisuun hin danda\'amne.';
+
+  @override
+  String get soundsNone => 'Koorsii kanaaf ammaaf chaartiin sagalee hin jiru.';
+
+  @override
+  String soundsLetterLabel(String glyph, String romanization) {
+    return '$glyph, $romanization';
+  }
 }

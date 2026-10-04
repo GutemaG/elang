@@ -53,6 +53,7 @@ from app.domain.lesson.exceptions import (
     LessonDomainError,
     LessonNotFoundError,
     SkillLockedError,
+    SoundChartIncompleteError,
     TooMuchFeedbackError,
     UploadLinkExpiredError,
 )
@@ -92,6 +93,7 @@ _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     ContentInUseError: 409,
     ContentExistsError: 409,
     ConfirmationRequiredError: 409,
+    SoundChartIncompleteError: 409,
     InvalidAudioLinkError: 422,
     AudioStorageNotConfiguredError: 503,
     InvalidUploadLinkError: 403,

@@ -16,6 +16,8 @@ const NAV_GROUPS = [
     items: [
       { to: '/', icon: 'menu_book', label: 'Curriculum', current: isCurriculum },
       { to: '/vocabulary', icon: 'translate', label: 'Vocabulary', current: isVocabulary },
+      // The app's Sounds tab: each language's letters and their recordings.
+      { to: '/sounds', icon: 'graphic_eq', label: 'Sounds', current: (path: string) => path.startsWith('/sounds') },
       { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
       { to: '/guide', icon: 'help', label: 'Guide', current: (path: string) => path === '/guide' },
     ],

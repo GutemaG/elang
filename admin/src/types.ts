@@ -437,3 +437,78 @@ export interface AdminAppConfig {
 export interface AdminAppConfigResponse {
   config: AdminAppConfig
 }
+
+// --- Sounds charts (`backend/app/infrastructure/api/sound_schemas.py`) ---
+
+/** Text by app language: `en` always, `am` and `om` when translated. */
+export type Localized = Partial<Record<string, string>>
+
+export type SoundLetterStatus = 'draft' | 'needs_review' | 'ready'
+
+export interface AdminSoundCounts {
+  letters: number
+  ready: number
+  needs_review: number
+  draft: number
+  /** Letters that need a recording of their own and have none. */
+  needs_recording: number
+  /** Letters that play another letter's recording. */
+  same_sound: number
+}
+
+/** What stops the chart being shown to learners. */
+export interface AdminSoundGaps {
+  no_letters: boolean
+  no_romanization: number
+  no_audio: number
+}
+
+export interface AdminSoundGroup {
+  key: string
+  names: Localized
+  /** Set for a grid: that many letters to a row, under `column_labels`. */
+  columns: number | null
+  column_labels: string[]
+}
+
+export interface AdminSoundLetter {
+  id: string
+  group: string
+  position: number
+  glyph: string
+  romanization: string
+  hint: Localized
+  audio_url: string | null
+  same_as_id: string | null
+  example_word: string | null
+  example_romanization: string | null
+  example_meaning: Localized
+  example_audio_url: string | null
+  status: SoundLetterStatus
+  recorded_by: string | null
+  updated_at: string
+}
+
+export interface AdminSoundChartSummary {
+  language: string
+  language_name: string
+  title: Localized
+  enabled: boolean
+  version: number
+  updated_at: string
+  counts: AdminSoundCounts
+  gaps: AdminSoundGaps
+}
+
+export interface AdminSoundChartList {
+  charts: AdminSoundChartSummary[]
+}
+
+export interface AdminSoundChart extends AdminSoundChartSummary {
+  groups: AdminSoundGroup[]
+  letters: AdminSoundLetter[]
+}
+
+/** One letter's changes for `PATCH .../letters`: only the fields given
+ * change, and `null` clears one. */
+export type SoundLetterChange = { id: string } & Partial<Omit<AdminSoundLetter, 'id' | 'group' | 'position' | 'updated_at'>>

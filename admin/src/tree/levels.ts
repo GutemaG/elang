@@ -44,6 +44,12 @@ export const routes = {
   feedbackItem: (id: string) => `${ADMIN}/feedback/${id}`,
   // App updates: the builds the app checks itself against.
   appConfig: `${ADMIN}/app-config`,
+  // Sounds: one chart of letters and recordings per learning language.
+  soundCharts: `${ADMIN}/sound-charts`,
+  soundChart: (language: string) => `${ADMIN}/sound-charts/${language}`,
+  soundLetters: (language: string) => `${ADMIN}/sound-charts/${language}/letters`,
+  soundLetter: (language: string, id: string) => `${ADMIN}/sound-charts/${language}/letters/${id}`,
+  soundUploads: (language: string) => `${ADMIN}/sound-charts/${language}/audio/uploads`,
   // Exercises (bolt 038): a lesson's list, one exercise, and their order.
   exercises: (lessonId: string) => `${ADMIN}/lessons/${lessonId}/exercises`,
   exercise: (id: string) => `${ADMIN}/exercises/${id}`,

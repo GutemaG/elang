@@ -2102,6 +2102,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restart'**
   String get updateRestart;
+
+  /// Bottom bar tab: the learning path.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn'**
+  String get tabLearn;
+
+  /// Bottom bar tab, and its screen's title: the letters of the language being learned and how they sound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sounds'**
+  String get tabSounds;
+
+  /// Bottom bar tab: the weekly league.
+  ///
+  /// In en, this message translates to:
+  /// **'League'**
+  String get tabLeague;
+
+  /// Bottom bar tab: lessons downloaded for offline use.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get tabDownloads;
+
+  /// Bottom bar tab: settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get tabSettings;
+
+  /// Under the Sounds title: the language and its script, e.g. "Amharic · Fidel".
+  ///
+  /// In en, this message translates to:
+  /// **'{language} · {script}'**
+  String soundsSubtitle(String language, String script);
+
+  /// Hint at the top of the Sounds screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a letter to hear it.'**
+  String get soundsTapToHear;
+
+  /// Button in a letter's sheet that plays its sound.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get soundsPlay;
+
+  /// Button in a letter's sheet that plays its sound slowly.
+  ///
+  /// In en, this message translates to:
+  /// **'Slow'**
+  String get soundsSlow;
+
+  /// In a letter's sheet: another letter that is said the same way.
+  ///
+  /// In en, this message translates to:
+  /// **'Sounds the same as {glyph}'**
+  String soundsSameAs(String glyph);
+
+  /// Heading of a letter's example word.
+  ///
+  /// In en, this message translates to:
+  /// **'Example'**
+  String get soundsExample;
+
+  /// Credit for the speakers who recorded the sounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded by {names}'**
+  String soundsRecordedBy(String names);
+
+  /// Shown when the Sounds chart has never been downloaded and the phone is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet once to load the sounds. After that they work offline.'**
+  String get soundsOffline;
+
+  /// Title when the Sounds chart could not be loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the sounds'**
+  String get soundsLoadFailed;
+
+  /// Shown when a letter's sound could not be played.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t play this sound.'**
+  String get soundsCantPlay;
+
+  /// Shown when the Sounds tab's chart was removed.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no sounds chart for this course yet.'**
+  String get soundsNone;
+
+  /// What a screen reader says for a letter tile.
+  ///
+  /// In en, this message translates to:
+  /// **'{glyph}, {romanization}'**
+  String soundsLetterLabel(String glyph, String romanization);
 }
 
 class _AppLocalizationsDelegate

@@ -7,7 +7,7 @@ import { canvasBrowser, shrinkPicture } from './shrink'
  * choice's `image_url`, through a short-lived link (see
  * `uploadThroughLink`). */
 export function uploadPicture(api: ApiClient, lessonId: string, picture: Blob, type: string): Promise<string> {
-  return uploadThroughLink(api, routes.imageUploads, lessonId, picture, type, {
+  return uploadThroughLink(api, routes.imageUploads, { lesson_id: lessonId }, picture, type, {
     notConfigured: 'This server has nowhere to store pictures yet, so pictures can’t be uploaded.',
     store: 'picture store',
   })

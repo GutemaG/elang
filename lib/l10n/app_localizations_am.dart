@@ -1277,4 +1277,64 @@ class AppLocalizationsAm extends AppLocalizations {
 
   @override
   String get updateRestart => 'እንደገና ጀምር';
+
+  @override
+  String get tabLearn => 'ትምህርት';
+
+  @override
+  String get tabSounds => 'ድምጾች';
+
+  @override
+  String get tabLeague => 'ሊግ';
+
+  @override
+  String get tabDownloads => 'ውርዶች';
+
+  @override
+  String get tabSettings => 'ቅንብሮች';
+
+  @override
+  String soundsSubtitle(String language, String script) {
+    return '$language · $script';
+  }
+
+  @override
+  String get soundsTapToHear => 'ለመስማት ፊደሉን ይንኩ።';
+
+  @override
+  String get soundsPlay => 'አጫውት';
+
+  @override
+  String get soundsSlow => 'በዝግታ';
+
+  @override
+  String soundsSameAs(String glyph) {
+    return 'ልክ እንደ $glyph ይነበባል';
+  }
+
+  @override
+  String get soundsExample => 'ምሳሌ';
+
+  @override
+  String soundsRecordedBy(String names) {
+    return 'የቀረጹት፦ $names';
+  }
+
+  @override
+  String get soundsOffline =>
+      'ድምጾቹን ለመጫን አንድ ጊዜ ከበይነመረብ ጋር ይገናኙ። ከዚያ ያለ በይነመረብ ይሰራሉ።';
+
+  @override
+  String get soundsLoadFailed => 'ድምጾቹን መጫን አልተቻለም';
+
+  @override
+  String get soundsCantPlay => 'ይህን ድምጽ ማጫወት አልተቻለም።';
+
+  @override
+  String get soundsNone => 'ለዚህ ኮርስ እስካሁን የድምጽ ሰንጠረዥ የለም።';
+
+  @override
+  String soundsLetterLabel(String glyph, String romanization) {
+    return '$glyph፣ $romanization';
+  }
 }

@@ -1304,4 +1304,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateRestart => 'Restart';
+
+  @override
+  String get tabLearn => 'Learn';
+
+  @override
+  String get tabSounds => 'Sounds';
+
+  @override
+  String get tabLeague => 'League';
+
+  @override
+  String get tabDownloads => 'Downloads';
+
+  @override
+  String get tabSettings => 'Settings';
+
+  @override
+  String soundsSubtitle(String language, String script) {
+    return '$language · $script';
+  }
+
+  @override
+  String get soundsTapToHear => 'Tap a letter to hear it.';
+
+  @override
+  String get soundsPlay => 'Play';
+
+  @override
+  String get soundsSlow => 'Slow';
+
+  @override
+  String soundsSameAs(String glyph) {
+    return 'Sounds the same as $glyph';
+  }
+
+  @override
+  String get soundsExample => 'Example';
+
+  @override
+  String soundsRecordedBy(String names) {
+    return 'Recorded by $names';
+  }
+
+  @override
+  String get soundsOffline =>
+      'Connect to the internet once to load the sounds. After that they work offline.';
+
+  @override
+  String get soundsLoadFailed => 'Couldn\'t load the sounds';
+
+  @override
+  String get soundsCantPlay => 'Couldn\'t play this sound.';
+
+  @override
+  String get soundsNone => 'There is no sounds chart for this course yet.';
+
+  @override
+  String soundsLetterLabel(String glyph, String romanization) {
+    return '$glyph, $romanization';
+  }
 }

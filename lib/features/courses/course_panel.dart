@@ -27,8 +27,8 @@ class CoursePanel extends StatelessWidget {
     required this.activeCourseId,
     required this.onCourseSelected,
     required this.onAddCourse,
-    required this.onSettings,
-    required this.onDownloads,
+    this.onSettings,
+    this.onDownloads,
     this.onLeague,
     this.loading = false,
     this.onRetry,
@@ -39,8 +39,11 @@ class CoursePanel extends StatelessWidget {
   final String? activeCourseId;
   final ValueChanged<Course> onCourseSelected;
   final VoidCallback onAddCourse;
-  final VoidCallback onSettings;
-  final VoidCallback onDownloads;
+
+  /// The rows below the rail; each is left out when `null`, as all three
+  /// are once the bottom bar has them.
+  final VoidCallback? onSettings;
+  final VoidCallback? onDownloads;
 
   /// Opens the weekly league (023-weekly-leagues); no row without it.
   final VoidCallback? onLeague;
@@ -67,20 +70,23 @@ class CoursePanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.spaceSm),
             _rail(context),
             const SizedBox(height: AppSpacing.spaceXs),
-            SizedBox(
-              height: 1,
-              child: ColoredBox(color: context.colors.cardBorder),
-            ),
-            ListRow(
-              icon: Icons.settings_outlined,
-              title: context.l10n.courseSettings,
-              onTap: onSettings,
-            ),
-            ListRow(
-              icon: Icons.folder_outlined,
-              title: context.l10n.manageDownloads,
-              onTap: onDownloads,
-            ),
+            if (onSettings != null || onDownloads != null || onLeague != null)
+              SizedBox(
+                height: 1,
+                child: ColoredBox(color: context.colors.cardBorder),
+              ),
+            if (onSettings != null)
+              ListRow(
+                icon: Icons.settings_outlined,
+                title: context.l10n.courseSettings,
+                onTap: onSettings,
+              ),
+            if (onDownloads != null)
+              ListRow(
+                icon: Icons.folder_outlined,
+                title: context.l10n.manageDownloads,
+                onTap: onDownloads,
+              ),
             if (onLeague != null)
               ListRow(
                 key: const ValueKey('course-panel-league'),

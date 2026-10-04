@@ -332,5 +332,22 @@
   "updateAvailable": "Gosti Buna haaraan jira.",
   "updateAction": "Haaromsi",
   "updateDownloaded": "Haaromsichi qophaa'eera.",
-  "updateRestart": "Irra deebi'ii jalqabi"
+  "updateRestart": "Irra deebi'ii jalqabi",
+  "tabLearn": "Barnoota",
+  "tabSounds": "Sagaleewwan",
+  "tabLeague": "Liigii",
+  "tabDownloads": "Buufamoota",
+  "tabSettings": "Qindaa'ina",
+  "soundsSubtitle": "{language} · {script}",
+  "soundsTapToHear": "Dhaggeeffachuuf qubee tuqi.",
+  "soundsPlay": "Taphachiisi",
+  "soundsSlow": "Suuta",
+  "soundsSameAs": "Akkuma {glyph} dubbatama",
+  "soundsExample": "Fakkeenya",
+  "soundsRecordedBy": "Kan waraabe: {names}",
+  "soundsOffline": "Sagaleewwan fe'uuf yeroo tokko interneetii wajjin walqunnami. Achii booda interneetii malee hojjetu.",
+  "soundsLoadFailed": "Sagaleewwan fe'uun hin danda'amne",
+  "soundsCantPlay": "Sagalee kana taphachiisuun hin danda'amne.",
+  "soundsNone": "Koorsii kanaaf ammaaf chaartiin sagalee hin jiru.",
+  "soundsLetterLabel": "{glyph}, {romanization}"
 }

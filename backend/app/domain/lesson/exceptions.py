@@ -186,6 +186,14 @@ class ConfirmationRequiredError(AdminContentError):
     error_code = "confirmation_required"
 
 
+class SoundChartIncompleteError(AdminContentError):
+    """A Sounds chart that learners would see with gaps: a letter without
+    its romanization, or a sound that cannot play. `details` counts them
+    (`no_letters`, `no_romanization`, `no_audio`)."""
+
+    error_code = "sound_chart_incomplete"
+
+
 class InvalidAudioLinkError(AdminContentError):
     """A pasted audio link that cannot be used; `details["reason"]` says
     why (`not_https`, `private_address`, `unreachable`, `timeout`,

@@ -12,7 +12,7 @@ export interface UploadWords {
 /** Stores one file through a short-lived link and returns its public
  * address (bolts 039 and 052).
  *
- * Two requests: the admin API hands out a link signed for this lesson,
+ * Two requests: the admin API hands out a link signed for its owner,
  * type and exact size, then the file goes straight to the store (R2, or
  * the local backend). The second request is a plain `fetch`, not the API
  * client: it must carry exactly the headers the link was signed with and
@@ -21,7 +21,9 @@ export interface UploadWords {
 export async function uploadThroughLink(
   api: ApiClient,
   route: string,
-  lessonId: string,
+  /** What the file belongs to, sent with the request for its link, e.g.
+   * `{ lesson_id }`; empty when the route names it. */
+  owner: Record<string, string>,
   file: Blob,
   type: string,
   words: UploadWords,
@@ -29,7 +31,7 @@ export async function uploadThroughLink(
   let link: AudioUploadResponse
   try {
     link = await api.post<AudioUploadResponse>(route, {
-      lesson_id: lessonId,
+      ...owner,
       content_type: type,
       size: file.size,
     })

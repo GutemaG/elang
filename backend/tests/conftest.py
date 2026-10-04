@@ -46,6 +46,8 @@ from app.infrastructure.api.league_routers import router as league_router
 from app.infrastructure.api.lesson_routers import router as lesson_router
 from app.infrastructure.api.practice_routers import router as practice_router
 from app.infrastructure.api.routers import router as auth_router
+from app.infrastructure.api.sound_routers import admin_router as admin_sound_router
+from app.infrastructure.api.sound_routers import router as sound_router
 from app.infrastructure.api.user_routers import config_router
 from app.infrastructure.api.user_routers import router as user_router
 
@@ -56,6 +58,7 @@ from app.infrastructure.db import (
     feedback_models,  # noqa: F401
     league_models,  # noqa: F401
     lesson_models,  # noqa: F401
+    sound_models,  # noqa: F401
 )
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.session import get_db_session
@@ -160,6 +163,8 @@ def make_client(app_engine: AsyncEngine) -> Generator[Any]:
         app.include_router(admin_learner_router)
         app.include_router(feedback_router)
         app.include_router(admin_feedback_router)
+        app.include_router(sound_router)
+        app.include_router(admin_sound_router)
         app.state.google_verifier = google_verifier
         app.state.apple_verifier = apple_verifier
         app.dependency_overrides[get_db_session] = override_get_db_session
