@@ -64,6 +64,16 @@ export const routes = {
   // Vocabulary (bolt 040): a course's words, and one word.
   vocab: (courseId: string) => `${ADMIN}/courses/${courseId}/vocab`,
   vocabItem: (id: string) => `${ADMIN}/vocab/${id}`,
+  // Workbook (intent 025): a course's draft curriculum, one row, and an
+  // upload link for a row's recording.
+  curriculum: (courseId: string) => `${ADMIN}/courses/${courseId}/curriculum`,
+  curriculumRow: (courseId: string, ref: string) =>
+    `${ADMIN}/courses/${courseId}/curriculum/rows/${encodeURIComponent(ref)}`,
+  curriculumUploads: (courseId: string) => `${ADMIN}/courses/${courseId}/curriculum/audio/uploads`,
+  curriculumExercises: (courseId: string, ref: string) =>
+    `${ADMIN}/courses/${courseId}/curriculum/lessons/${encodeURIComponent(ref)}/exercises`,
+  curriculumPublish: (courseId: string, ref: string) =>
+    `${ADMIN}/courses/${courseId}/curriculum/lessons/${encodeURIComponent(ref)}/publish`,
 }
 
 /** Every list that can be reordered: the three levels, and a lesson's

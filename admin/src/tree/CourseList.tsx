@@ -20,7 +20,8 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'coming_soon', label: 'Coming soon' },
 ]
 
-// What a course opens to: its curriculum, or (bolt 040) its words.
+// What a course opens to: its curriculum, (bolt 040) its words, or (intent
+// 025) its workbook.
 const PURPOSES = {
   curriculum: {
     eyebrow: 'Curriculum',
@@ -35,6 +36,14 @@ const PURPOSES = {
     description: 'The words Practice brings back to learners. Open a course to see and correct its words.',
     open: 'Open vocabulary',
     to: (id: string) => `/courses/${id}/vocabulary`,
+    canCreate: false,
+  },
+  workbook: {
+    eyebrow: 'Workbook',
+    description:
+      'Prepare a course’s words and sentences from the curriculum workbook: review and record them, then publish each lesson.',
+    open: 'Open workbook',
+    to: (id: string) => `/courses/${id}/workbook`,
     canCreate: false,
   },
 }

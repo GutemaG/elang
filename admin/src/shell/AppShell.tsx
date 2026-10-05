@@ -6,16 +6,21 @@ import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 
 const isVocabulary = (path: string) => path === '/vocabulary' || /^\/courses\/[^/]+\/vocabulary$/.test(path)
-const isCurriculum = (path: string) => (path === '/' || path.startsWith('/courses/')) && !isVocabulary(path)
+const isWorkbook = (path: string) => path === '/workbook' || /^\/courses\/[^/]+\/workbook(\/|$)/.test(path)
+const isCurriculum = (path: string) =>
+  (path === '/' || path.startsWith('/courses/')) && !isVocabulary(path) && !isWorkbook(path)
 
 /** The workspace's places. Curriculum covers the course list and every
- * course page except a course's words, which are Vocabulary's (bolt 040). */
+ * course page except a course's words, which are Vocabulary's (bolt 040),
+ * and its workbook (intent 025). */
 const NAV_GROUPS = [
   {
     heading: 'Workspace',
     items: [
       { to: '/', icon: 'menu_book', label: 'Curriculum', current: isCurriculum },
       { to: '/vocabulary', icon: 'translate', label: 'Vocabulary', current: isVocabulary },
+      // The curriculum workbook: prepared, reviewed and recorded, then published.
+      { to: '/workbook', icon: 'table_view', label: 'Workbook', current: isWorkbook },
       // The app's Sounds tab: each language's letters and their recordings.
       { to: '/sounds', icon: 'graphic_eq', label: 'Sounds', current: (path: string) => path.startsWith('/sounds') },
       { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },

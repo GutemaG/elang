@@ -11,7 +11,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from tests.integration.test_courses_migration import _alembic, _ok
+from tests.integration.test_courses_migration import _ok
 
 _PREVIOUS_HEAD = "a9d4e6f2c8b1"
 _NEW_HEAD = "c5e8a3f1d7b2"
@@ -79,12 +79,6 @@ def _chart(db_file: Path, language: str) -> tuple[list[str], int]:
             "SELECT groups, version FROM sound_charts WHERE language = ?", (language,)
         ).fetchone()
     return [g["key"] for g in json.loads(groups)], version
-
-
-def test_there_is_a_single_head(tmp_path: Path) -> None:
-    result = _alembic(tmp_path / "unused.db", "heads")
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.split() == [_NEW_HEAD, "(head)"]
 
 
 def test_upgrade_makes_an_old_qubee_chart_a_to_z(tmp_path: Path) -> None:

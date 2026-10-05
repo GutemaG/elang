@@ -21,6 +21,8 @@ import { AppUpdatesPage } from './updates/AppUpdatesPage'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
 import { VocabularyPage } from './vocab/VocabularyPage'
+import { LessonPage } from './workbook/LessonPage'
+import { WorkbookPage } from './workbook/WorkbookPage'
 
 /** The session decides the screen; only an admin reaches the routes. */
 export function App() {
@@ -48,6 +50,9 @@ export function App() {
             <Route path="/courses/:courseId" element={<CourseTree />} />
             <Route path="/vocabulary" element={<CourseList key="vocabulary" purpose="vocabulary" />} />
             <Route path="/courses/:courseId/vocabulary" element={<VocabularyPage />} />
+            <Route path="/workbook" element={<CourseList key="workbook" purpose="workbook" />} />
+            <Route path="/courses/:courseId/workbook" element={<WorkbookPage />} />
+            <Route path="/courses/:courseId/workbook/lessons/:lessonRef" element={<LessonPage />} />
             <Route path="/languages" element={<LanguagesPage />} />
             <Route path="/sounds" element={<SoundsPage />} />
             <Route path="/sounds/:language" element={<SoundChartPage />} />

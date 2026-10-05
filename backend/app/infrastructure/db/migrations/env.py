@@ -13,6 +13,7 @@ from app.config import get_settings
 # autogenerate to see them, since `env.py` only imports `models.py` (the
 # auth bounded context) directly otherwise.
 from app.infrastructure.db import (
+    curriculum_models,  # noqa: F401
     feedback_models,  # noqa: F401
     league_models,  # noqa: F401
     lesson_models,  # noqa: F401

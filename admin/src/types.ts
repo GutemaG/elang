@@ -516,3 +516,121 @@ export interface AdminSoundChart extends AdminSoundChartSummary {
 /** One letter's changes for `PATCH .../letters`: only the fields given
  * change, and `null` clears one. */
 export type SoundLetterChange = { id: string } & Partial<Omit<AdminSoundLetter, 'id' | 'group' | 'position' | 'updated_at'>>
+
+// --- Workbook (intent 025): a course's draft curriculum -----------------------
+
+export type CurriculumEntryKind = 'section' | 'skill' | 'lesson'
+export type CurriculumRowKind = 'word' | 'sentence'
+export type CurriculumStatus = 'to_do' | 'draft' | 'needs_change' | 'reviewed'
+export type CurriculumConfidence = 'high' | 'medium' | 'low'
+
+export interface CurriculumCounts {
+  rows: number
+  /** Rows with their text in the course's language. */
+  filled: number
+  reviewed: number
+  /** Rows with a recording. */
+  recorded: number
+  needs_change: number
+}
+
+export type CurriculumPublishState = 'not_published' | 'published' | 'changed'
+
+export interface CurriculumEntry {
+  ref: string
+  kind: CurriculumEntryKind
+  parent_ref: string | null
+  position: number
+  title: string
+  goal: string | null
+  grammar: string | null
+  /** A lesson's rows counted; null for a section or skill. */
+  counts: CurriculumCounts | null
+  /** The live section, skill or lesson published from it (bolt 085). */
+  published_id?: string | null
+  published_at?: string | null
+  /** A lesson's: since publishing, has anything changed? */
+  publish_state?: CurriculumPublishState | null
+  exercise_count?: number | null
+}
+
+export interface CurriculumRow {
+  ref: string
+  kind: CurriculumRowKind
+  lesson_ref: string
+  position: number
+  english: string
+  text: string | null
+  romanization: string | null
+  blank: string | null
+  accepted: string[]
+  notes: string | null
+  confidence: CurriculumConfidence | null
+  status: CurriculumStatus
+  comment: string | null
+  audio_url: string | null
+  /** Sent back with an edit; an older one is `409 content_changed`. */
+  version: number
+  updated_by: string | null
+  updated_at: string
+}
+
+export interface Curriculum {
+  course_id: string
+  course_title: string
+  language: string
+  entries: CurriculumEntry[]
+  rows: CurriculumRow[]
+  counts: CurriculumCounts
+}
+
+/** What an import sends: the plan and rows, without what the server keeps. */
+export type CurriculumImportEntry = Omit<
+  CurriculumEntry,
+  'counts' | 'published_id' | 'published_at' | 'publish_state' | 'exercise_count'
+>
+export type CurriculumImportRow = Omit<CurriculumRow, 'audio_url' | 'version' | 'updated_by' | 'updated_at'>
+
+export interface CurriculumImportRequest {
+  entries: CurriculumImportEntry[]
+  rows: CurriculumImportRow[]
+  overwrite_reviewed: boolean
+}
+
+export interface CurriculumImportTally {
+  added: number
+  changed: number
+  kept: number
+  unchanged: number
+}
+
+export interface CurriculumImportResult {
+  dry_run: boolean
+  entries: CurriculumImportTally
+  rows: CurriculumImportTally
+  /** Rows the file would change but that are reviewed or recorded. */
+  kept: string[]
+  missing_entries: string[]
+  missing_rows: string[]
+}
+
+/** One of a lesson's draft exercises (bolt 085): a body in the live format,
+ * the word row it practises, and the body it was generated as with its
+ * key (`mc:W001`), so an edited one can be kept or reset. */
+export type DraftExercise = ExerciseBody & {
+  vocab_ref: string | null
+  generated: (ExerciseBody & { key: string }) | null
+  edited: boolean
+}
+
+export interface DraftExerciseList {
+  exercises: DraftExercise[]
+}
+
+export interface PublishLessonResult {
+  category_id: string
+  skill_id: string
+  lesson_id: string
+  exercise_ids: string[]
+  created: ('section' | 'skill' | 'lesson')[]
+}

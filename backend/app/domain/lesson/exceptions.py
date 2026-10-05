@@ -186,6 +186,21 @@ class ConfirmationRequiredError(AdminContentError):
     error_code = "confirmation_required"
 
 
+class ContentChangedError(AdminContentError):
+    """A write made from an old copy: someone saved a newer one since it was
+    loaded. `details["current_version"]` is the saved version. Intent 025."""
+
+    error_code = "content_changed"
+
+
+class LessonNotReadyError(AdminContentError):
+    """A curriculum lesson that cannot be published (or given exercises)
+    yet: `details["reason"]` is `rows` (a row not reviewed or not recorded,
+    counted in `details`) or `exercises` (none drafted). Intent 025."""
+
+    error_code = "lesson_not_ready"
+
+
 class SoundChartIncompleteError(AdminContentError):
     """A Sounds chart that learners would see with gaps: a letter without
     its romanization, or a sound that cannot play. `details` counts them

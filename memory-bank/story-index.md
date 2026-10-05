@@ -1,10 +1,10 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 99
-- **Generated**: 99
-- **Completed**: 95
-- **Last updated**: 2026-09-26
+- **Total stories**: 114
+- **Generated**: 114
+- **Completed**: 110
+- **Last updated**: 2026-10-05
 
 ---
 
@@ -290,3 +290,28 @@
 - [x] **014-lessons-exercises-and-practice** (screen-translations): Lessons, exercises and practice translated - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
 - [x] **015-every-screen-in-every-language** (screen-translations): The sweep in every language; allow-list empty - Must - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
 - [x] **016-reviewer-guide** (screen-translations): A guide for the native-speaker reviewer - Should - ✅ COMPLETED (bolt 079-translate-onboarding-and-settings)
+
+---
+
+### 025-curriculum-workspace
+
+#### Unit: 001-curriculum-service
+
+- [x] **001-draft-curriculum-tables** (curriculum-service): Draft plan and rows per course - Must - ✅ COMPLETED (bolt 082-curriculum-store)
+- [x] **002-import-the-curriculum** (curriculum-service): Atomic import that merges by ID - Must - ✅ COMPLETED (bolt 082-curriculum-store)
+- [x] **003-edit-a-row** (curriculum-service): Edit a row, with checks - Must - ✅ COMPLETED (bolt 082-curriculum-store)
+- [x] **004-a-rows-audio** (curriculum-service): Set and replace a row's audio - Must - ✅ COMPLETED (bolt 082-curriculum-store)
+- [x] **005-draft-exercises** (curriculum-service): Keep a lesson's draft exercises - Must - ✅ COMPLETED (bolt 085-curriculum-publish-service)
+- [x] **006-publish-a-lesson** (curriculum-service): Publish one lesson into the course - Must - ✅ COMPLETED (bolt 085-curriculum-publish-service)
+
+#### Unit: 002-curriculum-admin
+
+- [x] **007-curriculum-tab-and-overview** (curriculum-admin): The Curriculum tab and its progress - Must - ✅ COMPLETED (bolt 083-curriculum-import)
+- [x] **008-read-the-workbook** (curriculum-admin): Read the workbook in the browser - Must - ✅ COMPLETED (bolt 083-curriculum-import)
+- [x] **009-import-preview-and-confirm** (curriculum-admin): Preview an import, then confirm - Must - ✅ COMPLETED (bolt 083-curriculum-import)
+- [x] **010-export-to-excel** (curriculum-admin): Download the curriculum as Excel - Should - ✅ COMPLETED (bolt 083-curriculum-import)
+- [x] **011-review-a-lessons-rows** (curriculum-admin): Review and correct a lesson's rows - Must - ✅ COMPLETED (bolt 084-curriculum-review-and-record)
+- [x] **012-record-a-row** (curriculum-admin): Record or upload a row's audio - Must - ✅ COMPLETED (bolt 084-curriculum-review-and-record)
+- [x] **013-generate-exercises** (curriculum-admin): Generate a lesson's exercises - Must - ✅ COMPLETED (bolt 086-curriculum-generate-and-publish)
+- [x] **014-edit-generated-exercises** (curriculum-admin): Edit the generated exercises - Must - ✅ COMPLETED (bolt 086-curriculum-generate-and-publish)
+- [x] **015-publish-from-the-admin** (curriculum-admin): Publish a lesson from its page - Must - ✅ COMPLETED (bolt 086-curriculum-generate-and-publish)

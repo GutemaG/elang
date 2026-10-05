@@ -39,6 +39,7 @@ from sqlalchemy.ext.asyncio import (
 from app.infrastructure.api.admin_learner_routers import router as admin_learner_router
 from app.infrastructure.api.admin_routers import router as admin_router
 from app.infrastructure.api.course_routers import router as course_router
+from app.infrastructure.api.curriculum_routers import router as curriculum_router
 from app.infrastructure.api.error_handlers import register_exception_handlers
 from app.infrastructure.api.feedback_routers import admin_router as admin_feedback_router
 from app.infrastructure.api.feedback_routers import router as feedback_router
@@ -55,6 +56,7 @@ from app.infrastructure.api.user_routers import router as user_router
 # context's tables onto the shared `Base.metadata`, so `Base.metadata.create_all`
 # below (used by every DB-backed test in the suite) creates them too.
 from app.infrastructure.db import (
+    curriculum_models,  # noqa: F401
     feedback_models,  # noqa: F401
     league_models,  # noqa: F401
     lesson_models,  # noqa: F401
@@ -165,6 +167,7 @@ def make_client(app_engine: AsyncEngine) -> Generator[Any]:
         app.include_router(admin_feedback_router)
         app.include_router(sound_router)
         app.include_router(admin_sound_router)
+        app.include_router(curriculum_router)
         app.state.google_verifier = google_verifier
         app.state.apple_verifier = apple_verifier
         app.dependency_overrides[get_db_session] = override_get_db_session
