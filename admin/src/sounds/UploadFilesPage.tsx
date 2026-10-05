@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { cleanUp, durationOf, formatSeconds, type Pcm, type Span } from '../audio/clean'
-import { ClipEditor, type ClipUse, type PrepareState } from '../audio/ClipEditor'
-import { finalClip, playPcm, prepareClip, type Prepared } from '../audio/codec'
+import { durationOf, formatSeconds, type Pcm, type Span } from '../audio/clean'
+import { ClipEditor, EffectButtons, cleanedSize, effectsInWords, type ClipUse, type PrepareState } from '../audio/ClipEditor'
+import { cleanedPcm, finalClip, playPcm, prepareClip, type Prepared } from '../audio/codec'
+import type { Effect } from '../audio/effects'
 import { checkClip, MAX_AUDIO_BYTES, formatSize } from '../audio/formats'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { plainMessage, playableUrl } from '../exercises/model'
@@ -33,6 +34,8 @@ interface Row {
   use: ClipUse | null
   /** Where the admin moved this file's cut to; null for where it was found. */
   span: Span | null
+  /** This file's own effects, over the page's. */
+  effects: Effect[] | null
 }
 
 const prepState = (prep: Row['prep']): PrepareState =>
@@ -93,6 +96,8 @@ function Uploader({
   const [result, setResult] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   const [cleanAll, setCleanAll] = useState(true)
+  const [pageEffects, setPageEffects] = useState<Effect[]>([])
+  const effectsOf = (row: Row) => row.effects ?? pageEffects
   const [trimming, setTrimming] = useState<number | null>(null)
   const nextId = useRef(0)
   const player = useListener()
@@ -115,6 +120,7 @@ function Uploader({
         prep: check.ok ? ('working' as const) : null,
         use: null,
         span: null,
+        effects: null,
       }
     })
     setRows((old) => [...old, ...added])
@@ -159,6 +165,7 @@ function Uploader({
         const final = await finalClip({ clip: row.file, type: type.ok ? type.type : row.file.type }, prep, {
           use: row.use ?? (cleanAll ? 'cleaned' : 'original'),
           span: row.span,
+          effects: effectsOf(row),
         })
         if (final.clip.size > MAX_AUDIO_BYTES) throw new Error(`The file is ${formatSize(final.clip.size)}; 5 MB at most.`)
         const url = await uploadSound(api, chart.language, final.clip, final.type)
@@ -231,10 +238,24 @@ function Uploader({
             <span className="block text-sm font-semibold text-coffee">Clean up every file</span>
             <span className="block text-xs text-stone">
               Trims the silence around each sound and evens the volume, then uploads it as a small mp3. Turn it off to
-              upload the files exactly as they are. A file’s scissors move its cut, or keep that one as recorded.
+              upload the files exactly as they are. A file’s scissors move its cut, change its effects, or keep that
+              one as recorded.
             </span>
           </span>
         </label>
+      )}
+      {rows.length > 0 && cleanAll && (
+        <div className="-mt-2 rounded-b-lg px-4">
+          <EffectButtons
+            effects={pageEffects}
+            disabled={busy}
+            label="Every file"
+            onEffects={(effects) => {
+              player.stop()
+              setPageEffects(effects)
+            }}
+          />
+        </div>
       )}
 
       {rows.length > 0 && (
@@ -267,11 +288,13 @@ function Uploader({
                   playing={player.playing}
                   onPlayFile={() => {
                     const cut = cutOf(row, cleanAll)
-                    if (cut && row.prep && row.prep !== 'working') player.togglePcm(`file-${row.id}`, cleanUp(row.prep.pcm, cut))
+                    if (cut && row.prep && row.prep !== 'working')
+                      player.togglePcm(`file-${row.id}`, cleanedPcm(row.prep, { span: cut, effects: effectsOf(row) }))
                     else player.toggleFile(row.id, row.file)
                   }}
                   onPlayCurrent={player.toggleUrl}
                   cut={cutOf(row, cleanAll)}
+                  effects={effectsOf(row)}
                   onTrim={() => {
                     player.stop()
                     setTrimming(row.id)
@@ -325,6 +348,9 @@ function Uploader({
               onUse={(use) => edit(trimmed.id, { use })}
               span={trimmed.span}
               onSpan={(span) => edit(trimmed.id, { span })}
+              effects={effectsOf(trimmed)}
+              onEffects={(effects) => edit(trimmed.id, { effects })}
+              originalSize={trimmed.file.size}
               original={
                 <div className="flex items-center gap-2 text-sm text-coffee-soft">
                   <PlayButton
@@ -366,6 +392,7 @@ function FileRow({
   onPlayFile,
   onPlayCurrent,
   cut,
+  effects,
   onTrim,
 }: {
   row: Row
@@ -381,6 +408,7 @@ function FileRow({
   onPlayCurrent: (url: string) => void
   /** The stretch kept when the row is cleaned, or null when it goes as it is. */
   cut: Span | null
+  effects: readonly Effect[]
   onTrim: () => void
 }) {
   let what: { text: string; tone: string }
@@ -411,10 +439,10 @@ function FileRow({
               {row.prep === 'working'
                 ? 'Reading…'
                 : row.prep && cut
-                  ? `Cleaned: ${formatSeconds(durationOf(row.prep.pcm))} → ${formatSeconds(cut.end - cut.start)}`
+                  ? `Cleaned: ${formatSeconds(durationOf(row.prep.pcm))} → ${formatSeconds(cut.end - cut.start)} · ${formatSize(row.file.size)} → ${cleanedSize(cut.end - cut.start)}${effects.length ? `, ${effectsInWords(effects)}` : ''}`
                   : row.prep
-                    ? `As recorded: ${formatSeconds(durationOf(row.prep.pcm))}`
-                    : ''}
+                    ? `As recorded: ${formatSeconds(durationOf(row.prep.pcm))} · ${formatSize(row.file.size)}`
+                    : formatSize(row.file.size)}
             </span>
           </span>
           {row.prep && row.prep !== 'working' && (

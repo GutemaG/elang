@@ -10,6 +10,7 @@ import { Input } from '../ui/Input'
 import type { Span } from './clean'
 import { ClipEditor, usePrepared, type ClipUse } from './ClipEditor'
 import { finalClip, type Prepared } from './codec'
+import type { Effect } from './effects'
 import {
   IPHONE_SAFE_RECORDING,
   MAX_AUDIO_BYTES,
@@ -192,21 +193,34 @@ interface Cleaning {
   prepared: Prepared | null
   use: ClipUse
   span: Span | null
+  effects: readonly Effect[]
 }
 
-/** The clip editor's choices for one clip, cleared for the next. */
+/** The clip editor's choices for one clip. The cut is cleared for the next
+ * clip; cleaned or not, and the effects, carry over to it. */
 function useCleaning(clip: Blob | null) {
   const state = usePrepared(clip)
   const [use, setUse] = useState<ClipUse>('cleaned')
   const [span, setSpan] = useState<Span | null>(null)
-  const cleaning: Cleaning = { prepared: state.kind === 'ready' ? state.prepared : null, use, span }
+  const [effects, setEffects] = useState<Effect[]>([])
+  const cleaning: Cleaning = { prepared: state.kind === 'ready' ? state.prepared : null, use, span, effects }
   return {
     cleaning,
     /** Still reading the clip, so the cleaned version is not ready to send. */
     working: state.kind === 'working' && use === 'cleaned',
     reset: () => setSpan(null),
     editor: (original: ReactNode) => (
-      <ClipEditor state={state} use={use} onUse={setUse} span={span} onSpan={setSpan} original={original} />
+      <ClipEditor
+        state={state}
+        use={use}
+        onUse={setUse}
+        span={span}
+        onSpan={setSpan}
+        effects={effects}
+        onEffects={setEffects}
+        original={original}
+        originalSize={clip?.size ?? 0}
+      />
     ),
   }
 }

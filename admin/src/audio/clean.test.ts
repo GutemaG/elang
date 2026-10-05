@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { RATE, prepared, room } from '../test/clips'
 import { LEAD_SECONDS, MIN_SECONDS, TAIL_SECONDS, cleanUp, durationOf, findSpeech, peaksOf, toInt16, widen } from './clean'
-import { encodeMp3, finalClip, prepareClip } from './codec'
+import { encodeMp3, finalClip, mp3SizeOf, prepareClip } from './codec'
 
 const close = (seconds: number) => expect.closeTo(seconds, 2)
 
@@ -91,6 +91,8 @@ describe('storing a clip', () => {
     // 64 kbps for a second: about 8 KB.
     expect(mp3.size).toBeGreaterThan(6000)
     expect(mp3.size).toBeLessThan(10000)
+    // The size shown before it is made is close to what it comes to.
+    expect(Math.abs(mp3.size - mp3SizeOf(1))).toBeLessThan(600)
     // jsdom's Blob has no arrayBuffer(); a FileReader reads it.
     const bytes = await new Promise<Uint8Array>((resolve) => {
       const reader = new FileReader()
@@ -106,12 +108,12 @@ describe('storing a clip', () => {
     const original = { clip: new Blob(['take'], { type: 'audio/mp4' }), type: 'audio/mp4' }
     const prep = prepared()
 
-    const cleaned = await finalClip(original, prep, { use: 'cleaned', span: null })
+    const cleaned = await finalClip(original, prep, { use: 'cleaned', span: null, effects: [] })
     expect(cleaned.type).toBe('audio/mpeg')
     expect(cleaned.clip.size).toBeLessThan(8000)
 
-    expect(await finalClip(original, prep, { use: 'original', span: null })).toBe(original)
-    expect(await finalClip(original, null, { use: 'cleaned', span: null })).toBe(original)
+    expect(await finalClip(original, prep, { use: 'original', span: null, effects: [] })).toBe(original)
+    expect(await finalClip(original, null, { use: 'cleaned', span: null, effects: [] })).toBe(original)
   })
 
   it('reads nothing in a browser without an audio engine', async () => {

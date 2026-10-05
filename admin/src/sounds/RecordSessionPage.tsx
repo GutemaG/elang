@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import type { Span } from '../audio/clean'
 import { ClipEditor, usePrepared, type ClipUse } from '../audio/ClipEditor'
 import { finalClip } from '../audio/codec'
+import type { Effect } from '../audio/effects'
 import { audioTypeOf, canRecord, formatDuration, MAX_AUDIO_BYTES } from '../audio/formats'
 import { useRecorder } from '../audio/useRecorder'
 import { messageOf, useSession } from '../auth/SessionContext'
@@ -72,6 +73,7 @@ function Session({
   const prep = usePrepared(state.kind === 'recorded' ? state.clip : null)
   const [use, setUse] = useState<ClipUse>('cleaned')
   const [span, setSpan] = useState<Span | null>(null)
+  const [effects, setEffects] = useState<Effect[]>([])
   const prepared = prep.kind === 'ready' ? prep.prepared : null
 
   const actions = {
@@ -135,7 +137,7 @@ function Session({
     setBusy(true)
     setProblem(null)
     try {
-      const final = await finalClip({ clip, type }, prepared, { use, span })
+      const final = await finalClip({ clip, type }, prepared, { use, span, effects })
       if (final.clip.size > MAX_AUDIO_BYTES) {
         setProblem('That take is too long. Record it again, shorter.')
         return
@@ -209,6 +211,9 @@ function Session({
                 onUse={setUse}
                 span={span}
                 onSpan={setSpan}
+                effects={effects}
+                onEffects={setEffects}
+                originalSize={state.clip.size}
                 autoPlay
                 original={<audio controls autoPlay={use === 'original'} src={state.url} aria-label="Play the take" className="w-full" />}
               />

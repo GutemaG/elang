@@ -16,7 +16,8 @@ vi.mock('../auth/GoogleButton', () => ({ GoogleButton: () => null }))
 vi.mock('../audio/codec', async (original) => ({
   ...(await original<typeof import('../audio/codec')>()),
   prepareClip: vi.fn(async () => null),
-  playPcm: vi.fn(() => () => {}),
+  // Stopping calls back, as the real one does.
+  playPcm: vi.fn((_pcm: unknown, onEnd: () => void) => () => onEnd()),
 }))
 
 const A = '/api/v1/admin'
@@ -473,7 +474,7 @@ describe('cleaning files before they upload', () => {
     await userEvent.upload(screen.getByLabelText('Recordings'), [m4a('hu.m4a'), m4a('he.m4a')])
 
     expect(screen.getByRole('checkbox', { name: /Clean up every file/ })).toBeChecked()
-    expect(await screen.findAllByText('Cleaned: 2.00 s → 0.73 s')).toHaveLength(2)
+    expect(await screen.findAllByText('Cleaned: 2.00 s → 0.73 s · 29 KB → ≈ 6 KB')).toHaveLength(2)
 
     // The play button plays what will be uploaded.
     await userEvent.click(screen.getByRole('button', { name: 'Play hu.m4a' }))
@@ -483,7 +484,7 @@ describe('cleaning files before they upload', () => {
     const dialog = within(screen.getByRole('dialog', { name: 'Clean up hu.m4a' }))
     await userEvent.click(dialog.getByRole('radio', { name: /As recorded/ }))
     await userEvent.click(dialog.getByRole('button', { name: 'Done' }))
-    expect(screen.getByText('As recorded: 2.00 s')).toBeInTheDocument()
+    expect(screen.getByText('As recorded: 2.00 s · 29 KB')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Upload 2 files' }))
     await waitFor(() => expect(patches()).toHaveLength(1))
@@ -493,14 +494,33 @@ describe('cleaning files before they upload', () => {
     ])
   })
 
+  it('improves every file at once, and one file on its own', async () => {
+    renderApp('/sounds/am/upload')
+    await screen.findByLabelText('Recordings')
+    await userEvent.upload(screen.getByLabelText('Recordings'), [m4a('hu.m4a'), m4a('he.m4a')])
+    await screen.findAllByText('Cleaned: 2.00 s → 0.73 s · 29 KB → ≈ 6 KB')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove rumble' }))
+    expect(screen.getAllByText('Cleaned: 2.00 s → 0.73 s · 29 KB → ≈ 6 KB, rumble removed')).toHaveLength(2)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clean up he.m4a' }))
+    const dialog = within(screen.getByRole('dialog', { name: 'Clean up he.m4a' }))
+    expect(dialog.getByRole('button', { name: /Remove rumble/ })).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(dialog.getByRole('button', { name: 'Clearer' }))
+    await userEvent.click(dialog.getByRole('button', { name: 'Done' }))
+
+    expect(screen.getByText('Cleaned: 2.00 s → 0.73 s · 29 KB → ≈ 6 KB, rumble removed, clearer')).toBeInTheDocument()
+    expect(screen.getByText('Cleaned: 2.00 s → 0.73 s · 29 KB → ≈ 6 KB, rumble removed')).toBeInTheDocument()
+  })
+
   it('uploads every file as it is with cleaning off', async () => {
     renderApp('/sounds/am/upload')
     await screen.findByLabelText('Recordings')
     await userEvent.upload(screen.getByLabelText('Recordings'), [m4a('hu.m4a')])
-    await screen.findByText('Cleaned: 2.00 s → 0.73 s')
+    await screen.findByText('Cleaned: 2.00 s → 0.73 s · 29 KB → ≈ 6 KB')
 
     await userEvent.click(screen.getByRole('checkbox', { name: /Clean up every file/ }))
-    expect(screen.getByText('As recorded: 2.00 s')).toBeInTheDocument()
+    expect(screen.getByText('As recorded: 2.00 s · 29 KB')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Upload 1 file' }))
 
     await waitFor(() => expect(patches()).toHaveLength(1))
@@ -549,6 +569,11 @@ describe('the record session', () => {
       await waitFor(() => expect(patches()).toHaveLength(1))
 
       await take()
+      // The effects picked for the first take hold for the next.
+      await userEvent.click(screen.getByRole('button', { name: 'Warmer' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Record again' }))
+      await userEvent.click(await screen.findByRole('button', { name: /Stop/ }))
+      expect(await screen.findByRole('button', { name: /Warmer/ })).toHaveAttribute('aria-pressed', 'true')
       await userEvent.click(screen.getByRole('radio', { name: /As recorded/ }))
       await userEvent.click(screen.getByRole('button', { name: 'Keep and next' }))
       await waitFor(() => expect(patches()).toHaveLength(2))

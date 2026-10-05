@@ -18,7 +18,8 @@ vi.mock('../auth/GoogleButton', () => ({ GoogleButton: () => null }))
 vi.mock('./codec', async (original) => ({
   ...(await original<typeof import('./codec')>()),
   prepareClip: vi.fn(async () => null),
-  playPcm: vi.fn(() => () => {}),
+  // Stopping calls back, as the real one does.
+  playPcm: vi.fn((_pcm: unknown, onEnd: () => void) => () => onEnd()),
 }))
 
 const A = '/api/v1/admin'
@@ -414,6 +415,9 @@ describe('cleaning a clip before it is stored', () => {
     await user().upload(screen.getByLabelText('Audio file'), m4a())
 
     expect(await screen.findByRole('radio', { name: /Cleaned/ })).toBeChecked()
+    // Each choice says how long and how big it is.
+    expect(screen.getByRole('radio', { name: /Cleaned.*0\.73 s · ≈ 6 KB/ })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /As recorded.*2\.00 s · 29 KB/ })).toBeInTheDocument()
     expect(screen.getByText(/Silence trimmed and the volume evened: 2\.00 s → 0\.73 s/)).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Waveform: kept from 0.42 s to 1.15 s of 2.00 s' })).toBeInTheDocument()
 
@@ -443,6 +447,42 @@ describe('cleaning a clip before it is stored', () => {
 
     await click('Find the speech again')
     expect(screen.getByText(/2\.00 s → 0\.73 s/)).toBeInTheDocument()
+  })
+
+  it('improves the sound with buttons, and still stores the recording as recorded when asked', async () => {
+    await openListening()
+    await tab('Upload')
+    await user().upload(screen.getByLabelText('Audio file'), m4a())
+    await screen.findByRole('radio', { name: /Cleaned/ })
+    const effects = within(screen.getByRole('group', { name: 'Improve the sound' }))
+    expect(effects.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'Reduce noise',
+      'Remove rumble',
+      'Warmer',
+      'Clearer',
+    ])
+
+    await click('Play cleaned')
+    const plain = vi.mocked(playPcm).mock.calls[0]![0].samples
+    await userEvent.click(effects.getByRole('button', { name: 'Warmer' }))
+    await userEvent.click(effects.getByRole('button', { name: 'Reduce noise' }))
+    expect(effects.getByRole('button', { name: /Warmer/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText(/volume evened, noise reduced, warmer: 2\.00 s → 0\.73 s/)).toBeInTheDocument()
+    await click('Play cleaned')
+    const improved = vi.mocked(playPcm).mock.calls.at(-1)![0].samples
+    expect(improved.length).toBe(plain.length)
+    expect(improved).not.toEqual(plain)
+
+    // A second click turns one off again.
+    await userEvent.click(effects.getByRole('button', { name: /Warmer/ }))
+    expect(screen.getByText(/volume evened, noise reduced: /)).toBeInTheDocument()
+
+    // Not liked: the file as it came, whatever was picked.
+    await userEvent.click(screen.getByRole('radio', { name: /As recorded/ }))
+    expect(screen.queryByRole('group', { name: 'Improve the sound' })).not.toBeInTheDocument()
+    await click('Use this file')
+    await waitFor(() => expect(presigns()).toHaveLength(1))
+    expect(presigns()[0]?.body).toMatchObject({ content_type: 'audio/mp4', size: 30000 })
   })
 
   it('stores a recording as recorded when asked', async () => {

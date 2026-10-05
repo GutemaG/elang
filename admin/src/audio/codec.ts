@@ -3,12 +3,21 @@
 // apart from clean.ts so tests can swap it out (jsdom has no audio engine).
 
 import { cleanUp, findSpeech, toInt16, type Pcm, type Span } from './clean'
+import { applyEffects, type Effect } from './effects'
 
 /** Cleaned clips are stored at this rate: plenty for a voice, and half the
  * size of 48 kHz. */
 export const CLEAN_RATE = 24000
 /** Mono at 64 kbps: about 8 KB for a one-second letter. */
 const MP3_KBPS = 64
+/** A fixed bitrate, so a cleaned clip's size is known from its length
+ * alone: the effects never change it, only the cut does. */
+export const MP3_BYTES_PER_SECOND = (MP3_KBPS * 1000) / 8
+
+/** About how big the cleaned mp3 of `seconds` will be: the frames, plus
+ * one the encoder adds at the end. */
+export const mp3SizeOf = (seconds: number): number => Math.round(seconds * MP3_BYTES_PER_SECOND) + 192
+
 /** lame takes samples in blocks of this many. */
 const MP3_BLOCK = 1152
 
@@ -91,13 +100,28 @@ export function stopPcm() {
   playing?.done()
 }
 
-/** What to store for a clip: the cleaned span as an mp3, or the clip as it
- * came when the admin chose that or it could not be read. */
+/** How a clip is to be stored: cleaned (with its cut and effects), or as it
+ * came. */
+export interface CleanChoice {
+  use: 'cleaned' | 'original'
+  /** Where the admin moved the cut to, or null for where it was found. */
+  span: Span | null
+  effects: readonly Effect[]
+}
+
+/** The cleaned version: the effects over the whole clip (so noise is learnt
+ * from all its quiet), then the cut, the level and the fades. */
+export function cleanedPcm(prepared: Prepared, choice: Pick<CleanChoice, 'span' | 'effects'>): Pcm {
+  return cleanUp(applyEffects(prepared.pcm, choice.effects), choice.span ?? prepared.auto)
+}
+
+/** What to store for a clip: the cleaned version as an mp3, or the clip as
+ * it came when the admin chose that or it could not be read. */
 export async function finalClip(
   original: { clip: Blob; type: string },
   prepared: Prepared | null,
-  choice: { use: 'cleaned' | 'original'; span: Span | null },
+  choice: CleanChoice,
 ): Promise<{ clip: Blob; type: string }> {
   if (choice.use === 'original' || !prepared) return original
-  return { clip: await encodeMp3(cleanUp(prepared.pcm, choice.span ?? prepared.auto)), type: 'audio/mpeg' }
+  return { clip: await encodeMp3(cleanedPcm(prepared, choice)), type: 'audio/mpeg' }
 }

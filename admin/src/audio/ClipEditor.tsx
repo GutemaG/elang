@@ -4,7 +4,9 @@ import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 import { MIN_SECONDS, cleanUp, durationOf, formatSeconds, peaksOf, widen, type Span } from './clean'
-import { playPcm, prepareClip, type Prepared } from './codec'
+import { mp3SizeOf, playPcm, prepareClip, type Prepared } from './codec'
+import { EFFECTS, applyEffects, ordered, type Effect } from './effects'
+import { formatSize } from './formats'
 
 /** Which version of a clip is stored. */
 export type ClipUse = 'cleaned' | 'original'
@@ -28,6 +30,64 @@ export function usePrepared(clip: Blob | null): PrepareState {
   return done.prepared ? { kind: 'ready', prepared: done.prepared } : { kind: 'failed' }
 }
 
+/** The effects picked, in words: "noise reduced, warmer". */
+export function effectsInWords(effects: readonly Effect[]): string {
+  const words: Record<Effect, string> = {
+    denoise: 'noise reduced',
+    rumble: 'rumble removed',
+    warmer: 'warmer',
+    clearer: 'clearer',
+  }
+  return ordered(effects)
+    .map((e) => words[e])
+    .join(', ')
+}
+
+/** The effects as buttons that stay pressed, any number at once. */
+export function EffectButtons({
+  effects,
+  onEffects,
+  disabled,
+  label = 'Improve',
+}: {
+  effects: readonly Effect[]
+  onEffects: (effects: Effect[]) => void
+  disabled?: boolean
+  label?: string
+}) {
+  return (
+    <div role="group" aria-label="Improve the sound" className="flex flex-wrap items-center gap-1.5">
+      <span aria-hidden="true" className="mr-0.5 text-xs font-semibold text-stone">
+        {label}
+      </span>
+      {EFFECTS.map((e) => {
+        const on = effects.includes(e.id)
+        return (
+          <button
+            key={e.id}
+            type="button"
+            aria-pressed={on}
+            title={e.hint}
+            disabled={disabled}
+            onClick={() => onEffects(on ? effects.filter((x) => x !== e.id) : ordered([...effects, e.id]))}
+            className={cx(
+              'inline-flex h-8 items-center gap-1 rounded-full border px-3 text-[0.8125rem] font-semibold transition-colors',
+              'focus-visible:outline-2 focus-visible:outline-forest disabled:opacity-45',
+              on ? 'border-forest bg-forest-tint text-forest' : 'border-line bg-surface text-coffee-soft hover:bg-inset',
+            )}
+          >
+            {on && <Icon name="check" className="-ml-0.5 text-base" />}
+            {e.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** "≈ 6 KB": the cleaned mp3's size, known before it is made. */
+export const cleanedSize = (seconds: number): string => `≈ ${formatSize(mp3SizeOf(seconds))}`
+
 const BARS = 120
 const WIDTH = 480
 const HEIGHT = 64
@@ -41,7 +101,10 @@ export function ClipEditor({
   onUse,
   span,
   onSpan,
+  effects,
+  onEffects,
   original,
+  originalSize,
   autoPlay = false,
 }: {
   state: PrepareState
@@ -50,7 +113,11 @@ export function ClipEditor({
   /** Where the admin moved the cut to, or null for where it was found. */
   span: Span | null
   onSpan: (span: Span | null) => void
+  effects: readonly Effect[]
+  onEffects: (effects: Effect[]) => void
   original: ReactNode
+  /** The clip as it came, in bytes. */
+  originalSize: number
   /** Plays the cleaned version as soon as it is ready. */
   autoPlay?: boolean
 }) {
@@ -61,8 +128,16 @@ export function ClipEditor({
   const chosen: ClipUse = state.kind === 'failed' ? 'original' : use
 
   const choices: { id: ClipUse; label: string; detail: string }[] = [
-    { id: 'cleaned', label: 'Cleaned', detail: cut ? formatSeconds(cut.end - cut.start) : '' },
-    { id: 'original', label: 'As recorded', detail: prepared ? formatSeconds(length) : '' },
+    {
+      id: 'cleaned',
+      label: 'Cleaned',
+      detail: cut ? `${formatSeconds(cut.end - cut.start)} · ${cleanedSize(cut.end - cut.start)}` : '',
+    },
+    {
+      id: 'original',
+      label: 'As recorded',
+      detail: [prepared ? formatSeconds(length) : '', formatSize(originalSize)].filter(Boolean).join(' · '),
+    },
   ]
 
   return (
@@ -106,7 +181,17 @@ export function ClipEditor({
         </p>
       )}
       {chosen === 'cleaned' && prepared && cut ? (
-        <Trimmer prepared={prepared} cut={cut} moved={span !== null} onSpan={onSpan} autoPlay={autoPlay} />
+        <>
+          <EffectButtons effects={effects} onEffects={onEffects} />
+          <Trimmer
+            prepared={prepared}
+            cut={cut}
+            moved={span !== null}
+            onSpan={onSpan}
+            effects={effects}
+            autoPlay={autoPlay}
+          />
+        </>
       ) : (
         original
       )}
@@ -119,21 +204,31 @@ function Trimmer({
   cut,
   moved,
   onSpan,
+  effects,
   autoPlay,
 }: {
   prepared: Prepared
   cut: Span
   moved: boolean
   onSpan: (span: Span | null) => void
+  effects: readonly Effect[]
   autoPlay: boolean
 }) {
-  const { pcm } = prepared
+  // The waveform and the sound are of the clip with its effects.
+  const pcm = useMemo(() => applyEffects(prepared.pcm, effects), [prepared.pcm, effects])
   const length = durationOf(pcm)
   const peaks = useMemo(() => peaksOf(pcm, BARS), [pcm])
   const [playing, setPlaying] = useState(autoPlay)
   const stop = useRef<(() => void) | null>(null)
   const dragging = useRef<'start' | 'end' | null>(null)
   const first = useRef({ pcm, cut, autoPlay })
+
+  // A new effect is a new sound: the old one stops.
+  const shown = useRef(pcm)
+  useEffect(() => {
+    if (shown.current !== pcm) stop.current?.()
+    shown.current = pcm
+  }, [pcm])
 
   // The take plays once on its own when asked; leaving stops the sound.
   useEffect(() => {
@@ -231,8 +326,8 @@ function Trimmer({
         )}
       </div>
       <p className="tnum text-xs text-stone">
-        Silence trimmed and the volume evened: {formatSeconds(length)} → {formatSeconds(cut.end - cut.start)}. Drag the
-        handles or use the sliders if a sound is cut short.
+        Silence trimmed and the volume evened{effects.length > 0 && `, ${effectsInWords(effects)}`}: {formatSeconds(length)} →{' '}
+        {formatSeconds(cut.end - cut.start)}. Drag the handles or use the sliders if a sound is cut short.
       </p>
     </div>
   )
