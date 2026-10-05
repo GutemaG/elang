@@ -3,10 +3,11 @@ sound, shown in the app's Sounds tab (the Fidel for Amharic, Qubee for
 Afaan Oromo).
 
 A chart is one per learning language. Its letters sit in groups (the 34
-Fidel families and their labialised forms; Qubee's vowels, consonants and
-letter pairs), in order. A group with `columns` is laid out as a grid of
+Fidel families and their labialised forms; Qubee's A to Z, letter pairs
+and long vowels), in order. A group with `columns` is laid out as a grid of
 that many columns, its letters filling it row by row, with
-`column_labels` along the top: the Fidel's seven vowel orders.
+`column_labels` along the top: the Fidel's seven vowel orders. A letter
+may be marked a vowel or a consonant, which the app shows by colour.
 
 This module holds the rules and the starting templates. The templates only
 save typing: an admin adds the recordings and examples, and can change any
@@ -19,6 +20,10 @@ from dataclasses import dataclass, field
 
 # A letter's review state on the admin site. Learners never see it.
 LETTER_STATUSES = ("draft", "needs_review", "ready")
+
+# What a letter may be marked as; unmarked is fine too (the Fidel's
+# letters are both at once).
+LETTER_KINDS = ("vowel", "consonant")
 
 # Templates an admin can start a chart from.
 TEMPLATES = ("fidel", "qubee", "empty")
@@ -51,6 +56,7 @@ class LetterTemplate:
     # as, so it needs no recording of its own.
     same_as: str | None = None
     hint: dict[str, str] = field(default_factory=dict)
+    kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -172,8 +178,14 @@ def _fidel() -> ChartTemplate:
 
 # --- Qubee ------------------------------------------------------------------
 
-# (glyph, romanization, hint) for one Qubee letter.
-_Item = tuple[str, str, dict[str, str]]
+# (glyph, romanization, hint, kind) for one Qubee letter.
+_Item = tuple[str, str, dict[str, str], str]
+
+QUBEE_VOWELS = "aeiou"
+
+# The A to Z group's names; the migration that regrouped existing Qubee
+# charts uses them too.
+ALPHABET_NAMES = {"en": "A–Z", "am": "A–Z", "om": "A–Z"}
 
 _EJECTIVE = {"en": "Pushed out from the throat"}
 _LONG = {"en": "Held twice as long; the length changes the word"}
@@ -181,57 +193,49 @@ _LONG = {"en": "Held twice as long; the length changes the word"}
 
 def _qubee() -> ChartTemplate:
     def group(key: str, items: list[_Item]) -> list[LetterTemplate]:
-        return [LetterTemplate(group=key, glyph=g, romanization=r, hint=h) for g, r, h in items]
+        return [
+            LetterTemplate(group=key, glyph=g, romanization=r, hint=h, kind=k)
+            for g, r, h, k in items
+        ]
 
-    vowels: list[_Item] = [(f"{v.upper()} {v}", v, {}) for v in "aeiou"]
-    long_vowels: list[_Item] = [(v * 2, v * 2, _LONG) for v in "aeiou"]
-    consonant_sounds = {"c": "ch'", "q": "k'", "x": "t'"}
-    consonants: list[_Item] = [
+    # The 26 letters in alphabet order (P, V and Z only in borrowed words),
+    # then the hudhaa.
+    sounds = {"c": "ch'", "q": "k'", "x": "t'"}
+    alphabet: list[_Item] = [
         (
             f"{c.upper()} {c}",
-            consonant_sounds.get(c, c),
-            _EJECTIVE if c in consonant_sounds else {},
+            sounds.get(c, c),
+            _EJECTIVE if c in sounds else {},
+            "vowel" if c in QUBEE_VOWELS else "consonant",
         )
-        for c in "bcdfghjklmnqrstwxy"
+        for c in "abcdefghijklmnopqrstuvwxyz"
     ]
-    consonants.append(("'", "'", {"en": "Hudhaa: a short catch in the throat, as in uh-oh"}))
+    alphabet.append(
+        ("'", "'", {"en": "Hudhaa: a short catch in the throat, as in uh-oh"}, "consonant")
+    )
     pairs: list[_Item] = [
-        ("Ch ch", "ch", {}),
-        ("Dh dh", "dh", {"en": "A d made with the tongue drawn back"}),
-        ("Ny ny", "ny", {"en": "As in canyon"}),
-        ("Ph ph", "p'", _EJECTIVE),
-        ("Sh sh", "sh", {}),
+        ("Ch ch", "ch", {}, "consonant"),
+        ("Dh dh", "dh", {"en": "A d made with the tongue drawn back"}, "consonant"),
+        ("Ny ny", "ny", {"en": "As in canyon"}, "consonant"),
+        ("Ph ph", "p'", _EJECTIVE, "consonant"),
+        ("Sh sh", "sh", {}, "consonant"),
     ]
-    borrowed: list[_Item] = [(f"{c.upper()} {c}", c, {}) for c in "pvz"]
+    long_vowels: list[_Item] = [(v * 2, v * 2, _LONG, "vowel") for v in QUBEE_VOWELS]
     return ChartTemplate(
         title={"en": "Qubee", "am": "ቁቤ", "om": "Qubee"},
         groups=(
-            GroupTemplate(
-                key="vowels", names={"en": "Vowels", "am": "አናባቢዎች", "om": "Dubbachiiftuu"}
-            ),
-            GroupTemplate(
-                key="long_vowels",
-                names={"en": "Long vowels", "am": "ረጃጅም አናባቢዎች", "om": "Dubbachiiftuu dheeraa"},
-            ),
-            GroupTemplate(
-                key="consonants",
-                names={"en": "Consonants", "am": "ተነባቢዎች", "om": "Dubbifamaa"},
-            ),
+            GroupTemplate(key="alphabet", names=dict(ALPHABET_NAMES)),
             GroupTemplate(
                 key="pairs",
                 names={"en": "Letter pairs", "am": "ጥምር ፊደላት", "om": "Qubee dachaa"},
             ),
             GroupTemplate(
-                key="borrowed",
-                names={"en": "In borrowed words", "am": "በውሰት ቃላት", "om": "Jechoota liqii"},
+                key="long_vowels",
+                names={"en": "Long vowels", "am": "ረጃጅም አናባቢዎች", "om": "Dubbachiiftuu dheeraa"},
             ),
         ),
         letters=tuple(
-            group("vowels", vowels)
-            + group("long_vowels", long_vowels)
-            + group("consonants", consonants)
-            + group("pairs", pairs)
-            + group("borrowed", borrowed)
+            group("alphabet", alphabet) + group("pairs", pairs) + group("long_vowels", long_vowels)
         ),
     )
 

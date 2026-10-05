@@ -61,18 +61,24 @@ class TestFidel:
 
 
 class TestQubee:
-    def test_has_its_groups_and_37_sounds(self) -> None:
+    def test_is_a_to_z_then_letter_pairs_and_long_vowels(self) -> None:
         chart = chart_template("qubee")
         sizes = {g.key: sum(1 for x in chart.letters if x.group == g.key) for g in chart.groups}
 
-        assert sizes == {
-            "vowels": 5,
-            "long_vowels": 5,
-            "consonants": 19,
-            "pairs": 5,
-            "borrowed": 3,
-        }
+        assert sizes == {"alphabet": 27, "pairs": 5, "long_vowels": 5}
+        assert chart.groups[0].names["en"] == "A–Z"
         assert all(g.columns is None for g in chart.groups)
+        alphabet = [x.glyph for x in chart.letters if x.group == "alphabet"]
+        assert alphabet[:3] == ["A a", "B b", "C c"]
+        assert alphabet[-2:] == ["Z z", "'"]
+
+    def test_marks_every_letter_a_vowel_or_a_consonant(self) -> None:
+        letters = chart_template("qubee").letters
+        vowels = [x.glyph for x in letters if x.kind == "vowel"]
+
+        assert vowels == ["A a", "E e", "I i", "O o", "U u", "aa", "ee", "ii", "oo", "uu"]
+        assert all(x.kind == "consonant" for x in letters if x.glyph not in vowels)
+        assert all(x.kind is None for x in chart_template("fidel").letters)
 
     def test_marks_the_sounds_english_has_not_got(self) -> None:
         by_glyph = {x.glyph: x for x in chart_template("qubee").letters}

@@ -38,6 +38,8 @@ class SoundLetter(BaseModel):
     id: str
     glyph: str
     romanization: str
+    # "vowel", "consonant", or null when unmarked.
+    kind: str | None
     hint: dict[str, str]
     # What plays: the letter's own recording, or that of the letter it
     # sounds the same as.
@@ -99,6 +101,7 @@ class AdminSoundLetter(BaseModel):
     position: int
     glyph: str
     romanization: str
+    kind: str | None
     hint: dict[str, str]
     audio_url: str | None
     same_as_id: str | None
@@ -147,6 +150,7 @@ class CreateSoundLetterRequest(BaseModel):
     group: str
     glyph: str
     romanization: str | None = None
+    kind: str | None = None
     hint: dict[str, str] | None = None
     audio_url: str | None = None
     same_as_id: str | None = None

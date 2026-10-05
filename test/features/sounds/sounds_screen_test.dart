@@ -1,6 +1,7 @@
 // The Sounds tab's screen: the chart, a tap that plays and opens the
 // letter's sheet, and what shows offline.
 
+import 'package:elang/features/sounds/sound_chart.dart';
 import 'package:elang/features/sounds/sound_chart_store.dart';
 import 'package:elang/features/sounds/sound_charts.dart';
 import 'package:elang/features/sounds/sounds_screen.dart';
@@ -16,13 +17,14 @@ class _Setup {
   final store = InMemorySoundChartStore();
   final player = FakeSoundPlayer();
   late final charts = SoundCharts(api: api, store: store);
+  String language = 'am';
 
   Widget app({Locale locale = const Locale('en')}) => MaterialApp(
     theme: AppTheme.light,
     locale: locale,
     localizationsDelegates: AppLanguage.delegates,
     supportedLocales: AppLanguage.locales,
-    home: SoundsScreen(charts: charts, language: 'am', player: player),
+    home: SoundsScreen(charts: charts, language: language, player: player),
   );
 }
 
@@ -60,6 +62,41 @@ void main() {
     await tester.tap(find.text('Labialised'));
     await tester.pumpAndSettle();
     expect(_tile('lwa'), findsOneWidget);
+  });
+
+  testWidgets('colours the vowels of A to Z and says what the colour means', (
+    tester,
+  ) async {
+    final s = _Setup()..language = 'om';
+    s.api.charts = [summary(language: 'om', version: 2)];
+    s.api.byLanguage['om'] = SoundChart.fromJson(qubeeJson());
+    await _pump(tester, setup: s);
+
+    expect(find.text('A–Z'), findsOneWidget);
+    expect(find.bySemanticsLabel('A a, a, Vowel'), findsOneWidget);
+    expect(find.bySemanticsLabel('B b, b, Consonant'), findsOneWidget);
+    expect(find.text('Vowel'), findsOneWidget);
+    expect(find.text('Consonant'), findsOneWidget);
+
+    await tester.tap(_tile('a'));
+    await tester.pumpAndSettle();
+    // The key under the grid, and the sheet.
+    expect(find.text('Vowel'), findsNWidgets(2));
+
+    // Letter pairs are all consonants: no key.
+    Navigator.of(tester.element(find.text('Vowel').last)).pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Letter pairs'));
+    await tester.pumpAndSettle();
+    expect(find.text('Vowel'), findsNothing);
+    expect(find.text('Consonant'), findsNothing);
+  });
+
+  testWidgets('the Fidel marks no letter a vowel', (tester) async {
+    await _pump(tester);
+
+    expect(find.bySemanticsLabel('ሀ, he'), findsOneWidget);
+    expect(find.text('Vowel'), findsNothing);
   });
 
   testWidgets('a tap plays the letter and opens its sheet', (tester) async {

@@ -1337,4 +1337,10 @@ class AppLocalizationsAm extends AppLocalizations {
   String soundsLetterLabel(String glyph, String romanization) {
     return '$glyph፣ $romanization';
   }
+
+  @override
+  String get soundsVowel => 'አናባቢ';
+
+  @override
+  String get soundsConsonant => 'ተነባቢ';
 }

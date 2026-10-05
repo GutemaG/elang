@@ -349,5 +349,7 @@
   "soundsLoadFailed": "ድምጾቹን መጫን አልተቻለም",
   "soundsCantPlay": "ይህን ድምጽ ማጫወት አልተቻለም።",
   "soundsNone": "ለዚህ ኮርስ እስካሁን የድምጽ ሰንጠረዥ የለም።",
-  "soundsLetterLabel": "{glyph}፣ {romanization}"
+  "soundsLetterLabel": "{glyph}፣ {romanization}",
+  "soundsVowel": "አናባቢ",
+  "soundsConsonant": "ተነባቢ"
 }

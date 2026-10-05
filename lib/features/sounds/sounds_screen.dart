@@ -7,6 +7,7 @@ import '../../shared/models/language_names.dart';
 import '../../shared/theme/app_shadows.dart';
 import '../../shared/theme/app_spacing.dart';
 import '../../shared/theme/app_theme_context.dart';
+import '../../shared/theme/app_tone.dart';
 import '../../shared/theme/app_typography.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_icon_button.dart';
@@ -272,20 +273,35 @@ class _SoundsScreenState extends State<SoundsScreen> {
                   ),
             delegate: SliverChildBuilderDelegate((context, i) {
               final letter = group.letters[i];
+              final kind = _kindName(context, letter);
+              final label = context.l10n.soundsLetterLabel(
+                letter.glyph,
+                letter.romanization,
+              );
               return GlyphTile(
                 key: SoundsScreen.tileKey(letter.id),
                 glyph: letter.glyph,
                 caption: letter.romanization,
                 muted: letter.sameAs != null,
-                semanticLabel: context.l10n.soundsLetterLabel(
-                  letter.glyph,
-                  letter.romanization,
-                ),
+                tone: letter.isVowel ? AppTone.primary : null,
+                semanticLabel: kind == null ? label : '$label, $kind',
                 onTap: () => _open(group, letter),
               );
             }, childCount: group.letters.length),
           ),
         ),
+        if (group.letters.any((x) => x.isVowel))
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.marginMobile,
+              0,
+              AppSpacing.marginMobile,
+              AppSpacing.spaceMd,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: ExcludeSemantics(child: _KindKey(group: group)),
+            ),
+          ),
         if (chart.credits.isNotEmpty)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
@@ -336,6 +352,52 @@ class _SoundsScreenState extends State<SoundsScreen> {
         builder: (_) =>
             _LetterSheet(group: group, initial: letter, play: _play),
       ),
+    );
+  }
+}
+
+/// "Vowel" or "Consonant" in the app language, or null for a letter the
+/// chart does not mark.
+String? _kindName(BuildContext context, SoundLetter letter) => letter.isVowel
+    ? context.l10n.soundsVowel
+    : letter.isConsonant
+    ? context.l10n.soundsConsonant
+    : null;
+
+/// Under a group with vowels: what the green tiles mean.
+class _KindKey extends StatelessWidget {
+  const _KindKey({required this.group});
+
+  final SoundGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    Widget item(Widget mark, String label) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        mark,
+        const SizedBox(width: AppSpacing.space2xs),
+        Text(
+          label,
+          style: AppTypography.forText(
+            AppTypography.bodySm.copyWith(color: colors.textMuted),
+            label,
+          ),
+        ),
+      ],
+    );
+    return Wrap(
+      spacing: AppSpacing.spaceMd,
+      runSpacing: AppSpacing.space2xs,
+      children: [
+        item(
+          const GlyphSwatch(tone: AppTone.primary),
+          context.l10n.soundsVowel,
+        ),
+        if (group.letters.any((x) => x.isConsonant))
+          item(const GlyphSwatch(), context.l10n.soundsConsonant),
+      ],
     );
   }
 }
@@ -431,6 +493,7 @@ class _LetterSheetState extends State<_LetterSheet> {
     final colors = context.colors;
     final code = Localizations.localeOf(context).languageCode;
     final hint = inLanguage(_letter.hint, code);
+    final kind = _kindName(context, _letter);
     final example = _letter.example;
     final family = _family;
     return Padding(
@@ -458,6 +521,18 @@ class _LetterSheetState extends State<_LetterSheet> {
                         color: colors.onSurface,
                       ),
                     ),
+                    if (kind != null)
+                      Text(
+                        kind,
+                        style: AppTypography.forText(
+                          AppTypography.labelMd.copyWith(
+                            color: _letter.isVowel
+                                ? context.tone(AppTone.primary).ink
+                                : colors.textMuted,
+                          ),
+                          kind,
+                        ),
+                      ),
                     if (_letter.sameAs != null)
                       Text(
                         context.l10n.soundsSameAs(_letter.sameAs!),

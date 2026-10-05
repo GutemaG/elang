@@ -1851,5 +1851,13 @@
         "type": "String"
       }
     }
+  },
+  "soundsVowel": "Vowel",
+  "@soundsVowel": {
+    "description": "Sounds tab: a letter that is a vowel (A E I O U in Qubee)."
+  },
+  "soundsConsonant": "Consonant",
+  "@soundsConsonant": {
+    "description": "Sounds tab: a letter that is a consonant."
   }
 }

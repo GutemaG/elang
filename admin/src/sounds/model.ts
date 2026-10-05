@@ -13,6 +13,7 @@ import type {
   AdminSoundLetter,
   Localized,
   SoundLetterChange,
+  SoundLetterKind,
   SoundLetterStatus,
 } from '../types'
 
@@ -29,9 +30,18 @@ export const TEMPLATES = [
     name: 'Fidel',
     description: 'The 34 families in their seven vowel orders, and the labialised letters: 260 letters.',
   },
-  { id: 'qubee', name: 'Qubee', description: 'Short and long vowels, consonants, letter pairs: 37 sounds.' },
+  {
+    id: 'qubee',
+    name: 'Qubee',
+    description: 'A to Z with the vowels marked, letter pairs and long vowels: 37 sounds.',
+  },
   { id: 'empty', name: 'Empty', description: 'No letters yet; add each one yourself.' },
 ] as const
+
+export const KIND_LABELS: Record<SoundLetterKind, string> = {
+  vowel: 'Vowel',
+  consonant: 'Consonant',
+}
 
 export const STATUS_LABELS: Record<SoundLetterStatus, string> = {
   draft: 'Draft',
@@ -156,6 +166,7 @@ export const CSV_COLUMNS = [
   'group',
   'glyph',
   'romanization',
+  'kind',
   'hint_en',
   'hint_am',
   'hint_om',
@@ -174,6 +185,7 @@ export function chartToCsv(chart: AdminSoundChart): string {
     x.group,
     x.glyph,
     x.romanization,
+    x.kind ?? '',
     x.hint.en ?? '',
     x.hint.am ?? '',
     x.hint.om ?? '',
@@ -247,6 +259,14 @@ export function csvToChanges(text: string, chart: AdminSoundChart): CsvResult {
     if (glyph !== letter.glyph) change.glyph = glyph
     const romanization = (row.romanization ?? '').trim()
     if (romanization !== letter.romanization) change.romanization = romanization
+    if ('kind' in row) {
+      const kind = orNull(row.kind)?.toLowerCase() ?? null
+      if (kind !== null && !(kind in KIND_LABELS)) {
+        problems.push({ line, message: `The kind must be vowel, consonant or blank, not “${row.kind!.trim()}”.` })
+        return
+      }
+      if (kind !== letter.kind) change.kind = kind as SoundLetterKind | null
+    }
     const hint = localizedFrom(row, 'hint')
     if (has('hint') && !sameLocalized(hint, letter.hint)) change.hint = hint
     const meaning = localizedFrom(row, 'meaning')

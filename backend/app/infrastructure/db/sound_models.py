@@ -75,6 +75,9 @@ class SoundLetterModel(Base):
     position: Mapped[int] = mapped_column(Integer, nullable=False)
     glyph: Mapped[str] = mapped_column(String(16), nullable=False)
     romanization: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    # "vowel", "consonant" or unmarked (`LETTER_KINDS`); the app colours
+    # vowels.
+    kind: Mapped[str | None] = mapped_column(String(16), nullable=True)
     # A tip for a hard sound, by app language.
     hint: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False, default=dict)
     audio_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)

@@ -147,6 +147,7 @@ class TestLetters:
                 "letters": [
                     {
                         "id": dh["id"],
+                        "kind": None,
                         "audio_url": CLIP,
                         "hint": {"en": " A d with the tongue back ", "am": ""},
                         "example_word": "dhugaa",
@@ -165,6 +166,7 @@ class TestLetters:
         body = response.json()
         saved = next(x for x in body["letters"] if x["id"] == dh["id"])
         assert saved["hint"] == {"en": "A d with the tongue back"}
+        assert (dh["kind"], saved["kind"]) == ("consonant", None)
         assert saved["example_meaning"] == {"en": "truth", "am": "እውነት"}
         assert (saved["status"], saved["recorded_by"]) == ("needs_review", "Chaltu")
         assert body["version"] == chart["version"] + 1
@@ -175,6 +177,7 @@ class TestLetters:
         [
             ({"audio_url": "http://insecure.example/a.mp3"}, "letters[1].audio_url"),
             ({"status": "done"}, "letters[1].status"),
+            ({"kind": "semivowel"}, "letters[1].kind"),
             ({"glyph": ""}, "letters[1].glyph"),
             ({"romanization": "x" * 33}, "letters[1].romanization"),
             ({"hint": {"english": "x"}}, "letters[1].hint"),
@@ -387,6 +390,20 @@ class TestWhatTheAppReads:
         assert body["credits"] == ["Selam"]
         # Nothing only admins should see.
         assert "status" not in letters["ሀ"] and "recorded_by" not in letters["ሀ"]
+
+    def test_qubee_is_a_to_z_with_its_vowels_marked(self, client: TestClient, h: dict) -> None:
+        _record_all(client, h, _create(client, h, "om", "qubee"))
+        _turn_on(client, h, "om")
+
+        body = client.get(f"{APP}/om").json()
+        assert [g["key"] for g in body["groups"]] == ["alphabet", "pairs", "long_vowels"]
+        alphabet = body["groups"][0]["letters"]
+        assert [(x["glyph"], x["kind"]) for x in alphabet[:3]] == [
+            ("A a", "vowel"),
+            ("B b", "consonant"),
+            ("C c", "consonant"),
+        ]
+        assert body["groups"][0]["names"]["en"] == "A–Z"
 
     def test_can_be_cached_and_revalidated(self, client: TestClient, h: dict) -> None:
         chart = _record_all(client, h, _create(client, h))

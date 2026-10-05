@@ -6,7 +6,7 @@ import { saveFile, readText, CSV_TYPE } from '../import/download'
 import { plural } from '../format'
 import { PageHeader } from '../shell/Page'
 import { routes } from '../tree/levels'
-import type { AdminSoundChart, AdminSoundGroup, AdminSoundLetter, SoundLetterStatus } from '../types'
+import type { AdminSoundChart, AdminSoundGroup, AdminSoundLetter, SoundLetterKind, SoundLetterStatus } from '../types'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
@@ -14,6 +14,7 @@ import { Icon } from '../ui/Icon'
 import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
 import {
+  KIND_LABELS,
   STATE_LABELS,
   STATUS_LABELS,
   chartToCsv,
@@ -290,7 +291,7 @@ export function SoundChartPage() {
 
       {group && <GroupGrid chart={chart} group={group} filter={filter} selection={selection} />}
 
-      <Legend />
+      <Legend kinds={chart.letters.some((x) => x.kind)} />
 
       {!chart.enabled && (
         <div className="mt-10 border-t border-line pt-4">
@@ -403,7 +404,7 @@ function Count({ tone = 'plain', children }: { tone?: LetterState | 'plain'; chi
   )
 }
 
-function Legend() {
+function Legend({ kinds }: { kinds: boolean }) {
   const states: LetterState[] = ['ready', 'needs_review', 'draft', 'no_audio', 'same_sound']
   return (
     <ul className="mt-4 flex flex-wrap gap-4 text-xs text-stone" aria-label="Key">
@@ -413,9 +414,21 @@ function Legend() {
           {STATE_LABELS[s]}
         </li>
       ))}
+      {kinds &&
+        (Object.keys(KIND_LABELS) as SoundLetterKind[]).map((k) => (
+          <li key={k} className="flex items-center gap-1.5">
+            <span aria-hidden="true" className={cx('text-sm leading-none font-bold', KIND_TONES[k])}>
+              {k === 'vowel' ? 'A' : 'B'}
+            </span>
+            {KIND_LABELS[k]}
+          </li>
+        ))}
     </ul>
   )
 }
+
+/** A vowel's glyph is green, as the app colours it. */
+const KIND_TONES: Record<SoundLetterKind, string> = { vowel: 'text-forest', consonant: 'text-coffee' }
 
 function GroupGrid({
   chart,
@@ -491,7 +504,8 @@ function Tile({
   selection: Selection | null
 }) {
   const state = stateOf(letter)
-  const label = `${letter.glyph}, ${letter.romanization || 'no romanization'}: ${STATE_LABELS[state]}${sameAs ? ` as ${sameAs.glyph}` : ''}`
+  const kind = letter.kind ? `, ${KIND_LABELS[letter.kind].toLowerCase()}` : ''
+  const label = `${letter.glyph}, ${letter.romanization || 'no romanization'}${kind}: ${STATE_LABELS[state]}${sameAs ? ` as ${sameAs.glyph}` : ''}`
   const picked = !!selection?.ids.has(letter.id)
   const className = cx(
     'relative flex min-w-[3.25rem] flex-col items-center rounded border px-1.5 pt-1.5 pb-1 transition-[opacity,box-shadow] hover:shadow-e1',
@@ -507,7 +521,12 @@ function Tile({
       ) : (
         <span aria-hidden="true" className={cx('absolute top-1 right-1 size-1.5 rounded-full', STATE_TONES[state].dot)} />
       )}
-      <span className={cx('text-lg leading-6 font-semibold', state === 'same_sound' ? 'text-stone' : 'text-coffee')}>
+      <span
+        className={cx(
+          'text-lg leading-6 font-semibold',
+          state === 'same_sound' ? 'text-stone' : letter.kind ? KIND_TONES[letter.kind] : 'text-coffee',
+        )}
+      >
         {letter.glyph}
       </span>
       <span className="font-mono text-[0.625rem] text-stone">{letter.romanization || '—'}</span>

@@ -129,6 +129,7 @@ def _public_letter(letter: SoundLetterModel, by_id: dict[str, SoundLetterModel])
         id=letter.id,
         glyph=letter.glyph,
         romanization=letter.romanization,
+        kind=letter.kind,
         hint=letter.hint or {},
         audio_url=(source.audio_url if source else letter.audio_url),
         same_as=source.glyph if source else None,
@@ -202,6 +203,7 @@ def _admin_letter(r: SoundLetterModel) -> AdminSoundLetter:
         position=r.position,
         glyph=r.glyph,
         romanization=r.romanization,
+        kind=r.kind,
         hint=r.hint or {},
         audio_url=r.audio_url,
         same_as_id=r.same_as_id,
@@ -247,8 +249,8 @@ async def admin_create_sound_chart(
     ctx: AdminContext = Depends(_ctx),
 ) -> AdminSoundChart:
     """A new chart, off, filled from a template: `fidel` (the 34 families in
-    seven orders and the labialised letters), `qubee` (vowels, consonants
-    and letter pairs) or `empty`."""
+    seven orders and the labialised letters), `qubee` (A to Z with vowels
+    and consonants marked, letter pairs and long vowels) or `empty`."""
     return _admin_chart(
         await uc.create_chart(repo, ctx, language=body.language, template=body.template)
     )

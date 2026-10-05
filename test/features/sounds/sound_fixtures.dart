@@ -39,6 +39,35 @@ Map<String, Object?> fidelJson({int version = 3}) => {
   'credits': ['Selam'],
 };
 
+/// A small Qubee: A to Z with its vowels marked, and a letter pair.
+Map<String, Object?> qubeeJson() => {
+  'language': 'om',
+  'title': {'en': 'Qubee'},
+  'version': 2,
+  'updated_at': '2026-10-05T09:00:00Z',
+  'groups': [
+    {
+      'key': 'alphabet',
+      'names': {'en': 'A–Z'},
+      'columns': null,
+      'column_labels': <String>[],
+      'letters': [
+        _letter('a', 'A a', 'a', kind: 'vowel'),
+        _letter('b', 'B b', 'b', kind: 'consonant'),
+        _letter('c', 'C c', "ch'", kind: 'consonant'),
+      ],
+    },
+    {
+      'key': 'pairs',
+      'names': {'en': 'Letter pairs'},
+      'columns': null,
+      'column_labels': <String>[],
+      'letters': [_letter('ch', 'Ch ch', 'ch', kind: 'consonant')],
+    },
+  ],
+  'credits': <String>[],
+};
+
 Map<String, Object?> _letter(
   String id,
   String glyph,
@@ -46,11 +75,13 @@ Map<String, Object?> _letter(
   String? sameAs,
   String? audio,
   String? hint,
+  String? kind,
   bool example = false,
 }) => {
   'id': id,
   'glyph': glyph,
   'romanization': romanization,
+  'kind': ?kind,
   'hint': {'en': ?hint},
   'audio_url': '$clip/${audio ?? id}.m4a',
   'same_as': sameAs,

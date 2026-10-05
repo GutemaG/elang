@@ -35,6 +35,7 @@ function letter(id: string, glyph: string, romanization: string, extra: Partial<
     position: 0,
     glyph,
     romanization,
+    kind: null,
     hint: {},
     audio_url: null,
     same_as_id: null,
@@ -198,6 +199,27 @@ describe('a chart', () => {
     expect(screen.getByRole('link', { name: 'ሀ, he: Ready' })).toHaveClass('opacity-30')
   })
 
+  it('colours the vowels and says which letters are which', async () => {
+    chart = withCounts({
+      ...chart,
+      letters: chart.letters.map((x) => ({ ...x, kind: x.id === 'ha' ? 'vowel' : x.id === 'hu' ? 'consonant' : null })),
+    })
+    renderApp('/sounds/am')
+
+    const vowel = await screen.findByRole('link', { name: 'ሀ, he, vowel: Ready' })
+    expect(within(vowel).getByText('ሀ')).toHaveClass('text-forest')
+    expect(screen.getByRole('link', { name: 'ሁ, hu, consonant: No audio' })).toBeInTheDocument()
+    const key = within(screen.getByRole('list', { name: 'Key' }))
+    expect(key.getByText('Vowel')).toBeInTheDocument()
+    expect(key.getByText('Consonant')).toBeInTheDocument()
+  })
+
+  it('has no vowel key for a chart with no letters marked', async () => {
+    renderApp('/sounds/am')
+    const key = within(await screen.findByRole('list', { name: 'Key' }))
+    expect(key.queryByText('Vowel')).not.toBeInTheDocument()
+  })
+
   it('will not show the chart in the app until every sound has audio', async () => {
     renderApp('/sounds/am')
 
@@ -281,7 +303,7 @@ describe('a chart', () => {
     renderApp('/sounds/am')
     await screen.findByRole('heading', { name: 'Amharic · Fidel' })
 
-    const csv = chartToCsv(chart).replace(',hu,,,,', ',hu,Like the u in put,,,')
+    const csv = chartToCsv(chart).replace(',hu,,,,,', ',hu,,Like the u in put,,,')
     fireEvent.change(screen.getByLabelText('CSV file to import'), {
       target: { files: [new File([csv], 'sounds-am.csv', { type: 'text/csv' })] },
     })
@@ -309,6 +331,20 @@ describe('a letter', () => {
       expect(patches()).toEqual([[{ id: 'hu', romanization: 'hū', status: 'needs_review', recorded_by: 'Selam' }]]),
     )
     expect(await screen.findByRole('heading', { name: /Letter ሐ/ })).toBeInTheDocument()
+  })
+
+  it('marks a letter a vowel, or unmarks it', async () => {
+    renderApp('/sounds/am/letters/hu')
+
+    const kind = await screen.findByLabelText('Vowel or consonant')
+    expect(kind).toHaveValue('')
+    await userEvent.selectOptions(kind, 'Vowel')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(patches()).toEqual([[{ id: 'hu', kind: 'vowel' }]]))
+
+    await userEvent.selectOptions(kind, 'Not marked')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(patches()[1]).toEqual([{ id: 'hu', kind: null }]))
   })
 
   it('a letter that sounds like another has nothing to record', async () => {
@@ -645,12 +681,25 @@ describe('the rules', () => {
     const c = smallChart()
     expect(csvToChanges(chartToCsv(c), c)).toEqual({ changes: [], problems: [] })
 
-    const edited = chartToCsv(c).concat('\r\nnope,fidel,ሂ,hi,,,,,,,,,draft,\r\n,fidel,ሁ,hū,,,,,,,,,done,')
+    const edited = chartToCsv(c).concat('\r\nnope,fidel,ሂ,hi,,,,,,,,,,draft,\r\n,fidel,ሁ,hū,,,,,,,,,,done,')
     const result = csvToChanges(edited, c)
     expect(result.problems).toEqual([
       { line: 6, message: 'No letter in this chart has that id.' },
       { line: 7, message: 'The status must be draft, needs_review or ready, not “done”.' },
     ])
+  })
+
+  it('reads a letter marked a vowel or a consonant, and refuses any other kind', () => {
+    const c = smallChart()
+    c.letters[0]!.kind = 'vowel'
+    const csv = 'glyph,romanization,group,kind\r\nሀ,he,fidel,\r\nሁ,hu,fidel,Consonant\r\nሐ,he,fidel,glide'
+    expect(csvToChanges(csv, c)).toEqual({
+      changes: [
+        { id: 'ha', kind: null },
+        { id: 'hu', kind: 'consonant' },
+      ],
+      problems: [{ line: 4, message: 'The kind must be vowel, consonant or blank, not “glide”.' }],
+    })
   })
 
   it('leaves a field alone when its column is not in the file', () => {

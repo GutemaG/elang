@@ -2204,6 +2204,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{glyph}, {romanization}'**
   String soundsLetterLabel(String glyph, String romanization);
+
+  /// Sounds tab: a letter that is a vowel (A E I O U in Qubee).
+  ///
+  /// In en, this message translates to:
+  /// **'Vowel'**
+  String get soundsVowel;
+
+  /// Sounds tab: a letter that is a consonant.
+  ///
+  /// In en, this message translates to:
+  /// **'Consonant'**
+  String get soundsConsonant;
 }
 
 class _AppLocalizationsDelegate

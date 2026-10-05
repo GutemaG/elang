@@ -113,6 +113,7 @@ class SoundLetter {
     required this.id,
     required this.glyph,
     required this.romanization,
+    this.kind,
     this.hint = const {},
     this.audioUrl,
     this.sameAs,
@@ -125,6 +126,7 @@ class SoundLetter {
       id: _string(json['id']),
       glyph: _string(json['glyph']),
       romanization: _string(json['romanization']),
+      kind: json['kind'] as String?,
       hint: _localized(json['hint']),
       audioUrl: json['audio_url'] as String?,
       sameAs: json['same_as'] as String?,
@@ -137,6 +139,13 @@ class SoundLetter {
   final String id;
   final String glyph;
   final String romanization;
+
+  /// `vowel`, `consonant`, or null when the chart does not say (the
+  /// Fidel's letters are both at once).
+  final String? kind;
+
+  bool get isVowel => kind == 'vowel';
+  bool get isConsonant => kind == 'consonant';
 
   /// A tip for a sound English has not got, by app language.
   final Localized hint;
@@ -153,6 +162,7 @@ class SoundLetter {
     id: id,
     glyph: glyph,
     romanization: romanization,
+    kind: kind,
     hint: hint,
     audioUrl: audioUrl == null ? null : resolve(audioUrl!),
     sameAs: sameAs,
@@ -172,6 +182,7 @@ class SoundLetter {
     'id': id,
     'glyph': glyph,
     'romanization': romanization,
+    'kind': kind,
     'hint': hint,
     'audio_url': audioUrl,
     'same_as': sameAs,

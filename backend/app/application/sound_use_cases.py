@@ -33,6 +33,7 @@ from app.domain.lesson.exceptions import (
     SoundChartIncompleteError,
 )
 from app.domain.sounds import (
+    LETTER_KINDS,
     LETTER_STATUSES,
     MAX_EXAMPLE,
     MAX_GLYPH,
@@ -58,6 +59,7 @@ logger = logging.getLogger("app.admin")
 LETTER_FIELDS = (
     "glyph",
     "romanization",
+    "kind",
     "hint",
     "audio_url",
     "same_as_id",
@@ -278,6 +280,7 @@ async def create_chart(
             position=position,
             glyph=letter.glyph,
             romanization=letter.romanization,
+            kind=letter.kind,
             hint=dict(letter.hint),
             example_meaning={},
             status="draft",
@@ -371,6 +374,12 @@ async def _apply(
         letter.romanization = (
             _text(f("romanization"), changes["romanization"], MAX_ROMANIZATION) or ""
         )
+    if "kind" in changes:
+        if changes["kind"] not in (*LETTER_KINDS, None):
+            raise InvalidContentError(
+                f("kind"), f"kind must be one of: {', '.join(LETTER_KINDS)}, or null"
+            )
+        letter.kind = changes["kind"]
     if "hint" in changes:
         letter.hint = _localized(f("hint"), changes["hint"], MAX_HINT)
     if "audio_url" in changes:

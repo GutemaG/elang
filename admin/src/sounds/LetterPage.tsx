@@ -5,18 +5,26 @@ import { AudioField } from '../audio/AudioField'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { Section } from '../exercises/fields'
 import { routes } from '../tree/levels'
-import type { AdminSoundChart, AdminSoundLetter, Localized, SoundLetterChange, SoundLetterStatus } from '../types'
+import type {
+  AdminSoundChart,
+  AdminSoundLetter,
+  Localized,
+  SoundLetterChange,
+  SoundLetterKind,
+  SoundLetterStatus,
+} from '../types'
 import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 import { FIELD_CLASS, Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
-import { APP_LANGUAGES, STATE_LABELS, STATUS_LABELS, englishOf, stateOf, uploadSound } from './model'
+import { APP_LANGUAGES, KIND_LABELS, STATE_LABELS, STATUS_LABELS, englishOf, stateOf, uploadSound } from './model'
 import { useSoundChart } from './useSoundChart'
 
 interface Draft {
   glyph: string
   romanization: string
+  kind: SoundLetterKind | ''
   same_as_id: string
   hint: Localized
   audio_url: string
@@ -32,6 +40,7 @@ function draftOf(x: AdminSoundLetter): Draft {
   return {
     glyph: x.glyph,
     romanization: x.romanization,
+    kind: x.kind ?? '',
     same_as_id: x.same_as_id ?? '',
     hint: { ...x.hint },
     audio_url: x.audio_url ?? '',
@@ -54,6 +63,7 @@ function changesOf(saved: AdminSoundLetter, d: Draft): SoundLetterChange {
   const c: SoundLetterChange = { id: saved.id }
   if (d.glyph.trim() !== saved.glyph) c.glyph = d.glyph.trim()
   if (d.romanization.trim() !== saved.romanization) c.romanization = d.romanization.trim()
+  if ((d.kind || null) !== saved.kind) c.kind = d.kind || null
   if (orNull(d.same_as_id) !== saved.same_as_id) c.same_as_id = orNull(d.same_as_id)
   if (!same(d.hint, saved.hint)) c.hint = cleanLocalized(d.hint)
   if (orNull(d.audio_url) !== saved.audio_url) c.audio_url = orNull(d.audio_url)
@@ -117,7 +127,15 @@ function LetterForm({
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const ids = { glyph: useId(), romanization: useId(), same: useId(), word: useId(), wordRom: useId(), by: useId() }
+  const ids = {
+    glyph: useId(),
+    romanization: useId(),
+    kind: useId(),
+    same: useId(),
+    word: useId(),
+    wordRom: useId(),
+    by: useId(),
+  }
 
   const index = chart.letters.findIndex((x) => x.id === letter.id)
   const next = chart.letters[index + 1]
@@ -234,6 +252,21 @@ function LetterForm({
                 className="font-mono"
                 onChange={(e) => edit('romanization', e.target.value)}
               />
+            </Field>
+            <Field id={ids.kind} label="Vowel or consonant" hint="The app colours the vowels.">
+              <select
+                id={ids.kind}
+                className={FIELD_CLASS}
+                value={draft.kind}
+                onChange={(e) => edit('kind', e.target.value as SoundLetterKind | '')}
+              >
+                <option value="">Not marked</option>
+                {(Object.keys(KIND_LABELS) as SoundLetterKind[]).map((k) => (
+                  <option key={k} value={k}>
+                    {KIND_LABELS[k]}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field
               id={ids.same}

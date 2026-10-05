@@ -349,5 +349,7 @@
   "soundsLoadFailed": "Sagaleewwan fe'uun hin danda'amne",
   "soundsCantPlay": "Sagalee kana taphachiisuun hin danda'amne.",
   "soundsNone": "Koorsii kanaaf ammaaf chaartiin sagalee hin jiru.",
-  "soundsLetterLabel": "{glyph}, {romanization}"
+  "soundsLetterLabel": "{glyph}, {romanization}",
+  "soundsVowel": "Dubbachiiftuu",
+  "soundsConsonant": "Dubbifamaa"
 }

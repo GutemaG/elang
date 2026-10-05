@@ -471,12 +471,16 @@ export interface AdminSoundGroup {
   column_labels: string[]
 }
 
+export type SoundLetterKind = 'vowel' | 'consonant'
+
 export interface AdminSoundLetter {
   id: string
   group: string
   position: number
   glyph: string
   romanization: string
+  /** Shown by colour in the app; null when unmarked. */
+  kind: SoundLetterKind | null
   hint: Localized
   audio_url: string | null
   same_as_id: string | null

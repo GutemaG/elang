@@ -11,7 +11,7 @@ import 'tactile_pressable.dart';
 /// Sounds tab's chart is a grid of these (ሀ over "he").
 ///
 /// [muted] draws a letter that only borrows another's sound in a quieter
-/// face. The tile scales its text down rather than overflow, so the
+/// face; [tone] colours one that stands out, such as a vowel. The tile scales its text down rather than overflow, so the
 /// Fidel's seven columns fit a narrow phone at any text size.
 class GlyphTile extends StatelessWidget {
   const GlyphTile({
@@ -21,6 +21,7 @@ class GlyphTile extends StatelessWidget {
     required this.semanticLabel,
     required this.onTap,
     this.muted = false,
+    this.tone,
   });
 
   final String glyph;
@@ -30,20 +31,22 @@ class GlyphTile extends StatelessWidget {
   final String semanticLabel;
   final VoidCallback onTap;
   final bool muted;
+  final AppTone? tone;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final toned = muted || tone == null ? null : context.tone(tone!);
     return Semantics(
       button: true,
       label: semanticLabel,
       excludeSemantics: true,
       child: TactilePressable(
         onPressed: onTap,
-        faceColor: muted
-            ? colors.surfaceContainer
-            : colors.surfaceContainerLowest,
-        borderColor: colors.tileBorder,
+        faceColor:
+            toned?.surface ??
+            (muted ? colors.surfaceContainer : colors.surfaceContainerLowest),
+        borderColor: toned?.border ?? colors.tileBorder,
         borderWidth: 1.5,
         borderRadius: BorderRadius.circular(AppRadii.sm + 2),
         shelfDepth: AppShadows.tileShelfDepth,
@@ -61,7 +64,9 @@ class GlyphTile extends StatelessWidget {
                     glyph,
                     style: AppTypography.forText(
                       AppTypography.headlineSm.copyWith(
-                        color: muted ? colors.textMuted : colors.onSurface,
+                        color:
+                            toned?.ink ??
+                            (muted ? colors.textMuted : colors.onSurface),
                         height: 1.15,
                       ),
                       glyph,
@@ -79,6 +84,32 @@ class GlyphTile extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small square coloured like a [GlyphTile] of [tone] (or a plain one),
+/// for a key that says what the colours mean.
+class GlyphSwatch extends StatelessWidget {
+  const GlyphSwatch({super.key, this.tone});
+
+  final AppTone? tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final toned = tone == null ? null : context.tone(tone!);
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        color: toned?.surface ?? colors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadii.sm / 2),
+        border: Border.all(
+          color: toned?.border ?? colors.tileBorder,
+          width: 1.5,
         ),
       ),
     );
