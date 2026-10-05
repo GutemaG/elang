@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -7,9 +7,19 @@ import { FakeServer, type Call } from '../test/fakeServer'
 import { LISTENING, lessonExercises } from '../test/exercises'
 import { courseTree } from '../test/fixtures'
 import { renderApp, withStoredSession } from '../test/renderApp'
+import { prepared } from '../test/clips'
 import type { AdminExercise } from '../types'
+import { playPcm, prepareClip } from './codec'
 
 vi.mock('../auth/GoogleButton', () => ({ GoogleButton: () => null }))
+
+// Reading and playing need a browser's audio engine; the tests hand over
+// samples instead. Storing (the mp3) is real.
+vi.mock('./codec', async (original) => ({
+  ...(await original<typeof import('./codec')>()),
+  prepareClip: vi.fn(async () => null),
+  playPcm: vi.fn(() => () => {}),
+}))
 
 const A = '/api/v1/admin'
 const LIST = `${A}/lessons/lesson-1/exercises`
@@ -147,6 +157,8 @@ beforeEach(() => {
   URL.createObjectURL = createObjectURL
   URL.revokeObjectURL = revokeObjectURL
   withMicrophone()
+  vi.mocked(prepareClip).mockImplementation(async () => null)
+  vi.mocked(playPcm).mockClear()
 })
 
 afterEach(() => {
@@ -385,6 +397,77 @@ describe('uploading a file', () => {
     expect(screen.queryByRole('button', { name: 'Use this file' })).not.toBeInTheDocument()
     expect(presigns()).toHaveLength(0)
     expect(createObjectURL).not.toHaveBeenCalled()
+  })
+})
+
+describe('cleaning a clip before it is stored', () => {
+  const user = () => userEvent.setup({ applyAccept: false })
+  const m4a = () => new File([new Uint8Array(30000)], 'salam.m4a', { type: 'audio/mp4' })
+
+  beforeEach(() => {
+    vi.mocked(prepareClip).mockImplementation(async () => prepared())
+  })
+
+  it('trims the silence and evens the volume, then stores a small mp3', async () => {
+    await openListening()
+    await tab('Upload')
+    await user().upload(screen.getByLabelText('Audio file'), m4a())
+
+    expect(await screen.findByRole('radio', { name: /Cleaned/ })).toBeChecked()
+    expect(screen.getByText(/Silence trimmed and the volume evened: 2\.00 s → 0\.73 s/)).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Waveform: kept from 0.42 s to 1.15 s of 2.00 s' })).toBeInTheDocument()
+
+    await click('Play cleaned')
+    const played = vi.mocked(playPcm).mock.calls[0]![0]
+    expect(played.samples.length).toBe(Math.round(0.73 * 24000))
+
+    await click('Use this file')
+    await waitFor(() => expect(presigns()).toHaveLength(1))
+    expect(presigns()[0]?.body).toMatchObject({ content_type: 'audio/mpeg' })
+    const sent = storePuts()[0]?.raw as Blob
+    expect(sent.type).toBe('audio/mpeg')
+    expect(sent.size).toBeLessThan(30000)
+  })
+
+  it('moves the cut by hand, and finds the speech again', async () => {
+    await openListening()
+    await tab('Upload')
+    await user().upload(screen.getByLabelText('Audio file'), m4a())
+    await screen.findByRole('radio', { name: /Cleaned/ })
+
+    fireEvent.change(screen.getByRole('slider', { name: /End/ }), { target: { value: '1.5' } })
+    expect(screen.getByText(/2\.00 s → 1\.08 s/)).toBeInTheDocument()
+    // A cut never ends before it starts.
+    fireEvent.change(screen.getByRole('slider', { name: /Start/ }), { target: { value: '1.9' } })
+    expect(screen.getByRole('img', { name: /kept from 1\.35 s to 1\.50 s/ })).toBeInTheDocument()
+
+    await click('Find the speech again')
+    expect(screen.getByText(/2\.00 s → 0\.73 s/)).toBeInTheDocument()
+  })
+
+  it('stores a recording as recorded when asked', async () => {
+    await openListening()
+    await click('Start recording')
+    await click(await screen.findByRole('button', { name: 'Stop' }).then(() => 'Stop'))
+    await userEvent.click(await screen.findByRole('radio', { name: /As recorded/ }))
+    expect(screen.getByLabelText('Play the recording')).toBeInTheDocument()
+
+    await click('Use this recording')
+    await waitFor(() => expect(presigns()).toHaveLength(1))
+    expect(presigns()[0]?.body).toMatchObject({ content_type: 'audio/mp4', size: 4000 })
+  })
+
+  it('stores a clip it cannot read as it is, and says so', async () => {
+    vi.mocked(prepareClip).mockImplementation(async () => null)
+    await openListening()
+    await recordATake()
+
+    expect(await screen.findByText(/can’t read the clip to clean it/)).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Cleaned/ })).toBeDisabled()
+    expect(screen.getByRole('radio', { name: /As recorded/ })).toBeChecked()
+    await click('Use this recording')
+    await waitFor(() => expect(presigns()).toHaveLength(1))
+    expect(presigns()[0]?.body).toMatchObject({ content_type: 'audio/mp4' })
   })
 })
 

@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { checkClip } from '../audio/formats'
+import { cleanUp, durationOf, formatSeconds, type Pcm, type Span } from '../audio/clean'
+import { ClipEditor, type ClipUse, type PrepareState } from '../audio/ClipEditor'
+import { finalClip, playPcm, prepareClip, type Prepared } from '../audio/codec'
+import { checkClip, MAX_AUDIO_BYTES, formatSize } from '../audio/formats'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { plainMessage, playableUrl } from '../exercises/model'
 import { plural } from '../format'
@@ -9,6 +12,7 @@ import type { AdminSoundChart, AdminSoundLetter, SoundLetterChange } from '../ty
 import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
+import { Modal } from '../ui/Modal'
 import { LetterPicker } from './LetterPicker'
 import { englishOf, matchFiles, uploadSound } from './model'
 import { useSoundChart } from './useSoundChart'
@@ -23,6 +27,23 @@ interface Row {
   problem: string | null
   state: 'waiting' | 'uploading' | 'done' | 'failed'
   error?: string
+  /** The file read for cleaning; null when this browser can't read it. */
+  prep: Prepared | null | 'working'
+  /** This file's own choice, over the page's "clean up every file". */
+  use: ClipUse | null
+  /** Where the admin moved this file's cut to; null for where it was found. */
+  span: Span | null
+}
+
+const prepState = (prep: Row['prep']): PrepareState =>
+  prep === 'working' ? { kind: 'working' } : prep ? { kind: 'ready', prepared: prep } : { kind: 'failed' }
+
+/** The stretch of a row's file that is kept: cleaned only when it could be
+ * read, otherwise null and the file goes as it is. */
+function cutOf(row: Row, cleanAll: boolean): Span | null {
+  const use = row.use ?? (cleanAll ? 'cleaned' : 'original')
+  if (use !== 'cleaned' || !row.prep || row.prep === 'working') return null
+  return row.span ?? row.prep.auto
 }
 
 /** Many recordings at once: each file is matched to a letter by its name,
@@ -71,6 +92,8 @@ function Uploader({
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
+  const [cleanAll, setCleanAll] = useState(true)
+  const [trimming, setTrimming] = useState<number | null>(null)
   const nextId = useRef(0)
   const player = useListener()
   const recordable = chart.letters.filter((x) => !x.same_as_id)
@@ -80,21 +103,29 @@ function Uploader({
     setResult(null)
     setProblem(null)
     const matches = matchFiles(files, chart.letters)
-    setRows((old) => [
-      ...old,
-      ...matches.map((m) => {
-        const check = checkClip(m.file)
-        return {
-          id: nextId.current++,
-          file: m.file,
-          letterId: m.letter?.id ?? '',
-          ambiguous: m.ambiguous,
-          problem: check.ok ? null : check.problem,
-          state: 'waiting' as const,
-        }
-      }),
-    ])
+    const added: Row[] = matches.map((m) => {
+      const check = checkClip(m.file)
+      return {
+        id: nextId.current++,
+        file: m.file,
+        letterId: m.letter?.id ?? '',
+        ambiguous: m.ambiguous,
+        problem: check.ok ? null : check.problem,
+        state: 'waiting' as const,
+        prep: check.ok ? ('working' as const) : null,
+        use: null,
+        span: null,
+      }
+    })
+    setRows((old) => [...old, ...added])
+    // Each file is read for cleaning in the background.
+    for (const row of added) {
+      if (row.prep !== 'working') continue
+      void prepareClip(row.file).then((prep) => edit(row.id, { prep }))
+    }
   }
+
+  const edit = (id: number, change: Partial<Row>) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...change } : r)))
 
   function onDrop(e: DragEvent) {
     e.preventDefault()
@@ -107,9 +138,12 @@ function Uploader({
   for (const r of ready) chosen.set(r.letterId, (chosen.get(r.letterId) ?? 0) + 1)
   const twice = new Set([...chosen].filter(([, n]) => n > 1).map(([id]) => id))
   const replacing = ready.filter((r) => byId.get(r.letterId)?.audio_url).length
+  const reading = ready.some((r) => r.prep === 'working' && (r.use ?? (cleanAll ? 'cleaned' : 'original')) === 'cleaned')
+  const trimmed = rows.find((r) => r.id === trimming)
 
   async function upload() {
-    if (busy || ready.length === 0 || twice.size > 0) return
+    if (busy || ready.length === 0 || twice.size > 0 || reading) return
+    if (player.playing) player.stop()
     setBusy(true)
     setProblem(null)
     const changes: SoundLetterChange[] = []
@@ -121,7 +155,13 @@ function Uploader({
       setRows([...next])
       try {
         const type = checkClip(row.file)
-        const url = await uploadSound(api, chart.language, row.file, type.ok ? type.type : row.file.type)
+        const prep = row.prep === 'working' ? null : row.prep
+        const final = await finalClip({ clip: row.file, type: type.ok ? type.type : row.file.type }, prep, {
+          use: row.use ?? (cleanAll ? 'cleaned' : 'original'),
+          span: row.span,
+        })
+        if (final.clip.size > MAX_AUDIO_BYTES) throw new Error(`The file is ${formatSize(final.clip.size)}; 5 MB at most.`)
+        const url = await uploadSound(api, chart.language, final.clip, final.type)
         changes.push({ id: row.letterId, audio_url: url, status: 'needs_review' })
         next[i] = { ...row, state: 'done' }
       } catch (e) {
@@ -179,6 +219,25 @@ function Uploader({
       )}
 
       {rows.length > 0 && (
+        <label className="flex items-start gap-3 rounded-lg border border-line bg-surface px-4 py-3">
+          <input
+            type="checkbox"
+            checked={cleanAll}
+            disabled={busy}
+            onChange={(e) => setCleanAll(e.target.checked)}
+            className="mt-0.5 size-4 accent-forest"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-coffee">Clean up every file</span>
+            <span className="block text-xs text-stone">
+              Trims the silence around each sound and evens the volume, then uploads it as a small mp3. Turn it off to
+              upload the files exactly as they are. A file’s scissors move its cut, or keep that one as recorded.
+            </span>
+          </span>
+        </label>
+      )}
+
+      {rows.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-line bg-surface">
           <table className="w-full min-w-[34rem] text-sm">
             <thead>
@@ -206,8 +265,17 @@ function Uploader({
                     setRows((rs) => rs.filter((_, j) => j !== i))
                   }}
                   playing={player.playing}
-                  onPlayFile={() => player.toggleFile(row.id, row.file)}
+                  onPlayFile={() => {
+                    const cut = cutOf(row, cleanAll)
+                    if (cut && row.prep && row.prep !== 'working') player.togglePcm(`file-${row.id}`, cleanUp(row.prep.pcm, cut))
+                    else player.toggleFile(row.id, row.file)
+                  }}
                   onPlayCurrent={player.toggleUrl}
+                  cut={cutOf(row, cleanAll)}
+                  onTrim={() => {
+                    player.stop()
+                    setTrimming(row.id)
+                  }}
                 />
               ))}
             </tbody>
@@ -237,11 +305,50 @@ function Uploader({
           >
             Clear
           </Button>
-          <Button variant="primary" disabled={busy || ready.length === 0 || twice.size > 0} onClick={() => void upload()}>
+          <Button
+            variant="primary"
+            disabled={busy || ready.length === 0 || twice.size > 0 || reading}
+            onClick={() => void upload()}
+          >
             <Icon name="cloud_upload" className="text-lg" />
-            {busy ? 'Uploading…' : `Upload ${plural(ready.length, 'file')}`}
+            {busy ? 'Uploading…' : reading ? 'Reading files…' : `Upload ${plural(ready.length, 'file')}`}
           </Button>
         </div>
+      )}
+
+      {trimmed && (
+        <Modal title={`Clean up ${trimmed.file.name}`} onClose={() => setTrimming(null)} className="sm:max-w-xl">
+          <div className="mt-4">
+            <ClipEditor
+              state={prepState(trimmed.prep)}
+              use={trimmed.use ?? (cleanAll ? 'cleaned' : 'original')}
+              onUse={(use) => edit(trimmed.id, { use })}
+              span={trimmed.span}
+              onSpan={(span) => edit(trimmed.id, { span })}
+              original={
+                <div className="flex items-center gap-2 text-sm text-coffee-soft">
+                  <PlayButton
+                    playing={player.playing === `file-${trimmed.id}`}
+                    label={trimmed.file.name}
+                    onClick={() => player.toggleFile(trimmed.id, trimmed.file)}
+                  />
+                  The file as recorded{trimmed.prep && trimmed.prep !== 'working' ? `, ${formatSeconds(durationOf(trimmed.prep.pcm))}` : ''}.
+                </div>
+              }
+            />
+          </div>
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="primary"
+              onClick={() => {
+                player.stop()
+                setTrimming(null)
+              }}
+            >
+              Done
+            </Button>
+          </div>
+        </Modal>
       )}
     </div>
   )
@@ -258,6 +365,8 @@ function FileRow({
   playing,
   onPlayFile,
   onPlayCurrent,
+  cut,
+  onTrim,
 }: {
   row: Row
   letters: AdminSoundLetter[]
@@ -270,6 +379,9 @@ function FileRow({
   playing: string | null
   onPlayFile: () => void
   onPlayCurrent: (url: string) => void
+  /** The stretch kept when the row is cleaned, or null when it goes as it is. */
+  cut: Span | null
+  onTrim: () => void
 }) {
   let what: { text: string; tone: string }
   if (row.state === 'done') what = { text: 'Uploaded', tone: 'bg-forest-tint text-forest' }
@@ -291,9 +403,32 @@ function FileRow({
             disabled={!!row.problem}
             onClick={onPlayFile}
           />
-          <span className="truncate font-mono text-xs" title={row.file.name}>
-            {row.file.name}
+          <span className="min-w-0">
+            <span className="block truncate font-mono text-xs" title={row.file.name}>
+              {row.file.name}
+            </span>
+            <span className="tnum block text-[0.6875rem] text-stone">
+              {row.prep === 'working'
+                ? 'Reading…'
+                : row.prep && cut
+                  ? `Cleaned: ${formatSeconds(durationOf(row.prep.pcm))} → ${formatSeconds(cut.end - cut.start)}`
+                  : row.prep
+                    ? `As recorded: ${formatSeconds(durationOf(row.prep.pcm))}`
+                    : ''}
+            </span>
           </span>
+          {row.prep && row.prep !== 'working' && (
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={`Clean up ${row.file.name}`}
+              title="Move the cut, or keep this file as recorded"
+              disabled={disabled}
+              onClick={onTrim}
+            >
+              <Icon name="content_cut" className="text-lg text-coffee-soft" />
+            </Button>
+          )}
         </div>
       </td>
       <td className="px-4 py-2">
@@ -357,12 +492,15 @@ function PlayButton({
 function useListener() {
   const ref = useRef<HTMLAudioElement>(null)
   const urls = useRef(new Map<File, string>())
+  const pcmStop = useRef<(() => void) | null>(null)
   const [playing, setPlaying] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
 
   useEffect(() => {
     const made = urls.current
+    const sound = pcmStop
     return () => {
+      sound.current?.()
       for (const url of made.values()) URL.revokeObjectURL(url)
     }
   }, [])
@@ -378,7 +516,20 @@ function useListener() {
 
   function stop() {
     ref.current?.pause()
+    pcmStop.current?.()
     setPlaying(null)
+  }
+
+  /** A cleaned version, played from its samples. */
+  function togglePcm(key: string, pcm: Pcm) {
+    setProblem(null)
+    if (playing === key) return stop()
+    ref.current?.pause()
+    pcmStop.current = playPcm(pcm, () => {
+      pcmStop.current = null
+      setPlaying((now) => (now === key ? null : now))
+    })
+    setPlaying(key)
   }
 
   function toggle(key: string, src: string) {
@@ -386,6 +537,7 @@ function useListener() {
     if (!audio) return
     setProblem(null)
     if (playing === key) return stop()
+    pcmStop.current?.()
     audio.src = src
     audio.currentTime = 0
     setPlaying(key)
@@ -415,6 +567,8 @@ function useListener() {
     element: <audio ref={ref} onEnded={stop} onError={failed} className="hidden" />,
     playing,
     problem,
+    stop,
+    togglePcm,
     toggleFile: (id: number, file: File) => toggle(`file-${id}`, urlOf(file)),
     toggleUrl: (url: string) => toggle(url, playableUrl(url)),
     forget,

@@ -2,12 +2,22 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { playPcm, prepareClip } from '../audio/codec'
+import { prepared } from '../test/clips'
 import { FakeServer, type Call } from '../test/fakeServer'
 import { renderApp, withStoredSession } from '../test/renderApp'
 import type { AdminSoundChart, AdminSoundLetter, SoundLetterChange } from '../types'
 import { chartToCsv, csvToChanges, matchFiles, searchLetters } from './model'
 
 vi.mock('../auth/GoogleButton', () => ({ GoogleButton: () => null }))
+
+// Reading and playing need a browser's audio engine; the tests hand over
+// samples instead. Storing (the mp3) is real.
+vi.mock('../audio/codec', async (original) => ({
+  ...(await original<typeof import('../audio/codec')>()),
+  prepareClip: vi.fn(async () => null),
+  playPcm: vi.fn(() => () => {}),
+}))
 
 const A = '/api/v1/admin'
 const CHARTS = `${A}/sound-charts`
@@ -107,12 +117,12 @@ function serve() {
       chart = withCounts({ ...chart, ...(call.body as Partial<AdminSoundChart>), version: chart.version + 1 })
       return { body: chart }
     })
-    .on('POST', UPLOADS, () => ({
+    .on('POST', UPLOADS, (call: Call) => ({
       status: 201,
       body: {
         upload_url: `https://store.example${STORE_PATH}?X-Amz-Signature=abc`,
         method: 'PUT',
-        headers: { 'Content-Type': 'audio/mpeg' },
+        headers: { 'Content-Type': (call.body as { content_type: string }).content_type },
         key: STORE_PATH.slice(1),
         public_url: PUBLIC_URL,
         expires_in: 600,
@@ -122,6 +132,8 @@ function serve() {
 }
 
 beforeEach(() => {
+  vi.mocked(prepareClip).mockImplementation(async () => null)
+  vi.mocked(playPcm).mockClear()
   withStoredSession()
   chart = smallChart()
   server = new FakeServer().install()
@@ -443,7 +455,114 @@ describe('uploading many files', () => {
   })
 })
 
+describe('cleaning files before they upload', () => {
+  const m4a = (name: string) => new File([new Uint8Array(30000)], name, { type: 'audio/mp4' })
+
+  beforeEach(() => {
+    vi.mocked(prepareClip).mockImplementation(async () => prepared())
+    URL.createObjectURL = vi.fn(() => 'blob:file')
+    URL.revokeObjectURL = vi.fn()
+    // jsdom has no media playback.
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+    return () => pause.mockRestore()
+  })
+
+  it('cleans every file by default, and one can be kept as recorded', async () => {
+    renderApp('/sounds/am/upload')
+    await screen.findByLabelText('Recordings')
+    await userEvent.upload(screen.getByLabelText('Recordings'), [m4a('hu.m4a'), m4a('he.m4a')])
+
+    expect(screen.getByRole('checkbox', { name: /Clean up every file/ })).toBeChecked()
+    expect(await screen.findAllByText('Cleaned: 2.00 s → 0.73 s')).toHaveLength(2)
+
+    // The play button plays what will be uploaded.
+    await userEvent.click(screen.getByRole('button', { name: 'Play hu.m4a' }))
+    expect(vi.mocked(playPcm).mock.calls[0]![0].samples.length).toBe(Math.round(0.73 * 24000))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clean up hu.m4a' }))
+    const dialog = within(screen.getByRole('dialog', { name: 'Clean up hu.m4a' }))
+    await userEvent.click(dialog.getByRole('radio', { name: /As recorded/ }))
+    await userEvent.click(dialog.getByRole('button', { name: 'Done' }))
+    expect(screen.getByText('As recorded: 2.00 s')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Upload 2 files' }))
+    await waitFor(() => expect(patches()).toHaveLength(1))
+    expect(server.callsTo('POST', UPLOADS).map((c) => (c.body as { content_type: string }).content_type)).toEqual([
+      'audio/mp4',
+      'audio/mpeg',
+    ])
+  })
+
+  it('uploads every file as it is with cleaning off', async () => {
+    renderApp('/sounds/am/upload')
+    await screen.findByLabelText('Recordings')
+    await userEvent.upload(screen.getByLabelText('Recordings'), [m4a('hu.m4a')])
+    await screen.findByText('Cleaned: 2.00 s → 0.73 s')
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /Clean up every file/ }))
+    expect(screen.getByText('As recorded: 2.00 s')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Upload 1 file' }))
+
+    await waitFor(() => expect(patches()).toHaveLength(1))
+    expect(server.callsTo('POST', UPLOADS)[0]!.body).toEqual({ content_type: 'audio/mp4', size: 30000 })
+  })
+})
+
 describe('the record session', () => {
+  it('keeps each take cleaned, or as recorded once chosen for the session', async () => {
+    vi.mocked(prepareClip).mockImplementation(async () => prepared())
+    URL.createObjectURL = vi.fn(() => 'blob:take')
+    URL.revokeObjectURL = vi.fn()
+    chart = withCounts({ ...chart, letters: [...chart.letters, letter('le', 'ለ', 'le', { position: 4 })] })
+    class Recorder {
+      static isTypeSupported = () => true
+      state = 'inactive'
+      mimeType = 'audio/mp4'
+      ondataavailable: ((e: { data: Blob }) => void) | null = null
+      onstop: (() => void) | null = null
+      start() {
+        this.state = 'recording'
+      }
+      stop() {
+        this.state = 'inactive'
+        this.ondataavailable?.({ data: new Blob([new Uint8Array(30000)], { type: 'audio/mp4' }) })
+        this.onstop?.()
+      }
+    }
+    vi.stubGlobal('MediaRecorder', Recorder)
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }) },
+      configurable: true,
+    })
+    const take = async () => {
+      await userEvent.click(await screen.findByRole('button', { name: 'Record' }))
+      await userEvent.click(await screen.findByRole('button', { name: /Stop/ }))
+      return screen.findByRole('radio', { name: /Cleaned/ })
+    }
+
+    try {
+      renderApp('/sounds/am/record')
+      await take()
+      // The cleaned take plays by itself.
+      await waitFor(() => expect(playPcm).toHaveBeenCalledTimes(1))
+      await userEvent.click(screen.getByRole('button', { name: 'Keep and next' }))
+      await waitFor(() => expect(patches()).toHaveLength(1))
+
+      await take()
+      await userEvent.click(screen.getByRole('radio', { name: /As recorded/ }))
+      await userEvent.click(screen.getByRole('button', { name: 'Keep and next' }))
+      await waitFor(() => expect(patches()).toHaveLength(2))
+
+      expect(server.callsTo('POST', UPLOADS).map((c) => (c.body as { content_type: string }).content_type)).toEqual([
+        'audio/mpeg',
+        'audio/mp4',
+      ])
+    } finally {
+      vi.unstubAllGlobals()
+      Reflect.deleteProperty(navigator, 'mediaDevices')
+    }
+  })
+
   it('says when the browser cannot record', async () => {
     renderApp('/sounds/am/record')
 

@@ -7,6 +7,9 @@ import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 import { Input } from '../ui/Input'
+import type { Span } from './clean'
+import { ClipEditor, usePrepared, type ClipUse } from './ClipEditor'
+import { finalClip, type Prepared } from './codec'
 import {
   IPHONE_SAFE_RECORDING,
   MAX_AUDIO_BYTES,
@@ -184,17 +187,46 @@ function Note({ icon, children }: { icon: string; children: ReactNode }) {
   )
 }
 
+/** What the clip editor chose: cleaned (with its cut) or as recorded. */
+interface Cleaning {
+  prepared: Prepared | null
+  use: ClipUse
+  span: Span | null
+}
+
+/** The clip editor's choices for one clip, cleared for the next. */
+function useCleaning(clip: Blob | null) {
+  const state = usePrepared(clip)
+  const [use, setUse] = useState<ClipUse>('cleaned')
+  const [span, setSpan] = useState<Span | null>(null)
+  const cleaning: Cleaning = { prepared: state.kind === 'ready' ? state.prepared : null, use, span }
+  return {
+    cleaning,
+    /** Still reading the clip, so the cleaned version is not ready to send. */
+    working: state.kind === 'working' && use === 'cleaned',
+    reset: () => setSpan(null),
+    editor: (original: ReactNode) => (
+      <ClipEditor state={state} use={use} onUse={setUse} span={span} onSpan={setSpan} original={original} />
+    ),
+  }
+}
+
 /** Sends one clip to the store. `send` answers false when it failed, and
  * `problem` then says why. */
 function useClipUpload(store: ClipUploader, onUploaded: (url: string) => void) {
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
 
-  async function send(clip: Blob, type: string): Promise<boolean> {
+  async function send(clip: Blob, type: string, cleaning?: Cleaning): Promise<boolean> {
     setBusy(true)
     setProblem(null)
     try {
-      onUploaded(await store(clip, type))
+      const final = cleaning ? await finalClip({ clip, type }, cleaning.prepared, cleaning) : { clip, type }
+      if (final.clip.size > MAX_AUDIO_BYTES) {
+        setProblem(`The clip is ${formatSize(final.clip.size)}; clips can be 5 MB at most. Use the cleaned version, or a shorter one.`)
+        return false
+      }
+      onUploaded(await store(final.clip, final.type))
       return true
     } catch (e) {
       setProblem(plainMessage(messageOf(e)))
@@ -218,6 +250,7 @@ function RecordPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (ur
   const recorder = useRecorder()
   const upload = useClipUpload(send, onUploaded)
   const { state } = recorder
+  const clean = useCleaning(state.kind === 'recorded' ? state.clip : null)
 
   if (!canRecord()) {
     return <Note icon="mic_off">This browser can’t record audio. Use Upload or Link instead.</Note>
@@ -229,15 +262,19 @@ function RecordPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (ur
       upload.setProblem('This browser recorded in a format that can’t be stored. Upload a file instead.')
       return
     }
-    if (clip.size > MAX_AUDIO_BYTES) {
+    if (clip.size > MAX_AUDIO_BYTES && (clean.cleaning.use === 'original' || !clean.cleaning.prepared)) {
       upload.setProblem(`The recording is ${formatSize(clip.size)}; clips can be 5 MB at most. Record a shorter one.`)
       return
     }
-    if (await upload.send(clip, type)) recorder.discard()
+    if (await upload.send(clip, type, clean.cleaning)) {
+      clean.reset()
+      recorder.discard()
+    }
   }
 
   const again = () => {
     upload.setProblem(null)
+    clean.reset()
     void recorder.start()
   }
 
@@ -276,12 +313,12 @@ function RecordPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (ur
 
       {state.kind === 'recorded' && (
         <div className="space-y-3">
-          <audio controls src={state.url} aria-label="Play the recording" className="w-full" />
+          {clean.editor(<audio controls src={state.url} aria-label="Play the recording" className="w-full" />)}
           <p className="text-xs text-stone">
             {formatDuration(state.seconds)} · {formatSize(state.clip.size)} · not uploaded yet
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button variant="primary" disabled={upload.busy} onClick={() => void use(state.clip)}>
+            <Button variant="primary" disabled={upload.busy || clean.working} onClick={() => void use(state.clip)}>
               <Icon name="cloud_upload" className="text-lg" />
               {upload.busy ? 'Uploading…' : 'Use this recording'}
             </Button>
@@ -294,6 +331,7 @@ function RecordPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (ur
               disabled={upload.busy}
               onClick={() => {
                 upload.setProblem(null)
+                clean.reset()
                 recorder.discard()
               }}
             >
@@ -329,6 +367,7 @@ function UploadPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (ur
   const upload = useClipUpload(send, onUploaded)
   const [chosen, setChosen] = useState<Chosen | null>(null)
   const input = useRef<HTMLInputElement>(null)
+  const clean = useCleaning(chosen?.file ?? null)
 
   // Each chosen file is played from a URL of its own, freed when replaced.
   const chosenUrl = chosen?.url
@@ -339,6 +378,7 @@ function UploadPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (ur
 
   function choose(file: File | undefined) {
     setChosen(null)
+    clean.reset()
     upload.setProblem(null)
     if (!file) return
     const check = checkClip(file)
@@ -351,7 +391,7 @@ function UploadPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (ur
   }
 
   async function use(c: Chosen) {
-    if (await upload.send(c.file, c.type)) {
+    if (await upload.send(c.file, c.type, clean.cleaning)) {
       setChosen(null)
       if (input.current) input.current.value = ''
     }
@@ -376,11 +416,11 @@ function UploadPanel({ send, onUploaded }: { send: ClipUploader; onUploaded: (ur
 
       {chosen && (
         <div className="mt-3 space-y-3">
-          <audio controls src={chosen.url} aria-label="Play the chosen file" className="w-full" />
+          {clean.editor(<audio controls src={chosen.url} aria-label="Play the chosen file" className="w-full" />)}
           <p className="text-xs break-all text-stone">
             {chosen.file.name} · {formatSize(chosen.file.size)} · not uploaded yet
           </p>
-          <Button variant="primary" disabled={upload.busy} onClick={() => void use(chosen)}>
+          <Button variant="primary" disabled={upload.busy || clean.working} onClick={() => void use(chosen)}>
             <Icon name="cloud_upload" className="text-lg" />
             {upload.busy ? 'Uploading…' : 'Use this file'}
           </Button>

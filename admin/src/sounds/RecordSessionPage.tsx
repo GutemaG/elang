@@ -1,6 +1,9 @@
 import { useEffect, useId, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
+import type { Span } from '../audio/clean'
+import { ClipEditor, usePrepared, type ClipUse } from '../audio/ClipEditor'
+import { finalClip } from '../audio/codec'
 import { audioTypeOf, canRecord, formatDuration, MAX_AUDIO_BYTES } from '../audio/formats'
 import { useRecorder } from '../audio/useRecorder'
 import { messageOf, useSession } from '../auth/SessionContext'
@@ -65,6 +68,11 @@ function Session({
   const [problem, setProblem] = useState<string | null>(null)
   const { state } = recorder
   const letter = queue[index]
+  // Cleaned or as recorded holds for the whole session; the cut is the take's own.
+  const prep = usePrepared(state.kind === 'recorded' ? state.clip : null)
+  const [use, setUse] = useState<ClipUse>('cleaned')
+  const [span, setSpan] = useState<Span | null>(null)
+  const prepared = prep.kind === 'ready' ? prep.prepared : null
 
   const actions = {
     toggle: () => {
@@ -72,20 +80,23 @@ function Session({
       if (state.kind === 'recording') recorder.stop()
       else if (state.kind !== 'asking') {
         setProblem(null)
+        setSpan(null)
         void recorder.start()
       }
     },
     keep: () => {
-      if (state.kind === 'recorded' && !busy) void keep(state.clip)
+      if (state.kind === 'recorded' && !busy && !(use === 'cleaned' && prep.kind === 'working')) void keep(state.clip)
     },
     again: () => {
       if (!busy && state.kind !== 'recording') {
         setProblem(null)
+        setSpan(null)
         void recorder.start()
       }
     },
     skip: () => {
       if (busy) return
+      setSpan(null)
       recorder.discard()
       setProblem(null)
       setIndex((i) => i + 1)
@@ -121,17 +132,19 @@ function Session({
       setProblem('This browser recorded in a format that can’t be stored. Use Upload files instead.')
       return
     }
-    if (clip.size > MAX_AUDIO_BYTES) {
-      setProblem('That take is too long. Record it again, shorter.')
-      return
-    }
     setBusy(true)
     setProblem(null)
     try {
-      const url = await uploadSound(api, chart.language, clip, type)
+      const final = await finalClip({ clip, type }, prepared, { use, span })
+      if (final.clip.size > MAX_AUDIO_BYTES) {
+        setProblem('That take is too long. Record it again, shorter.')
+        return
+      }
+      const url = await uploadSound(api, chart.language, final.clip, final.type)
       await saveLetters([
         { id: letter.id, audio_url: url, status: 'needs_review', ...(speaker.trim() ? { recorded_by: speaker.trim() } : {}) },
       ])
+      setSpan(null)
       recorder.discard()
       setKept((n) => n + 1)
       setIndex((i) => i + 1)
@@ -189,13 +202,23 @@ function Session({
           </Button>
         ) : state.kind === 'recorded' ? (
           <div className="flex w-full flex-col items-center gap-3">
-            <audio controls autoPlay src={state.url} aria-label="Play the take" className="w-full max-w-sm" />
+            <div className="w-full max-w-md text-left">
+              <ClipEditor
+                state={prep}
+                use={use}
+                onUse={setUse}
+                span={span}
+                onSpan={setSpan}
+                autoPlay
+                original={<audio controls autoPlay={use === 'original'} src={state.url} aria-label="Play the take" className="w-full" />}
+              />
+            </div>
             <div className="flex flex-wrap justify-center gap-2">
               <Button disabled={busy} onClick={() => actions.again()}>
                 <Icon name="replay" className="text-lg" />
                 Record again
               </Button>
-              <Button variant="primary" disabled={busy} onClick={() => actions.keep()}>
+              <Button variant="primary" disabled={busy || (use === 'cleaned' && prep.kind === 'working')} onClick={() => actions.keep()}>
                 <Icon name="check" className="text-lg" />
                 {busy ? 'Saving…' : 'Keep and next'}
               </Button>
