@@ -206,6 +206,64 @@ describe('a chart', () => {
     expect(screen.getByText('In the app')).toBeInTheDocument()
   })
 
+  it('marks many letters ready at once, skipping any that cannot be', async () => {
+    chart = withCounts({
+      ...chart,
+      letters: [
+        ...chart.letters.map((x) => (x.id === 'hu' ? { ...x, audio_url: PUBLIC_URL, status: 'needs_review' as const } : x)),
+        letter('le', 'ለ', 'le', { position: 4, audio_url: PUBLIC_URL, status: 'needs_review' }),
+        letter('lu', 'ሉ', 'lu', { position: 5 }),
+      ],
+    })
+    renderApp('/sounds/am')
+    await userEvent.click(await screen.findByRole('button', { name: 'Select letters' }))
+    const toolbar = within(screen.getByRole('toolbar', { name: 'Selected letters' }))
+    expect(toolbar.getByRole('button', { name: 'Mark ready' })).toBeDisabled()
+
+    // No recording, or another letter's: nothing to mark.
+    expect(screen.getByRole('button', { name: 'ሉ, lu: No audio' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'ሐ, he: Same sound as ሀ' })).toBeDisabled()
+
+    // Only those that need review, from the filter.
+    await userEvent.click(screen.getByRole('button', { name: 'Needs review' }))
+    await userEvent.click(toolbar.getByRole('button', { name: 'Select all shown (2)' }))
+    expect(toolbar.getByText('2 letters selected')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'ሁ, hu: Needs review' })).toHaveAttribute('aria-pressed', 'true')
+    // ሀ is ready already, so picking it changes nothing more.
+    await userEvent.click(screen.getByRole('button', { name: 'ሀ, he: Ready' }))
+    expect(toolbar.getByText('3 letters selected')).toBeInTheDocument()
+
+    await userEvent.click(toolbar.getByRole('button', { name: 'Mark ready' }))
+    const dialog = within(screen.getByRole('dialog', { name: 'Mark 2 letters ready?' }))
+    await userEvent.click(dialog.getByRole('button', { name: 'Mark ready' }))
+
+    await waitFor(() =>
+      expect(patches()).toEqual([
+        [
+          { id: 'hu', status: 'ready' },
+          { id: 'le', status: 'ready' },
+        ],
+      ]),
+    )
+    expect(await screen.findByRole('status')).toHaveTextContent('2 letters marked Ready.')
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'ለ, le: Ready' })).toBeInTheDocument()
+  })
+
+  it('can send letters back for review, and leaves select mode untouched on Done', async () => {
+    renderApp('/sounds/am')
+    await userEvent.click(await screen.findByRole('button', { name: 'Select letters' }))
+    await userEvent.click(screen.getByRole('button', { name: 'ሀ, he: Ready' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mark needs review' }))
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Mark 1 letter needs review?' })).getByRole('button', { name: 'Mark needs review' }))
+    await waitFor(() => expect(patches()).toEqual([[{ id: 'ha', status: 'needs_review' }]]))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Select letters' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+    expect(screen.getByRole('link', { name: 'ሀ, he: Needs review' })).toBeInTheDocument()
+    expect(patches()).toHaveLength(1)
+  })
+
   it('imports a CSV as changes to only the letters that differ', async () => {
     renderApp('/sounds/am')
     await screen.findByRole('heading', { name: 'Amharic · Fidel' })

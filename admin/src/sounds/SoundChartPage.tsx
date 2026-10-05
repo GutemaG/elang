@@ -6,7 +6,7 @@ import { saveFile, readText, CSV_TYPE } from '../import/download'
 import { plural } from '../format'
 import { PageHeader } from '../shell/Page'
 import { routes } from '../tree/levels'
-import type { AdminSoundChart, AdminSoundGroup, AdminSoundLetter } from '../types'
+import type { AdminSoundChart, AdminSoundGroup, AdminSoundLetter, SoundLetterStatus } from '../types'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
@@ -15,6 +15,7 @@ import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
 import {
   STATE_LABELS,
+  STATUS_LABELS,
   chartToCsv,
   csvName,
   csvToChanges,
@@ -46,6 +47,16 @@ export const STATE_TONES: Record<LetterState, { dot: string; tile: string }> = {
   same_sound: { dot: 'bg-line-strong', tile: 'border-line bg-inset' },
 }
 
+/** A letter can be marked ready or for review only once it has a recording
+ * of its own. */
+const reviewable = (letter: AdminSoundLetter) => !letter.same_as_id && !!letter.audio_url
+
+/** The letters picked to mark in one go, and how to change the pick. */
+interface Selection {
+  ids: Set<string>
+  toggle: (id: string) => void
+}
+
 function shows(filter: Filter, letter: AdminSoundLetter): boolean {
   const state = stateOf(letter)
   if (filter === 'all') return true
@@ -65,6 +76,8 @@ export function SoundChartPage() {
   const [adding, setAdding] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [selected, setSelected] = useState<Set<string> | null>(null)
+  const [marking, setMarking] = useState<SoundLetterStatus | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   if (!chart) {
@@ -77,6 +90,18 @@ export function SoundChartPage() {
 
   const group = chart.groups.find((g) => g.key === groupKey) ?? chart.groups[0]
   const missing = needingRecording(chart).length
+  const shown = group ? lettersOf(chart, group.key).filter((x) => reviewable(x) && shows(filter, x)) : []
+  const picked = chart.letters.filter((x) => selected?.has(x.id))
+  const changing = (status: SoundLetterStatus) => picked.filter((x) => x.status !== status)
+  const selection: Selection | null = selected && {
+    ids: selected,
+    toggle: (id) =>
+      setSelected((old) => {
+        const next = new Set(old)
+        if (!next.delete(id)) next.add(id)
+        return next
+      }),
+  }
 
   async function importCsv(file: File | undefined) {
     if (!file || !chart) return
@@ -205,13 +230,65 @@ export function SoundChartPage() {
             ))}
           </div>
         )}
-        <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setAdding(true)}>
-          <Icon name="add" className="text-lg" />
-          Add letter
-        </Button>
+        <span className="ml-auto flex gap-1">
+          {!selected && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setNotice(null)
+                setSelected(new Set())
+              }}
+            >
+              <Icon name="checklist" className="text-lg" />
+              Select letters
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={() => setAdding(true)}>
+            <Icon name="add" className="text-lg" />
+            Add letter
+          </Button>
+        </span>
       </div>
 
-      {group && <GroupGrid chart={chart} group={group} filter={filter} />}
+      {selected && (
+        <div
+          role="toolbar"
+          aria-label="Selected letters"
+          className="sticky top-0 z-10 mt-3 flex flex-wrap items-center gap-2 rounded-md border border-forest/30 bg-forest-tint px-3 py-2"
+        >
+          <span className="tnum text-sm font-semibold text-forest" aria-live="polite">
+            {picked.length === 0 ? 'Tap letters to select them' : `${plural(picked.length, 'letter')} selected`}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={shown.length === 0 || shown.every((x) => selected.has(x.id))}
+            onClick={() => setSelected(new Set([...selected, ...shown.map((x) => x.id)]))}
+          >
+            Select all shown ({shown.length})
+          </Button>
+          {picked.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+              Clear
+            </Button>
+          )}
+          <span className="ml-auto flex flex-wrap gap-2">
+            <Button size="sm" disabled={changing('needs_review').length === 0} onClick={() => setMarking('needs_review')}>
+              Mark needs review
+            </Button>
+            <Button size="sm" variant="primary" disabled={changing('ready').length === 0} onClick={() => setMarking('ready')}>
+              <Icon name="done_all" className="text-lg" />
+              Mark ready
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelected(null)}>
+              Done
+            </Button>
+          </span>
+        </div>
+      )}
+
+      {group && <GroupGrid chart={chart} group={group} filter={filter} selection={selection} />}
 
       <Legend />
 
@@ -270,6 +347,25 @@ export function SoundChartPage() {
           }}
         />
       )}
+      {marking && (
+        <ConfirmDialog
+          title={`Mark ${plural(changing(marking).length, 'letter')} ${STATUS_LABELS[marking].toLowerCase()}?`}
+          body={
+            marking === 'ready'
+              ? 'Ready means a native speaker has listened to each recording and it sounds right. Recordings stay as they are.'
+              : 'They go back on the list for a native speaker to check. Recordings stay as they are.'
+          }
+          confirm={`Mark ${STATUS_LABELS[marking].toLowerCase()}`}
+          onClose={() => setMarking(null)}
+          onConfirm={async () => {
+            const changes = changing(marking).map((x) => ({ id: x.id, status: marking }))
+            await saveLetters(changes)
+            setNotice(`${plural(changes.length, 'letter')} marked ${STATUS_LABELS[marking]}.`)
+            setMarking(null)
+            setSelected(null)
+          }}
+        />
+      )}
       {deleting && <DeleteChartDialog chart={chart} onClose={() => setDeleting(false)} />}
     </main>
   )
@@ -321,14 +417,31 @@ function Legend() {
   )
 }
 
-function GroupGrid({ chart, group, filter }: { chart: AdminSoundChart; group: AdminSoundGroup; filter: Filter }) {
+function GroupGrid({
+  chart,
+  group,
+  filter,
+  selection,
+}: {
+  chart: AdminSoundChart
+  group: AdminSoundGroup
+  filter: Filter
+  selection: Selection | null
+}) {
   const letters = lettersOf(chart, group.key)
   if (letters.length === 0) {
     return <p className="mt-6 text-sm text-stone">This group has no letters yet. Use “Add letter”.</p>
   }
   const byId = new Map(chart.letters.map((x) => [x.id, x]))
   const tile = (letter: AdminSoundLetter) => (
-    <Tile key={letter.id} chart={chart} letter={letter} dim={!shows(filter, letter)} sameAs={byId.get(letter.same_as_id ?? '')} />
+    <Tile
+      key={letter.id}
+      chart={chart}
+      letter={letter}
+      dim={!shows(filter, letter) || (!!selection && !reviewable(letter))}
+      sameAs={byId.get(letter.same_as_id ?? '')}
+      selection={selection}
+    />
   )
 
   if (group.columns) {
@@ -369,31 +482,56 @@ function Tile({
   letter,
   dim,
   sameAs,
+  selection,
 }: {
   chart: AdminSoundChart
   letter: AdminSoundLetter
   dim: boolean
   sameAs?: AdminSoundLetter
+  selection: Selection | null
 }) {
   const state = stateOf(letter)
   const label = `${letter.glyph}, ${letter.romanization || 'no romanization'}: ${STATE_LABELS[state]}${sameAs ? ` as ${sameAs.glyph}` : ''}`
-  return (
-    <Link
-      to={`/sounds/${chart.language}/letters/${letter.id}`}
-      aria-label={label}
-      title={label}
-      className={cx(
-        'relative flex min-w-[3.25rem] flex-col items-center rounded border px-1.5 pt-1.5 pb-1 transition-[opacity,box-shadow] hover:shadow-e1',
-        'focus-visible:outline-2 focus-visible:outline-forest',
-        STATE_TONES[state].tile,
-        dim && 'opacity-30',
+  const picked = !!selection?.ids.has(letter.id)
+  const className = cx(
+    'relative flex min-w-[3.25rem] flex-col items-center rounded border px-1.5 pt-1.5 pb-1 transition-[opacity,box-shadow] hover:shadow-e1',
+    'focus-visible:outline-2 focus-visible:outline-forest',
+    STATE_TONES[state].tile,
+    picked && 'border-forest bg-forest-tint ring-2 ring-forest',
+    dim && 'opacity-30',
+  )
+  const face = (
+    <>
+      {picked ? (
+        <Icon name="check_circle" filled className="absolute -top-1.5 -right-1.5 rounded-full bg-surface text-base text-forest" />
+      ) : (
+        <span aria-hidden="true" className={cx('absolute top-1 right-1 size-1.5 rounded-full', STATE_TONES[state].dot)} />
       )}
-    >
-      <span aria-hidden="true" className={cx('absolute top-1 right-1 size-1.5 rounded-full', STATE_TONES[state].dot)} />
       <span className={cx('text-lg leading-6 font-semibold', state === 'same_sound' ? 'text-stone' : 'text-coffee')}>
         {letter.glyph}
       </span>
       <span className="font-mono text-[0.625rem] text-stone">{letter.romanization || '—'}</span>
+    </>
+  )
+  if (selection) {
+    const can = reviewable(letter)
+    return (
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={picked}
+        title={can ? label : `${label}. Needs a recording of its own to be marked.`}
+        disabled={!can}
+        onClick={() => selection.toggle(letter.id)}
+        className={cx(className, 'w-full', can ? 'cursor-pointer' : 'cursor-not-allowed hover:shadow-none')}
+      >
+        {face}
+      </button>
+    )
+  }
+  return (
+    <Link to={`/sounds/${chart.language}/letters/${letter.id}`} aria-label={label} title={label} className={className}>
+      {face}
     </Link>
   )
 }
