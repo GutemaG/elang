@@ -80,6 +80,20 @@ describe('a lesson’s exercises', () => {
     expect(panel().queryByText('Edited')).not.toBeInTheDocument()
   })
 
+  it('delete one that should not be published, after asking', async () => {
+    await generated()
+
+    await userEvent.click(panel().getByRole('button', { name: 'Delete exercise 2' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Delete exercise 2?' }))
+    expect(dialog.getByText('Listening:')).toBeInTheDocument()
+    await userEvent.click(dialog.getByRole('button', { name: 'Delete' }))
+
+    await panel().findByText('Exercise 2 deleted.')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(saves()[1]!.map((d) => d.generated?.key)).toEqual(['mc:W001', 'build:S001', 'gap:S001'])
+    expect(panel().getAllByRole('listitem')).toHaveLength(3)
+  })
+
   it('publish the lesson, then say it is published', async () => {
     await generated()
     expect(panel().getByText('Not published')).toBeInTheDocument()

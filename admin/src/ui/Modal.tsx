@@ -27,7 +27,11 @@ export function Modal({
         aria-labelledby={titleId}
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
         className={cx(
-          'relative max-h-[92vh] w-full overflow-y-auto rounded-t-lg border border-line bg-surface p-6 shadow-e3 sm:max-w-md sm:rounded-lg',
+          'relative max-h-[92vh] w-full overflow-y-auto rounded-t-lg border border-line bg-surface p-6 shadow-e3 sm:rounded-lg',
+          // A width of the caller's replaces the default rather than joining
+          // it: with both, the stylesheet's order picks one (`sm:max-w-md`
+          // beat `sm:max-w-lg` and `sm:max-w-4xl`).
+          !className?.includes('max-w-') && 'sm:max-w-md',
           className,
         )}
       >

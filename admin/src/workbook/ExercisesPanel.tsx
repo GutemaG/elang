@@ -52,6 +52,7 @@ export function ExercisesPanel({
   const [published, setPublished] = useState<PublishLessonResult | null>(null)
   const [editing, setEditing] = useState<number | null>(null)
   const [shown, setShown] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState<number | null>(null)
   const counts = lesson.counts ?? NO_COUNTS
   const ready = isReady(lesson.counts)
   const state = lesson.publish_state ?? 'not_published'
@@ -178,6 +179,16 @@ export function ExercisesPanel({
                     Reset to generated
                   </Button>
                 )}
+                <Button
+                  size="icon"
+                  variant="danger-ghost"
+                  aria-label={`Delete exercise ${i + 1}`}
+                  title={list.length === 1 ? 'A lesson needs at least one exercise' : 'Delete'}
+                  disabled={busy || list.length === 1}
+                  onClick={() => setDeleting(i)}
+                >
+                  <Icon name="delete" className="text-lg" />
+                </Button>
               </div>
               {shown === i && (
                 <div className="mt-3">
@@ -216,6 +227,41 @@ export function ExercisesPanel({
           {state === 'not_published' ? 'Publish lesson' : 'Publish again'}
         </Button>
       </div>
+
+      {deleting !== null && list[deleting] && (
+        <Modal title={`Delete exercise ${deleting + 1}?`} onClose={() => !busy && setDeleting(null)}>
+          <p className="mt-2 text-sm leading-6 text-coffee-soft">
+            <span className="font-semibold">{TYPE_INFO[list[deleting].type].name}:</span> {list[deleting].prompt}
+          </p>
+          <p className="mt-1 text-sm leading-6 text-stone">
+            It will not be published. Generate again makes it again, with the rest.
+          </p>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button className="justify-center" disabled={busy} onClick={() => setDeleting(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              className="justify-center"
+              disabled={busy}
+              onClick={() => {
+                const at = deleting
+                void save(
+                  list.filter((_, j) => j !== at),
+                  `Exercise ${at + 1} deleted.`,
+                ).then((ok) => {
+                  if (ok) {
+                    setDeleting(null)
+                    setShown(null)
+                  }
+                })
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </Modal>
+      )}
 
       {editing !== null && list[editing] && (
         <EditDialog
