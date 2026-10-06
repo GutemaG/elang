@@ -135,3 +135,33 @@ class TestSkillTreeNextLessonId:
         # Cycle just completed and reset -- back to the first lesson,
         # ready for a replay pass (crown-level increment).
         assert next_lesson_id == seeded_content["lesson_a1"]
+
+
+class TestSkillTreeLessons:
+    """026-lesson-path-nodes: each skill's lessons, in order, with whether
+    each is done in the current pass."""
+
+    def test_a_finished_lesson_is_done_and_the_next_is_not(
+        self, make_client: Any, seeded_content: dict[str, str]
+    ) -> None:
+        client, token = _sign_in(make_client)
+        client.post(
+            f"/api/v1/lessons/{seeded_content['lesson_a1']}/complete",
+            headers=_auth(token),
+            json={
+                "attempt_id": "attempt-1",
+                "correct_count": 1,
+                "total_count": 1,
+                "time_spent_seconds": 10.0,
+                "client_completed_at": datetime.now(UTC).isoformat(),
+            },
+        )
+
+        tree = client.get("/api/v1/skill-tree", headers=_auth(token)).json()
+        entry = next(s for s in tree["skills"] if s["id"] == seeded_content["skill_a"])
+
+        assert entry["lessons"] == [
+            {"id": seeded_content["lesson_a1"], "title": "Hello", "done": True},
+            {"id": seeded_content["lesson_a2"], "title": "Goodbye", "done": False},
+        ]
+        assert entry["state"] == "active"

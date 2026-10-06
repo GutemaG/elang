@@ -95,6 +95,16 @@ class LessonRepository(Protocol):
         """
         ...
 
+    async def list_lessons_by_skills(
+        self, skill_ids: Sequence[str]
+    ) -> dict[str, tuple[tuple[str, str], ...]]:
+        """`list_lesson_ids_by_skills` with each lesson's title: `(id,
+        title)` per lesson, in `order_index` order, in one query. The skill
+        tree draws a path stop per lesson from it (026-lesson-path-nodes).
+        A skill with no lessons is absent.
+        """
+        ...
+
     async def list_exercises_by_vocab_item_ids(
         self, vocab_item_ids: Sequence[str]
     ) -> dict[str, Exercise]:

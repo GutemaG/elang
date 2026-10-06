@@ -1452,6 +1452,23 @@
   "@skillCompletedNote": {
     "description": "Popover of a completed skill."
   },
+  "finishLessonAbove": "Finish the lesson above to unlock this one.",
+  "@finishLessonAbove": {
+    "description": "Popover of a locked lesson in a skill the learner has started."
+  },
+  "lessonDonePlayAgain": "You've done this lesson. Play it again any time.",
+  "@lessonDonePlayAgain": {
+    "description": "Popover of a lesson already done in a skill not yet finished."
+  },
+  "inSkill": "in {skill}",
+  "@inSkill": {
+    "description": "Screen-reader phrase of a lesson's bubble on the path: the skill it belongs to.",
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
   "locked": "Locked",
   "@locked": {
     "description": "Popover badge of a locked skill."

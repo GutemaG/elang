@@ -172,7 +172,7 @@ Future<void> _placeDivider(WidgetTester tester, String title, double dy) async {
 Finder get _jump => find.byTooltip('Jump to your current lesson');
 
 Finder get _activeNode => find.byWidgetPredicate(
-  (w) => w is SkillPathNode && w.node.state == SkillNodeState.active,
+  (w) => w is SkillPathNode && w.stop.state == SkillNodeState.active,
 );
 
 void main() {

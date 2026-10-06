@@ -8,7 +8,7 @@ response mapping.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 
 from app.domain.course import Course, CourseRepository
@@ -152,6 +152,16 @@ async def _apply_vocab_progress_update(
 
 
 @dataclass(frozen=True)
+class PathLesson:
+    """One lesson of a skill as the path shows it (026-lesson-path-nodes):
+    `done` when it is in the skill's current pass."""
+
+    id: str
+    title: str
+    done: bool
+
+
+@dataclass(frozen=True)
 class SkillTreeSummary:
     """Story 001's skill entries plus bolt 005's account-level HUD stats --
     everything `GET /skill-tree` returns in one call (Technical Design's
@@ -181,6 +191,9 @@ class SkillTreeSummary:
     # 021-daily-reminder (bolt 062): a lesson that counts for the streak was
     # finished on today's UTC date, so the app can skip tonight's reminder.
     practised_today: bool = False
+    # Each skill's lessons in order, so the app draws a stop per lesson
+    # (026-lesson-path-nodes). A skill with no lessons has none.
+    lessons_by_skill: dict[str, list[PathLesson]] = field(default_factory=dict)
 
 
 async def get_skill_tree(
@@ -240,17 +253,24 @@ async def get_skill_tree(
     # *set* -- see LessonCompletionService). One grouped query for every
     # skill's lesson ids (not a per-skill round trip) keeps this at the
     # same small constant query count as the rest of get_skill_tree.
-    lessons_by_skill = await lesson_repo.list_lesson_ids_by_skills([s.id for s in skills])
+    lessons_by_skill = await lesson_repo.list_lessons_by_skills([s.id for s in skills])
     lesson_id_by_skill: dict[str, str | None] = {}
     lesson_progress_by_skill: dict[str, tuple[int, int]] = {}
+    path_lessons_by_skill: dict[str, list[PathLesson]] = {}
     for skill in skills:
-        lesson_ids = lessons_by_skill.get(skill.id, ())
+        lessons = lessons_by_skill.get(skill.id, ())
+        lesson_ids = [lesson_id for lesson_id, _ in lessons]
         if not lesson_ids:
             lesson_id_by_skill[skill.id] = None
             lesson_progress_by_skill[skill.id] = (0, 0)
+            path_lessons_by_skill[skill.id] = []
             continue
         progress = progress_by_skill.get(skill.id)
         done_this_cycle = progress.completed_lesson_ids_this_cycle if progress else frozenset()
+        path_lessons_by_skill[skill.id] = [
+            PathLesson(id=lesson_id, title=title, done=lesson_id in done_this_cycle)
+            for lesson_id, title in lessons
+        ]
         lesson_progress_by_skill[skill.id] = (
             sum(1 for lid in lesson_ids if lid in done_this_cycle),
             len(lesson_ids),
@@ -283,6 +303,7 @@ async def get_skill_tree(
         # Only a non-review lesson writes `last_completed_date`, so this is
         # the streak's own day rule with no extra query.
         practised_today=streak.last_completed_date == now.astimezone(UTC).date(),
+        lessons_by_skill=path_lessons_by_skill,
     )
 
 

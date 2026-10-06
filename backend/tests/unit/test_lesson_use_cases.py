@@ -9,7 +9,7 @@ from datetime import UTC, date, datetime, timedelta, timezone
 
 import pytest
 
-from app.application.lesson_use_cases import get_lesson_content, get_skill_tree
+from app.application.lesson_use_cases import PathLesson, get_lesson_content, get_skill_tree
 from app.domain.lesson.entities import (
     Category,
     Exercise,
@@ -175,6 +175,11 @@ class TestGetSkillTree:
         # One of two lessons done: the skill is still unfinished, and the
         # summary says how far through it the learner is.
         assert summary.lesson_progress_by_skill["s1"] == (1, 2)
+        # Each lesson, in order, for a stop per lesson on the path.
+        assert summary.lessons_by_skill["s1"] == [
+            PathLesson(id="lesson-a1", title="Hello", done=True),
+            PathLesson(id="lesson-a2", title="Goodbye", done=False),
+        ]
 
 
 class TestPractisedToday:

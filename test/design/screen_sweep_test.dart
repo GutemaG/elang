@@ -224,6 +224,16 @@ SkillTreeNode _node(String id, String category, SkillNodeState state) =>
       state: state,
       categoryId: category,
       crownLevel: state == SkillNodeState.completed ? 3 : 0,
+      // A bubble per lesson under the skill's label (026-lesson-path-nodes),
+      // the active skill's first lesson done.
+      lessons: [
+        SkillLesson(
+          id: 'lesson-$id-1',
+          title: 'Hello and goodbye',
+          done: state == SkillNodeState.active,
+        ),
+        SkillLesson(id: 'lesson-$id-2', title: 'How are you?', done: false),
+      ],
     );
 
 SkillTreeResponse _tree() => SkillTreeResponse(

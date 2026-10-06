@@ -295,6 +295,19 @@ class FakeLessonRepositoryWithSkillIndex(FakeLessonRepository):
                 result[skill_id] = lesson_ids
         return result
 
+    async def list_lessons_by_skills(
+        self, skill_ids: Sequence[str]
+    ) -> dict[str, tuple[tuple[str, str], ...]]:
+        result: dict[str, tuple[tuple[str, str], ...]] = {}
+        for skill_id in set(skill_ids):
+            matching = sorted(
+                (lesson for lesson in self._lessons.values() if lesson.skill_id == skill_id),
+                key=lambda lesson: lesson.order_index,
+            )
+            if matching:
+                result[skill_id] = tuple((lesson.id, lesson.title) for lesson in matching)
+        return result
+
     async def list_content_versions_by_skills(
         self, skill_ids: Sequence[str]
     ) -> dict[str, datetime]:

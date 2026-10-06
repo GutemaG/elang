@@ -162,7 +162,7 @@ class _PathNodeState extends State<PathNode>
               if (state == PathNodeState.completed && widget.crownLevel > 0)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.space2xs),
-                  child: _CrownBadge(level: widget.crownLevel),
+                  child: PathCrownBadge(level: widget.crownLevel),
                 ),
               if (active && callout != null)
                 Padding(
@@ -383,8 +383,10 @@ class _RingPainter extends CustomPainter {
       old.fraction != fraction || old.track != track || old.fill != fill;
 }
 
-class _CrownBadge extends StatelessWidget {
-  const _CrownBadge({required this.level});
+/// The "Lv N" crown badge over a completed node, and beside a skill's
+/// label when its lessons are bubbles of their own (026-lesson-path-nodes).
+class PathCrownBadge extends StatelessWidget {
+  const PathCrownBadge({super.key, required this.level});
 
   final int level;
 

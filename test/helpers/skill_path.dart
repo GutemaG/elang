@@ -6,7 +6,7 @@ import 'package:elang/shared/widgets/path_popover.dart';
 /// The path node of the skill titled [title]. The path shows no titles, so
 /// tests find a skill by its node.
 Finder findSkill(String title) => find.byWidgetPredicate(
-  (w) => w is SkillPathNode && w.node.title == title,
+  (w) => w is SkillPathNode && w.stop.title == title,
   description: 'the path node of "$title"',
 );
 

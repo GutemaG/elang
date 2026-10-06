@@ -1107,6 +1107,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'You\'ve completed this skill. Reviews don\'t earn XP or use beans.';
 
   @override
+  String get finishLessonAbove => 'Finish the lesson above to unlock this one.';
+
+  @override
+  String get lessonDonePlayAgain =>
+      'You\'ve done this lesson. Play it again any time.';
+
+  @override
+  String inSkill(String skill) {
+    return 'in $skill';
+  }
+
+  @override
   String get locked => 'Locked';
 
   @override

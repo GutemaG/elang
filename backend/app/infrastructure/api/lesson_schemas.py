@@ -45,6 +45,15 @@ class CategoryResponse(BaseModel):
     order_index: int
 
 
+class PathLessonResponse(BaseModel):
+    """One of a skill's lessons, as the path shows it
+    (026-lesson-path-nodes): `done` when it is in the skill's current pass."""
+
+    id: str
+    title: str
+    done: bool
+
+
 class SkillTreeEntryResponse(BaseModel):
     id: str
     title: str
@@ -68,6 +77,9 @@ class SkillTreeEntryResponse(BaseModel):
     # shows `lessons_done`/`lesson_count` on an unfinished node.
     lessons_done: int
     lesson_count: int
+    # 026-lesson-path-nodes: the skill's lessons in order, so the app draws
+    # a stop per lesson. An app that does not read it draws one per skill.
+    lessons: list[PathLessonResponse] = []
 
 
 class SkillTreeResponse(BaseModel):

@@ -1768,6 +1768,24 @@ abstract class AppLocalizations {
   /// **'You\'ve completed this skill. Reviews don\'t earn XP or use beans.'**
   String get skillCompletedNote;
 
+  /// Popover of a locked lesson in a skill the learner has started.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the lesson above to unlock this one.'**
+  String get finishLessonAbove;
+
+  /// Popover of a lesson already done in a skill not yet finished.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve done this lesson. Play it again any time.'**
+  String get lessonDonePlayAgain;
+
+  /// Screen-reader phrase of a lesson's bubble on the path: the skill it belongs to.
+  ///
+  /// In en, this message translates to:
+  /// **'in {skill}'**
+  String inSkill(String skill);
+
   /// Popover badge of a locked skill.
   ///
   /// In en, this message translates to:

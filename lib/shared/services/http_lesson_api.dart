@@ -199,6 +199,8 @@ class HttpLessonApi implements LessonApi {
       contentVersion: _parseContentVersion(json['content_version']),
       lessonsDone: json['lessons_done'] as int? ?? 0,
       lessonCount: json['lesson_count'] as int? ?? 0,
+      // Missing from a backend older than 026-lesson-path-nodes.
+      lessons: SkillLesson.listFrom(json['lessons']),
     );
   }
 

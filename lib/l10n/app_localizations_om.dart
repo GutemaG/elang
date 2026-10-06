@@ -1117,6 +1117,18 @@ class AppLocalizationsOm extends AppLocalizations {
       'Dandeettii kana xumurteetta. Irra deebiin XP hin argamsiisu, ija bunaas hin fayyadamu.';
 
   @override
+  String get finishLessonAbove => 'Kana banuuf barnoota gubbaa jiru xumuri.';
+
+  @override
+  String get lessonDonePlayAgain =>
+      'Barnoota kana xumurteetta. Yeroo barbaadde irra deebi\'ii hojjechuu dandeessa.';
+
+  @override
+  String inSkill(String skill) {
+    return '$skill keessatti';
+  }
+
+  @override
   String get locked => 'Cufameera';
 
   @override

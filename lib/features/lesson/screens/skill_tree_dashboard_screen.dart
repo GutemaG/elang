@@ -407,19 +407,23 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     if (cache == null || _prefetching) return;
     _prefetching = true;
     try {
+      final stops = [
+        for (final category in tree.categories) ...tree.stopsIn(category),
+      ];
       final open = [
-        ...tree.nodes.where((n) => n.state == SkillNodeState.active),
-        ...tree.nodes.where((n) => n.state == SkillNodeState.completed),
+        ...stops.where((s) => s.state == SkillNodeState.active),
+        ...stops.where((s) => s.state == SkillNodeState.completed),
       ];
       var fetched = 0;
-      for (final node in open) {
+      for (final stop in open) {
         if (fetched >= _prefetchPerLoad || !mounted) break;
-        final cached = await cache.loadLesson(node.lessonId);
-        if (cached != null && cached.isFreshFor(node.contentVersion)) continue;
+        final version = stop.skill.contentVersion;
+        final cached = await cache.loadLesson(stop.lessonId);
+        if (cached != null && cached.isFreshFor(version)) continue;
         fetched++;
         try {
-          final content = await widget.lessonApi.startLesson(node.lessonId);
-          await cache.saveLesson(content, skillVersion: node.contentVersion);
+          final content = await widget.lessonApi.startLesson(stop.lessonId);
+          await cache.saveLesson(content, skillVersion: version);
         } on Object {
           // Offline or refused: this lesson just fetches when tapped.
         }
@@ -668,28 +672,28 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     }
   }
 
-  /// A tapped node opens its popover (the path shows no titles, so that is
-  /// where the skill is named); its button starts the lesson. A completed
-  /// skill's popover says a review earns and spends nothing; a locked one
-  /// only says how to unlock it.
-  Future<void> _onNodeTap(SkillTreeNode node, Rect anchor) async {
-    final start = await showSkillPopover(
+  /// A tapped bubble opens its popover (the path shows no titles, so that
+  /// is where the lesson is named); its button starts the bubble's lesson.
+  /// A completed skill's popover says a review earns and spends nothing; a
+  /// locked one only says how to unlock it.
+  Future<void> _onStopTap(PathStop stop, Rect anchor) async {
+    final start = await showStopPopover(
       context,
-      node: node,
+      stop: stop,
       anchor: anchor,
-      footer: node.state == SkillNodeState.locked
+      footer: stop.state == SkillNodeState.locked
           ? null
           : _DownloadNote(
-              lessonId: node.lessonId,
+              lessonId: stop.lessonId,
               downloader: widget.lessonPackDownloader,
             ),
     );
     if (start != true || !mounted) return;
-    final isReview = node.state == SkillNodeState.completed;
+    final node = stop.skill;
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => LessonScreen(
-          lessonId: node.lessonId,
+          lessonId: stop.lessonId,
           lessonApi: widget.lessonApi,
           audioPlayer: widget.audioPlayer,
           feedbackPlayer: widget.feedbackPlayer,
@@ -700,8 +704,11 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           mediaCache: widget.mediaCache,
           skillVersion: node.contentVersion,
           beansNow: (_sheetBeans ?? _lastData?.beansStatus)?.beans,
-          isReview: isReview,
-          skillProgress: SkillLessonProgress.forNode(node),
+          isReview: stop.isReview,
+          // A lesson bubble is simply a lesson: no "Lesson N of M".
+          skillProgress: stop.isLesson
+              ? null
+              : SkillLessonProgress.forNode(node),
           reminders: widget.reminders,
         ),
       ),
@@ -917,12 +924,16 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
     final section = categories.isEmpty
         ? 0
         : _section.clamp(0, categories.length - 1);
-    final active = tree.nodes
-        .where((n) => n.state == SkillNodeState.active)
+    final stopsBySection = [
+      for (final category in categories) tree.stopsIn(category),
+    ];
+    final active = stopsBySection
+        .expand((stops) => stops)
+        .where((s) => s.state == SkillNodeState.active)
         .firstOrNull;
     final activeSection = active == null
         ? -1
-        : categories.indexWhere((c) => c.id == active.categoryId);
+        : categories.indexWhere((c) => c.id == active.skill.categoryId);
     _activeSection = activeSection;
     // Where things are only settles after layout, so the header and the
     // jump button are brought up to date once this frame is drawn too.
@@ -982,11 +993,10 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
                       key: ValueKey('section-header-$section'),
                       category: categories[section],
                       colorIndex: section,
-                      completed: tree
-                          .nodesIn(categories[section])
-                          .where((n) => n.state == SkillNodeState.completed)
+                      completed: stopsBySection[section]
+                          .where((s) => s.state == SkillNodeState.completed)
                           .length,
-                      total: tree.nodesIn(categories[section]).length,
+                      total: stopsBySection[section].length,
                     ),
                   ),
                 ),
@@ -1054,8 +1064,8 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
               SliverToBoxAdapter(
                 key: i == activeSection ? _activeSectionKey : null,
                 child: _CategoryNodes(
-                  nodes: tree.nodesIn(categories[i]),
-                  onNodeTap: _onNodeTap,
+                  stops: stopsBySection[i],
+                  onStopTap: _onStopTap,
                   activeNodeId: i == activeSection ? active?.id : null,
                   activeNodeKey: _activeNodeKey,
                 ),
@@ -1183,23 +1193,26 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
   }
 }
 
-/// One category's skill path. The zig-zag offset restarts at the top of every
-/// category; the section's divider is a sliver above this, not part of it
-/// (011-dashboard-ui-polish, story 002; 020-dashboard-section-header).
+/// One category's path: a bubble per lesson, each skill's first under its
+/// label (026-lesson-path-nodes), or a bubble per skill for a tree without
+/// lessons. The zig-zag offset restarts at the top of every category and
+/// runs on across its skills; the section's divider is a sliver above
+/// this, not part of it (011-dashboard-ui-polish, story 002;
+/// 020-dashboard-section-header).
 class _CategoryNodes extends StatelessWidget {
   const _CategoryNodes({
-    required this.nodes,
-    required this.onNodeTap,
+    required this.stops,
+    required this.onStopTap,
     required this.activeNodeKey,
     this.activeNodeId,
   });
 
-  final List<SkillTreeNode> nodes;
+  final List<PathStop> stops;
 
-  /// A node and where it is on screen, for its popover to point at.
-  final void Function(SkillTreeNode node, Rect anchor) onNodeTap;
+  /// A bubble and where it is on screen, for its popover to point at.
+  final void Function(PathStop stop, Rect anchor) onStopTap;
 
-  /// The learner's current node in this section, if it is here; it gets
+  /// The learner's current bubble in this section, if it is here; it gets
   /// [activeNodeKey] so the jump button can find it.
   final String? activeNodeId;
   final GlobalKey activeNodeKey;
@@ -1213,20 +1226,23 @@ class _CategoryNodes extends StatelessWidget {
       ),
       child: Column(
         children: [
-          for (int i = 0; i < nodes.length; i++)
+          for (int i = 0; i < stops.length; i++) ...[
+            if (stops[i].isLesson && stops[i].isFirstOfSkill)
+              PathSkillLabel(skill: stops[i].skill),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.spaceMd),
               child: Align(
                 alignment: _lateralOffset(i),
                 child: Builder(
                   builder: (nodeContext) => SkillPathNode(
-                    key: nodes[i].id == activeNodeId ? activeNodeKey : null,
-                    node: nodes[i],
-                    onTap: () => onNodeTap(nodes[i], _rectOf(nodeContext)),
+                    key: stops[i].id == activeNodeId ? activeNodeKey : null,
+                    stop: stops[i],
+                    onTap: () => onStopTap(stops[i], _rectOf(nodeContext)),
                   ),
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

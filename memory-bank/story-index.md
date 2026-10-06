@@ -1,10 +1,10 @@
 # Global Story Index
 
 ## Overview
-- **Total stories**: 114
-- **Generated**: 114
-- **Completed**: 110
-- **Last updated**: 2026-10-05
+- **Total stories**: 119
+- **Generated**: 119
+- **Completed**: 115
+- **Last updated**: 2026-10-06
 
 ---
 
@@ -315,3 +315,16 @@
 - [x] **013-generate-exercises** (curriculum-admin): Generate a lesson's exercises - Must - ✅ COMPLETED (bolt 086-curriculum-generate-and-publish)
 - [x] **014-edit-generated-exercises** (curriculum-admin): Edit the generated exercises - Must - ✅ COMPLETED (bolt 086-curriculum-generate-and-publish)
 - [x] **015-publish-from-the-admin** (curriculum-admin): Publish a lesson from its page - Must - ✅ COMPLETED (bolt 086-curriculum-generate-and-publish)
+
+### 026-lesson-path-nodes
+
+#### Unit: 001-path-lessons-service
+
+- [x] **001-lessons-in-the-skill-tree** (path-lessons-service): Each skill's lessons in the skill tree - Must - ✅ COMPLETED (bolt 087-path-lessons-service)
+
+#### Unit: 002-path-lessons-app
+
+- [x] **002-one-bubble-per-lesson** (path-lessons-app): A bubble per lesson, under its skill's label - Must - ✅ COMPLETED (bolt 088-path-lesson-nodes)
+- [x] **003-lesson-states-and-taps** (path-lessons-app): Each lesson's state, popover and tap - Must - ✅ COMPLETED (bolt 088-path-lesson-nodes)
+- [x] **004-no-parts-of-a-skill** (path-lessons-app): No "Lesson N of M" anywhere - Must - ✅ COMPLETED (bolt 088-path-lesson-nodes)
+- [x] **005-older-backend-and-saved-copies** (path-lessons-app): Old trees drawn as today; saved copies keep lessons - Must - ✅ COMPLETED (bolt 088-path-lesson-nodes)

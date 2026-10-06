@@ -1082,6 +1082,18 @@ class AppLocalizationsAm extends AppLocalizations {
       'ይህን ክህሎት አጠናቀዋል። ክለሳዎች XP አያስገኙም ፍሬም አይጠቀሙም።';
 
   @override
+  String get finishLessonAbove => 'ይህን ለመክፈት ከላይ ያለውን ትምህርት ይጨርሱ።';
+
+  @override
+  String get lessonDonePlayAgain =>
+      'ይህን ትምህርት ጨርሰዋል። በፈለጉት ጊዜ እንደገና ሊሠሩት ይችላሉ።';
+
+  @override
+  String inSkill(String skill) {
+    return 'በ$skill ውስጥ';
+  }
+
+  @override
   String get locked => 'ተቆልፏል';
 
   @override

@@ -496,6 +496,37 @@ class TestSqlAlchemyLessonRepositoryListLessonIdsBySkills:
         assert await repo.list_lesson_ids_by_skills([]) == {}
 
 
+class TestSqlAlchemyLessonRepositoryListLessonsBySkills:
+    """026-lesson-path-nodes: each skill's lessons with their titles, in
+    order, for the path's stops."""
+
+    async def test_groups_lessons_with_titles_in_order(self, db_session: AsyncSession) -> None:
+        db_session.add_all(
+            [
+                SkillModel(category_id="cat-1", id="s1", title="Greetings", order_index=1),
+                SkillModel(category_id="cat-1", id="s2", title="Food", order_index=2),
+                SkillModel(category_id="cat-1", id="s3", title="Empty", order_index=3),
+            ]
+        )
+        db_session.add_all(
+            [
+                LessonModel(id="l2", skill_id="s1", title="Goodbye", order_index=2),
+                LessonModel(id="l1", skill_id="s1", title="Hello", order_index=1),
+                LessonModel(id="l3", skill_id="s2", title="Coffee", order_index=1),
+            ]
+        )
+        await db_session.commit()
+
+        repo = SqlAlchemyLessonRepository(db_session)
+        grouped = await repo.list_lessons_by_skills(["s1", "s2", "s3"])
+
+        assert grouped == {
+            "s1": (("l1", "Hello"), ("l2", "Goodbye")),
+            "s2": (("l3", "Coffee"),),
+        }
+        assert await repo.list_lessons_by_skills([]) == {}
+
+
 class TestSqlAlchemyLessonRepositoryListExercisesByVocabItemIds:
     """Bolt 019-srs-tracking-service, story 004: resolving due vocab items
     to a renderable exercise.

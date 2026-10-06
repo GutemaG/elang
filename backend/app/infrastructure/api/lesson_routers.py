@@ -62,6 +62,7 @@ from app.infrastructure.api.lesson_schemas import (
     CompleteLessonResponse,
     LessonContentResponse,
     LessonSummaryResponse,
+    PathLessonResponse,
     RefillResponse,
     SkillTreeEntryResponse,
     SkillTreeResponse,
@@ -105,6 +106,10 @@ def _to_skill_tree_response(
                 content_version=summary.content_version_by_skill[entry.skill.id],
                 lessons_done=summary.lesson_progress_by_skill.get(entry.skill.id, (0, 0))[0],
                 lesson_count=summary.lesson_progress_by_skill.get(entry.skill.id, (0, 0))[1],
+                lessons=[
+                    PathLessonResponse(id=lesson.id, title=lesson.title, done=lesson.done)
+                    for lesson in summary.lessons_by_skill.get(entry.skill.id, [])
+                ],
             )
             for entry in summary.entries
         ],

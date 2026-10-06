@@ -375,6 +375,22 @@ class SqlAlchemyLessonRepository:
             grouped.setdefault(skill_id, []).append(lesson_id)
         return {skill_id: tuple(ids) for skill_id, ids in grouped.items()}
 
+    async def list_lessons_by_skills(
+        self, skill_ids: Sequence[str]
+    ) -> dict[str, tuple[tuple[str, str], ...]]:
+        if not skill_ids:
+            return {}
+        stmt = (
+            select(LessonModel.skill_id, LessonModel.id, LessonModel.title)
+            .where(LessonModel.skill_id.in_(skill_ids))
+            .order_by(LessonModel.skill_id, LessonModel.order_index)
+        )
+        result = await self._session.execute(stmt)
+        grouped: dict[str, list[tuple[str, str]]] = {}
+        for skill_id, lesson_id, title in result.all():
+            grouped.setdefault(skill_id, []).append((lesson_id, title))
+        return {skill_id: tuple(lessons) for skill_id, lessons in grouped.items()}
+
     async def list_exercises_by_vocab_item_ids(
         self, vocab_item_ids: Sequence[str]
     ) -> dict[str, Exercise]:

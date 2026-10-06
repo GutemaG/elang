@@ -112,6 +112,8 @@ void main() {
         expect(result.nodes[0].lessonCount, 2);
         expect(result.nodes[0].isPartlyDone, isTrue);
         expect(result.nodes[1].lessonCount, 0);
+        // No `lessons` in this (older) response: one bubble per skill.
+        expect(result.nodes[0].lessons, isEmpty);
       },
     );
 
@@ -129,6 +131,46 @@ void main() {
         sessionRepository: await _signedInSessionRepository(),
       );
     }
+
+    test('reads each skill’s lessons (026-lesson-path-nodes)', () async {
+      final api = await apiReturning({
+        'unit_title': 'Unit 1',
+        'unit_subtitle': '',
+        'categories': [
+          {'id': 'cat-1', 'title': 'S1', 'subtitle': '', 'order_index': 1},
+        ],
+        'skills': [
+          {
+            'id': 'skill-a',
+            'title': 'Greetings',
+            'order_index': 1,
+            'category_id': 'cat-1',
+            'state': 'active',
+            'crown_level': 0,
+            'lesson_id': 'lesson-a2',
+            'content_version': '2026-10-06T09:00:00Z',
+            'lessons_done': 1,
+            'lesson_count': 2,
+            'lessons': [
+              {'id': 'lesson-a1', 'title': 'Hello', 'done': true},
+              {'id': 'lesson-a2', 'title': 'Goodbye', 'done': false},
+            ],
+          },
+        ],
+        'streak_count': 0,
+        'beans': 5,
+        'beans_max': 5,
+        'total_xp': 0,
+      });
+
+      final tree = await api.getSkillTree();
+
+      final stops = tree.stopsIn(tree.categories.single);
+      expect(stops.map((s) => (s.lessonId, s.title, s.state)), [
+        ('lesson-a1', 'Hello', SkillNodeState.completed),
+        ('lesson-a2', 'Goodbye', SkillNodeState.active),
+      ]);
+    });
 
     Map<String, dynamic> skill(String id, String? categoryId) => {
       'id': id,

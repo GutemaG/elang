@@ -192,6 +192,10 @@ class TestSkillTreeEndpoint:
         # How far through its lessons each skill is, for a brand-new user.
         assert by_id[seeded_content["skill_a"]]["lessons_done"] == 0
         assert by_id[seeded_content["skill_a"]]["lesson_count"] >= 1
+        # 026-lesson-path-nodes: the skill's lessons, none done yet.
+        assert by_id[seeded_content["skill_a"]]["lessons"] == [
+            {"id": seeded_content["lesson_a1"], "title": "Hello & Goodbye", "done": False}
+        ]
 
 
 class TestLessonContentEndpoint:

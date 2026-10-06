@@ -101,7 +101,9 @@ void main() {
     testWidgets('a part-way skill shows a ring and says Continue', (
       tester,
     ) async {
-      await tester.pumpWidget(_host(SkillPathNode(node: _node(done: 1))));
+      await tester.pumpWidget(
+        _host(SkillPathNode(stop: PathStop.ofSkill(_node(done: 1)))),
+      );
 
       expect(find.text('CONTINUE'), findsOneWidget);
       expect(find.byKey(const ValueKey('skill-progress-ring')), findsOneWidget);
@@ -112,12 +114,18 @@ void main() {
     });
 
     testWidgets('an unstarted or finished skill shows neither', (tester) async {
-      await tester.pumpWidget(_host(SkillPathNode(node: _node(done: 0))));
+      await tester.pumpWidget(
+        _host(SkillPathNode(stop: PathStop.ofSkill(_node(done: 0)))),
+      );
       expect(find.text('START'), findsOneWidget);
       expect(find.byKey(const ValueKey('skill-progress-ring')), findsNothing);
 
       await tester.pumpWidget(
-        _host(SkillPathNode(node: _node(state: SkillNodeState.completed))),
+        _host(
+          SkillPathNode(
+            stop: PathStop.ofSkill(_node(state: SkillNodeState.completed)),
+          ),
+        ),
       );
       expect(find.text('START'), findsNothing);
       expect(find.text('Numbers'), findsNothing); // no title on the path
