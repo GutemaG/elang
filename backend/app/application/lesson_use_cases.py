@@ -8,6 +8,7 @@ response mapping.
 from __future__ import annotations
 
 import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 
@@ -117,6 +118,19 @@ def _default_progress(user_id: str, skill_id: str) -> UserSkillProgress:
     return UserSkillProgress(
         user_id=user_id, skill_id=skill_id, unlocked=True, crown_level=0, completed_at=None
     )
+
+
+def _results_by_vocab_item(results: Iterable[tuple[str | None, bool]]) -> dict[str, bool]:
+    """One result per vocabulary item, in first-seen order: correct only if
+    every exercise for it was. A Workbook lesson asks about each word more
+    than once (its choice question and its listening one), and the session
+    does not autoflush, so writing the same item's progress twice would
+    insert two rows and fail the whole completion."""
+    merged: dict[str, bool] = {}
+    for vocab_item_id, correct in results:
+        if vocab_item_id is not None:
+            merged[vocab_item_id] = merged.get(vocab_item_id, True) and correct
+    return merged
 
 
 async def _apply_vocab_progress_update(
@@ -598,13 +612,14 @@ async def complete_lesson(
             )
         )
 
-    for exercise in lesson.exercises:
-        if exercise.vocab_item_id is None:
-            continue
+    for vocab_item_id, was_correct in _results_by_vocab_item(
+        (exercise.vocab_item_id, exercise.id not in missed_exercise_ids)
+        for exercise in lesson.exercises
+    ).items():
         await _apply_vocab_progress_update(
             user_id=user_id,
-            vocab_item_id=exercise.vocab_item_id,
-            was_correct=exercise.id not in missed_exercise_ids,
+            vocab_item_id=vocab_item_id,
+            was_correct=was_correct,
             now=client_completed_at,
             vocab_progress_repo=vocab_progress_repo,
         )
@@ -656,13 +671,14 @@ async def _complete_review(
             f"Invalid completion counts: correct_count={correct_count}, total_count={total_count}"
         )
 
-    for exercise in lesson.exercises:
-        if exercise.vocab_item_id is None:
-            continue
+    for vocab_item_id, was_correct in _results_by_vocab_item(
+        (exercise.vocab_item_id, exercise.id not in missed_exercise_ids)
+        for exercise in lesson.exercises
+    ).items():
         await _apply_vocab_progress_update(
             user_id=user_id,
-            vocab_item_id=exercise.vocab_item_id,
-            was_correct=exercise.id not in missed_exercise_ids,
+            vocab_item_id=vocab_item_id,
+            was_correct=was_correct,
             now=client_completed_at,
             vocab_progress_repo=vocab_progress_repo,
         )
@@ -830,7 +846,7 @@ async def complete_practice_session(
     if total_count == 0:
         raise InvalidPracticeCompletionError("A practice session must grade at least one item")
 
-    for vocab_item_id, correct in results:
+    for vocab_item_id, correct in _results_by_vocab_item(results).items():
         await _apply_vocab_progress_update(
             user_id=user_id,
             vocab_item_id=vocab_item_id,

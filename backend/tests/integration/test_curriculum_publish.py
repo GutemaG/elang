@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
+import uuid
 from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -293,3 +295,44 @@ class TestPublishing:
 
         assert again["created"] == ["section", "skill", "lesson"]
         assert again["category_id"] != first["category_id"]
+
+
+class TestPlayingAPublishedLesson:
+    def test_a_word_asked_about_twice_still_completes_and_counts_once(
+        self, client: TestClient, h: dict, seeded: Path
+    ) -> None:
+        # A Workbook lesson asks about each word in more than one exercise;
+        # completing it used to fail on a second progress row for the word.
+        _import(client, h)
+        _finish(client, h)
+        _save(client, h, _choice("Which is hello?"), _choice("Hear hello"), _choice("Bye?", "W002"))
+        published = _publish(client, h).json()
+        missed = published["exercise_ids"][1]
+
+        response = client.post(
+            f"/api/v1/lessons/{published['lesson_id']}/complete",
+            json={
+                "attempt_id": str(uuid.uuid4()),
+                "correct_count": 2,
+                "total_count": 3,
+                "time_spent_seconds": 30,
+                "client_completed_at": datetime.now(UTC).isoformat(),
+                "missed_exercise_ids": [missed],
+            },
+            headers=h,
+        )
+
+        assert response.status_code == 200, response.text
+        skill = next(
+            s
+            for s in client.get("/api/v1/skill-tree", headers=h).json()["skills"]
+            if s["id"] == published["skill_id"]
+        )
+        # Its only published lesson, so the skill is finished.
+        assert skill["state"] == "completed"
+        with sqlite3.connect(seeded) as conn:
+            rows = conn.execute(
+                "SELECT v.translation, p.box_level FROM user_vocab_progress p"
+                " JOIN vocab_items v ON v.id = p.vocab_item_id ORDER BY v.translation"
+            ).fetchall()
+        assert rows == [("goodbye", 1), ("hello", 1)]
