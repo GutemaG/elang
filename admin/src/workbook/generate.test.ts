@@ -74,6 +74,27 @@ describe('generating a lesson’s exercises', () => {
     expect(skillLessons.size).toBeGreaterThan(1)
   })
 
+  it('builds a sentence from bare words, with no wrong word like its own', () => {
+    const lesson = rows.filter((r) => r.lesson_ref === 'S1-U01-L1')
+    const word = lesson.find((r) => r.kind === 'word')!
+    const sentence = lesson.find((r) => r.kind === 'sentence')!
+    const changed = rows.map((r) =>
+      r.ref === word.ref
+        ? { ...r, text: 'Nagaatti' }
+        : r.ref === sentence.ref
+          ? { ...r, text: 'Nagaatti, halkan gaarii.', romanization: 'nagaatti, halkan gaarii.' }
+          : r,
+    )
+
+    const build = generateExercises('S1-U01-L1', entries, changed).find((d) => keyOf(d) === `build:${sentence.ref}`)!
+    if (build.type !== 'sentence_construction') throw new Error()
+    const tiles = build.content.word_bank
+    const textOf = new Map(tiles.map((t) => [t.id, t.text]))
+    expect(build.answer_key.correct_sequence.map((id) => textOf.get(id))).toEqual(['Nagaatti', 'halkan', 'gaarii'])
+    expect(tiles.filter((t) => t.text.toLowerCase() === 'nagaatti')).toHaveLength(1)
+    expect(tiles.find((t) => t.text === 'gaarii')?.pronunciation).toBe('gaarii')
+  })
+
   it('makes exercises for every lesson of Section 1, for the server to check', () => {
     const lessons = entries.filter((e) => e.kind === 'lesson' && e.ref.startsWith('S1-'))
     const all = lessons.map((l) => ({ lesson: l.ref, exercises: generateExercises(l.ref, entries, rows) }))

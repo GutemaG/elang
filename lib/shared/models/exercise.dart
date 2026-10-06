@@ -101,6 +101,22 @@ class SentenceConstructionExercise extends Exercise {
   final Map<String, String> wordPronunciations;
 }
 
+/// Punctuation at either end of a word: `,` `.` `?` `!`, the Ethiopic `፣`
+/// `።` `፤`, quotes and the like. Apostrophes stay, since in Afaan Oromo
+/// `'` is a letter (hudhaa).
+final _edgePunctuation = RegExp(
+  r"^(?:(?!['’])[\p{P}\p{S}])+|(?:(?!['’])[\p{P}\p{S}])+$",
+  unicode: true,
+);
+
+/// [word] without the punctuation at its ends (`Nagaatti,` -> `Nagaatti`,
+/// `ይሁኑ፣` -> `ይሁኑ`), as a word-bank tile shows it; [word] itself when it
+/// is nothing but punctuation.
+String bareWord(String word) {
+  final bare = word.trim().replaceAll(_edgePunctuation, '');
+  return bare.isEmpty ? word.trim() : bare;
+}
+
 /// One tappable tile in a [MatchPairsExercise]'s left or right column.
 ///
 /// Needs a stable [id] (unlike [MultipleChoiceExercise.options]' plain
@@ -314,8 +330,14 @@ bool isAnswerCorrect(Exercise exercise, Object answer) {
   return switch (exercise) {
     MultipleChoiceExercise e => answer == e.correctOptionIndex,
     ListeningExercise e => answer == e.correctOptionIndex,
+    // By the bare words: "Nagaatti," and "Nagaatti" are the same tile to
+    // the learner, so either one builds the sentence.
     SentenceConstructionExercise e =>
-      answer is List<String> && listEquals(answer, e.correctSentence),
+      answer is List<String> &&
+          listEquals(
+            [for (final w in answer) bareWord(w).toLowerCase()],
+            [for (final w in e.correctSentence) bareWord(w).toLowerCase()],
+          ),
     MatchPairsExercise e =>
       answer is Map<String, String> && mapEquals(answer, e.correctPairs),
     // Same shape as multiple choice: one index, no partial credit.

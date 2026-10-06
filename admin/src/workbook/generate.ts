@@ -23,6 +23,16 @@ const EMPTY: CsvRow = {
   descriptions: '',
 }
 
+/** A word without the punctuation at its ends (`Nagaatti,` -> `Nagaatti`,
+ * `ይሁኑ፣` -> `ይሁኑ`). Apostrophes stay: in Afaan Oromo `'` is a letter. */
+export function bareWord(word: string): string {
+  const bare = word.trim().replace(/^(?:(?!['’])[\p{P}\p{S}])+|(?:(?!['’])[\p{P}\p{S}])+$/gu, '')
+  return bare || word.trim()
+}
+
+/** A sentence's words as tiles: split on spaces, punctuation dropped. */
+const wordsOf = (text: string | null | undefined): string[] => (text ?? '').split(/\s+/).filter(Boolean).map(bareWord)
+
 /** What a generated exercise is, so generating again can find it. */
 export const keyOf = (draft: DraftExercise): string | null => draft.generated?.key ?? null
 
@@ -122,9 +132,13 @@ export function generateExercises(lessonRef: string, entries: CurriculumEntry[],
   }
 
   for (const s of sentences) {
-    const tokens = s.text!.split(/\s+/).filter(Boolean)
-    const spoken = s.romanization?.split(/\s+/).filter(Boolean) ?? []
-    const extraWords = words.map((w) => w.text!).filter((t) => !tokens.includes(t) && !/\s/.test(t)).slice(0, 2)
+    const tokens = wordsOf(s.text)
+    const spoken = wordsOf(s.romanization)
+    // A wrong word never looks like one of the sentence's own.
+    const own = new Set(tokens.map((t) => t.toLowerCase()))
+    const extraWords = [
+      ...new Set(words.map((w) => bareWord(w.text!)).filter((t) => !own.has(t.toLowerCase()) && !/\s/.test(t))),
+    ].slice(0, 2)
     if (tokens.length >= 2) {
       out.push(
         exercise(

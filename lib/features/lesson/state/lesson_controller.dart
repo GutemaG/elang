@@ -167,6 +167,19 @@ class LessonController extends ChangeNotifier {
 
   TileFeedback get feedback => _feedback;
   Object? get selectedAnswer => _selectedAnswer;
+
+  /// For a sentence being built: the word-bank position each built word
+  /// was placed from, in the built order, so the very tile tapped is the
+  /// one that dims. Empty when nothing is placed.
+  List<int> get placedWordPositions {
+    final built = _selectedAnswer;
+    if (built is! List<String> || built.length != _placedPositions.length) {
+      return const [];
+    }
+    return List.unmodifiable(_placedPositions);
+  }
+
+  final List<int> _placedPositions = [];
   String? get armedTileId => _armedTileId;
   bool get armedIsLeft => _armedIsLeft;
   Map<String, String> get matchedPairs => Map.unmodifiable(_matchedPairs);
@@ -207,9 +220,10 @@ class LessonController extends ChangeNotifier {
     check();
   }
 
-  /// Toggles a sentence-construction word-bank token, or a spell-tiles tile
-  /// id, in or out of the built answer, in tap order. Tile ids are unique,
-  /// so a spelled word's twin tiles toggle independently (bolt 033).
+  /// Toggles a spell-tiles tile id in or out of the built answer, in tap
+  /// order. Tile ids are unique, so a spelled word's twin tiles toggle
+  /// independently (bolt 033). A sentence uses [placeWord] and
+  /// [removeWordAt] instead, since its words are text and can repeat.
   void toggleWordBankToken(String token) {
     if (isChecked || _lessonInterrupted) return;
     final built = List<String>.of(
@@ -220,6 +234,34 @@ class LessonController extends ChangeNotifier {
     } else {
       built.add(token);
     }
+    _selectedAnswer = built;
+    notifyListeners();
+  }
+
+  /// Adds the word at [position] in a sentence's word bank to the end of
+  /// the built answer. By position, not by text: a sentence can need the
+  /// same word twice (`ደህና ይሁኑ፣ ደህና ይደሩ`), and each copy in the bank is
+  /// placed on its own.
+  void placeWord(int position, String word) {
+    if (isChecked || _lessonInterrupted) return;
+    final built = (_selectedAnswer as List<String>?) ?? const [];
+    // A new exercise starts with nothing placed.
+    if (built.length != _placedPositions.length) _placedPositions.clear();
+    if (_placedPositions.contains(position)) return;
+    _placedPositions.add(position);
+    _selectedAnswer = [...built, word];
+    notifyListeners();
+  }
+
+  /// Takes the word at [index] out of the built answer, back to the bank.
+  void removeWordAt(int index) {
+    if (isChecked || _lessonInterrupted) return;
+    final built = List<String>.of(
+      (_selectedAnswer as List<String>?) ?? const [],
+    );
+    if (index < 0 || index >= built.length) return;
+    built.removeAt(index);
+    if (index < _placedPositions.length) _placedPositions.removeAt(index);
     _selectedAnswer = built;
     notifyListeners();
   }
