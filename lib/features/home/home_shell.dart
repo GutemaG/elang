@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../shared/l10n/app_language.dart';
 import '../../shared/models/course.dart';
+import '../../shared/services/account_deletion_api.dart';
 import '../../shared/services/answer_feedback_player.dart';
 import '../../shared/services/connectivity_monitor.dart';
 import '../../shared/services/course_api.dart';
@@ -119,6 +120,9 @@ class _HomeShellState extends State<HomeShell> {
   late final FeedbackApi _feedbackApi =
       widget.feedbackApi ??
       HttpFeedbackApi(sessionRepository: widget.sessionRepository);
+  late final AccountDeletionApi _accountDeletionApi = HttpAccountDeletionApi(
+    sessionRepository: widget.sessionRepository,
+  );
 
   @override
   void initState() {
@@ -285,6 +289,7 @@ class _HomeShellState extends State<HomeShell> {
         courseApi: widget.courseApi,
         reminders: widget.reminders,
         feedbackApi: _feedbackApi,
+        accountDeletionApi: _accountDeletionApi,
         onCourseChanged: (_) => _reloads.value++,
       ),
     };

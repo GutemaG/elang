@@ -43,6 +43,11 @@ class UserRepository(Protocol):
         and validate first (`update_account_settings`)."""
         ...
 
+    async def delete_account(self, user_id: str) -> None:
+        """Removes the account and every row stored for it, as both app
+        stores require of an app with sign-in."""
+        ...
+
 
 class AppConfigRepository(Protocol):
     """The `app_config` rows (bolt 071, FR-9): one JSON value per key."""

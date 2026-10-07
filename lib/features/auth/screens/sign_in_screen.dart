@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../shared/config/auth_config.dart';
 import '../../../shared/services/auth_api.dart';
 import '../../../shared/services/onboarding_repository.dart';
 import '../../../shared/services/session_repository.dart';
@@ -165,11 +167,28 @@ class _SignInScreenState extends State<SignInScreen> {
               textAlign: TextAlign.center,
             ),
           ),
+          // The two pages the note names, as both app stores require.
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: [
+              AppButton.text(
+                label: context.l10n.termsOfService,
+                onPressed: () => _openPage(AuthConfig.termsOfServiceUrl),
+              ),
+              AppButton.text(
+                label: context.l10n.privacyPolicy,
+                onPressed: () => _openPage(AuthConfig.privacyPolicyUrl),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
+
+Future<void> _openPage(String address) =>
+    launchUrl(Uri.parse(address), mode: LaunchMode.externalApplication);
 
 /// The mockup's "quiet inline error": a warm banner with Retry inside it.
 class _InlineErrorBanner extends StatelessWidget {

@@ -354,5 +354,11 @@
   "soundsNone": "Koorsii kanaaf ammaaf chaartiin sagalee hin jiru.",
   "soundsLetterLabel": "{glyph}, {romanization}",
   "soundsVowel": "Dubbachiiftuu",
-  "soundsConsonant": "Dubbifamaa"
+  "soundsConsonant": "Dubbifamaa",
+  "privacyPolicy": "Imaammata iccitii",
+  "termsOfService": "Haalawwan itti fayyadamaa",
+  "deleteAccount": "Herrega haqi",
+  "deleteAccountQuestion": "Herrega kee haqxaa?",
+  "deleteAccountMessage": "Guddinni kee, walitti fufiinsi kee, iddoon liigii fi yaadni ati ergite guutummaatti ni haqamu. Kun deebi'uu hin danda'u.",
+  "deleteAccountFailed": "Herrega kee haquun hin danda'amne. Walqunnamtii kee mirkaneeffadhuu irra deebi'ii yaali."
 }

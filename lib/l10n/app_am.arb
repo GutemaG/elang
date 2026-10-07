@@ -354,5 +354,11 @@
   "soundsNone": "ለዚህ ኮርስ እስካሁን የድምጽ ሰንጠረዥ የለም።",
   "soundsLetterLabel": "{glyph}፣ {romanization}",
   "soundsVowel": "አናባቢ",
-  "soundsConsonant": "ተነባቢ"
+  "soundsConsonant": "ተነባቢ",
+  "privacyPolicy": "የግላዊነት ፖሊሲ",
+  "termsOfService": "የአጠቃቀም ውል",
+  "deleteAccount": "መለያ ሰርዝ",
+  "deleteAccountQuestion": "መለያዎን ይሰርዙ?",
+  "deleteAccountMessage": "እድገትዎ፣ ተከታታይ ቀናትዎ፣ የሊግ ቦታዎችዎ እና አስተያየቶችዎ እስከመጨረሻው ይሰረዛሉ። ይህ መመለስ አይቻልም።",
+  "deleteAccountFailed": "መለያዎን መሰረዝ አልተቻለም። ግንኙነትዎን አረጋግጠው እንደገና ይሞክሩ።"
 }

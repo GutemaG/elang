@@ -14,6 +14,7 @@ from fastapi import APIRouter, Body, Depends
 
 from app.application.league_use_cases import apply_league_visibility
 from app.application.use_cases import (
+    delete_account,
     read_app_config,
     update_account_settings,
     update_user_preferences,
@@ -89,6 +90,18 @@ async def update_my_settings_endpoint(
         user=user, settings=settings, now=datetime.now(UTC), league_repo=league_repo
     )
     return AccountSettingsResponse(settings=settings)
+
+
+@router.delete("/me", status_code=204)
+async def delete_my_account_endpoint(
+    user: User = Depends(get_current_user),
+    user_repo: SqlAlchemyUserRepository = Depends(get_user_repository),
+) -> None:
+    """Deletes the signed-in account and everything stored for it (Google
+    Play and App Store account-deletion rule). The session token stops
+    working at once.
+    """
+    await delete_account(user_repo, user)
 
 
 @config_router.get("/config", response_model=AppConfigResponse)

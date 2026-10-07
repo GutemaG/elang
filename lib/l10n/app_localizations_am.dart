@@ -1355,4 +1355,24 @@ class AppLocalizationsAm extends AppLocalizations {
 
   @override
   String get soundsConsonant => 'ተነባቢ';
+
+  @override
+  String get privacyPolicy => 'የግላዊነት ፖሊሲ';
+
+  @override
+  String get termsOfService => 'የአጠቃቀም ውል';
+
+  @override
+  String get deleteAccount => 'መለያ ሰርዝ';
+
+  @override
+  String get deleteAccountQuestion => 'መለያዎን ይሰርዙ?';
+
+  @override
+  String get deleteAccountMessage =>
+      'እድገትዎ፣ ተከታታይ ቀናትዎ፣ የሊግ ቦታዎችዎ እና አስተያየቶችዎ እስከመጨረሻው ይሰረዛሉ። ይህ መመለስ አይቻልም።';
+
+  @override
+  String get deleteAccountFailed =>
+      'መለያዎን መሰረዝ አልተቻለም። ግንኙነትዎን አረጋግጠው እንደገና ይሞክሩ።';
 }

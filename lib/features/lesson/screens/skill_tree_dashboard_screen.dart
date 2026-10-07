@@ -8,6 +8,7 @@ import '../../../shared/models/course.dart';
 import '../../../shared/models/lesson_content.dart';
 import '../../../shared/models/skill_lesson_progress.dart';
 import '../../../shared/models/skill_tree.dart';
+import '../../../shared/services/account_deletion_api.dart';
 import '../../../shared/services/answer_feedback_player.dart';
 import '../../../shared/services/connectivity_monitor.dart';
 import '../../../shared/services/course_api.dart';
@@ -535,6 +536,9 @@ class _SkillTreeDashboardScreenState extends State<SkillTreeDashboardScreen> {
           courseApi: widget.courseApi,
           reminders: widget.reminders,
           feedbackApi: HttpFeedbackApi(
+            sessionRepository: widget.sessionRepository,
+          ),
+          accountDeletionApi: HttpAccountDeletionApi(
             sessionRepository: widget.sessionRepository,
           ),
         ),

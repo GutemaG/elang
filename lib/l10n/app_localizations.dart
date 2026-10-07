@@ -2234,6 +2234,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Consonant'**
   String get soundsConsonant;
+
+  /// Link to Buna's privacy policy web page (Settings, sign-in screen).
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get privacyPolicy;
+
+  /// Link to Buna's terms of use web page (Settings, sign-in screen).
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of use'**
+  String get termsOfService;
+
+  /// Button: permanently delete the signed-in account and its data.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccount;
+
+  /// Title of the delete-account confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get deleteAccountQuestion;
+
+  /// Text of the delete-account confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress, streak, league places and feedback will be deleted for good. This can\'t be undone.'**
+  String get deleteAccountMessage;
+
+  /// Message when deleting the account failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete your account. Check your connection and try again.'**
+  String get deleteAccountFailed;
 }
 
 class _AppLocalizationsDelegate

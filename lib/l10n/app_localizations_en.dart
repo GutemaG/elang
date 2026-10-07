@@ -1382,4 +1382,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get soundsConsonant => 'Consonant';
+
+  @override
+  String get privacyPolicy => 'Privacy policy';
+
+  @override
+  String get termsOfService => 'Terms of use';
+
+  @override
+  String get deleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountQuestion => 'Delete your account?';
+
+  @override
+  String get deleteAccountMessage =>
+      'Your progress, streak, league places and feedback will be deleted for good. This can\'t be undone.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Couldn\'t delete your account. Check your connection and try again.';
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../shared/models/course.dart';
+import '../../../shared/services/account_deletion_api.dart';
 import '../../../shared/services/course_api.dart';
 import '../../../shared/services/reminders/reminder_service.dart';
 import '../../../shared/services/session_api.dart';
@@ -244,5 +245,13 @@ class SettingsController extends ChangeNotifier {
   Future<void> logout() async {
     await _sessionRepository.clearSession();
     await _reminders?.signedOut();
+  }
+
+  /// Deletes the account on the server, then signs out here. Throws
+  /// [AccountDeletionException] and stays signed in when the server
+  /// did not delete it.
+  Future<void> deleteAccount(AccountDeletionApi api) async {
+    await api.deleteAccount();
+    await logout();
   }
 }

@@ -1394,4 +1394,24 @@ class AppLocalizationsOm extends AppLocalizations {
 
   @override
   String get soundsConsonant => 'Dubbifamaa';
+
+  @override
+  String get privacyPolicy => 'Imaammata iccitii';
+
+  @override
+  String get termsOfService => 'Haalawwan itti fayyadamaa';
+
+  @override
+  String get deleteAccount => 'Herrega haqi';
+
+  @override
+  String get deleteAccountQuestion => 'Herrega kee haqxaa?';
+
+  @override
+  String get deleteAccountMessage =>
+      'Guddinni kee, walitti fufiinsi kee, iddoon liigii fi yaadni ati ergite guutummaatti ni haqamu. Kun deebi\'uu hin danda\'u.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Herrega kee haquun hin danda\'amne. Walqunnamtii kee mirkaneeffadhuu irra deebi\'ii yaali.';
 }

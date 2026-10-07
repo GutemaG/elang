@@ -213,6 +213,13 @@ async def update_account_settings(
     return registry.resolve(updated.settings)
 
 
+async def delete_account(user_repo: UserRepository, user: User) -> None:
+    """Deletes the signed-in account and all of its data. Signs it out
+    everywhere too, since its sessions go with it."""
+    await user_repo.delete_account(user.id)
+    logger.info("account_deleted user_id=%s", user.id)
+
+
 async def read_app_config(
     repo: AppConfigRepository,
     registry: SettingsRegistry = APP_CONFIG,

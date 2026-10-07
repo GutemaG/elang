@@ -11,7 +11,7 @@ import hashlib
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities import AuthSession, User
@@ -22,7 +22,33 @@ from app.domain.value_objects import (
     ProviderIdentity,
     SessionToken,
 )
+from app.infrastructure.db.feedback_models import FeedbackModel
+from app.infrastructure.db.league_models import LeagueMemberModel
+from app.infrastructure.db.lesson_models import (
+    AmoleTransactionModel,
+    LessonAttemptModel,
+    PracticeAttemptModel,
+    UserBeansModel,
+    UserSkillProgressModel,
+    UserStreakModel,
+    UserVocabProgressModel,
+)
 from app.infrastructure.db.models import AppConfigModel, AuthSessionModel, UserModel
+
+# Every table holding a row that belongs to one account, keyed by `user_id`.
+# Deleting an account empties these first, then removes the `users` row.
+_ACCOUNT_TABLES = (
+    AuthSessionModel,
+    LessonAttemptModel,
+    PracticeAttemptModel,
+    UserVocabProgressModel,
+    UserSkillProgressModel,
+    UserStreakModel,
+    UserBeansModel,
+    AmoleTransactionModel,
+    LeagueMemberModel,
+    FeedbackModel,
+)
 
 
 def _hash_token(token_value: str) -> str:
@@ -153,6 +179,14 @@ class SqlAlchemyUserRepository:
         model.email = email
         await self._session.flush()
         return _user_model_to_domain(model)
+
+    async def delete_account(self, user_id: str) -> None:
+        """Removes the account and everything stored for it: sign-in
+        sessions, progress, history, league places and feedback."""
+        for table in _ACCOUNT_TABLES:
+            await self._session.execute(delete(table).where(table.user_id == user_id))
+        await self._session.execute(delete(UserModel).where(UserModel.id == user_id))
+        await self._session.flush()
 
 
 class SqlAlchemyAuthSessionRepository:

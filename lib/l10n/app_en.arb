@@ -1876,5 +1876,29 @@
   "soundsConsonant": "Consonant",
   "@soundsConsonant": {
     "description": "Sounds tab: a letter that is a consonant."
+  },
+  "privacyPolicy": "Privacy policy",
+  "@privacyPolicy": {
+    "description": "Link to Buna's privacy policy web page (Settings, sign-in screen)."
+  },
+  "termsOfService": "Terms of use",
+  "@termsOfService": {
+    "description": "Link to Buna's terms of use web page (Settings, sign-in screen)."
+  },
+  "deleteAccount": "Delete account",
+  "@deleteAccount": {
+    "description": "Button: permanently delete the signed-in account and its data."
+  },
+  "deleteAccountQuestion": "Delete your account?",
+  "@deleteAccountQuestion": {
+    "description": "Title of the delete-account confirmation."
+  },
+  "deleteAccountMessage": "Your progress, streak, league places and feedback will be deleted for good. This can't be undone.",
+  "@deleteAccountMessage": {
+    "description": "Text of the delete-account confirmation."
+  },
+  "deleteAccountFailed": "Couldn't delete your account. Check your connection and try again.",
+  "@deleteAccountFailed": {
+    "description": "Message when deleting the account failed."
   }
 }

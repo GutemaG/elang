@@ -48,6 +48,11 @@ abstract final class AuthConfig {
     defaultValue: 'http://localhost:8000',
   );
 
+  /// Public pages both app stores link to, served by the backend at the
+  /// same address as the API (`backend/app/infrastructure/api/legal_pages.py`).
+  static const String privacyPolicyUrl = '$apiBaseUrl/privacy';
+  static const String termsOfServiceUrl = '$apiBaseUrl/terms';
+
   /// Google OAuth client ID used to initialize `google_sign_in` on the
   /// client. This is the Web application client (used for the web/iOS
   /// init path); Android matches by package name + SHA-1 fingerprint
@@ -69,7 +74,7 @@ abstract final class AuthConfig {
   static const String appleServicesId = 'REPLACE_WITH_APPLE_SERVICES_ID';
 
   /// Apple app Bundle ID (iOS native Sign in with Apple capability).
-  static const String appleBundleId = 'REPLACE_WITH_APPLE_BUNDLE_ID';
+  static const String appleBundleId = 'com.bunaapp.buna';
 
   /// Apple Developer Team ID.
   static const String appleTeamId = 'REPLACE_WITH_APPLE_TEAM_ID';

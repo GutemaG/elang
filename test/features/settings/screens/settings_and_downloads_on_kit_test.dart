@@ -263,7 +263,7 @@ void main() {
       expect(_groups(tester), [
         ['Daily goal', 'Course'],
         ['Notifications', 'Sound'],
-        ['Licences'],
+        ['Licences', 'Privacy policy', 'Terms of use'],
       ]);
       for (final title in headers) {
         final header = tester.getTopLeft(find.text(title)).dy;

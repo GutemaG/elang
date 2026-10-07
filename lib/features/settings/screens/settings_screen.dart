@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/l10n/app_language.dart';
+import '../../../shared/config/auth_config.dart';
 import '../../../shared/models/course.dart';
 import '../../../shared/models/language_names.dart';
+import '../../../shared/services/account_deletion_api.dart';
 import '../../../shared/services/course_api.dart';
 import '../../../shared/services/reminders/reminder_service.dart';
 import '../../../shared/services/session_api.dart';
@@ -102,6 +105,7 @@ class SettingsScreen extends StatefulWidget {
     this.reminders,
     this.accountSettingsApi,
     this.feedbackApi,
+    this.accountDeletionApi,
     this.onCourseChanged,
   });
 
@@ -123,12 +127,19 @@ class SettingsScreen extends StatefulWidget {
   /// feedback" row out.
   final FeedbackApi? feedbackApi;
 
+  /// Deletes the account (both app stores require it); `null` leaves the
+  /// "Delete account" button out.
+  final AccountDeletionApi? accountDeletionApi;
+
   /// Told when the learner switches course here, so the learning path,
   /// open beside it in the bottom bar, follows.
   final ValueChanged<Course>? onCourseChanged;
 
   /// The "Send feedback" row.
   static const sendFeedbackKey = ValueKey('settings-send-feedback');
+
+  /// The "Delete account" button.
+  static const deleteAccountKey = ValueKey('settings-delete-account');
 
   /// The "Show me in leagues" switch.
   static const showInLeaguesKey = ValueKey('settings-show-in-leagues');
@@ -268,6 +279,37 @@ class _SettingsScreenState extends State<SettingsScreen>
     Navigator.of(context)
         .pushNamedAndRemoveUntil(AuthRoutes.signIn, (route) => false);
   }
+
+  bool _deleting = false;
+
+  Future<void> _confirmDeleteAccount(AccountDeletionApi api) async {
+    final l = context.l10n;
+    final confirmed = await showAppConfirmDialog(
+      context: context,
+      title: l.deleteAccountQuestion,
+      message: l.deleteAccountMessage,
+      confirmLabel: l.deleteAccount,
+      destructive: true,
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deleting = true);
+    try {
+      await _controller.deleteAccount(api);
+    } on AccountDeletionException {
+      if (!mounted) return;
+      setState(() => _deleting = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.deleteAccountFailed)));
+      return;
+    }
+    if (!mounted) return;
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AuthRoutes.signIn, (route) => false);
+  }
+
+  Future<void> _openPage(String address) =>
+      launchUrl(Uri.parse(address), mode: LaunchMode.externalApplication);
 
   String _goalLabel(int? minutes) {
     final l = context.l10n;
@@ -461,14 +503,37 @@ class _SettingsScreenState extends State<SettingsScreen>
                     applicationName: 'Buna',
                   ),
                 ),
+                ListRow(
+                  icon: Icons.privacy_tip_outlined,
+                  title: context.l10n.privacyPolicy,
+                  onTap: () => _openPage(AuthConfig.privacyPolicyUrl),
+                ),
+                ListRow(
+                  icon: Icons.description_outlined,
+                  title: context.l10n.termsOfService,
+                  onTap: () => _openPage(AuthConfig.termsOfServiceUrl),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.spaceLg),
             AppButton.exit(
               label: context.l10n.logOut,
               leading: const Icon(Icons.logout),
-              onPressed: _confirmLogout,
+              onPressed: _deleting ? null : _confirmLogout,
             ),
+            if (widget.accountDeletionApi case final api?) ...[
+              const SizedBox(height: AppSpacing.spaceSm),
+              Center(
+                child: AppButton.text(
+                  key: SettingsScreen.deleteAccountKey,
+                  label: context.l10n.deleteAccount,
+                  leading: const Icon(Icons.delete_outline),
+                  onPressed: _deleting
+                      ? null
+                      : () => _confirmDeleteAccount(api),
+                ),
+              ),
+            ],
           ],
         );
     }

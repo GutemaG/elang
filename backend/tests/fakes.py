@@ -194,6 +194,9 @@ class FakeUserRepository:
         self._users[user_id] = user
         return user
 
+    async def delete_account(self, user_id: str) -> None:
+        self._users.pop(user_id, None)
+
 
 class FakeAuthSessionRepository:
     """In-memory stand-in for `app.domain.repositories.AuthSessionRepository`."""
