@@ -174,7 +174,12 @@ describe('the audio section', () => {
     expect(currentClip()).toHaveAttribute('src', `${API_BASE_URL}/media/audio/am/hello.m4a`)
     expect(screen.getByText('Local backend only')).toBeInTheDocument()
     expect(screen.queryByText('Not saved yet')).not.toBeInTheDocument()
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['micRecord', 'upload_fileUpload', 'linkLink'])
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'micRecord',
+      'upload_fileUpload',
+      'linkLink',
+      'record_voice_overGenerate',
+    ])
     expect(screen.getByRole('tab', { name: 'Record' })).toHaveAttribute('aria-selected', 'true')
   })
 
@@ -627,5 +632,76 @@ describe('a pasted link', () => {
 
     await userEvent.type(screen.getByLabelText('Audio link'), 'https://cdn.example/a.mp3{Enter}')
     await waitFor(() => expect(server.callsTo('POST', LINKS)).toHaveLength(1))
+  })
+})
+
+const VOICE_SETTINGS = '/api/v1/admin/voice/settings'
+const VOICE_LIST = '/api/v1/admin/voice/voices'
+
+/** The voices the Generate tab reads (intent 027). */
+function serveVoices(fake: FakeServer) {
+  fake
+    .on('GET', VOICE_SETTINGS, {
+      body: {
+        configured: true,
+        languages: [
+          { language: 'am', language_name: 'Amharic', male_voice_id: 'am-yohanes-calm', female_voice_id: 'am-loza', speed: 50, updated_by: null, updated_at: null },
+          { language: 'om', language_name: 'Afaan Oromo', male_voice_id: 'om-diriba', female_voice_id: 'om-obse', speed: 50, updated_by: null, updated_at: null },
+        ],
+      },
+    })
+    .on('GET', VOICE_LIST, (call) => {
+      const code = new URLSearchParams(call.query).get('language')
+      const voices =
+        code === 'am'
+          ? [
+              { id: 'am-yohanes-calm', name: 'Yohanes', descriptor: '', gender: 'male', style: 'Narration', preview_audio_url: null },
+              { id: 'am-loza', name: 'Loza', descriptor: '', gender: 'female', style: 'Narration', preview_audio_url: null },
+            ]
+          : []
+      return { body: { language: code, voices } }
+    })
+}
+
+describe('generating an exercise’s audio (intent 027)', () => {
+  beforeEach(() => serveVoices(server))
+
+  it('asks the server for the lesson’s language, starting from no words', async () => {
+    server.on('POST', '/api/v1/admin/voice/generate', () => ({
+      body: new Blob(['mp3'], { type: 'audio/mpeg' }),
+      headers: { 'Content-Type': 'audio/mpeg', 'X-Voice-Name': 'Loza', 'X-Duration-Seconds': '1.2' },
+    }))
+    URL.createObjectURL = vi.fn(() => 'blob:take')
+    URL.revokeObjectURL = vi.fn()
+    await openListening()
+    await tab('Generate')
+    const panel = within(screen.getByRole('tabpanel', { name: 'Generate' }))
+
+    const words = await panel.findByLabelText('Words to say')
+    expect(words).toHaveValue('')
+    expect(words).toHaveAttribute('placeholder', 'Type the words the learner should hear')
+    await userEvent.type(words, 'ሰላም')
+    await userEvent.click(panel.getByRole('button', { name: 'Generate' }))
+
+    expect(await panel.findByText('Loza · 1.2 s · not stored yet')).toBeInTheDocument()
+    expect(server.callsTo('POST', '/api/v1/admin/voice/generate')[0]!.body).toMatchObject({
+      lesson_id: 'lesson-1',
+      text: 'ሰላም',
+    })
+  })
+})
+
+describe('uploads are never tagged as generated (bolt 099)', () => {
+  it('sends no source when a file is uploaded', async () => {
+    await openListening()
+    await tab('Upload')
+    await userEvent.setup({ applyAccept: false }).upload(
+      screen.getByLabelText('Audio file'),
+      new File([new Uint8Array(3000)], 'salam.m4a', { type: 'audio/mp4' }),
+    )
+    await userEvent.click(await screen.findByRole('button', { name: 'Use this file' }))
+
+    await waitFor(() => expect(presigns()).toHaveLength(1))
+    expect(presigns()[0]!.body).not.toHaveProperty('source')
   })
 })

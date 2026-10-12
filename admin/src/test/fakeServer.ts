@@ -13,7 +13,9 @@ export interface Call {
 
 export interface Reply {
   status?: number
+  /** JSON, or a Blob sent as is (a generated voice take). */
   body?: unknown
+  headers?: Record<string, string>
 }
 
 /** A handler that throws makes the request fail as a network error would. */
@@ -57,7 +59,11 @@ export class FakeServer {
       }
       const reply = handler(call)
       const status = reply.status ?? 200
-      if (status === 204 || reply.body === undefined) return new Response(null, { status })
+      if (status === 204 || reply.body === undefined) return new Response(null, { status, headers: reply.headers })
+      // jsdom's Blob is not the one `Response` reads, so send its bytes.
+      if (reply.body instanceof Blob) {
+        return new Response(await bytesOf(reply.body), { status, headers: reply.headers })
+      }
       return json(status, reply.body)
     })
     return this
@@ -66,4 +72,15 @@ export class FakeServer {
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+}
+
+/** A jsdom Blob's bytes. jsdom's Blob has no `arrayBuffer()`, and `Response`
+ * would send its `toString()`. */
+function bytesOf(blob: Blob): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsArrayBuffer(blob)
+  })
 }

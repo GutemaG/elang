@@ -47,7 +47,10 @@ IMAGE_UPLOAD_ROUTE = "/api/v1/image-files"
 # Exactly the keys `presign_upload` builds, and nothing else: no `..`, no
 # absolute paths, no separators beyond the two, so a key can only ever name
 # a file two folders below AUDIO_DIR.
-KEY_PATTERN = re.compile(r"[a-z]{2,3}/[A-Za-z0-9_-]{1,64}/[0-9a-f]{12}\.(?:m4a|mp3|webm|ogg)")
+# A generated take's name starts with its tag (intent 027).
+KEY_PATTERN = re.compile(
+    r"[a-z]{2,3}/[A-Za-z0-9_-]{1,64}/(?:gen-(?:am|om)-[a-z0-9-]{1,40}-)?[0-9a-f]{12}\.(?:m4a|mp3|webm|ogg)"
+)
 # The same layout for pictures, with the two extensions
 # `presign_image_upload` builds.
 IMAGE_KEY_PATTERN = re.compile(r"[a-z]{2,3}/[A-Za-z0-9_-]{1,64}/[0-9a-f]{12}\.(?:webp|jpg)")

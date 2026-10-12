@@ -18,6 +18,7 @@ from app.infrastructure.db import (
     league_models,  # noqa: F401
     lesson_models,  # noqa: F401
     sound_models,  # noqa: F401
+    voice_models,  # noqa: F401
 )
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.url import normalize_database_url

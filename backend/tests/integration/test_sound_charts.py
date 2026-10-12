@@ -270,6 +270,24 @@ class TestLetters:
         )
         assert bad.status_code == 422
 
+    def test_a_generated_take_is_named_for_its_voice(self, client: TestClient, h: dict) -> None:
+        _create(client, h)
+        url = f"{A}/om/audio/uploads"
+
+        tagged = client.post(
+            url,
+            json={"content_type": "audio/mpeg", "size": 9000, "source": "gen-om-obse"},
+            headers=h,
+        )
+        refused = client.post(
+            url, json={"content_type": "audio/mpeg", "size": 9000, "source": "obse"}, headers=h
+        )
+
+        assert tagged.status_code == 201, tagged.text
+        assert re.fullmatch(r"om/sounds/gen-om-obse-[0-9a-f]{12}\.mp3", tagged.json()["key"])
+        assert refused.status_code == 422
+        assert refused.json()["details"]["field"] == "source"
+
 
 class TestTurningOn:
     def test_is_refused_until_every_sound_can_play(self, client: TestClient, h: dict) -> None:

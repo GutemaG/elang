@@ -148,7 +148,7 @@ function LetterForm({
   const sameAs = chart.letters.find((x) => x.id === draft.same_as_id)
   const change = changesOf(saved, draft)
   const dirty = Object.keys(change).length > 1
-  const upload = (clip: Blob, type: string) => uploadSound(api, chart.language, clip, type)
+  const upload = (clip: Blob, type: string, source?: string) => uploadSound(api, chart.language, clip, type, source)
   const position = group?.columns
     ? `${englishOf(group.names)} · row ${Math.floor(letter.position / group.columns) + 1}, ${group.column_labels[letter.position % group.columns] ?? ''}`
     : `${englishOf(group?.names ?? {})} · ${letter.position + 1}`
@@ -314,6 +314,7 @@ function LetterForm({
             title="Sound"
             hint="About a second, said once and clearly. Record it here, upload a file, or paste a link."
             upload={upload}
+            voice={{ language: chart.language, text: draft.glyph }}
             url={draft.audio_url}
             savedUrl={saved.audio_url}
             onChange={(url) => {
@@ -347,6 +348,7 @@ function LetterForm({
             title="Example word’s sound"
             hint="The whole word, said once."
             upload={upload}
+            voice={{ language: chart.language, text: draft.example_word }}
             url={draft.example_audio_url}
             savedUrl={saved.example_audio_url}
             onChange={(url) => edit('example_audio_url', url)}

@@ -53,6 +53,7 @@ from app.domain.lesson.exceptions import (
     LessonNotReadyError,
 )
 from app.domain.lesson.exercise_parts import validate_exercise
+from app.domain.voices import key_prefix
 from app.infrastructure.db.admin_content_repository import (
     EXERCISE,
     LESSON,
@@ -579,9 +580,12 @@ async def presign_upload(
     row_ref: str,
     content_type: str,
     size: int,
+    source: str | None = None,
 ) -> tuple[str, PresignedUpload]:
     """A PUT link for one row's recording; save its address as the row's
-    `audio_url` afterwards. The same types and limits as lesson audio."""
+    `audio_url` afterwards. The same types and limits as lesson audio, and
+    the same `source` tag for a generated take."""
+    prefix = key_prefix(source)
     base_type = content_type.split(";")[0].strip().lower()
     if base_type not in AUDIO_TYPES:
         raise InvalidContentError(
@@ -595,7 +599,7 @@ async def presign_upload(
     course = await _course_or_404(repo, course_id)
     key = (
         f"{course.learning_language}/curriculum/{row_ref}/"
-        f"{secrets.token_hex(6)}.{AUDIO_TYPES[base_type]}"
+        f"{prefix}{secrets.token_hex(6)}.{AUDIO_TYPES[base_type]}"
     )
     upload = storage.presign_put(
         key, content_type=base_type, size=size, expires_in=UPLOAD_LINK_SECONDS

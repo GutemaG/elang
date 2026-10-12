@@ -90,6 +90,18 @@ class TestUploads:
         assert query["X-Amz-SignedHeaders"] == ["content-length;content-type;host"]
         assert SECRET not in response.text
 
+    def test_a_generated_take_is_named_for_its_voice(self, client: TestClient, h: dict) -> None:
+        response = _upload(client, h, source="gen-om-obse", content_type="audio/mpeg")
+
+        assert response.status_code == 201, response.text
+        assert re.fullmatch(rf"am/{LESSON}/gen-om-obse-[0-9a-f]{{12}}\.mp3", response.json()["key"])
+
+    def test_a_bad_tag_is_refused(self, client: TestClient, h: dict) -> None:
+        response = _upload(client, h, source="gen-om-../evil")
+
+        assert response.status_code == 422
+        assert response.json()["details"]["field"] == "source"
+
     def test_each_upload_gets_its_own_key(self, client: TestClient, h: dict) -> None:
         keys = {_upload(client, h).json()["key"] for _ in range(3)}
         assert len(keys) == 3

@@ -709,3 +709,49 @@ describe('the rules', () => {
     expect(csvToChanges(csv, c).changes).toEqual([{ id: 'hu', romanization: 'hū' }])
   })
 })
+
+const VOICE_SETTINGS = '/api/v1/admin/voice/settings'
+const VOICE_LIST = '/api/v1/admin/voice/voices'
+
+/** The voices the Generate tab reads (intent 027). */
+function serveVoices(fake: FakeServer) {
+  fake
+    .on('GET', VOICE_SETTINGS, {
+      body: {
+        configured: true,
+        languages: [
+          { language: 'am', language_name: 'Amharic', male_voice_id: 'am-yohanes-calm', female_voice_id: 'am-loza', speed: 50, updated_by: null, updated_at: null },
+          { language: 'om', language_name: 'Afaan Oromo', male_voice_id: 'om-diriba', female_voice_id: 'om-obse', speed: 50, updated_by: null, updated_at: null },
+        ],
+      },
+    })
+    .on('GET', VOICE_LIST, (call) => {
+      const code = new URLSearchParams(call.query).get('language')
+      const voices =
+        code === 'am'
+          ? [
+              { id: 'am-yohanes-calm', name: 'Yohanes', descriptor: '', gender: 'male', style: 'Narration', preview_audio_url: null },
+              { id: 'am-loza', name: 'Loza', descriptor: '', gender: 'female', style: 'Narration', preview_audio_url: null },
+            ]
+          : []
+      return { body: { language: code, voices } }
+    })
+}
+
+describe('generating a letter’s sounds (intent 027)', () => {
+  beforeEach(() => serveVoices(server))
+
+  it('offers Generate with the letter, and with its example word', async () => {
+    chart = withCounts({ ...chart, letters: chart.letters.map((l) => (l.id === 'hu' ? { ...l, example_word: 'ሁለት' } : l)) })
+    renderApp('/sounds/am/letters/hu')
+    await screen.findByRole('heading', { name: /Letter ሁ/ })
+
+    const tabs = screen.getAllByRole('tab', { name: 'Generate' })
+    expect(tabs).toHaveLength(2)
+    for (const tab of tabs) await userEvent.click(tab)
+    const panels = screen.getAllByRole('tabpanel', { name: 'Generate' })
+    expect(await within(panels[0]!).findByLabelText('Words to say')).toHaveValue('ሁ')
+    expect(await within(panels[1]!).findByLabelText('Words to say')).toHaveValue('ሁለት')
+    expect(server.callsTo('GET', VOICE_SETTINGS)).toHaveLength(1)
+  })
+})

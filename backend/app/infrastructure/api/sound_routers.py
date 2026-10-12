@@ -344,7 +344,13 @@ async def admin_create_sound_upload(
     """A short-lived PUT link for one recording; save its `public_url` as a
     letter's `audio_url` or `example_audio_url` afterwards."""
     key, upload = await uc.presign_upload(
-        repo, ctx, storage, language, content_type=body.content_type, size=body.size
+        repo,
+        ctx,
+        storage,
+        language,
+        content_type=body.content_type,
+        size=body.size,
+        source=body.source,
     )
     return AudioUploadResponse(
         upload_url=upload.url,

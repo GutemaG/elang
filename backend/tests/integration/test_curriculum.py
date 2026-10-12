@@ -6,6 +6,7 @@ records each row.
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from collections.abc import Callable
 from pathlib import Path
@@ -414,6 +415,23 @@ class TestRecordings:
         assert saved["status"] == "draft"
         cleared = _patch(client, h, "W001", audio_url=None).json()["row"]
         assert cleared["audio_url"] is None
+
+    def test_a_generated_take_is_named_for_its_voice(self, client: TestClient, h: dict) -> None:
+        _import(client, h)
+        body = {"row_ref": "W001", "content_type": "audio/mpeg", "size": 1234}
+
+        tagged = client.post(
+            f"{C}/audio/uploads", json={**body, "source": "gen-am-loza"}, headers=h
+        )
+        plain = client.post(f"{C}/audio/uploads", json=body, headers=h)
+        refused = client.post(f"{C}/audio/uploads", json={**body, "source": "gen-om-"}, headers=h)
+
+        assert tagged.status_code == 201, tagged.text
+        assert re.fullmatch(
+            r"am/curriculum/W001/gen-am-loza-[0-9a-f]{12}\.mp3", tagged.json()["key"]
+        )
+        assert re.fullmatch(r"am/curriculum/W001/[0-9a-f]{12}\.mp3", plain.json()["key"])
+        assert refused.status_code == 422
 
     def test_refuses_other_types_sizes_and_rows(self, client: TestClient, h: dict) -> None:
         _import(client, h)

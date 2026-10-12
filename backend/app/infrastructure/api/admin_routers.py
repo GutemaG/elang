@@ -724,7 +724,13 @@ async def create_audio_upload(
     """A short-lived PUT link for one recording or file: straight to R2, or
     to this backend in local development without R2."""
     key, upload = await audio_uc.presign_upload(
-        repo, ctx, storage, lesson_id=body.lesson_id, content_type=body.content_type, size=body.size
+        repo,
+        ctx,
+        storage,
+        lesson_id=body.lesson_id,
+        content_type=body.content_type,
+        size=body.size,
+        source=body.source,
     )
     return AudioUploadResponse(
         upload_url=upload.url,

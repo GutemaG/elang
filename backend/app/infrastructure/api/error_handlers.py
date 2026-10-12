@@ -58,6 +58,13 @@ from app.domain.lesson.exceptions import (
     SoundChartIncompleteError,
     TooMuchFeedbackError,
     UploadLinkExpiredError,
+    VoiceCreditExhaustedError,
+    VoiceLanguageMismatchError,
+    VoiceNotConfiguredError,
+    VoiceRateLimitedError,
+    VoiceServiceFailedError,
+    VoiceServiceTimeoutError,
+    VoiceTextRejectedError,
 )
 
 _AUTH_STATUS_BY_EXCEPTION: dict[type[AuthDomainError], int] = {
@@ -103,6 +110,13 @@ _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     InvalidUploadLinkError: 403,
     UploadLinkExpiredError: 403,
     AudioFileExistsError: 409,
+    VoiceNotConfiguredError: 503,
+    VoiceCreditExhaustedError: 402,
+    VoiceRateLimitedError: 429,
+    VoiceServiceFailedError: 502,
+    VoiceServiceTimeoutError: 504,
+    VoiceTextRejectedError: 422,
+    VoiceLanguageMismatchError: 422,
 }
 _LESSON_DEFAULT_STATUS = 400
 

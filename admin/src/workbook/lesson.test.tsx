@@ -164,3 +164,60 @@ describe('the order to check and record in', () => {
     expect(nextUnrecorded(entries, allRecorded, 'S1-U01-L1', 'W001', 'in_order')).toBeNull()
   })
 })
+
+const VOICE_SETTINGS = '/api/v1/admin/voice/settings'
+const VOICE_LIST = '/api/v1/admin/voice/voices'
+
+/** The voices the Generate tab reads (intent 027). */
+function serveVoices(fake: FakeServer) {
+  fake
+    .on('GET', VOICE_SETTINGS, {
+      body: {
+        configured: true,
+        languages: [
+          { language: 'am', language_name: 'Amharic', male_voice_id: 'am-yohanes-calm', female_voice_id: 'am-loza', speed: 50, updated_by: null, updated_at: null },
+          { language: 'om', language_name: 'Afaan Oromo', male_voice_id: 'om-diriba', female_voice_id: 'om-obse', speed: 50, updated_by: null, updated_at: null },
+        ],
+      },
+    })
+    .on('GET', VOICE_LIST, (call) => {
+      const code = new URLSearchParams(call.query).get('language')
+      const voices =
+        code === 'am'
+          ? [
+              { id: 'am-yohanes-calm', name: 'Yohanes', descriptor: '', gender: 'male', style: 'Narration', preview_audio_url: null },
+              { id: 'am-loza', name: 'Loza', descriptor: '', gender: 'female', style: 'Narration', preview_audio_url: null },
+            ]
+          : []
+      return { body: { language: code, voices } }
+    })
+}
+
+describe('generating a row’s recording (intent 027)', () => {
+  beforeEach(() => serveVoices(server))
+
+  it('offers Generate with the row’s words, and follows them as they are edited', async () => {
+    renderApp(`${L2}?row=W002`)
+    const form = await screen.findByRole('form', { name: 'Row W002' })
+    expect(server.callsTo('GET', VOICE_SETTINGS)).toHaveLength(0)
+
+    await userEvent.click(within(form).getByRole('tab', { name: 'Generate' }))
+    const panel = within(within(form).getByRole('tabpanel', { name: 'Generate' }))
+    expect(await panel.findByRole('radio', { name: 'Female · Loza' })).toBeChecked()
+    expect(panel.getByLabelText('Words to say')).toHaveValue('ቃል W002')
+    expect(panel.getByLabelText('Words to say')).toHaveAttribute('lang', 'am')
+
+    const text = within(form).getByLabelText('Amharic')
+    await userEvent.clear(text)
+    await userEvent.type(text, 'ደህና ሁኑ')
+    expect(panel.getByLabelText('Words to say')).toHaveValue('ደህና ሁኑ')
+  })
+
+  it('asks for no voices until Generate is opened', async () => {
+    renderApp(`${L2}?row=W002`)
+    await screen.findByRole('form', { name: 'Row W002' })
+
+    expect(server.callsTo('GET', VOICE_SETTINGS)).toHaveLength(0)
+    expect(server.callsTo('GET', VOICE_LIST)).toHaveLength(0)
+  })
+})

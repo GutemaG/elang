@@ -1,6 +1,9 @@
 import { ApiError, type ApiClient } from '../api'
 import type { AudioUploadResponse } from '../types'
 
+/** A generated take's tag for a link request, or nothing (intent 027). */
+export const sourced = (source?: string): Record<string, string> => (source ? { source } : {})
+
 /** What a failure says, in the words of the kind of file being stored. */
 export interface UploadWords {
   /** Sentence for a server with nowhere to store this kind of file (503). */

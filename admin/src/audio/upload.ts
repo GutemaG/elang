@@ -1,12 +1,12 @@
 import type { ApiClient } from '../api'
 import { routes } from '../tree/levels'
-import { uploadThroughLink } from '../upload/link'
+import { sourced, uploadThroughLink } from '../upload/link'
 import type { AudioLinkResponse } from '../types'
 
 /** Stores one clip and returns the address to save as `audio_url`, through
  * a short-lived link (see `uploadThroughLink`). */
-export function uploadClip(api: ApiClient, lessonId: string, clip: Blob, type: string): Promise<string> {
-  return uploadThroughLink(api, routes.audioUploads, { lesson_id: lessonId }, clip, type, {
+export function uploadClip(api: ApiClient, lessonId: string, clip: Blob, type: string, source?: string): Promise<string> {
+  return uploadThroughLink(api, routes.audioUploads, { lesson_id: lessonId, ...sourced(source) }, clip, type, {
     notConfigured: 'This server has nowhere to store audio yet, so clips can’t be uploaded. Paste a link instead.',
     store: 'audio store',
   })

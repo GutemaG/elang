@@ -21,6 +21,7 @@ import { AppUpdatesPage } from './updates/AppUpdatesPage'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
 import { VocabularyPage } from './vocab/VocabularyPage'
+import { VoicesPage } from './voices/VoicesPage'
 import { LessonPage } from './workbook/LessonPage'
 import { WorkbookPage } from './workbook/WorkbookPage'
 
@@ -59,6 +60,7 @@ export function App() {
             <Route path="/sounds/:language/letters/:letterId" element={<LetterPage />} />
             <Route path="/sounds/:language/record" element={<RecordSessionPage />} />
             <Route path="/sounds/:language/upload" element={<UploadFilesPage />} />
+            <Route path="/voices" element={<VoicesPage />} />
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/learners" element={<LearnersPage />} />

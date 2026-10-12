@@ -113,3 +113,33 @@ describe('errors', () => {
     expect((error as ApiError).message).toMatch(/Could not reach the server/)
   })
 })
+
+describe('files (intent 027)', () => {
+  it('returns a file’s bytes and the headers that describe it', async () => {
+    server.on('POST', '/api/v1/admin/voice/generate', {
+      body: new Blob(['ID3-mp3'], { type: 'audio/mpeg' }),
+      headers: { 'Content-Type': 'audio/mpeg', 'X-Voice-Id': 'om-obse' },
+    })
+
+    const { blob, headers } = await client().postForBlob('/api/v1/admin/voice/generate', { text: 'Akkam' })
+
+    expect(await blob.text()).toBe('ID3-mp3')
+    expect(headers.get('X-Voice-Id')).toBe('om-obse')
+    const call = server.callsTo('POST', '/api/v1/admin/voice/generate')[0]!
+    expect(call.token).toBe('session-abc')
+    expect(call.body).toEqual({ text: 'Akkam' })
+  })
+
+  it('turns a JSON error into an ApiError', async () => {
+    server.on('POST', '/api/v1/admin/voice/generate', {
+      status: 402,
+      body: { error_code: 'voice_credit_exhausted', message: 'The Addis AI credit has run out.' },
+    })
+
+    await expect(client().postForBlob('/api/v1/admin/voice/generate', {})).rejects.toMatchObject({
+      status: 402,
+      errorCode: 'voice_credit_exhausted',
+      message: 'The Addis AI credit has run out.',
+    })
+  })
+})

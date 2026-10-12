@@ -240,3 +240,61 @@ class AudioFileExistsError(AdminContentError):
     """A local upload would replace a file already saved. Bolt 041."""
 
     error_code = "audio_file_exists"
+
+
+# --- Generated voices (intent 027) -------------------------------------------
+# Raised by the Addis AI client. `addis_code` is Addis's own error code, for
+# the log only: it is never put in `details`, so it never reaches a browser,
+# and the messages are ours, never Addis's.
+
+
+class VoiceServiceError(AdminContentError):
+    """Base for generated-voice failures."""
+
+    error_code = "voice_service_error"
+
+    def __init__(self, message: str, *, addis_code: str | None = None) -> None:
+        super().__init__(message)
+        self.addis_code = addis_code
+
+
+class VoiceNotConfiguredError(VoiceServiceError):
+    """No Addis AI key on this server, or Addis refused it."""
+
+    error_code = "voice_not_configured"
+
+
+class VoiceCreditExhaustedError(VoiceServiceError):
+    error_code = "voice_credit_exhausted"
+
+
+class VoiceRateLimitedError(VoiceServiceError):
+    """Addis still said "too many requests" after the retries."""
+
+    error_code = "voice_rate_limited"
+
+
+class VoiceServiceFailedError(VoiceServiceError):
+    """Addis failed, or answered with something unreadable."""
+
+    error_code = "voice_service_failed"
+
+
+class VoiceServiceTimeoutError(VoiceServiceError):
+    error_code = "voice_service_timeout"
+
+
+class VoiceTextRejectedError(InvalidContentError):
+    """Addis would not read the text."""
+
+    def __init__(self, message: str, *, addis_code: str | None = None) -> None:
+        super().__init__("text", message)
+        self.addis_code = addis_code
+
+
+class VoiceLanguageMismatchError(InvalidContentError):
+    """The voice does not speak the requested language."""
+
+    def __init__(self, message: str, *, addis_code: str | None = None) -> None:
+        super().__init__("voice_id", message)
+        self.addis_code = addis_code

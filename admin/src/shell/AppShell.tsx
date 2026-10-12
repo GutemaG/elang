@@ -23,6 +23,8 @@ const NAV_GROUPS = [
       { to: '/workbook', icon: 'table_view', label: 'Workbook', current: isWorkbook },
       // The app's Sounds tab: each language's letters and their recordings.
       { to: '/sounds', icon: 'graphic_eq', label: 'Sounds', current: (path: string) => path.startsWith('/sounds') },
+      // Generated voices: which Addis AI voice speaks each language (intent 027).
+      { to: '/voices', icon: 'record_voice_over', label: 'Voices', current: (path: string) => path === '/voices' },
       { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
       { to: '/guide', icon: 'help', label: 'Guide', current: (path: string) => path === '/guide' },
     ],

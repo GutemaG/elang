@@ -33,6 +33,8 @@ from app.infrastructure.api.sound_routers import admin_router as admin_sound_rou
 from app.infrastructure.api.sound_routers import router as sound_router
 from app.infrastructure.api.user_routers import config_router
 from app.infrastructure.api.user_routers import router as user_router
+from app.infrastructure.api.voice_routers import VOICE_HEADERS
+from app.infrastructure.api.voice_routers import admin_router as admin_voice_router
 from app.infrastructure.external.apple_verifier import AppleTokenVerifier
 from app.infrastructure.external.google_verifier import GoogleTokenVerifier
 from app.infrastructure.logging_config import configure_logging
@@ -89,6 +91,8 @@ def create_app() -> FastAPI:
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
+        # A generated take's voice and length (intent 027).
+        expose_headers=VOICE_HEADERS,
     )
 
     register_exception_handlers(app)
@@ -105,6 +109,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_feedback_router)
     app.include_router(sound_router)
     app.include_router(admin_sound_router)
+    app.include_router(admin_voice_router)
     app.include_router(curriculum_router)
     app.include_router(audio_file_router)
     app.include_router(image_file_router)

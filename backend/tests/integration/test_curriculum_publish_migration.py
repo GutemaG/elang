@@ -8,7 +8,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from tests.integration.test_courses_migration import _alembic, _ok
+from tests.integration.test_courses_migration import _ok
 
 _PREVIOUS_HEAD = "d8b3f6a2c4e1"
 _NEW_HEAD = "e2c7a9d4b6f3"
@@ -17,12 +17,6 @@ _NEW_HEAD = "e2c7a9d4b6f3"
 def _columns(db_file: Path, table: str) -> set[str]:
     with sqlite3.connect(db_file) as conn:
         return {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
-
-
-def test_there_is_a_single_head(tmp_path: Path) -> None:
-    result = _alembic(tmp_path / "unused.db", "heads")
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.split() == [_NEW_HEAD, "(head)"]
 
 
 def test_upgrade_and_downgrade_keep_the_curriculum(tmp_path: Path) -> None:

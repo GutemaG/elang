@@ -140,6 +140,9 @@ class TestKeys:
             "om/1c9e0f7a-2b3c-4d5e-8f90-a1b2c3d4e5f6/0123456789ab.mp3",
             "ti/l_2/abcdefabcdef.webm",
             "amh/x/000000000000.ogg",
+            # A generated take (intent 027).
+            "om/lesson-1/gen-om-obse-0123456789ab.mp3",
+            "am/sounds/gen-am-yohanes-calm-abcdefabcdef.mp3",
         ],
     )
     def test_the_keys_uploads_are_given_are_valid(self, key: str) -> None:
@@ -160,6 +163,10 @@ class TestKeys:
             "am/lesson-1/a41f0c2b7d19.m4a/",
             "AM/lesson-1/a41f0c2b7d19.m4a",
             "am/lesson 1/a41f0c2b7d19.m4a",
+            "om/lesson-1/gen-ti-x-0123456789ab.mp3",
+            "om/lesson-1/gen-om-0123456789ab.mp3",
+            "om/lesson-1/gen-om-../0123456789ab.mp3",
+            "om/lesson-1/xgen-om-obse-0123456789ab.mp3",
             "",
         ],
     )

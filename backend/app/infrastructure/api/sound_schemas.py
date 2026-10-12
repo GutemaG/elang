@@ -171,3 +171,5 @@ class UpdateSoundLettersRequest(BaseModel):
 class SoundUploadRequest(BaseModel):
     content_type: str
     size: int = Field(description="Exact size in bytes of the file to be uploaded")
+    # A generated take's tag, e.g. "gen-am-loza" (intent 027).
+    source: str | None = None

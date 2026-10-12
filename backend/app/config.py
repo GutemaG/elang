@@ -55,6 +55,13 @@ class Settings(BaseSettings):
     r2_access_key_id: str = ""
     r2_secret_access_key: str = ""
 
+    # Generated voices in the admin (intent 027): Addis AI text-to-speech.
+    # Server-side only -- never sent to a browser or logged. Empty means
+    # the admin's Generate tab says it is not set up.
+    addis_api_key: str = ""
+    addis_api_base_url: str = "https://api.addisassistant.com"
+    addis_timeout_seconds: float = 30.0
+
     # Cache TTL for Apple's JWKS, independent of key-rotation-triggered
     # refetches (ADR-2 / open item: refetch-once on an unknown `kid`).
     apple_jwks_cache_ttl_seconds: int = 3600

@@ -233,6 +233,9 @@ class AudioUploadRequest(BaseModel):
     lesson_id: str
     content_type: str
     size: int = Field(description="Exact size in bytes of the file to be uploaded")
+    # A generated take's tag, e.g. "gen-om-obse" (intent 027); pictures
+    # ignore it.
+    source: str | None = None
 
 
 class AudioUploadResponse(BaseModel):

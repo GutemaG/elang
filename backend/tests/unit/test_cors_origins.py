@@ -88,3 +88,15 @@ def test_local_development_needs_no_setting_for_localhost(monkeypatch: pytest.Mo
     client = _client(monkeypatch, "", environment="local")
     assert _allowed(client, "http://localhost:5173")
     assert not _allowed(client, "https://admin-ethio-lang.vercel.app")
+
+
+def test_a_generated_take_s_headers_can_be_read_by_the_admin_site(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    origin = "https://admin-ethio-lang.vercel.app"
+    response = _client(monkeypatch, VERCEL).get("/health", headers={"Origin": origin})
+
+    exposed = {
+        h.strip().lower() for h in response.headers["access-control-expose-headers"].split(",")
+    }
+    assert {"x-voice-id", "x-voice-name", "x-duration-seconds", "x-credits-remaining"} <= exposed

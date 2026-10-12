@@ -7,10 +7,6 @@ import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
 import { Input } from '../ui/Input'
-import type { Span } from './clean'
-import { ClipEditor, usePrepared, type ClipUse } from './ClipEditor'
-import { finalClip, type Prepared } from './codec'
-import type { Effect } from './effects'
 import {
   IPHONE_SAFE_RECORDING,
   MAX_AUDIO_BYTES,
@@ -22,6 +18,8 @@ import {
   formatSize,
   recordingType,
 } from './formats'
+import { useCleaning, useClipUpload, type ClipUploader } from './clipHooks'
+import { GeneratePanel, type VoiceSource } from './GeneratePanel'
 import { checkLink, uploadClip } from './upload'
 import { useRecorder, type MicProblem } from './useRecorder'
 
@@ -29,7 +27,7 @@ import { useRecorder, type MicProblem } from './useRecorder'
 // (PLACEHOLDER_AUDIO_URL in backend/app/infrastructure/db/seed_category_content.py).
 const PLACEHOLDER_URL = 'https://www.kozco.com/tech/piano2-CoolEdit.mp3'
 
-type Tab = 'record' | 'upload' | 'link'
+type Tab = 'record' | 'upload' | 'link' | 'generate'
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'record', label: 'Record', icon: 'mic' },
@@ -37,8 +35,10 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'link', label: 'Link', icon: 'link' },
 ]
 
-/** Stores one clip and returns the address to keep. */
-export type ClipUploader = (clip: Blob, type: string) => Promise<string>
+// Intent 027: offered only by fields that say what they are for.
+const GENERATE_TAB = { id: 'generate' as const, label: 'Generate', icon: 'record_voice_over' }
+
+export type { ClipUploader }
 
 interface Props {
   /** The lesson a listening exercise's clips are stored under. */
@@ -54,19 +54,25 @@ interface Props {
   /** The stored `audio_url`, or null for an exercise not created yet. */
   savedUrl: string | null
   onChange: (url: string) => void
+  /** The clip's language (or lesson) and words: adds the Generate tab. */
+  voice?: VoiceSource
 }
 
 /** A listening exercise's clip: the current one, and three ways to replace
  * it (story 004). Recordings and files are uploaded when the admin chooses
  * "Use this…"; the exercise's own Save then stores the new address. All
  * three panels stay mounted, so switching tabs never loses a take. */
-export function AudioField({ lessonId, upload, title = 'Audio', hint, url, savedUrl, onChange }: Props) {
+export function AudioField({ lessonId, upload, title = 'Audio', hint, url, savedUrl, onChange, voice }: Props) {
   const { api } = useSession()
   const ids = useId()
-  const send: ClipUploader = upload ?? ((clip, type) => uploadClip(api, lessonId ?? '', clip, type))
+  const send: ClipUploader = upload ?? ((clip, type, source) => uploadClip(api, lessonId ?? '', clip, type, source))
   const [tab, setTab] = useState<Tab>('record')
+  // Generate asks the server for its voices, so it waits until it is first
+  // opened; after that it stays mounted like the others, keeping its take.
+  const [generateOpened, setGenerateOpened] = useState(false)
   const current = url.trim()
   const unsaved = current !== '' && current !== (savedUrl ?? '').trim()
+  const tabs = voice ? [...TABS, GENERATE_TAB] : TABS
 
   return (
     <Section title={title} hint={hint ?? 'The clip the learner hears. Record it here, upload a file, or paste a link.'}>
@@ -74,7 +80,7 @@ export function AudioField({ lessonId, upload, title = 'Audio', hint, url, saved
       <FieldError slot="audio_url" />
 
       <div role="tablist" aria-label="Replace the clip" className="mt-4 flex gap-1 border-b border-line">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -82,7 +88,10 @@ export function AudioField({ lessonId, upload, title = 'Audio', hint, url, saved
             id={`${ids}-tab-${t.id}`}
             aria-selected={tab === t.id}
             aria-controls={`${ids}-panel-${t.id}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id)
+              if (t.id === 'generate') setGenerateOpened(true)
+            }}
             className={cx(
               '-mb-px inline-flex h-11 items-center gap-1.5 border-b-2 px-3 text-sm font-semibold transition-colors sm:h-10',
               tab === t.id
@@ -96,7 +105,7 @@ export function AudioField({ lessonId, upload, title = 'Audio', hint, url, saved
         ))}
       </div>
 
-      {TABS.map((t) => (
+      {tabs.map((t) => (
         <div
           key={t.id}
           role="tabpanel"
@@ -108,10 +117,22 @@ export function AudioField({ lessonId, upload, title = 'Audio', hint, url, saved
           {t.id === 'record' && <RecordPanel send={send} onUploaded={onChange} />}
           {t.id === 'upload' && <UploadPanel send={send} onUploaded={onChange} />}
           {t.id === 'link' && <LinkPanel onChecked={onChange} />}
+          {t.id === 'generate' && voice && generateOpened && (
+            <GeneratePanel voice={voice} send={send} onUploaded={onChange} />
+          )}
         </div>
       ))}
     </Section>
   )
+}
+
+/** Who spoke a generated clip, from its stored name (`…/gen-om-obse-1a2b…`):
+ * the voice id's first word after the language, e.g. "Obse", "Yohanes". */
+export function generatedVoiceOf(url: string): string | null {
+  const path = url.split(/[?#]/)[0] ?? ''
+  const match = /\/gen-(?:am|om)-([a-z0-9]+)(?:-[a-z0-9-]*)?-[0-9a-f]{12}\.\w+$/.exec(path)
+  const word = match?.[1]
+  return word ? word[0]!.toUpperCase() + word.slice(1) : null
 }
 
 function CurrentClip({ url, unsaved }: { url: string; unsaved: boolean }) {
@@ -133,6 +154,7 @@ function CurrentClip({ url, unsaved }: { url: string; unsaved: boolean }) {
             tone: 'neutral' as const,
           }
         : { label: 'Hosted', title: 'Plays from its https address', tone: 'published' as const }
+  const voice = generatedVoiceOf(url)
 
   return (
     <div className="rounded-lg bg-inset p-3">
@@ -141,6 +163,11 @@ function CurrentClip({ url, unsaved }: { url: string; unsaved: boolean }) {
         <Pill tone={source.tone} title={source.title}>
           {source.label}
         </Pill>
+        {voice && (
+          <Pill tone="neutral" title="Made with Addis AI">
+            Generated · {voice}
+          </Pill>
+        )}
         {unsaved && (
           <Pill tone="draft" title="Press Save to keep this clip">
             Not saved yet
@@ -186,71 +213,6 @@ function Note({ icon, children }: { icon: string; children: ReactNode }) {
       <span>{children}</span>
     </p>
   )
-}
-
-/** What the clip editor chose: cleaned (with its cut) or as recorded. */
-interface Cleaning {
-  prepared: Prepared | null
-  use: ClipUse
-  span: Span | null
-  effects: readonly Effect[]
-}
-
-/** The clip editor's choices for one clip. The cut is cleared for the next
- * clip; cleaned or not, and the effects, carry over to it. */
-function useCleaning(clip: Blob | null) {
-  const state = usePrepared(clip)
-  const [use, setUse] = useState<ClipUse>('cleaned')
-  const [span, setSpan] = useState<Span | null>(null)
-  const [effects, setEffects] = useState<Effect[]>([])
-  const cleaning: Cleaning = { prepared: state.kind === 'ready' ? state.prepared : null, use, span, effects }
-  return {
-    cleaning,
-    /** Still reading the clip, so the cleaned version is not ready to send. */
-    working: state.kind === 'working' && use === 'cleaned',
-    reset: () => setSpan(null),
-    editor: (original: ReactNode) => (
-      <ClipEditor
-        state={state}
-        use={use}
-        onUse={setUse}
-        span={span}
-        onSpan={setSpan}
-        effects={effects}
-        onEffects={setEffects}
-        original={original}
-        originalSize={clip?.size ?? 0}
-      />
-    ),
-  }
-}
-
-/** Sends one clip to the store. `send` answers false when it failed, and
- * `problem` then says why. */
-function useClipUpload(store: ClipUploader, onUploaded: (url: string) => void) {
-  const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState<string | null>(null)
-
-  async function send(clip: Blob, type: string, cleaning?: Cleaning): Promise<boolean> {
-    setBusy(true)
-    setProblem(null)
-    try {
-      const final = cleaning ? await finalClip({ clip, type }, cleaning.prepared, cleaning) : { clip, type }
-      if (final.clip.size > MAX_AUDIO_BYTES) {
-        setProblem(`The clip is ${formatSize(final.clip.size)}; clips can be 5 MB at most. Use the cleaned version, or a shorter one.`)
-        return false
-      }
-      onUploaded(await store(final.clip, final.type))
-      return true
-    } catch (e) {
-      setProblem(plainMessage(messageOf(e)))
-      return false
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return { busy, problem, setProblem, send }
 }
 
 const MIC_PROBLEMS: Record<MicProblem, string> = {

@@ -49,6 +49,7 @@ from app.domain.sounds import (
     missing_for_learners,
 )
 from app.domain.value_objects import LANGUAGE_CODE_PATTERN
+from app.domain.voices import key_prefix
 from app.infrastructure.db.sound_models import SoundChartModel, SoundLetterModel
 from app.infrastructure.db.sound_repository import SqlAlchemySoundRepository
 from app.infrastructure.external.r2_storage import PresignedUpload
@@ -536,10 +537,12 @@ async def presign_upload(
     *,
     content_type: str,
     size: int,
+    source: str | None = None,
 ) -> tuple[str, PresignedUpload]:
     """A PUT link for one recording of this chart. Keys are new for every
     upload, so a recording's address never changes what it plays and can be
-    cached for good."""
+    cached for good. A generated take's `source` goes at the front."""
+    prefix = key_prefix(source)
     base_type = content_type.split(";")[0].strip().lower()
     if base_type not in AUDIO_TYPES:
         raise InvalidContentError(
@@ -550,7 +553,7 @@ async def presign_upload(
     if storage is None:
         raise AudioStorageNotConfiguredError("Audio storage is not configured on this server")
     await _chart_or_404(repo, language)
-    key = f"{language}/sounds/{secrets.token_hex(6)}.{AUDIO_TYPES[base_type]}"
+    key = f"{language}/sounds/{prefix}{secrets.token_hex(6)}.{AUDIO_TYPES[base_type]}"
     upload = storage.presign_put(
         key, content_type=base_type, size=size, expires_in=UPLOAD_LINK_SECONDS
     )

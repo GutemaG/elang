@@ -105,6 +105,7 @@ export function ClipEditor({
   onEffects,
   original,
   originalSize,
+  originalLabel = 'As recorded',
   autoPlay = false,
 }: {
   state: PrepareState
@@ -118,6 +119,8 @@ export function ClipEditor({
   original: ReactNode
   /** The clip as it came, in bytes. */
   originalSize: number
+  /** What the clip as it came is called: "As generated" for a voice take. */
+  originalLabel?: string
   /** Plays the cleaned version as soon as it is ready. */
   autoPlay?: boolean
 }) {
@@ -135,7 +138,7 @@ export function ClipEditor({
     },
     {
       id: 'original',
-      label: 'As recorded',
+      label: originalLabel,
       detail: [prepared ? formatSeconds(length) : '', formatSize(originalSize)].filter(Boolean).join(' · '),
     },
   ]

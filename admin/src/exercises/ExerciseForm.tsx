@@ -56,6 +56,7 @@ export function ExerciseForm({
       {(body.type === 'listening' || body.type === 'audio_image_choice') && (
         <AudioField
           lessonId={lessonId}
+          voice={{ lessonId }}
           url={body.content.audio_url}
           savedUrl={saved?.type === body.type ? saved.content.audio_url : null}
           onChange={(url) => onChange(setAudioUrl(body, url))}

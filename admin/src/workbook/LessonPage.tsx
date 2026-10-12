@@ -6,7 +6,7 @@ import { AudioField } from '../audio/AudioField'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { Section } from '../exercises/fields'
 import { routes } from '../tree/levels'
-import { uploadThroughLink } from '../upload/link'
+import { sourced, uploadThroughLink } from '../upload/link'
 import type { Curriculum, CurriculumRow, CurriculumStatus } from '../types'
 import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
@@ -275,8 +275,8 @@ function RowEditor({
   const blank = blankProblem(draft, row.kind)
   const warnRetext = retexts(change, row)
   const hasRomanization = LANGUAGE_COLUMNS[language]?.romanization !== null
-  const upload = (clip: Blob, type: string) =>
-    uploadThroughLink(api, routes.curriculumUploads(courseId), { row_ref: row.ref }, clip, type, {
+  const upload = (clip: Blob, type: string, source?: string) =>
+    uploadThroughLink(api, routes.curriculumUploads(courseId), { row_ref: row.ref, ...sourced(source) }, clip, type, {
       notConfigured: 'This server has nowhere to store audio yet, so recordings can’t be uploaded. Paste a link instead.',
       store: 'audio store',
     })
@@ -397,8 +397,9 @@ function RowEditor({
 
       <AudioField
         title="Recording"
-        hint="Said once, clearly, by a native speaker. Record it here, upload a file, or paste a link."
+        hint="Said once, clearly, by a native speaker. Record it here, upload a file, paste a link, or generate it."
         upload={upload}
+        voice={{ language, text: draft.text }}
         url={draft.audio_url}
         savedUrl={row.audio_url}
         onChange={(url) => edit('audio_url', url)}

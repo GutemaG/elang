@@ -203,6 +203,7 @@ async def create_curriculum_upload(
         row_ref=body.row_ref,
         content_type=body.content_type,
         size=body.size,
+        source=body.source,
     )
     return AudioUploadResponse(
         upload_url=upload.url,

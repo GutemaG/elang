@@ -52,8 +52,22 @@ export class ApiClient {
     return this.request<void>('DELETE', path)
   }
 
+  /** A POST whose answer is a file, such as a generated voice take (intent
+   * 027): its bytes, and the headers that describe it. Errors are JSON and
+   * become `ApiError` as usual. */
+  async postForBlob(path: string, body: unknown): Promise<{ blob: Blob; headers: Headers }> {
+    const response = await this.send('POST', path, body, '*/*')
+    return { blob: await response.blob(), headers: response.headers }
+  }
+
   private async request<T>(method: Method, path: string, body?: unknown): Promise<T> {
-    const headers: Record<string, string> = { Accept: 'application/json' }
+    const response = await this.send(method, path, body, 'application/json')
+    if (response.status === 204) return undefined as T
+    return (await response.json()) as T
+  }
+
+  private async send(method: Method, path: string, body: unknown, accept: string): Promise<Response> {
+    const headers: Record<string, string> = { Accept: accept }
     const token = this.options.getToken()
     if (token) headers.Authorization = `Bearer ${token}`
     if (body !== undefined) headers['Content-Type'] = 'application/json'
@@ -71,8 +85,7 @@ export class ApiClient {
 
     if (response.status === 401) this.options.onUnauthorized()
     if (!response.ok) throw await toApiError(response)
-    if (response.status === 204) return undefined as T
-    return (await response.json()) as T
+    return response
   }
 }
 

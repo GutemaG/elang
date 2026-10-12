@@ -51,6 +51,7 @@ from app.infrastructure.api.sound_routers import admin_router as admin_sound_rou
 from app.infrastructure.api.sound_routers import router as sound_router
 from app.infrastructure.api.user_routers import config_router
 from app.infrastructure.api.user_routers import router as user_router
+from app.infrastructure.api.voice_routers import admin_router as admin_voice_router
 
 # Imported for its side effect of registering the lesson-content bounded
 # context's tables onto the shared `Base.metadata`, so `Base.metadata.create_all`
@@ -61,6 +62,7 @@ from app.infrastructure.db import (
     league_models,  # noqa: F401
     lesson_models,  # noqa: F401
     sound_models,  # noqa: F401
+    voice_models,  # noqa: F401
 )
 from app.infrastructure.db.models import Base
 from app.infrastructure.db.session import get_db_session
@@ -167,6 +169,7 @@ def make_client(app_engine: AsyncEngine) -> Generator[Any]:
         app.include_router(admin_feedback_router)
         app.include_router(sound_router)
         app.include_router(admin_sound_router)
+        app.include_router(admin_voice_router)
         app.include_router(curriculum_router)
         app.state.google_verifier = google_verifier
         app.state.apple_verifier = apple_verifier

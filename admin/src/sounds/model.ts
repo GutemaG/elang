@@ -6,7 +6,7 @@ import Papa from 'papaparse'
 
 import type { ApiClient } from '../api'
 import { routes } from '../tree/levels'
-import { uploadThroughLink } from '../upload/link'
+import { sourced, uploadThroughLink } from '../upload/link'
 import type {
   AdminSoundChart,
   AdminSoundGroup,
@@ -86,8 +86,8 @@ export function rowsOf(group: AdminSoundGroup, letters: AdminSoundLetter[]): Adm
 }
 
 /** Stores one recording for `language`'s chart and returns its address. */
-export function uploadSound(api: ApiClient, language: string, clip: Blob, type: string): Promise<string> {
-  return uploadThroughLink(api, routes.soundUploads(language), {}, clip, type, {
+export function uploadSound(api: ApiClient, language: string, clip: Blob, type: string, source?: string): Promise<string> {
+  return uploadThroughLink(api, routes.soundUploads(language), sourced(source), clip, type, {
     notConfigured: 'This server has nowhere to store audio yet, so recordings can’t be uploaded. Paste a link instead.',
     store: 'audio store',
   })
