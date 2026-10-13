@@ -115,6 +115,32 @@ export function describeUse(use: AudioUse): string {
   return `Sounds › ${use.language} › ${use.letter ?? ''} ${what}`.replace(/\s+/g, ' ')
 }
 
+/** A use as a table cell: what it is, then where it sits. */
+export function partsOfUse(use: AudioUse): { title: string; where: string } {
+  if (use.place === 'exercise') {
+    return {
+      title: `Exercise ${use.exercise_number} · ${typeLabel(use.exercise_type)}`,
+      where: [use.course_title, use.section, use.lesson].filter(Boolean).join(' › '),
+    }
+  }
+  if (use.place === 'workbook') {
+    return {
+      title: `Workbook · ${use.english ?? use.text ?? ''}`.trim(),
+      where: [use.course_title, use.lesson].filter(Boolean).join(' › '),
+    }
+  }
+  return {
+    title: use.place === 'sound' ? `Letter ${use.letter ?? ''}`.trim() : `Example word ${use.text ?? ''}`.trim(),
+    where: `Sounds › ${use.language}${use.place === 'sound_example' && use.letter ? ` › ${use.letter}` : ''}`,
+  }
+}
+
+/** "MP3", from a key's extension. */
+export const formatOf = (key: string) => (key.includes('.') ? key.slice(key.lastIndexOf('.') + 1).toUpperCase() : '')
+
+export const fileNameOf = (key: string) => key.slice(key.lastIndexOf('/') + 1)
+export const folderOf = (key: string) => (key.includes('/') ? key.slice(0, key.lastIndexOf('/') + 1) : '')
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10 * 1024 ? 1 : 0)} KB`

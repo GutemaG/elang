@@ -175,8 +175,11 @@ Out of scope:
 - **Acceptance Criteria**:
   - Totals: files, size, in use, not used, missing, in trash.
   - Tabs: Files, Missing, Trash.
-  - Files: filter by course or language, status (all / in use / not
-    used), source (recorded / generated), and a search on key or use.
+  - Files: a table (File, Format, Size, Uploaded, Source, Status, Used
+    in), sortable by file name, size and date. Filters: search, course,
+    status (in use / not used), source (recorded / generated) and format
+    (MP3, M4A, ... with counts), with "Clear filters" and a count of
+    files and size shown. Missing and Trash are tables too.
   - Each file: Play (one at a time), key, size, date, source, status
     badge, and its uses, each with Open.
   - Missing: each use with Open, so the audio can be recorded again.
@@ -282,3 +285,10 @@ Out of scope:
   suite: 862 of 863 passed while the backend suite was running; the one
   failure (`generate.test.tsx`, a timing test) passes on its own.
   `tsc -b` and `eslint .` are clean.
+
+## Change (2026-10-14)
+
+- The owner asked for a table and a format filter. The Files, Missing
+  and Trash lists are now tables (they scroll sideways on a phone), the
+  Files table sorts from its headers, and a Format filter was added.
+  Admin suite: 865 passed.
