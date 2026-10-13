@@ -45,9 +45,12 @@ def presign(
     now: datetime,
     expires_in: int,
     service: str = "s3",
+    params: dict[str, str] | None = None,
 ) -> str:
     """A SigV4 presigned URL. `headers` (besides `host`) become signed
-    headers, so the eventual request must send exactly those values."""
+    headers, so the eventual request must send exactly those values.
+    `params` are the request's own query parameters (intent 029: a bucket
+    listing's `list-type`, `prefix`, ...), signed with the rest."""
     amz_date = now.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
     date = amz_date[:8]
     scope = f"{date}/{region}/{service}/aws4_request"
@@ -62,6 +65,7 @@ def presign(
         "X-Amz-Date": amz_date,
         "X-Amz-Expires": str(expires_in),
         "X-Amz-SignedHeaders": signed_names,
+        **(params or {}),
     }
     canonical_query = "&".join(f"{_encode(k)}={_encode(query[k])}" for k in sorted(query))
     canonical_path = _encode(path, safe="-_.~/")

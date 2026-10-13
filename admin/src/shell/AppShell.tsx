@@ -48,6 +48,13 @@ const NAV_GROUPS = [
       { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
       // Generated voices: which Addis AI voice speaks each language (intent 027).
       { to: '/voices', icon: 'record_voice_over', label: 'Voices', current: (path: string) => path === '/voices' },
+      // Every stored audio file, its uses, the trash and the backup (intent 029).
+      {
+        to: '/audio-library',
+        icon: 'library_music',
+        label: 'Audio library',
+        current: (path: string) => path === '/audio-library',
+      },
       // The phone app itself: which builds may still run.
       {
         to: '/app-updates',

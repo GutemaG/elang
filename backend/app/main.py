@@ -19,6 +19,7 @@ from app.infrastructure.api.admin_learner_routers import router as admin_learner
 from app.infrastructure.api.admin_routers import router as admin_router
 from app.infrastructure.api.audio_file_routers import image_router as image_file_router
 from app.infrastructure.api.audio_file_routers import router as audio_file_router
+from app.infrastructure.api.audio_library_routers import router as audio_library_router
 from app.infrastructure.api.course_routers import router as course_router
 from app.infrastructure.api.curriculum_routers import router as curriculum_router
 from app.infrastructure.api.error_handlers import register_exception_handlers
@@ -113,6 +114,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_voice_router)
     app.include_router(curriculum_router)
     app.include_router(team_router)
+    app.include_router(audio_library_router)
     app.include_router(audio_file_router)
     app.include_router(image_file_router)
     app.include_router(legal_router)

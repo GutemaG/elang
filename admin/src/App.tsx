@@ -10,6 +10,7 @@ import { FeedbackPage } from './feedback/FeedbackPage'
 import { GuidePage } from './guide/GuidePage'
 import { ImportPage } from './import/ImportPage'
 import { LanguagesPage } from './languages/LanguagesPage'
+import { AudioLibraryPage } from './library/AudioLibraryPage'
 import { DashboardPage } from './learners/DashboardPage'
 import { LearnerPage } from './learners/LearnerPage'
 import { LearnersPage } from './learners/LearnersPage'
@@ -64,6 +65,7 @@ export function App() {
             <Route path="/sounds/:language/record" element={<RecordSessionPage />} />
             <Route path="/sounds/:language/upload" element={<UploadFilesPage />} />
             <Route path="/voices" element={<SuperOnly><VoicesPage /></SuperOnly>} />
+            <Route path="/audio-library" element={<SuperOnly><AudioLibraryPage /></SuperOnly>} />
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/team" element={<SuperOnly><TeamPage /></SuperOnly>} />
             <Route path="/dashboard" element={<SuperOnly><DashboardPage /></SuperOnly>} />

@@ -36,9 +36,10 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.infrastructure.api import voice_routers
+from app.infrastructure.api import audio_library_routers, voice_routers
 from app.infrastructure.api.admin_learner_routers import router as admin_learner_router
 from app.infrastructure.api.admin_routers import router as admin_router
+from app.infrastructure.api.audio_library_routers import router as audio_library_router
 from app.infrastructure.api.course_routers import router as course_router
 from app.infrastructure.api.curriculum_routers import router as curriculum_router
 from app.infrastructure.api.error_handlers import register_exception_handlers
@@ -175,12 +176,16 @@ def make_client(app_engine: AsyncEngine) -> Generator[Any]:
         app.include_router(admin_voice_router)
         app.include_router(curriculum_router)
         app.include_router(team_router)
+        app.include_router(audio_library_router)
         app.state.google_verifier = google_verifier
         app.state.apple_verifier = apple_verifier
         app.dependency_overrides[get_db_session] = override_get_db_session
         # Tests never reach Addis AI, even with a key in `.env`: a test that
         # needs the voice service puts its own fake here.
         app.dependency_overrides[voice_routers.get_addis_voice_client] = lambda: None
+        # Nor R2 or the real `backend/media` folder: Audio library tests put
+        # their own store here.
+        app.dependency_overrides[audio_library_routers.get_media_library] = lambda: None
         return TestClient(app)
 
     yield _make

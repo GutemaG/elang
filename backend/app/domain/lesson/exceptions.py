@@ -256,6 +256,28 @@ class AudioFileExistsError(AdminContentError):
     error_code = "audio_file_exists"
 
 
+# --- Audio library (intent 029) ----------------------------------------------
+
+
+class AudioStorageUnavailableError(AdminContentError):
+    """The audio store answered with an error, or not at all."""
+
+    error_code = "audio_storage_unavailable"
+
+
+class AudioFileNotFoundError(AdminContentError):
+    """No stored file, or no trashed file, has this key."""
+
+    error_code = "audio_file_not_found"
+
+
+class AudioFileInUseError(AdminContentError):
+    """A file still used somewhere, or uploaded too recently, can't be
+    trashed; `details["keys"]` names them."""
+
+    error_code = "audio_file_in_use"
+
+
 # --- Generated voices (intent 027) -------------------------------------------
 # Raised by the Addis AI client. `addis_code` is Addis's own error code, for
 # the log only: it is never put in `details`, so it never reaches a browser,
