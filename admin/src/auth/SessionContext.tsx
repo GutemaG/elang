@@ -2,13 +2,20 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 import { ApiClient, ApiError } from '../api'
 import { API_BASE_URL } from '../config'
-import type { AdminMe, AuthResponse } from '../types'
+import type { AdminMe, AdminRole, AuthResponse } from '../types'
 import { clearSession, emailFromIdToken, loadSession, saveSession } from './session'
 
 export type SessionState =
   | { status: 'signed_out'; message: string | null }
   | { status: 'checking' }
-  | { status: 'admin'; email: string }
+  | {
+      status: 'admin'
+      email: string
+      role: AdminRole
+      isOwner: boolean
+      /** Null for a super admin: every course. */
+      courseIds: string[] | null
+    }
   | { status: 'not_admin'; email: string | null }
 
 interface SessionValue {
@@ -45,7 +52,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const resolveAdmin = useCallback(async (): Promise<SessionState | null> => {
     try {
       const me = await api.get<AdminMe>('/api/v1/admin/me')
-      return { status: 'admin', email: me.email }
+      // A server from before intent 028 sends only the email: its admins
+      // are all super admins.
+      const role = me.role ?? 'super_admin'
+      return {
+        status: 'admin',
+        email: me.email,
+        role,
+        isOwner: me.is_owner ?? false,
+        courseIds: role === 'super_admin' ? null : (me.course_ids ?? []),
+      }
     } catch (e) {
       if (e instanceof ApiError && e.status === 403) return { status: 'not_admin', email: loadSession()?.email ?? null }
       if (e instanceof ApiError && e.status === 401) return null

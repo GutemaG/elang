@@ -179,6 +179,20 @@ class ContentExistsError(AdminContentError):
     error_code = "content_exists"
 
 
+class AdminMemberExistsError(AdminContentError):
+    """An admin is added with an email already on the team, or an owner's
+    (intent 028)."""
+
+    error_code = "admin_member_exists"
+
+
+class AdminMemberSelfError(AdminContentError):
+    """A super admin tried to change or remove their own access (intent
+    028)."""
+
+    error_code = "admin_member_self"
+
+
 class ConfirmationRequiredError(AdminContentError):
     """A delete of unused content that removes children too; repeat it with
     `confirm=true`. `details` says what would go."""

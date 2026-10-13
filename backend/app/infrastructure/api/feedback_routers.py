@@ -2,7 +2,7 @@
 `POST /api/v1/feedback`; the admin site reads it from
 `GET /api/v1/admin/feedback` and marks it resolved with
 `PATCH /api/v1/admin/feedback/{id}`. The admin routes are admin-only
-through the router-level `require_admin`, as every admin route is (ADR-16).
+through the router-level `require_super_admin` (ADR-16; intent 028).
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application import feedback_use_cases as uc
 from app.domain.entities import User
-from app.infrastructure.api.dependencies import get_current_user, require_admin
+from app.infrastructure.api.dependencies import get_current_user, require_super_admin
 from app.infrastructure.api.feedback_schemas import (
     AdminFeedbackPage,
     FeedbackRequest,
@@ -26,7 +26,7 @@ from app.infrastructure.db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/feedback", tags=["feedback"])
 admin_router = APIRouter(
-    prefix="/api/v1/admin/feedback", tags=["admin"], dependencies=[Depends(require_admin)]
+    prefix="/api/v1/admin/feedback", tags=["admin"], dependencies=[Depends(require_super_admin)]
 )
 
 

@@ -20,10 +20,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application import sound_use_cases as uc
 from app.application.admin_content_use_cases import AdminContext
 from app.config import get_settings
-from app.domain.entities import User
+from app.domain.admin import AdminAccess
 from app.infrastructure.api.admin_routers import get_audio_storage
 from app.infrastructure.api.admin_schemas import AudioUploadResponse
-from app.infrastructure.api.dependencies import require_admin
+from app.infrastructure.api.dependencies import (
+    languages_of,
+    require_admin,
+    require_language,
+    require_super_admin,
+)
 from app.infrastructure.api.sound_schemas import (
     AdminSoundChart,
     AdminSoundChartList,
@@ -44,6 +49,7 @@ from app.infrastructure.api.sound_schemas import (
     UpdateSoundChartRequest,
     UpdateSoundLettersRequest,
 )
+from app.infrastructure.db.admin_content_repository import SqlAlchemyAdminContentRepository
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.db.sound_models import SoundChartModel, SoundLetterModel
 from app.infrastructure.db.sound_repository import SqlAlchemySoundRepository
@@ -65,9 +71,11 @@ async def _repo(session: AsyncSession = Depends(get_db_session)) -> SqlAlchemySo
     return SqlAlchemySoundRepository(session)
 
 
-async def _ctx(admin: User = Depends(require_admin)) -> AdminContext:
+async def _ctx(access: AdminAccess = Depends(require_admin)) -> AdminContext:
     return AdminContext(
-        email=admin.email or "", allow_local_media=get_settings().environment == "local"
+        email=access.email,
+        allow_local_media=get_settings().environment == "local",
+        access=access,
     )
 
 
@@ -236,13 +244,27 @@ def _admin_chart(view: uc.AdminChart) -> AdminSoundChart:
 @admin_router.get("/sound-charts", response_model=AdminSoundChartList)
 async def admin_list_sound_charts(
     repo: SqlAlchemySoundRepository = Depends(_repo),
+    session: AsyncSession = Depends(get_db_session),
+    access: AdminAccess = Depends(require_admin),
 ) -> AdminSoundChartList:
+    """Every chart for a super admin; a course admin's languages only
+    (intent 028)."""
+    allowed = await languages_of(access, SqlAlchemyAdminContentRepository(session))
     return AdminSoundChartList(
-        charts=[AdminSoundChartSummary(**_summary(v)) for v in await uc.list_charts(repo)]
+        charts=[
+            AdminSoundChartSummary(**_summary(v))
+            for v in await uc.list_charts(repo)
+            if allowed is None or v.chart.language in allowed
+        ]
     )
 
 
-@admin_router.post("/sound-charts", response_model=AdminSoundChart, status_code=201)
+@admin_router.post(
+    "/sound-charts",
+    response_model=AdminSoundChart,
+    status_code=201,
+    dependencies=[Depends(require_super_admin)],
+)
 async def admin_create_sound_chart(
     body: CreateSoundChartRequest,
     repo: SqlAlchemySoundRepository = Depends(_repo),
@@ -256,14 +278,22 @@ async def admin_create_sound_chart(
     )
 
 
-@admin_router.get("/sound-charts/{language}", response_model=AdminSoundChart)
+@admin_router.get(
+    "/sound-charts/{language}",
+    response_model=AdminSoundChart,
+    dependencies=[Depends(require_language)],
+)
 async def admin_get_sound_chart(
     language: str, repo: SqlAlchemySoundRepository = Depends(_repo)
 ) -> AdminSoundChart:
     return _admin_chart(await uc.get_chart(repo, language))
 
 
-@admin_router.patch("/sound-charts/{language}", response_model=AdminSoundChart)
+@admin_router.patch(
+    "/sound-charts/{language}",
+    response_model=AdminSoundChart,
+    dependencies=[Depends(require_language)],
+)
 async def admin_update_sound_chart(
     language: str,
     body: UpdateSoundChartRequest,
@@ -284,7 +314,11 @@ async def admin_update_sound_chart(
     )
 
 
-@admin_router.delete("/sound-charts/{language}", status_code=204)
+@admin_router.delete(
+    "/sound-charts/{language}",
+    status_code=204,
+    dependencies=[Depends(require_super_admin)],
+)
 async def admin_delete_sound_chart(
     language: str,
     repo: SqlAlchemySoundRepository = Depends(_repo),
@@ -295,7 +329,10 @@ async def admin_delete_sound_chart(
 
 
 @admin_router.post(
-    "/sound-charts/{language}/letters", response_model=AdminSoundLetter, status_code=201
+    "/sound-charts/{language}/letters",
+    response_model=AdminSoundLetter,
+    status_code=201,
+    dependencies=[Depends(require_language)],
 )
 async def admin_add_sound_letter(
     language: str,
@@ -307,7 +344,11 @@ async def admin_add_sound_letter(
     return _admin_letter(await uc.add_letter(repo, ctx, language, group=body.group, fields=fields))
 
 
-@admin_router.patch("/sound-charts/{language}/letters", response_model=AdminSoundChart)
+@admin_router.patch(
+    "/sound-charts/{language}/letters",
+    response_model=AdminSoundChart,
+    dependencies=[Depends(require_language)],
+)
 async def admin_update_sound_letters(
     language: str,
     body: UpdateSoundLettersRequest,
@@ -318,7 +359,11 @@ async def admin_update_sound_letters(
     return _admin_chart(await uc.update_letters(repo, ctx, language, body.letters))
 
 
-@admin_router.delete("/sound-charts/{language}/letters/{letter_id}", status_code=204)
+@admin_router.delete(
+    "/sound-charts/{language}/letters/{letter_id}",
+    status_code=204,
+    dependencies=[Depends(require_language)],
+)
 async def admin_delete_sound_letter(
     language: str,
     letter_id: str,
@@ -333,6 +378,7 @@ async def admin_delete_sound_letter(
     "/sound-charts/{language}/audio/uploads",
     response_model=AudioUploadResponse,
     status_code=201,
+    dependencies=[Depends(require_language)],
 )
 async def admin_create_sound_upload(
     language: str,

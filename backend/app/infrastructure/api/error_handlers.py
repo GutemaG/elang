@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.domain.exceptions import (
+    AdminAccessUnavailableError,
     AuthDomainError,
     CourseNotAvailableError,
     CourseNotFoundError,
@@ -27,9 +28,12 @@ from app.domain.exceptions import (
     MissingCredentialsError,
     NotAdminError,
     ProviderUnreachableError,
+    SuperAdminOnlyError,
 )
 from app.domain.lesson.exceptions import (
     AdminContentError,
+    AdminMemberExistsError,
+    AdminMemberSelfError,
     AudioFileExistsError,
     AudioStorageNotConfiguredError,
     BeansExhaustedError,
@@ -79,6 +83,8 @@ _AUTH_STATUS_BY_EXCEPTION: dict[type[AuthDomainError], int] = {
     CourseNotFoundError: 404,
     CourseNotAvailableError: 422,
     NotAdminError: 403,
+    SuperAdminOnlyError: 403,
+    AdminAccessUnavailableError: 503,
 }
 _AUTH_DEFAULT_STATUS = 400
 
@@ -101,6 +107,8 @@ _LESSON_STATUS_BY_EXCEPTION: dict[type[LessonDomainError], int] = {
     InvalidOrderError: 422,
     ContentInUseError: 409,
     ContentExistsError: 409,
+    AdminMemberExistsError: 409,
+    AdminMemberSelfError: 409,
     ConfirmationRequiredError: 409,
     ContentChangedError: 409,
     LessonNotReadyError: 409,

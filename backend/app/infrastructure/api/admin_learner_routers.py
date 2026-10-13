@@ -1,8 +1,8 @@
 """The admin site's learner pages and reports: `/api/v1/admin/learners*`
 and `/api/v1/admin/reports` (`026-learner-reports`).
 
-Admin-only through the router-level `require_admin`, as every admin route
-is (ADR-16). Read-only: nothing here writes.
+Super admin only, through the router-level `require_super_admin` (ADR-16;
+intent 028): learner data is personal. Read-only: nothing here writes.
 """
 
 from __future__ import annotations
@@ -18,11 +18,13 @@ from app.infrastructure.api.admin_learner_schemas import (
     AdminLearnerPage,
     AdminReport,
 )
-from app.infrastructure.api.dependencies import require_admin
+from app.infrastructure.api.dependencies import require_super_admin
 from app.infrastructure.db.admin_learner_repository import SqlAlchemyAdminLearnerRepository
 from app.infrastructure.db.session import get_db_session
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin"], dependencies=[Depends(require_admin)])
+router = APIRouter(
+    prefix="/api/v1/admin", tags=["admin"], dependencies=[Depends(require_super_admin)]
+)
 
 
 async def _repo(

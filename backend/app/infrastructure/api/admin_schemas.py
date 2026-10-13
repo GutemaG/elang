@@ -10,6 +10,11 @@ from pydantic import BaseModel, Field
 
 class AdminMeResponse(BaseModel):
     email: str
+    # Intent 028: `super_admin` or `course_admin`; `course_ids` is null for
+    # a super admin, who has every course.
+    role: str
+    is_owner: bool
+    course_ids: list[str] | None
 
 
 # --- courses and the tree ---------------------------------------------------

@@ -18,6 +18,7 @@ from typing import Any
 from sqlalchemy import delete, func, or_, select, union
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.infrastructure.db.admin_member_repository import SqlAlchemyAdminMemberRepository
 from app.infrastructure.db.lesson_models import (
     CategoryModel,
     CourseModel,
@@ -384,9 +385,48 @@ class SqlAlchemyAdminContentRepository:
         await self._session.delete(row)
         await self._session.flush()
 
+    async def learning_languages(self, course_ids: frozenset[str]) -> frozenset[str]:
+        """The languages these courses teach (intent 028)."""
+        if not course_ids:
+            return frozenset()
+        stmt = select(CourseModel.learning_language).where(CourseModel.id.in_(course_ids))
+        return frozenset((await self._session.execute(stmt)).scalars())
+
+    async def course_of(self, kind: str, item_id: str) -> str | None:
+        """The course a section, skill, lesson, exercise or vocab item
+        belongs to, in one query; None for an unknown id (intent 028)."""
+        stmt: Any
+        if kind == "vocab":
+            stmt = select(VocabItemModel.course_id).where(VocabItemModel.id == item_id)
+        else:
+            stmt = select(CategoryModel.course_id)
+            if kind == "section":
+                stmt = stmt.where(CategoryModel.id == item_id)
+            else:
+                stmt = stmt.join(SkillModel, SkillModel.category_id == CategoryModel.id)
+                if kind == "skill":
+                    stmt = stmt.where(SkillModel.id == item_id)
+                else:
+                    stmt = stmt.join(LessonModel, LessonModel.skill_id == SkillModel.id)
+                    if kind == "lesson":
+                        stmt = stmt.where(LessonModel.id == item_id)
+                    elif kind == "exercise":
+                        stmt = stmt.join(
+                            ExerciseModel, ExerciseModel.lesson_id == LessonModel.id
+                        ).where(ExerciseModel.id == item_id)
+                    else:
+                        raise ValueError(kind)
+        course_id: str | None = (await self._session.execute(stmt)).scalar_one_or_none()
+        return course_id
+
     async def delete_row(self, row: Any) -> None:
         await self._session.delete(row)
         await self._session.flush()
+
+    async def forget_course_admins(self, course_id: str) -> None:
+        """Takes a course off every course admin before it is deleted
+        (intent 028): SQLite in development has no foreign keys to do it."""
+        await SqlAlchemyAdminMemberRepository(self._session).forget_course(course_id)
 
     async def touch_lesson(self, lesson: LessonModel) -> None:
         """Moves the lesson's `content_version` (bolt 008) so a downloaded

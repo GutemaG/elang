@@ -14,14 +14,14 @@ export function NotAuthorisedScreen({ email }: { email: string | null }) {
       <p className="mt-2 text-sm leading-6 text-coffee-soft">
         {email ? (
           <>
-            <strong className="font-semibold break-all text-coffee">{email}</strong> is signed in, but is not an admin.
+            <strong className="font-semibold break-all text-coffee">{email}</strong> is signed in, but is not on the team.
           </>
         ) : (
-          'This account is signed in, but is not an admin.'
+          'This account is signed in, but is not on the team.'
         )}
       </p>
       <p className="mt-3 rounded bg-inset px-3 py-2.5 text-sm leading-6 text-stone">
-        Ask an existing admin to add your address to <code className="font-mono text-coffee">ADMIN_EMAILS</code>.
+        Ask a super admin to add this address.
       </p>
       <Button className="mt-6 w-full justify-center" onClick={signOut}>
         <Icon name="logout" className="text-lg" />

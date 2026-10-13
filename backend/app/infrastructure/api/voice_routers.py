@@ -17,9 +17,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application import voice_use_cases as uc
 from app.application.admin_content_use_cases import AdminContext
 from app.config import get_settings
-from app.domain.entities import User
+from app.domain.admin import AdminAccess
+from app.domain.exceptions import SuperAdminOnlyError
 from app.domain.lesson.exceptions import VoiceNotConfiguredError
-from app.infrastructure.api.dependencies import require_admin
+from app.infrastructure.api.dependencies import (
+    check_course_of,
+    languages_of,
+    require_admin,
+    require_super_admin,
+)
 from app.infrastructure.api.voice_schemas import (
     AdminVoiceCatalogResponse,
     AdminVoiceLanguageResponse,
@@ -49,8 +55,8 @@ async def _repo(
     return SqlAlchemyVoiceSettingsRepository(session)
 
 
-async def _ctx(admin: User = Depends(require_admin)) -> AdminContext:
-    return AdminContext(email=admin.email or "")
+async def _ctx(access: AdminAccess = Depends(require_admin)) -> AdminContext:
+    return AdminContext(email=access.email, access=access)
 
 
 def voice_generation_configured() -> bool:
@@ -106,7 +112,11 @@ async def admin_get_voice_settings(
     )
 
 
-@admin_router.put("/settings/{language}", response_model=AdminVoiceLanguageResponse)
+@admin_router.put(
+    "/settings/{language}",
+    response_model=AdminVoiceLanguageResponse,
+    dependencies=[Depends(require_super_admin)],
+)
 async def admin_update_voice_settings(
     language: str,
     body: UpdateVoiceSettingsRequest,
@@ -157,7 +167,11 @@ async def admin_list_voices(
     )
 
 
-@admin_router.get("/usage", response_model=AdminVoiceUsageResponse)
+@admin_router.get(
+    "/usage",
+    response_model=AdminVoiceUsageResponse,
+    dependencies=[Depends(require_super_admin)],
+)
 async def admin_voice_usage(
     client: AddisVoiceClient = Depends(_client),
 ) -> AdminVoiceUsageResponse:
@@ -179,9 +193,15 @@ async def admin_generate_voice(
     ctx: AdminContext = Depends(_ctx),
     client: AddisVoiceClient | None = Depends(get_addis_voice_client),
 ) -> Response:
+    content = SqlAlchemyAdminContentRepository(session)
+    await check_course_of(ctx.access, content, "lesson", body.lesson_id)
+    if body.lesson_id is None and body.language is not None:
+        allowed = await languages_of(ctx.access, content)
+        if allowed is not None and body.language not in allowed:
+            raise SuperAdminOnlyError("Only a super admin can do this")
     take = await uc.generate_voice(
         repo,
-        SqlAlchemyAdminContentRepository(session),
+        content,
         client,
         ctx,
         text=body.text,

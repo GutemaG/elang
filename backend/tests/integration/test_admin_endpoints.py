@@ -72,7 +72,12 @@ class TestAdminMe:
         response = client.get("/api/v1/admin/me", headers=headers)
 
         assert response.status_code == 200
-        assert response.json() == {"email": ADMIN}
+        assert response.json() == {
+            "email": ADMIN,
+            "role": "super_admin",
+            "is_owner": True,
+            "course_ids": None,
+        }
 
     def test_email_matching_ignores_case(
         self, client: TestClient, google: FakeTokenVerifier

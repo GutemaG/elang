@@ -19,7 +19,7 @@ from app.application import admin_content_use_cases as uc
 from app.application import admin_image_use_cases as image_uc
 from app.application.use_cases import read_app_config, update_app_config
 from app.config import get_settings
-from app.domain.entities import User
+from app.domain.admin import AdminAccess
 from app.domain.lesson.exceptions import ContentNotFoundError
 from app.infrastructure.api.admin_schemas import (
     AdminCourse,
@@ -60,7 +60,18 @@ from app.infrastructure.api.admin_schemas import (
     UpdateTitleRequest,
     UpdateVocabRequest,
 )
-from app.infrastructure.api.dependencies import get_app_config_repository, require_admin
+from app.infrastructure.api.dependencies import (
+    check_course_of,
+    get_app_config_repository,
+    require_admin,
+    require_course,
+    require_exercise_course,
+    require_lesson_course,
+    require_section_course,
+    require_skill_course,
+    require_super_admin,
+    require_vocab_course,
+)
 from app.infrastructure.api.user_schemas import AppConfigResponse
 from app.infrastructure.db.admin_content_repository import (
     EXERCISE,
@@ -96,9 +107,11 @@ async def _repo(
     return SqlAlchemyAdminContentRepository(session)
 
 
-async def _ctx(admin: User = Depends(require_admin)) -> uc.AdminContext:
+async def _ctx(access: AdminAccess = Depends(require_admin)) -> uc.AdminContext:
     return uc.AdminContext(
-        email=admin.email or "", allow_local_media=get_settings().environment == "local"
+        email=access.email,
+        allow_local_media=get_settings().environment == "local",
+        access=access,
     )
 
 
@@ -259,15 +272,25 @@ def _audio_status(exercise_type: str, content: dict[str, Any]) -> AudioStatus | 
 
 
 @router.get("/me", response_model=AdminMeResponse)
-async def get_admin_me(admin: User = Depends(require_admin)) -> AdminMeResponse:
-    """Story 001-admin-authorization: who the admin site is signed in as."""
-    return AdminMeResponse(email=admin.email or "")
+async def get_admin_me(access: AdminAccess = Depends(require_admin)) -> AdminMeResponse:
+    """Who the admin site is signed in as, and what they may reach (story
+    001-admin-authorization; intent 028, bolt 102)."""
+    return AdminMeResponse(
+        email=access.email,
+        role=access.role,
+        is_owner=access.is_owner,
+        course_ids=None if access.course_ids is None else sorted(access.course_ids),
+    )
 
 
 # --- app configuration -----------------------------------------------------
 
 
-@router.get("/app-config", response_model=AppConfigResponse)
+@router.get(
+    "/app-config",
+    response_model=AppConfigResponse,
+    dependencies=[Depends(require_super_admin)],
+)
 async def get_app_config(
     repo: SqlAlchemyAppConfigRepository = Depends(get_app_config_repository),
 ) -> AppConfigResponse:
@@ -276,17 +299,21 @@ async def get_app_config(
     return AppConfigResponse(config=await read_app_config(repo))
 
 
-@router.patch("/app-config", response_model=AppConfigResponse)
+@router.patch(
+    "/app-config",
+    response_model=AppConfigResponse,
+    dependencies=[Depends(require_super_admin)],
+)
 async def patch_app_config(
     changes: dict[str, Any] = Body(...),
     repo: SqlAlchemyAppConfigRepository = Depends(get_app_config_repository),
-    admin: User = Depends(require_admin),
+    access: AdminAccess = Depends(require_admin),
 ) -> AppConfigResponse:
     """Saves a partial map of app-wide values and returns them all. An
     unknown key, a wrong type or a negative build is `422
     invalid_setting`, and nothing is saved."""
     return AppConfigResponse(
-        config=await update_app_config(repo, changes, admin_email=admin.email or "")
+        config=await update_app_config(repo, changes, admin_email=access.email)
     )
 
 
@@ -302,7 +329,12 @@ async def list_languages(
     )
 
 
-@router.post("/languages", response_model=AdminLanguage, status_code=201)
+@router.post(
+    "/languages",
+    response_model=AdminLanguage,
+    status_code=201,
+    dependencies=[Depends(require_super_admin)],
+)
 async def create_language(
     body: CreateLanguageRequest,
     repo: SqlAlchemyAdminContentRepository = Depends(_repo),
@@ -314,7 +346,11 @@ async def create_language(
     return _language(language, 0)
 
 
-@router.patch("/languages/{code}", response_model=AdminLanguage)
+@router.patch(
+    "/languages/{code}",
+    response_model=AdminLanguage,
+    dependencies=[Depends(require_super_admin)],
+)
 async def update_language(
     code: str,
     body: UpdateLanguageRequest,
@@ -327,7 +363,7 @@ async def update_language(
     return _language(language, await repo.count_courses_using(code))
 
 
-@router.delete("/languages/{code}", status_code=204)
+@router.delete("/languages/{code}", status_code=204, dependencies=[Depends(require_super_admin)])
 async def delete_language(
     code: str,
     repo: SqlAlchemyAdminContentRepository = Depends(_repo),
@@ -341,12 +377,28 @@ async def delete_language(
 
 
 @router.get("/courses", response_model=AdminCourseList)
-async def list_courses(repo: SqlAlchemyAdminContentRepository = Depends(_repo)) -> AdminCourseList:
+async def list_courses(
+    repo: SqlAlchemyAdminContentRepository = Depends(_repo),
+    access: AdminAccess = Depends(require_admin),
+) -> AdminCourseList:
+    """Every course for a super admin; only theirs for a course admin
+    (intent 028)."""
     languages = await repo.language_map()
-    return AdminCourseList(courses=[_course(c, n, languages) for c, n in await repo.list_courses()])
+    return AdminCourseList(
+        courses=[
+            _course(c, n, languages)
+            for c, n in await repo.list_courses()
+            if access.can_open_course(c.id)
+        ]
+    )
 
 
-@router.post("/courses", response_model=AdminCourse, status_code=201)
+@router.post(
+    "/courses",
+    response_model=AdminCourse,
+    status_code=201,
+    dependencies=[Depends(require_super_admin)],
+)
 async def create_course(
     body: CreateCourseRequest,
     repo: SqlAlchemyAdminContentRepository = Depends(_repo),
@@ -362,7 +414,11 @@ async def create_course(
     return _course(course, 0, await repo.language_map())
 
 
-@router.patch("/courses/{course_id}", response_model=AdminCourse)
+@router.patch(
+    "/courses/{course_id}",
+    response_model=AdminCourse,
+    dependencies=[Depends(require_super_admin)],
+)
 async def update_course(
     course_id: str,
     body: UpdateCourseRequest,
@@ -373,7 +429,11 @@ async def update_course(
     return _course(course, len(await repo.children(SECTION, course_id)), await repo.language_map())
 
 
-@router.delete("/courses/{course_id}", status_code=204)
+@router.delete(
+    "/courses/{course_id}",
+    status_code=204,
+    dependencies=[Depends(require_super_admin)],
+)
 async def delete_course(
     course_id: str,
     repo: SqlAlchemyAdminContentRepository = Depends(_repo),
@@ -383,7 +443,11 @@ async def delete_course(
     return Response(status_code=204)
 
 
-@router.get("/courses/{course_id}/tree", response_model=AdminCourseTree)
+@router.get(
+    "/courses/{course_id}/tree",
+    response_model=AdminCourseTree,
+    dependencies=[Depends(require_course)],
+)
 async def get_course_tree(
     course_id: str, repo: SqlAlchemyAdminContentRepository = Depends(_repo)
 ) -> AdminCourseTree:
@@ -446,7 +510,12 @@ async def get_course_tree(
 # --- sections -----------------------------------------------------------------
 
 
-@router.post("/courses/{course_id}/sections", response_model=AdminNode, status_code=201)
+@router.post(
+    "/courses/{course_id}/sections",
+    response_model=AdminNode,
+    status_code=201,
+    dependencies=[Depends(require_course)],
+)
 async def create_section(
     course_id: str,
     body: CreateSectionRequest,
@@ -459,7 +528,11 @@ async def create_section(
     return _node(row)
 
 
-@router.patch("/sections/{section_id}", response_model=AdminNode)
+@router.patch(
+    "/sections/{section_id}",
+    response_model=AdminNode,
+    dependencies=[Depends(require_section_course)],
+)
 async def update_section(
     section_id: str,
     body: UpdateSectionRequest,
@@ -472,7 +545,11 @@ async def update_section(
     return _node(row)
 
 
-@router.put("/courses/{course_id}/sections/order", response_model=AdminNodeList)
+@router.put(
+    "/courses/{course_id}/sections/order",
+    response_model=AdminNodeList,
+    dependencies=[Depends(require_course)],
+)
 async def reorder_sections(
     course_id: str,
     body: ReorderRequest,
@@ -483,7 +560,11 @@ async def reorder_sections(
     return AdminNodeList(items=[_node(r) for r in rows])
 
 
-@router.delete("/sections/{section_id}", status_code=204)
+@router.delete(
+    "/sections/{section_id}",
+    status_code=204,
+    dependencies=[Depends(require_section_course)],
+)
 async def delete_section(
     section_id: str,
     confirm: bool = False,
@@ -497,7 +578,12 @@ async def delete_section(
 # --- skills -------------------------------------------------------------------
 
 
-@router.post("/sections/{section_id}/skills", response_model=AdminNode, status_code=201)
+@router.post(
+    "/sections/{section_id}/skills",
+    response_model=AdminNode,
+    status_code=201,
+    dependencies=[Depends(require_section_course)],
+)
 async def create_skill(
     section_id: str,
     body: TitleRequest,
@@ -507,7 +593,11 @@ async def create_skill(
     return _node(await uc.create_node(repo, ctx, SKILL, section_id, title=body.title))
 
 
-@router.patch("/skills/{skill_id}", response_model=AdminNode)
+@router.patch(
+    "/skills/{skill_id}",
+    response_model=AdminNode,
+    dependencies=[Depends(require_skill_course)],
+)
 async def update_skill(
     skill_id: str,
     body: UpdateTitleRequest,
@@ -517,7 +607,11 @@ async def update_skill(
     return _node(await uc.rename_node(repo, ctx, SKILL, skill_id, title=body.title))
 
 
-@router.put("/sections/{section_id}/skills/order", response_model=AdminNodeList)
+@router.put(
+    "/sections/{section_id}/skills/order",
+    response_model=AdminNodeList,
+    dependencies=[Depends(require_section_course)],
+)
 async def reorder_skills(
     section_id: str,
     body: ReorderRequest,
@@ -528,7 +622,7 @@ async def reorder_skills(
     return AdminNodeList(items=[_node(r) for r in rows])
 
 
-@router.delete("/skills/{skill_id}", status_code=204)
+@router.delete("/skills/{skill_id}", status_code=204, dependencies=[Depends(require_skill_course)])
 async def delete_skill(
     skill_id: str,
     confirm: bool = False,
@@ -542,7 +636,12 @@ async def delete_skill(
 # --- lessons ------------------------------------------------------------------
 
 
-@router.post("/skills/{skill_id}/lessons", response_model=AdminNode, status_code=201)
+@router.post(
+    "/skills/{skill_id}/lessons",
+    response_model=AdminNode,
+    status_code=201,
+    dependencies=[Depends(require_skill_course)],
+)
 async def create_lesson(
     skill_id: str,
     body: TitleRequest,
@@ -552,7 +651,11 @@ async def create_lesson(
     return _node(await uc.create_node(repo, ctx, LESSON, skill_id, title=body.title))
 
 
-@router.patch("/lessons/{lesson_id}", response_model=AdminNode)
+@router.patch(
+    "/lessons/{lesson_id}",
+    response_model=AdminNode,
+    dependencies=[Depends(require_lesson_course)],
+)
 async def update_lesson(
     lesson_id: str,
     body: UpdateTitleRequest,
@@ -562,7 +665,11 @@ async def update_lesson(
     return _node(await uc.rename_node(repo, ctx, LESSON, lesson_id, title=body.title))
 
 
-@router.put("/skills/{skill_id}/lessons/order", response_model=AdminNodeList)
+@router.put(
+    "/skills/{skill_id}/lessons/order",
+    response_model=AdminNodeList,
+    dependencies=[Depends(require_skill_course)],
+)
 async def reorder_lessons(
     skill_id: str,
     body: ReorderRequest,
@@ -573,7 +680,11 @@ async def reorder_lessons(
     return AdminNodeList(items=[_node(r) for r in rows])
 
 
-@router.delete("/lessons/{lesson_id}", status_code=204)
+@router.delete(
+    "/lessons/{lesson_id}",
+    status_code=204,
+    dependencies=[Depends(require_lesson_course)],
+)
 async def delete_lesson(
     lesson_id: str,
     confirm: bool = False,
@@ -587,7 +698,11 @@ async def delete_lesson(
 # --- exercises ----------------------------------------------------------------
 
 
-@router.get("/lessons/{lesson_id}/exercises", response_model=AdminExerciseList)
+@router.get(
+    "/lessons/{lesson_id}/exercises",
+    response_model=AdminExerciseList,
+    dependencies=[Depends(require_lesson_course)],
+)
 async def list_exercises(
     lesson_id: str, repo: SqlAlchemyAdminContentRepository = Depends(_repo)
 ) -> AdminExerciseList:
@@ -595,7 +710,12 @@ async def list_exercises(
     return AdminExerciseList(exercises=[_exercise(r) for r in rows])
 
 
-@router.post("/lessons/{lesson_id}/exercises", response_model=AdminExercise, status_code=201)
+@router.post(
+    "/lessons/{lesson_id}/exercises",
+    response_model=AdminExercise,
+    status_code=201,
+    dependencies=[Depends(require_lesson_course)],
+)
 async def create_exercise(
     lesson_id: str,
     body: ExerciseRequest,
@@ -618,6 +738,7 @@ async def create_exercise(
     "/lessons/{lesson_id}/exercises/import",
     response_model=AdminExerciseList | ExerciseImportCheck,
     status_code=201,
+    dependencies=[Depends(require_lesson_course)],
 )
 async def import_exercises(
     lesson_id: str,
@@ -635,7 +756,11 @@ async def import_exercises(
     return AdminExerciseList(exercises=[_exercise(r) for r in rows])
 
 
-@router.put("/exercises/{exercise_id}", response_model=AdminExercise)
+@router.put(
+    "/exercises/{exercise_id}",
+    response_model=AdminExercise,
+    dependencies=[Depends(require_exercise_course)],
+)
 async def update_exercise(
     exercise_id: str,
     body: ExerciseRequest,
@@ -654,7 +779,11 @@ async def update_exercise(
     return _exercise(row)
 
 
-@router.put("/lessons/{lesson_id}/exercises/order", response_model=AdminExerciseList)
+@router.put(
+    "/lessons/{lesson_id}/exercises/order",
+    response_model=AdminExerciseList,
+    dependencies=[Depends(require_lesson_course)],
+)
 async def reorder_exercises(
     lesson_id: str,
     body: ReorderRequest,
@@ -665,7 +794,11 @@ async def reorder_exercises(
     return AdminExerciseList(exercises=[_exercise(r) for r in rows])
 
 
-@router.delete("/exercises/{exercise_id}", status_code=204)
+@router.delete(
+    "/exercises/{exercise_id}",
+    status_code=204,
+    dependencies=[Depends(require_exercise_course)],
+)
 async def delete_exercise(
     exercise_id: str,
     repo: SqlAlchemyAdminContentRepository = Depends(_repo),
@@ -678,7 +811,11 @@ async def delete_exercise(
 # --- vocabulary (bolt 040) ----------------------------------------------------
 
 
-@router.get("/courses/{course_id}/vocab", response_model=AdminVocabList)
+@router.get(
+    "/courses/{course_id}/vocab",
+    response_model=AdminVocabList,
+    dependencies=[Depends(require_course)],
+)
 async def list_vocab(
     course_id: str, repo: SqlAlchemyAdminContentRepository = Depends(_repo)
 ) -> AdminVocabList:
@@ -692,7 +829,11 @@ async def list_vocab(
     )
 
 
-@router.patch("/vocab/{vocab_item_id}", response_model=AdminVocabItem)
+@router.patch(
+    "/vocab/{vocab_item_id}",
+    response_model=AdminVocabItem,
+    dependencies=[Depends(require_vocab_course)],
+)
 async def update_vocab(
     vocab_item_id: str,
     body: UpdateVocabRequest,
@@ -723,6 +864,7 @@ async def create_audio_upload(
 ) -> AudioUploadResponse:
     """A short-lived PUT link for one recording or file: straight to R2, or
     to this backend in local development without R2."""
+    await check_course_of(ctx.access, repo, "lesson", body.lesson_id)
     key, upload = await audio_uc.presign_upload(
         repo,
         ctx,
@@ -762,6 +904,7 @@ async def create_image_upload(
 ) -> ImageUploadResponse:
     """A short-lived PUT link for one picture: straight to R2, or to this
     backend in local development without R2."""
+    await check_course_of(ctx.access, repo, "lesson", body.lesson_id)
     key, upload = await image_uc.presign_image_upload(
         repo, ctx, storage, lesson_id=body.lesson_id, content_type=body.content_type, size=body.size
     )

@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { useAccess } from '../auth/access'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { plural } from '../format'
 import { PageHeader } from '../shell/Page'
@@ -18,6 +19,8 @@ import { TEMPLATES, englishOf } from './model'
  * The app's Sounds tab shows a chart only once it is turned on. */
 export function SoundsPage() {
   const { api } = useSession()
+  // Starting a chart is a super admin's (intent 028).
+  const { isSuper } = useAccess()
   const [charts, setCharts] = useState<AdminSoundChartSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
@@ -41,10 +44,12 @@ export function SoundsPage() {
         title="Sounds"
         description="The letters of each language and how they sound, for the app’s Sounds tab. Start a chart from a template, record or upload each sound, then turn it on."
         actions={
-          <Button variant="primary" onClick={() => setCreating(true)}>
-            <Icon name="add" className="text-lg" />
-            New chart
-          </Button>
+          isSuper && (
+            <Button variant="primary" onClick={() => setCreating(true)}>
+              <Icon name="add" className="text-lg" />
+              New chart
+            </Button>
+          )
         }
       />
 
@@ -65,12 +70,15 @@ export function SoundsPage() {
           <Icon name="graphic_eq" className="text-4xl text-stone" />
           <h2 className="mt-2 text-lg font-semibold text-coffee">No charts yet</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-stone">
-            Start with Amharic from the Fidel template or Afaan Oromo from Qubee: every letter is filled in, so only the
-            recordings are left.
+            {isSuper
+              ? 'Start with Amharic from the Fidel template or Afaan Oromo from Qubee: every letter is filled in, so only the recordings are left.'
+              : 'None of your courses’ languages has a chart yet. Ask a super admin to start one.'}
           </p>
-          <Button variant="primary" className="mt-4" onClick={() => setCreating(true)}>
-            New chart
-          </Button>
+          {isSuper && (
+            <Button variant="primary" className="mt-4" onClick={() => setCreating(true)}>
+              New chart
+            </Button>
+          )}
         </section>
       )}
 

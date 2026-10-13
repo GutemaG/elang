@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { ApiError } from '../api'
+import { useAccess } from '../auth/access'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { AddExerciseMenu } from '../exercises/AddExerciseMenu'
 import { courseAudience, courseStatus, plural } from '../format'
@@ -77,6 +78,8 @@ function CoursePage({ courseId }: { courseId: string }) {
   const [search] = useSearchParams()
   const openLesson = search.get('open')
   const { api } = useSession()
+  // Renaming, publishing and deleting a course are a super admin's (intent 028).
+  const { isSuper } = useAccess()
   const [tree, setTree] = useState<AdminCourseTree | null>(null)
   const [loadError, setLoadError] = useState<ApiError | Error | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
@@ -347,7 +350,7 @@ function CoursePage({ courseId }: { courseId: string }) {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {editing !== 'course' && (
+              {isSuper && editing !== 'course' && (
                 <Button
                   disabled={locked}
                   title={ordering ? SAVE_ORDER_FIRST : undefined}
@@ -357,24 +360,26 @@ function CoursePage({ courseId }: { courseId: string }) {
                   Rename course
                 </Button>
               )}
-              <Button
-                disabled={locked || (!available && totals.exercises === 0)}
-                title={
-                  ordering
-                    ? SAVE_ORDER_FIRST
-                    : !available && totals.exercises === 0
-                      ? 'Add a lesson with an exercise first'
-                      : undefined
-                }
-                onClick={() =>
-                  void run(() =>
-                    api.patch(routes.course(tree.course.id), { status: available ? 'coming_soon' : 'available' }),
-                  )
-                }
-              >
-                <Icon name={available ? 'schedule' : 'rocket_launch'} className="text-lg" />
-                {available ? 'Move to coming soon' : 'Make available'}
-              </Button>
+              {isSuper && (
+                <Button
+                  disabled={locked || (!available && totals.exercises === 0)}
+                  title={
+                    ordering
+                      ? SAVE_ORDER_FIRST
+                      : !available && totals.exercises === 0
+                        ? 'Add a lesson with an exercise first'
+                        : undefined
+                  }
+                  onClick={() =>
+                    void run(() =>
+                      api.patch(routes.course(tree.course.id), { status: available ? 'coming_soon' : 'available' }),
+                    )
+                  }
+                >
+                  <Icon name={available ? 'schedule' : 'rocket_launch'} className="text-lg" />
+                  {available ? 'Move to coming soon' : 'Make available'}
+                </Button>
+              )}
               <Link
                 to={`/courses/${tree.course.id}/vocabulary`}
                 className="inline-flex h-11 items-center gap-2 rounded border border-line bg-surface px-4 text-sm font-semibold text-coffee hover:bg-inset sm:h-10"
@@ -391,7 +396,7 @@ function CoursePage({ courseId }: { courseId: string }) {
                 <Icon name="add" className="text-lg" />
                 Add section
               </Button>
-              {tree.sections.length === 0 && (
+              {isSuper && tree.sections.length === 0 && (
                 <Button variant="danger-ghost" disabled={locked} onClick={() => setDeletingCourse(true)}>
                   <Icon name="delete" className="text-lg" />
                   Delete course

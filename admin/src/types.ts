@@ -6,9 +6,16 @@ export interface AuthResponse {
   expires_at: string
 }
 
+/** Intent 028: `role` is `super_admin` or `course_admin`; `course_ids` is
+ * null for a super admin, who has every course. */
 export interface AdminMe {
   email: string
+  role?: AdminRole
+  is_owner?: boolean
+  course_ids?: string[] | null
 }
+
+export type AdminRole = 'super_admin' | 'course_admin'
 
 export interface AdminCourse {
   id: string

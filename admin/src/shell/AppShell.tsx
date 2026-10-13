@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
+import { useAccess } from '../auth/access'
 import { Button } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { Icon } from '../ui/Icon'
@@ -12,7 +13,8 @@ const isCurriculum = (path: string) =>
 
 /** The workspace's places. Curriculum covers the course list and every
  * course page except a course's words, which are Vocabulary's (bolt 040),
- * and its workbook (intent 025). */
+ * and its workbook (intent 025). A course admin sees only Workspace; the
+ * other groups are for super admins (intent 028). */
 const NAV_GROUPS = [
   {
     heading: 'Workspace',
@@ -23,15 +25,13 @@ const NAV_GROUPS = [
       { to: '/workbook', icon: 'table_view', label: 'Workbook', current: isWorkbook },
       // The app's Sounds tab: each language's letters and their recordings.
       { to: '/sounds', icon: 'graphic_eq', label: 'Sounds', current: (path: string) => path.startsWith('/sounds') },
-      // Generated voices: which Addis AI voice speaks each language (intent 027).
-      { to: '/voices', icon: 'record_voice_over', label: 'Voices', current: (path: string) => path === '/voices' },
-      { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
       { to: '/guide', icon: 'help', label: 'Guide', current: (path: string) => path === '/guide' },
     ],
   },
   {
     // 026-learner-reports: who is learning and how it is going.
     heading: 'Learners',
+    superOnly: true,
     items: [
       { to: '/dashboard', icon: 'monitoring', label: 'Dashboard', current: (path: string) => path === '/dashboard' },
       { to: '/learners', icon: 'group', label: 'Learners', current: (path: string) => path.startsWith('/learners') },
@@ -40,9 +40,15 @@ const NAV_GROUPS = [
     ],
   },
   {
-    // The phone app itself: which builds may still run.
-    heading: 'App',
+    // Intent 028: what only a super admin changes.
+    heading: 'Configuration',
+    superOnly: true,
     items: [
+      { to: '/team', icon: 'group_add', label: 'Team', current: (path: string) => path === '/team' },
+      { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
+      // Generated voices: which Addis AI voice speaks each language (intent 027).
+      { to: '/voices', icon: 'record_voice_over', label: 'Voices', current: (path: string) => path === '/voices' },
+      // The phone app itself: which builds may still run.
       {
         to: '/app-updates',
         icon: 'system_update',
@@ -73,6 +79,7 @@ export function AppShell({ email, onSignOut, children }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const close = () => setDrawerOpen(false)
   const { pathname } = useLocation()
+  const { isSuper } = useAccess()
 
   return (
     <div className="min-h-screen lg:flex">
@@ -114,7 +121,7 @@ export function AppShell({ email, onSignOut, children }: Props) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Sections">
-          {NAV_GROUPS.map((group) => (
+          {NAV_GROUPS.filter((group) => isSuper || !group.superOnly).map((group) => (
             <div key={group.heading} className="mb-3">
               <p className="px-2 pt-2 pb-2 text-[0.6875rem] font-bold tracking-[0.12em] text-stone uppercase">
                 {group.heading}

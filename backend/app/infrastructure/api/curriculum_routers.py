@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application import curriculum_use_cases as uc
 from app.application.admin_content_use_cases import AdminContext
 from app.config import get_settings
-from app.domain.entities import User
+from app.domain.admin import AdminAccess
 from app.infrastructure.api.admin_routers import get_audio_storage
 from app.infrastructure.api.admin_schemas import AudioUploadResponse
 from app.infrastructure.api.curriculum_schemas import (
@@ -41,7 +41,7 @@ from app.infrastructure.api.curriculum_schemas import (
     UpdateCurriculumRowRequest,
     UpdateCurriculumRowResponse,
 )
-from app.infrastructure.api.dependencies import require_admin
+from app.infrastructure.api.dependencies import require_admin, require_course
 from app.infrastructure.db.admin_content_repository import SqlAlchemyAdminContentRepository
 from app.infrastructure.db.curriculum_models import CurriculumExerciseModel, CurriculumRowModel
 from app.infrastructure.db.curriculum_repository import SqlAlchemyCurriculumRepository
@@ -52,7 +52,7 @@ from app.infrastructure.external.r2_storage import R2Storage
 router = APIRouter(
     prefix="/api/v1/admin/courses/{course_id}/curriculum",
     tags=["admin"],
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_admin), Depends(require_course)],
 )
 
 
@@ -67,9 +67,11 @@ async def _content(
     return SqlAlchemyAdminContentRepository(session)
 
 
-async def _ctx(admin: User = Depends(require_admin)) -> AdminContext:
+async def _ctx(access: AdminAccess = Depends(require_admin)) -> AdminContext:
     return AdminContext(
-        email=admin.email or "", allow_local_media=get_settings().environment == "local"
+        email=access.email,
+        allow_local_media=get_settings().environment == "local",
+        access=access,
     )
 
 

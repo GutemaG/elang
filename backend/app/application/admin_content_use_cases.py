@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from app.domain.admin import AdminAccess
 from app.domain.lesson.exceptions import (
     ConfirmationRequiredError,
     ContentExistsError,
@@ -52,10 +53,13 @@ logger = logging.getLogger("app.admin")
 
 @dataclass(frozen=True)
 class AdminContext:
-    """Who is acting, and whether local-only `/media` audio is allowed."""
+    """Who is acting, and whether local-only `/media` audio is allowed.
+    `access` is what they may reach (intent 028); None only where no
+    request is behind the call, as in tests and scripts."""
 
     email: str
     allow_local_media: bool = False
+    access: AdminAccess | None = None
 
 
 def _log(ctx: AdminContext, action: str, entity: str, entity_id: str) -> None:
@@ -262,6 +266,7 @@ async def delete_course(
             sections=sections,
             words=words,
         )
+    await repo.forget_course_admins(course_id)
     await repo.delete_row(course)
     _log(ctx, "delete", "course", course_id)
 

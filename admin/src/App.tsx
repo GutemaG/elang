@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { NotAuthorisedScreen } from './auth/NotAuthorisedScreen'
+import { useAccess } from './auth/access'
 import { useSession } from './auth/SessionContext'
 import { SignInScreen } from './auth/SignInScreen'
 import { ExerciseEditorRoute } from './exercises/ExerciseEditorPage'
@@ -17,6 +19,7 @@ import { RecordSessionPage } from './sounds/RecordSessionPage'
 import { SoundChartPage } from './sounds/SoundChartPage'
 import { SoundsPage } from './sounds/SoundsPage'
 import { UploadFilesPage } from './sounds/UploadFilesPage'
+import { TeamPage } from './team/TeamPage'
 import { AppUpdatesPage } from './updates/AppUpdatesPage'
 import { CourseList } from './tree/CourseList'
 import { CourseTree } from './tree/CourseTree'
@@ -54,19 +57,20 @@ export function App() {
             <Route path="/workbook" element={<CourseList key="workbook" purpose="workbook" />} />
             <Route path="/courses/:courseId/workbook" element={<WorkbookPage />} />
             <Route path="/courses/:courseId/workbook/lessons/:lessonRef" element={<LessonPage />} />
-            <Route path="/languages" element={<LanguagesPage />} />
+            <Route path="/languages" element={<SuperOnly><LanguagesPage /></SuperOnly>} />
             <Route path="/sounds" element={<SoundsPage />} />
             <Route path="/sounds/:language" element={<SoundChartPage />} />
             <Route path="/sounds/:language/letters/:letterId" element={<LetterPage />} />
             <Route path="/sounds/:language/record" element={<RecordSessionPage />} />
             <Route path="/sounds/:language/upload" element={<UploadFilesPage />} />
-            <Route path="/voices" element={<VoicesPage />} />
+            <Route path="/voices" element={<SuperOnly><VoicesPage /></SuperOnly>} />
             <Route path="/guide" element={<GuidePage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/learners" element={<LearnersPage />} />
-            <Route path="/learners/:learnerId" element={<LearnerPage />} />
-            <Route path="/feedback" element={<FeedbackPage />} />
-            <Route path="/app-updates" element={<AppUpdatesPage />} />
+            <Route path="/team" element={<SuperOnly><TeamPage /></SuperOnly>} />
+            <Route path="/dashboard" element={<SuperOnly><DashboardPage /></SuperOnly>} />
+            <Route path="/learners" element={<SuperOnly><LearnersPage /></SuperOnly>} />
+            <Route path="/learners/:learnerId" element={<SuperOnly><LearnerPage /></SuperOnly>} />
+            <Route path="/feedback" element={<SuperOnly><FeedbackPage /></SuperOnly>} />
+            <Route path="/app-updates" element={<SuperOnly><AppUpdatesPage /></SuperOnly>} />
             <Route
               path="/courses/:courseId/lessons/:lessonId/exercises/new/:type"
               element={<ExerciseEditorRoute />}
@@ -81,4 +85,10 @@ export function App() {
         </AppShell>
       )
   }
+}
+
+/** A configuration or learners page: a course admin who opens its address
+ * is sent to the workspace instead (intent 028). */
+function SuperOnly({ children }: { children: ReactNode }) {
+  return useAccess().isSuper ? children : <Navigate to="/" replace />
 }

@@ -121,3 +121,17 @@ class NotAdminError(AuthDomainError):
     called an admin endpoint (ADR-16, bolt `034-admin-api-foundation`)."""
 
     error_code = "not_admin"
+
+
+class SuperAdminOnlyError(AuthDomainError):
+    """A course admin called a route only a super admin may use (intent
+    028)."""
+
+    error_code = "super_admin_only"
+
+
+class AdminAccessUnavailableError(AuthDomainError):
+    """The team couldn't be read, so access can't be decided: refused,
+    never granted (intent 028)."""
+
+    error_code = "admin_access_unavailable"

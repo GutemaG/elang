@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { useAccess } from '../auth/access'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { courseAudience, courseStatus, languageGlyph, plural } from '../format'
 import { PageHeader, StatCard, StatRow } from '../shell/Page'
@@ -51,6 +52,7 @@ const PURPOSES = {
 export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof PURPOSES }) {
   const copy = PURPOSES[purpose]
   const { api } = useSession()
+  const { isSuper } = useAccess()
   const [courses, setCourses] = useState<AdminCourse[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
@@ -86,7 +88,9 @@ export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof 
         title="Courses"
         description={copy.description}
         actions={
-          copy.canCreate && (
+          // Only a super admin creates courses (intent 028).
+          copy.canCreate &&
+          isSuper && (
             <>
               <Link
                 to="/guide"
@@ -155,7 +159,9 @@ export function CourseList({ purpose = 'curriculum' }: { purpose?: keyof typeof 
 
         {!courses && !error && <ListSkeleton />}
         {courses?.length === 0 && (
-          <p className="px-6 py-12 text-center text-sm text-stone">There are no courses.</p>
+          <p className="px-6 py-12 text-center text-sm text-stone">
+            {isSuper ? 'There are no courses.' : 'No courses yet. Ask a super admin to give you one.'}
+          </p>
         )}
         {courses && courses.length > 0 && shown.length === 0 && (
           <p className="px-6 py-12 text-center text-sm text-stone">No course has this status.</p>

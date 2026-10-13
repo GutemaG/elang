@@ -31,6 +31,7 @@ from app.infrastructure.api.practice_routers import router as practice_router
 from app.infrastructure.api.routers import router as auth_router
 from app.infrastructure.api.sound_routers import admin_router as admin_sound_router
 from app.infrastructure.api.sound_routers import router as sound_router
+from app.infrastructure.api.team_routers import router as team_router
 from app.infrastructure.api.user_routers import config_router
 from app.infrastructure.api.user_routers import router as user_router
 from app.infrastructure.api.voice_routers import VOICE_HEADERS
@@ -111,6 +112,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_sound_router)
     app.include_router(admin_voice_router)
     app.include_router(curriculum_router)
+    app.include_router(team_router)
     app.include_router(audio_file_router)
     app.include_router(image_file_router)
     app.include_router(legal_router)

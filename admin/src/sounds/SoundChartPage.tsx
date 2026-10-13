@@ -1,6 +1,7 @@
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
+import { useAccess } from '../auth/access'
 import { messageOf, useSession } from '../auth/SessionContext'
 import { saveFile, readText, CSV_TYPE } from '../import/download'
 import { plural } from '../format'
@@ -68,6 +69,8 @@ function shows(filter: Filter, letter: AdminSoundLetter): boolean {
 /** One language's chart: every letter as a tile showing where it stands,
  * the ways to fill it, and the switch that shows it in the app. */
 export function SoundChartPage() {
+  // Deleting a chart is a super admin's (intent 028).
+  const { isSuper } = useAccess()
   const { language = '' } = useParams()
   const { chart, error, setError, saveLetters, setEnabled, reload } = useSoundChart(language)
   const [filter, setFilter] = useState<Filter>('all')
@@ -293,7 +296,7 @@ export function SoundChartPage() {
 
       <Legend kinds={chart.letters.some((x) => x.kind)} />
 
-      {!chart.enabled && (
+      {isSuper && !chart.enabled && (
         <div className="mt-10 border-t border-line pt-4">
           <Button variant="danger-ghost" size="sm" onClick={() => setDeleting(true)}>
             <Icon name="delete" className="text-lg" />
