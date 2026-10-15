@@ -8,12 +8,14 @@ single request).
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncGenerator
 from datetime import timedelta
 
 from fastapi import Depends, Header, Request
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application import activity_use_cases as activity
 from app.application.use_cases import validate_session
 from app.config import get_settings
 from app.domain.admin import AdminAccess, parse_admin_emails, resolve_access
@@ -32,6 +34,7 @@ from app.domain.services import (
     SessionValidationService,
     UserPreferencesService,
 )
+from app.infrastructure.db.activity_repository import SqlAlchemyActivityRepository
 from app.infrastructure.db.admin_content_repository import SqlAlchemyAdminContentRepository
 from app.infrastructure.db.admin_member_repository import SqlAlchemyAdminMemberRepository
 from app.infrastructure.db.league_repository import SqlAlchemyLeagueRepository
@@ -132,8 +135,10 @@ async def get_current_user(
 
 
 async def require_admin(
-    user: User = Depends(get_current_user), session: AsyncSession = Depends(get_db_session)
-) -> AdminAccess:
+    request: Request,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[AdminAccess]:
     """Who the signed-in admin is, and what they may reach (ADR-16; intent
     028, bolt 102). An email in `ADMIN_EMAILS` is an owner: a super admin,
     with no database read. Anyone else must be on the team. Layered on
@@ -141,7 +146,28 @@ async def require_admin(
     a valid session that is neither is a 403. Read on every request, so
     removing someone, or a course from them, takes effect on the next one.
     A team that can't be read is a 503: access is never granted on error.
+
+    Intent 030: every admin route has this dependency, so it also keeps the
+    activity log. For a write, the target is named before the route runs;
+    the entry is written, in the same transaction, only if the route (and
+    every other check) succeeded. A failed route raises through the
+    `yield`, and nothing is recorded.
     """
+    access = await _resolve_admin(user, session)
+    route = request.scope.get("route")
+    recording = await activity.start_recording(
+        SqlAlchemyActivityRepository(session),
+        access=access,
+        method=request.method,
+        route=getattr(route, "path", None),
+        params={k: str(v) for k, v in request.path_params.items()},
+    )
+    yield access
+    if recording is not None:
+        await recording.finish()
+
+
+async def _resolve_admin(user: User, session: AsyncSession) -> AdminAccess:
     owners = parse_admin_emails(get_settings().admin_emails)
     member = None
     if user.email and user.email.strip().lower() not in owners:

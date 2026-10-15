@@ -85,3 +85,13 @@ class LeagueMemberModel(Base):
     tier_after: Mapped[str | None] = mapped_column(String(16), nullable=True)
     reward_amole: Mapped[int | None] = mapped_column(Integer, nullable=True)
     result_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Intent 030: a super admin took the member out of the week. The row
+    # stays, so their next XP doesn't put them back in it.
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    removed_reason: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Intent 030: added to the week's earned XP (may be negative); the
+    # league XP never goes below 0.
+    xp_adjustment: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    xp_adjustment_reason: Mapped[str | None] = mapped_column(String(200), nullable=True)

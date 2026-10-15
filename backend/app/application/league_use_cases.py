@@ -31,6 +31,7 @@ from app.domain.league import (
     WeeklyXp,
     avatar_colour,
     close_group,
+    league_xp,
     rank,
     shown_name,
     week_end,
@@ -54,10 +55,12 @@ def shows_in_leagues(settings: dict[str, Any]) -> bool:
 
 
 def _standings(members: Iterable[GroupMember], xp: dict[str, WeeklyXp]) -> list[Standing]:
+    """Each member's week, their XP corrected by a super admin's
+    adjustment (intent 030)."""
     return [
         Standing(
             user_id=m.user_id,
-            weekly_xp=xp[m.user_id].xp if m.user_id in xp else 0,
+            weekly_xp=league_xp(xp[m.user_id].xp if m.user_id in xp else 0, m.xp_adjustment),
             last_xp_at=xp[m.user_id].last_xp_at if m.user_id in xp else None,
             joined_at=m.joined_at,
         )
@@ -89,7 +92,11 @@ async def close_ended_weeks(
             group.week_start.year, group.week_start.month, group.week_start.day, tzinfo=UTC
         )
         xp = await league_repo.weekly_xp([m.user_id for m in members], start, start + LEAGUE_WEEK)
-        hidden = frozenset(m.user_id for m in members if not shows_in_leagues(m.settings))
+        # A member a super admin removed (intent 030) closes like one who
+        # switched leagues off: no place, no move, no reward.
+        hidden = frozenset(
+            m.user_id for m in members if m.removed or not shows_in_leagues(m.settings)
+        )
         results = close_group(group.tier, _standings(members, xp), hidden)
         await league_repo.save_results(group.group_id, results)
 
@@ -218,7 +225,9 @@ async def get_current_league(
         return CurrentLeague(
             tier, LeagueStatus.HIDDEN, ends_at, 0, 0, LEAGUE_REWARDS, [], last_result
         )
-    if membership is None:
+    # Intent 030: a removed member sees the app's "earn XP to join" state
+    # for the rest of the week; their next XP doesn't put them back in.
+    if membership is None or membership.removed:
         return CurrentLeague(
             tier, LeagueStatus.NOT_JOINED, ends_at, 0, 0, LEAGUE_REWARDS, [], last_result
         )
@@ -226,7 +235,7 @@ async def get_current_league(
     members = [
         m
         for m in await league_repo.list_members(membership.group_id)
-        if m.user_id == user.id or shows_in_leagues(m.settings)
+        if not m.removed and (m.user_id == user.id or shows_in_leagues(m.settings))
     ]
     xp = await league_repo.weekly_xp([m.user_id for m in members], week, ends_at)
     names = {m.user_id: shown_name(m.first_name, m.user_id) for m in members}

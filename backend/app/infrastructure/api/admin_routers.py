@@ -19,6 +19,7 @@ from app.application import admin_content_use_cases as uc
 from app.application import admin_image_use_cases as image_uc
 from app.application.use_cases import read_app_config, update_app_config
 from app.config import get_settings
+from app.domain.activity import note_activity
 from app.domain.admin import AdminAccess
 from app.domain.lesson.exceptions import ContentNotFoundError
 from app.infrastructure.api.admin_schemas import (
@@ -312,6 +313,7 @@ async def patch_app_config(
     """Saves a partial map of app-wide values and returns them all. An
     unknown key, a wrong type or a negative build is `422
     invalid_setting`, and nothing is saved."""
+    note_activity(target_name="App updates", link="/app-updates", fields=sorted(changes)[:20])
     return AppConfigResponse(
         config=await update_app_config(repo, changes, admin_email=access.email)
     )

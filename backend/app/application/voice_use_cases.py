@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from app.application.admin_content_use_cases import AdminContext
+from app.domain.activity import note_activity
 from app.domain.lesson.exceptions import (
     ContentNotFoundError,
     InvalidContentError,
@@ -278,6 +279,7 @@ async def generate_voice(
     except (VoiceServiceError, VoiceTextRejectedError) as exc:
         _log_failure(ctx, exc.error_code, exc.addis_code)
         raise
+    note_activity(language=code, voice=voice, characters=len(words))
     logger.info(
         "admin_write action=generate entity=voice language=%s voice=%s chars=%d "
         "seconds=%.2f admin=%s",

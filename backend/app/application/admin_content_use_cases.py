@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from app.domain.activity import note_activity
 from app.domain.admin import AdminAccess
 from app.domain.lesson.exceptions import (
     ConfirmationRequiredError,
@@ -126,6 +127,7 @@ async def create_language(
     if await repo.get(LanguageModel, code) is not None:
         raise ContentExistsError(f"A language with code {code!r} already exists", code=code)
     await repo.add(language)
+    note_activity(target_name=f"{language.name} ({code})", link="/languages")
     _log(ctx, "create", "language", code)
     return language
 
@@ -209,6 +211,7 @@ async def create_course(
         order_index=await repo.next_course_order_index(),
     )
     await repo.add(course)
+    note_activity(target_name=course.title, course_id=course.id, link=f"/courses/{course.id}")
     _log(ctx, "create", "course", course.id)
     return course
 

@@ -15,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings, get_settings
+from app.infrastructure.api.activity_routers import router as activity_router
+from app.infrastructure.api.admin_league_routers import router as admin_league_router
 from app.infrastructure.api.admin_learner_routers import router as admin_learner_router
 from app.infrastructure.api.admin_routers import router as admin_router
 from app.infrastructure.api.audio_file_routers import image_router as image_file_router
@@ -115,6 +117,8 @@ def create_app() -> FastAPI:
     app.include_router(curriculum_router)
     app.include_router(team_router)
     app.include_router(audio_library_router)
+    app.include_router(admin_league_router)
+    app.include_router(activity_router)
     app.include_router(audio_file_router)
     app.include_router(image_file_router)
     app.include_router(legal_router)

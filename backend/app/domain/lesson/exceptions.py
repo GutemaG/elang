@@ -278,6 +278,21 @@ class AudioFileInUseError(AdminContentError):
     error_code = "audio_file_in_use"
 
 
+# --- Admin Leagues page (intent 030) -----------------------------------------
+
+
+class LeagueMemberNotFoundError(AdminContentError):
+    """No league membership has this id."""
+
+    error_code = "league_member_not_found"
+
+
+class LeagueWeekClosedError(AdminContentError):
+    """Only the current week's open groups can be corrected."""
+
+    error_code = "league_week_closed"
+
+
 # --- Generated voices (intent 027) -------------------------------------------
 # Raised by the Addis AI client. `addis_code` is Addis's own error code, for
 # the log only: it is never put in `details`, so it never reaches a browser,

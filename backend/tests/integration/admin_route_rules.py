@@ -35,6 +35,11 @@ SUPER_ONLY: frozenset[tuple[str, str]] = frozenset(
         ("POST", "/api/v1/admin/audio-files/trash"),
         ("POST", "/api/v1/admin/audio-files/trash/restore"),
         ("POST", "/api/v1/admin/audio-files/trash/delete"),
+        ("GET", "/api/v1/admin/leagues"),
+        ("POST", "/api/v1/admin/leagues/members/{member_id}/remove"),
+        ("POST", "/api/v1/admin/leagues/members/{member_id}/restore"),
+        ("PUT", "/api/v1/admin/leagues/members/{member_id}/xp"),
+        ("GET", "/api/v1/admin/activity"),
     }
 )
 

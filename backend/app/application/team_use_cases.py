@@ -14,6 +14,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 
+from app.domain.activity import note_activity
 from app.domain.admin import ADMIN_ROLES, SUPER_ADMIN, AdminAccess, AdminMember, normalise_email
 from app.domain.lesson.exceptions import (
     AdminMemberExistsError,
@@ -41,6 +42,7 @@ class TeamMember:
 
 
 def _log(admin: str, action: str, member_id: str, role: str, courses: int) -> None:
+    note_activity(role=role, courses=courses)
     logger.info(
         "admin_write action=%s entity=admin_member id=%s role=%s courses=%d admin=%s",
         action,
@@ -128,6 +130,7 @@ async def add_member(
     role = _role(role)
     courses = await _courses(repo, role, course_ids)
     member = await repo.add(address, role, courses, admin=access.email)
+    note_activity(target_name=address, link="/team")
     _log(access.email, "add", member.id, role, len(courses))
     return await _one(repo, member)
 

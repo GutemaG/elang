@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
+import { ActivityPage } from './activity/ActivityPage'
 import { NotAuthorisedScreen } from './auth/NotAuthorisedScreen'
 import { useAccess } from './auth/access'
 import { useSession } from './auth/SessionContext'
@@ -10,6 +11,7 @@ import { FeedbackPage } from './feedback/FeedbackPage'
 import { GuidePage } from './guide/GuidePage'
 import { ImportPage } from './import/ImportPage'
 import { LanguagesPage } from './languages/LanguagesPage'
+import { LeaguesPage } from './leagues/LeaguesPage'
 import { AudioLibraryPage } from './library/AudioLibraryPage'
 import { DashboardPage } from './learners/DashboardPage'
 import { LearnerPage } from './learners/LearnerPage'
@@ -72,6 +74,8 @@ export function App() {
             <Route path="/learners" element={<SuperOnly><LearnersPage /></SuperOnly>} />
             <Route path="/learners/:learnerId" element={<SuperOnly><LearnerPage /></SuperOnly>} />
             <Route path="/feedback" element={<SuperOnly><FeedbackPage /></SuperOnly>} />
+            <Route path="/leagues" element={<SuperOnly><LeaguesPage /></SuperOnly>} />
+            <Route path="/activity" element={<SuperOnly><ActivityPage /></SuperOnly>} />
             <Route path="/app-updates" element={<SuperOnly><AppUpdatesPage /></SuperOnly>} />
             <Route
               path="/courses/:courseId/lessons/:lessonId/exercises/new/:type"

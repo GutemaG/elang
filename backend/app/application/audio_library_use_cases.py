@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import quote, unquote, urlsplit
 
+from app.domain.activity import note_activity
 from app.domain.lesson.exceptions import (
     AudioFileExistsError,
     AudioFileInUseError,
@@ -342,6 +343,7 @@ async def trash_files(
     for key in wanted:
         await library.move(key, f"{TRASH_PREFIX}{key}")
         _log("trash", key, email)
+    note_activity(files=len(wanted))
     return len(wanted)
 
 
@@ -363,6 +365,7 @@ async def restore_files(library: MediaLibrary, keys: list[str], *, email: str) -
     for key in wanted:
         await library.move(key, key[len(TRASH_PREFIX) :])
         _log("restore", key, email)
+    note_activity(files=len(wanted))
     return len(wanted)
 
 
@@ -372,6 +375,7 @@ async def delete_files(library: MediaLibrary, keys: list[str], *, email: str) ->
     for key in wanted:
         await library.delete(key)
         _log("delete", key, email)
+    note_activity(files=len(wanted))
     return len(wanted)
 
 

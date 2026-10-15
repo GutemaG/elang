@@ -24,6 +24,7 @@ from app.application.admin_audio_use_cases import (
     AudioStore,
 )
 from app.application.admin_content_use_cases import AdminContext
+from app.domain.activity import note_activity
 from app.domain.lesson.exceptions import (
     AudioStorageNotConfiguredError,
     ContentExistsError,
@@ -296,6 +297,7 @@ async def create_chart(
         if letter.same_as is not None:
             row.same_as_id = by_glyph[letter.same_as].id
     await repo.flush()
+    note_activity(target_name=language, link=f"/sounds/{language}")
     _log(ctx, "create", "sound_chart", language)
     return await _admin_chart(repo, chart)
 

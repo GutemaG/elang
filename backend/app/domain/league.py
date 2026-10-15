@@ -106,6 +106,12 @@ def zone_sizes(member_count: int, tier: LeagueTier) -> Zones:
     return Zones(promote, demote)
 
 
+def league_xp(earned: int, adjustment: int) -> int:
+    """The XP a member ranks by (intent 030): what they earned plus a
+    super admin's correction, never below 0."""
+    return max(0, earned + adjustment)
+
+
 @dataclass(frozen=True)
 class Standing:
     """One member's week so far: the input to `rank`."""
@@ -212,6 +218,8 @@ class LeagueMembership:
     week_start: date
     tier: LeagueTier
     joined_at: datetime
+    # Intent 030: taken out of this week by a super admin.
+    removed: bool = False
 
 
 @dataclass(frozen=True)
@@ -249,6 +257,9 @@ class GroupMember:
     # The stored account settings, to leave out anyone who switched off.
     settings: dict[str, Any]
     joined_at: datetime
+    # Intent 030: a super admin's removal and XP correction.
+    removed: bool = False
+    xp_adjustment: int = 0
 
 
 @dataclass(frozen=True)

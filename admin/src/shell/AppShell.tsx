@@ -37,6 +37,8 @@ const NAV_GROUPS = [
       { to: '/learners', icon: 'group', label: 'Learners', current: (path: string) => path.startsWith('/learners') },
       // 027-learner-feedback: what learners send from the app.
       { to: '/feedback', icon: 'feedback', label: 'Feedback', current: (path: string) => path === '/feedback' },
+      // Weekly leagues, and fixing them (intent 030).
+      { to: '/leagues', icon: 'emoji_events', label: 'Leagues', current: (path: string) => path === '/leagues' },
     ],
   },
   {
@@ -45,6 +47,8 @@ const NAV_GROUPS = [
     superOnly: true,
     items: [
       { to: '/team', icon: 'group_add', label: 'Team', current: (path: string) => path === '/team' },
+      // Who changed what in this site (intent 030).
+      { to: '/activity', icon: 'history', label: 'Activity log', current: (path: string) => path === '/activity' },
       { to: '/languages', icon: 'language', label: 'Languages', current: (path: string) => path === '/languages' },
       // Generated voices: which Addis AI voice speaks each language (intent 027).
       { to: '/voices', icon: 'record_voice_over', label: 'Voices', current: (path: string) => path === '/voices' },
