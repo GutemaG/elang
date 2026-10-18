@@ -51,7 +51,7 @@ void main() {
       for (final name in _bundled) {
         expect(
           File('assets/pictures/$name').readAsBytesSync(),
-          File('backend/sample_pictures/$name').readAsBytesSync(),
+          File('../backend/sample_pictures/$name').readAsBytesSync(),
           reason: name,
         );
       }
@@ -70,7 +70,7 @@ void main() {
 
     test('carry their credits, the same as the originals\'', () {
       final originals = {
-        for (final c in _credits('backend/sample_pictures/credits.json'))
+        for (final c in _credits('../backend/sample_pictures/credits.json'))
           c['file']: c,
       };
       final copies = _credits('assets/pictures/credits.json');

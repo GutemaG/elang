@@ -8,7 +8,8 @@ selection → Google/Apple sign-in → session persisted on-device.
 ## Repo layout
 
 ```
-lib/                Flutter app (features/auth/, shared/)
+mobile/              Flutter app: lib/, test/, assets/, android/, ios/ and pubspec.yaml.
+                     Run every flutter / dart command from here.
 backend/             FastAPI backend: learner API and /api/v1/admin/* (DDD-structured, SQLite for local dev)
 admin/               Content admin web site (Vite + React + TypeScript), see admin/README.md
 memory-bank/         specsmd planning artifacts (intents, units, stories, bolts, ADRs) —
@@ -40,6 +41,7 @@ Verify: `curl http://localhost:8000/health` → `{"status":"ok"}`.
 
 **Flutter app:**
 ```powershell
+cd mobile
 flutter pub get
 flutter devices             # see what's available: windows, chrome, a phone, etc.
 flutter run -d <device-id>
@@ -50,12 +52,12 @@ flutter run -d <device-id>
 1. Google Cloud Console → **OAuth consent screen** (a.k.a. "Google Auth Platform"): App name, support email, External audience, add your own Google account as a **Test user** (the app stays in Testing status until formally verified — anyone not listed gets blocked).
 2. **Clients → Create Client**, twice:
    - **Web application** — add `http://localhost:<port>` as an Authorized JavaScript origin (see the CORS/origin gotcha below for why the port matters); leave Authorized redirect URIs empty (not used by this flow).
-   - **Android** — package name from `android/app/build.gradle.kts` (`applicationId`), plus your debug keystore's SHA-1:
+   - **Android** — package name from `mobile/android/app/build.gradle.kts` (`applicationId`), plus your debug keystore's SHA-1:
      ```powershell
      keytool -list -v -keystore "$env:USERPROFILE\.android\debug.keystore" -alias androiddebugkey -storepass android -keypass android
      ```
 3. Put the **Web** client ID in two places:
-   - `lib/shared/config/auth_config.dart` — `googleClientId` and `googleServerClientId`
+   - `mobile/lib/shared/config/auth_config.dart` — `googleClientId` and `googleServerClientId`
    - `backend/.env` — `GOOGLE_OAUTH_CLIENT_ID`
 
    (Client *IDs* are not secrets and are fine to commit; a client *secret*, if one is ever generated, must never go in either of these files or in git.)
@@ -281,13 +283,14 @@ one of them (for example `# R2_ACCESS_KEY_ID=…`) and restart the backend.
 
 ```powershell
 # Flutter — unit/widget tests (fast, no backend needed)
+cd mobile
 flutter test test/ --exclude-tags=e2e
 
 # Flutter — real end-to-end tests (needs the backend running on :8000)
 flutter test test/shared/services/http_auth_api_e2e_test.dart
 
 # Backend
-cd backend
+cd ../backend
 uv run pytest
 uv run ruff check .
 uv run mypy .
